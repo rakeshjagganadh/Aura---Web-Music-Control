@@ -1,0 +1,162 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    /* AURA Studio Semantic Color Tokens */
+    --aura-void: #060709;
+    --aura-carbon: #0d0f14;
+    --aura-graphite: #141720;
+    --aura-elevated: #1b1e2a;
+    --aura-mist: #f1f3f7;
+    --aura-haze: #8e95a5;
+    --aura-ash: #535969;
+    --aura-violet: #818cf8;
+    --aura-violet-dark: #6366f1;
+    --aura-cyan: #38bdf8;
+    --aura-signal: #10b981;
+    --aura-border: rgba(255, 255, 255, 0.07);
+    --aura-border-strong: rgba(255, 255, 255, 0.12);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    color-scheme: dark;
+    background-color: var(--aura-void);
+    color: var(--aura-mist);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Three-Layer Typography Utilities */
+.aura-brand-text {
+  font-family: var(--font-sans);
+  letter-spacing: -0.035em;
+  font-weight: 800;
+}
+
+.aura-interface-text {
+  font-family: var(--font-sans);
+  letter-spacing: -0.01em;
+}
+
+.aura-tech-mono {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1, "zero" 1;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.10);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* Range input styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]:focus {
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  margin-top: -4px;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+input[type="range"]:hover::-webkit-slider-thumb {
+  transform: scale(1.25);
+  background: #ffffff;
+}
+
+input[type="range"]:active::-webkit-slider-thumb {
+  transform: scale(1.35);
+  background: #818cf8;
+}
+
+/* Vertical slider for EQ */
+input[type="range"].slider-vertical {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  height: 140px;
+  width: 24px;
+}
+
+input[type="range"].slider-vertical::-webkit-slider-runnable-track {
+  width: 4px;
+  height: 140px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+input[type="range"].slider-vertical::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  margin-left: -5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* Safe Area Inset Utilities */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.mb-safe {
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Touch & Mobile UX Utilities */
+.touch-pan-y {
+  touch-action: pan-y;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
