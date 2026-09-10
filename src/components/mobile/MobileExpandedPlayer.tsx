@@ -31,6 +31,8 @@ export const MobileExpandedPlayer: React.FC = () => {
     isPlaying,
     currentTime,
     duration,
+    isSeeking,
+    setIsSeeking,
     volume,
     isMuted,
     playbackRate,
@@ -213,6 +215,7 @@ export const MobileExpandedPlayer: React.FC = () => {
               currentTime={currentTime}
               duration={duration}
               onSeek={seek}
+              onSeekingChange={setIsSeeking}
               height={36}
               barWidth={2.5}
               barGap={1.5}

@@ -107,9 +107,16 @@ export const MobileMiniPlayer: React.FC = () => {
             </div>
 
             <div className="min-w-0 flex-1">
-              <h4 className="text-xs font-bold text-white truncate leading-tight">
-                {currentTrack.title}
-              </h4>
+              <div className="flex items-center gap-1.5 min-w-0">
+                <h4 className="text-xs font-bold text-white truncate leading-tight">
+                  {currentTrack.title}
+                </h4>
+                {currentTrack.source === 'youtube' && (
+                  <span className="text-[8px] font-mono px-1 py-0.2 rounded bg-red-500/20 text-red-300 border border-red-500/30 shrink-0">
+                    YT
+                  </span>
+                )}
+              </div>
               <p className="text-[11px] text-zinc-400 truncate mt-0.5">
                 {currentTrack.artist}
               </p>
@@ -124,7 +131,7 @@ export const MobileMiniPlayer: React.FC = () => {
               type="button"
               onClick={() => setIsAudioControlsOpen(true)}
               className={`p-2.5 rounded-xl transition-colors cursor-pointer ${
-                isAudioEffectActive
+                isAudioEffectActive && currentTrack.source !== 'youtube'
                   ? 'text-indigo-400 bg-indigo-500/15'
                   : 'text-zinc-400 hover:text-zinc-200'
               }`}

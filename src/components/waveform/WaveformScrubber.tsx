@@ -6,6 +6,7 @@ interface WaveformScrubberProps {
   currentTime: number;
   duration: number;
   onSeek: (seconds: number) => void;
+  onSeekingChange?: (isSeeking: boolean) => void;
   height?: number;
   barWidth?: number;
   barGap?: number;
@@ -27,6 +28,7 @@ export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
   currentTime,
   duration,
   onSeek,
+  onSeekingChange,
   height = 48,
   barWidth = 3,
   barGap = 2,
@@ -44,6 +46,12 @@ export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
   const [hoverPosition, setHoverPosition] = useState(0); // 0 to 1
   const [hoverTime, setHoverTime] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [dragRatio, setDragRatio] = useState<number | null>(null);
+
+  const isDraggingRef = useRef(false);
+  const lastSeekTimeRef = useRef(0);
+  const throttledSeekTimerRef = useRef<any>(null);
+  const pendingSeekTimeRef = useRef<number | null>(null);
 
   // Generate fallback peaks if empty
   const defaultPeaks = React.useMemo(() => {
@@ -56,7 +64,12 @@ export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
     return fallback;
   }, [peaks]);
 
-  const progress = duration > 0 ? Math.max(0, Math.min(1, currentTime / duration)) : 0;
+  // Compute effective progress: while dragging, visual playhead tracks pointer immediately
+  const progress = isDragging && dragRatio !== null
+    ? dragRatio
+    : duration > 0
+      ? Math.max(0, Math.min(1, currentTime / duration))
+      : 0;
 
   // Render waveform on canvas
   const drawWaveform = useCallback(() => {
@@ -115,7 +128,7 @@ export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
       const radius = Math.min(barWidth / 2, 1.5);
 
       const isPlayed = progressRatio <= progress;
-      const isHoveredPast = isHovering && progressRatio <= hoverPosition && !isPlayed;
+      const isHoveredPast = isHovering && !isDragging && progressRatio <= hoverPosition && !isPlayed;
 
       if (isPlayed) {
         // High contrast Aura Violet to Celestial Cyan gradient
@@ -134,20 +147,29 @@ export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
       ctx.fill();
     }
 
+    // Draw hover cursor line when hovering and not dragging
+    if (isHovering && !isDragging && hoverPosition > 0 && hoverPosition < 1) {
+      const hoverX = hoverPosition * width;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.beginPath();
+      ctx.roundRect(hoverX - 0.5, 2, 1, h - 4, 0.5);
+      ctx.fill();
+    }
+
     // Draw playhead cursor line
     if (progress > 0) {
       const playheadX = progress * width;
       ctx.fillStyle = '#ffffff';
-      ctx.shadowColor = 'rgba(129, 140, 248, 0.9)';
-      ctx.shadowBlur = 8;
+      ctx.shadowColor = isDragging ? 'rgba(165, 180, 252, 1)' : 'rgba(129, 140, 248, 0.9)';
+      ctx.shadowBlur = isDragging ? 12 : 8;
       ctx.beginPath();
-      ctx.roundRect(playheadX - 1, 1, 2, h - 2, 1);
+      ctx.roundRect(playheadX - (isDragging ? 1.5 : 1), 1, isDragging ? 3 : 2, h - 2, 1);
       ctx.fill();
       ctx.shadowBlur = 0;
     }
 
     ctx.restore();
-  }, [defaultPeaks, progress, isHovering, hoverPosition, barWidth, barGap, activeColor, inactiveColor, duration, loopRegion]);
+  }, [defaultPeaks, progress, isHovering, isDragging, hoverPosition, barWidth, barGap, activeColor, inactiveColor, duration, loopRegion]);
 
   useEffect(() => {
     drawWaveform();
@@ -160,38 +182,123 @@ export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, [drawWaveform]);
 
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    setHoverPosition(ratio);
-    setHoverTime(ratio * duration);
+  // Clean up timers on unmount
+  useEffect(() => {
+    return () => {
+      if (throttledSeekTimerRef.current) {
+        clearTimeout(throttledSeekTimerRef.current);
+      }
+    };
+  }, []);
 
-    if (isDragging) {
-      onSeek(ratio * duration);
+  const calculateRatio = (clientX: number): number => {
+    if (!containerRef.current) return 0;
+    const rect = containerRef.current.getBoundingClientRect();
+    if (rect.width <= 0) return 0;
+    return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+  };
+
+  const emitThrottledSeek = (targetTime: number) => {
+    pendingSeekTimeRef.current = targetTime;
+    const now = performance.now();
+    const elapsed = now - lastSeekTimeRef.current;
+
+    if (elapsed >= 45) {
+      lastSeekTimeRef.current = now;
+      onSeek(targetTime);
+    } else if (!throttledSeekTimerRef.current) {
+      throttledSeekTimerRef.current = setTimeout(() => {
+        throttledSeekTimerRef.current = null;
+        if (pendingSeekTimeRef.current !== null && isDraggingRef.current) {
+          lastSeekTimeRef.current = performance.now();
+          onSeek(pendingSeekTimeRef.current);
+        }
+      }, 45 - elapsed);
     }
   };
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!containerRef.current) return;
-    setIsDragging(true);
-    containerRef.current.setPointerCapture(e.pointerId);
-
-    const rect = containerRef.current.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    onSeek(ratio * duration);
-  };
-
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    setIsDragging(false);
     try {
-      containerRef.current?.releasePointerCapture(e.pointerId);
+      e.currentTarget.setPointerCapture(e.pointerId);
     } catch {
       // ignore
     }
+
+    isDraggingRef.current = true;
+    setIsDragging(true);
+    onSeekingChange?.(true);
+
+    const ratio = calculateRatio(e.clientX);
+    setDragRatio(ratio);
+    setHoverPosition(ratio);
+    const targetTime = ratio * (duration || 0);
+    setHoverTime(targetTime);
+
+    lastSeekTimeRef.current = performance.now();
+    onSeek(targetTime);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const ratio = calculateRatio(e.clientX);
+    setHoverPosition(ratio);
+    const targetTime = ratio * (duration || 0);
+    setHoverTime(targetTime);
+
+    if (isDraggingRef.current) {
+      setDragRatio(ratio);
+      emitThrottledSeek(targetTime);
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+
+    if (throttledSeekTimerRef.current) {
+      clearTimeout(throttledSeekTimerRef.current);
+      throttledSeekTimerRef.current = null;
+    }
+
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+
+    const ratio = calculateRatio(e.clientX);
+    const finalTargetTime = ratio * (duration || 0);
+
+    isDraggingRef.current = false;
+    setIsDragging(false);
+    setDragRatio(null);
+
+    // Final exact seek on release
+    onSeek(finalTargetTime);
+    onSeekingChange?.(false);
+  };
+
+  const handlePointerCancel = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+
+    if (throttledSeekTimerRef.current) {
+      clearTimeout(throttledSeekTimerRef.current);
+      throttledSeekTimerRef.current = null;
+    }
+
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+
+    isDraggingRef.current = false;
+    setIsDragging(false);
+    setDragRatio(null);
+    onSeekingChange?.(false);
   };
 
   const formatTime = (secs: number) => {
+    if (isNaN(secs) || secs < 0) return '0:00';
     const m = Math.floor(secs / 60);
     const s = Math.floor(secs % 60);
     return `${m}:${s < 10 ? '0' : ''}${s}`;
@@ -201,16 +308,19 @@ export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
     <div
       id="waveform-scrubber-container"
       ref={containerRef}
-      className={`relative w-full cursor-pointer select-none group py-1 ${className}`}
+      className={`relative w-full cursor-pointer select-none group py-1 touch-none ${className}`}
+      style={{ height, touchAction: 'none' }}
       onPointerEnter={() => setIsHovering(true)}
       onPointerLeave={() => {
         setIsHovering(false);
-        setIsDragging(false);
+        if (!isDraggingRef.current) {
+          setDragRatio(null);
+        }
       }}
-      onPointerMove={handlePointerMove}
       onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      style={{ height }}
+      onPointerCancel={handlePointerCancel}
     >
       <canvas
         ref={canvasRef}

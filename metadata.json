@@ -1,6 +1,6 @@
 {
   "name": "AURA STUDIO — Web Music Controller",
-  "description": "A minimal, creative professional music player and personal audio playground featuring Aura Sound Lab, zero-gap A/B looping, macro acoustic tuning, cue markers, stereo phase correlation, and lossless WAV master export.",
+  "description": "Universal music listening, personal audio studio, and Listen Together synchronized shared rooms with multi-source playback (local library, curated open streams, Audius decentralized catalog, and YouTube embed), 10-band EQ, 3D binaural spatializer, AURA Sound Lab, Loop A/B studio, and cue markers.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

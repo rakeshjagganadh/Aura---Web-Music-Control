@@ -12,8 +12,11 @@ import {
   Settings, 
   Plus, 
   ChevronLeft, 
-  ChevronRight
+  ChevronRight,
+  Radio,
+  Users
 } from 'lucide-react';
+import { useListenTogether } from '../../context/ListenTogetherContext';
 
 export const Sidebar: React.FC = () => {
   const {
@@ -27,10 +30,14 @@ export const Sidebar: React.FC = () => {
     tracks,
   } = useMusic();
 
+  const { isInRoom, participants } = useListenTogether();
+
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const mainNavItems: { id: NavView; label: string; icon: React.ElementType; badge?: number }[] = [
+  const mainNavItems: { id: NavView; label: string; icon: React.ElementType; badge?: number; dot?: boolean }[] = [
     { id: 'home', label: 'Home', icon: Home },
+    { id: 'sources', label: 'Sources', icon: Radio },
+    { id: 'listen-together', label: 'Listen Together', icon: Users, badge: isInRoom ? participants.length : undefined, dot: isInRoom },
     { id: 'songs', label: 'Library', icon: Music, badge: tracks.length },
     { id: 'albums', label: 'Albums', icon: Disc },
     { id: 'artists', label: 'Artists', icon: User },
@@ -83,7 +90,10 @@ export const Sidebar: React.FC = () => {
                 )}
 
                 {!isCollapsed && item.badge !== undefined && item.badge > 0 && (
-                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-md bg-white/5 text-zinc-400 border border-white/5">
+                  <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-md border flex items-center gap-1 ${
+                    item.dot ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' : 'bg-white/5 text-zinc-400 border-white/5'
+                  }`}>
+                    {item.dot && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
                     {item.badge}
                   </span>
                 )}

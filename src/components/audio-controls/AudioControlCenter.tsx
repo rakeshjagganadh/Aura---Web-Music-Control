@@ -187,6 +187,18 @@ export const AudioControlCenter: React.FC = () => {
 
         {/* Scrollable Main Content Body */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 select-none">
+          {currentTrack?.source === 'youtube' && (
+            <div className="mb-4 p-3 rounded-2xl bg-zinc-900/80 border border-red-500/20 flex items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 font-mono text-[10px] border border-red-500/30 font-semibold">
+                  YOUTUBE SOURCE
+                </span>
+                <span className="text-zinc-300 text-xs">
+                  Basic playback (Speed, Volume, Seek, Queue) is fully integrated. Web Audio DSP & EQ filters apply to local files.
+                </span>
+              </div>
+            </div>
+          )}
           
           {/* Quick Tone & Simple Overview Pane */}
           {activeAudioTab === 'overview' && (

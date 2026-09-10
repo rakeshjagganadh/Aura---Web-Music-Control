@@ -1,5 +1,7 @@
 export type NavView = 
   | 'home'
+  | 'sources'
+  | 'listen-together'
   | 'library'
   | 'songs'
   | 'albums'
@@ -7,8 +9,52 @@ export type NavView =
   | 'playlists'
   | 'playlist-detail'
   | 'favorites'
+  | 'moments'
   | 'studio'
   | 'settings';
+
+export type MusicSourceType = 'local' | 'curated_stream' | 'youtube' | 'web_stream' | 'radio' | 'audius';
+
+export interface TrackCapabilities {
+  basicPlayback: boolean; // Play, pause, stop
+  seek: boolean; // Arbitrary seek
+  volume: boolean; // Master volume
+  eq: boolean; // 10-band parametric EQ
+  effects: boolean; // Reverb, delay, distortion, chorus
+  spatial: boolean; // 3D binaural HRTF & stereo width
+  pitch: boolean; // Pitch shifting & tempo stretching
+  tempo: boolean; // Playback speed rate
+  loop: boolean; // Precision A/B looping
+  trim: boolean; // Non-destructive trimming
+  export: boolean; // Master Lossless WAV export
+  advancedProcessing: boolean; // Phase correlation & offline stems
+}
+
+export interface MusicSource {
+  id: string;
+  type: MusicSourceType;
+  name: string;
+  description: string;
+  icon: string;
+  isConnected: boolean;
+  isOfficial: boolean;
+  capabilities: TrackCapabilities;
+  trackCount?: number;
+  badge?: string;
+  category: 'local' | 'stream' | 'embed' | 'radio';
+}
+
+export interface AuraUserAccount {
+  id: string;
+  username: string;
+  displayName: string;
+  email?: string;
+  avatarUrl?: string;
+  isSignedIn: boolean;
+  syncEnabled: boolean;
+  lastSyncedAt?: number;
+  themePreference?: 'dark' | 'midnight' | 'obsidian';
+}
 
 export interface Track {
   id: string;
@@ -16,7 +62,7 @@ export interface Track {
   artist: string;
   album: string;
   duration: number; // in seconds
-  fileFormat: string; // e.g. 'MP3', 'WAV', 'FLAC', 'AAC', 'OGG'
+  fileFormat: string; // e.g. 'MP3', 'WAV', 'FLAC', 'AAC', 'OGG', 'STREAM', 'YOUTUBE'
   fileSize: number; // in bytes
   dateAdded: number; // timestamp
   coverUrl?: string; // image data URL or blob URL
@@ -31,6 +77,15 @@ export interface Track {
   sampleRate?: number;
   channels?: number;
   bitrate?: number;
+  
+  // Phase 3 Universal Source & Capabilities Extensions
+  source?: MusicSourceType; // 'local' | 'curated_stream' | 'youtube' | 'web_stream' | 'radio'
+  sourceId?: string;
+  sourceName?: string;
+  sourceUrl?: string;
+  externalStreamUrl?: string;
+  playbackCapability?: TrackCapabilities;
+  isAvailable?: boolean;
 }
 
 export interface Playlist {

@@ -76,7 +76,7 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
   if (!isOpen) return null;
 
   const handleSelectTrack = (track: Track) => {
-    playTrack(track, matchingTracks.length > 0 ? matchingTracks : tracks);
+    playTrack(track);
     onClose();
   };
 

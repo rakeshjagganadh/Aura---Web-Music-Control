@@ -12,11 +12,14 @@ import {
   Flame, 
   Compass, 
   ShieldCheck,
-  Power
+  Power,
+  Info
 } from 'lucide-react';
+import { canApplyDSP, getCapabilityNotice } from '../../services/sourceService';
 
 export const QuickSoundControls: React.FC = () => {
   const {
+    currentTrack,
     quickSound,
     updateQuickSound,
     resetQuickSound,
@@ -29,6 +32,9 @@ export const QuickSoundControls: React.FC = () => {
     toggleMasterBypass,
     saveCustomSoundLabPreset,
   } = useMusic();
+
+  const isDSPAllowed = canApplyDSP(currentTrack);
+  const dspNotice = getCapabilityNotice('eq', currentTrack);
 
   const [presetPromptOpen, setPresetPromptOpen] = React.useState(false);
   const [customName, setCustomName] = React.useState('');
@@ -94,6 +100,14 @@ export const QuickSoundControls: React.FC = () => {
 
   return (
     <div id="quick-sound-controls" className="flex flex-col gap-6 p-6 rounded-3xl bg-zinc-900/60 border border-white/10 backdrop-blur-xl shadow-2xl">
+      {/* Capability Notice if playing restricted stream */}
+      {!isDSPAllowed && dspNotice && (
+        <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-center gap-2.5">
+          <Info className="w-4 h-4 text-amber-400 shrink-0" />
+          <span>{dspNotice}</span>
+        </div>
+      )}
+
       {/* Header & Mode Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4">
         <div>

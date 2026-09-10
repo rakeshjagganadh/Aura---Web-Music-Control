@@ -37,6 +37,8 @@ export const ExpandedPlayer: React.FC = () => {
     isPlaying,
     currentTime,
     duration,
+    isSeeking,
+    setIsSeeking,
     volume,
     isMuted,
     playbackRate,
@@ -211,9 +213,21 @@ export const ExpandedPlayer: React.FC = () => {
           </div>
 
           <div className="mt-6 flex flex-col items-center">
-            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-              {currentTrack.title}
-            </h2>
+            <div className="flex items-center gap-2 max-w-full">
+              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight truncate">
+                {currentTrack.title}
+              </h2>
+              {currentTrack.source === 'youtube' && (
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/30 shrink-0">
+                  YouTube
+                </span>
+              )}
+              {currentTrack.source === 'audius' && (
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 shrink-0">
+                  Audius
+                </span>
+              )}
+            </div>
             <p className="text-sm font-medium text-zinc-400 mt-1">
               {currentTrack.artist} • <span className="text-zinc-500">{currentTrack.album}</span>
             </p>
@@ -266,6 +280,7 @@ export const ExpandedPlayer: React.FC = () => {
             currentTime={currentTime}
             duration={duration}
             onSeek={seek}
+            onSeekingChange={setIsSeeking}
             height={44}
             barWidth={3}
             barGap={2}

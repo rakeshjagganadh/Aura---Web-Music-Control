@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Track } from '../../types';
 import { useMusic } from '../../context/MusicContext';
+import { useListenTogether } from '../../context/ListenTogetherContext';
 import { 
   Play, 
   Pause, 
@@ -13,7 +14,8 @@ import {
   Disc,
   Clock,
   Sparkles,
-  Info
+  Info,
+  Users
 } from 'lucide-react';
 
 interface SongObjectCardProps {
@@ -43,7 +45,14 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
     playNext,
     deleteTrack,
     openTrackInfo,
+    setCurrentView,
   } = useMusic();
+
+  const {
+    isInRoom,
+    roomAddTrack,
+    createRoom,
+  } = useListenTogether();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -151,6 +160,19 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
             </div>
           )}
 
+          {/* Top Left Source Badge if Audius or YouTube */}
+          {(track.source === 'youtube' || track.source === 'audius') && (
+            <div className="absolute top-2.5 left-2.5 pointer-events-none">
+              <span className={`text-[9px] font-mono font-medium px-2 py-0.5 rounded-md backdrop-blur-md border shadow-sm ${
+                track.source === 'youtube'
+                  ? 'bg-red-950/80 text-red-300 border-red-500/30'
+                  : 'bg-purple-950/80 text-purple-300 border-purple-500/30'
+              }`}>
+                {track.source === 'youtube' ? 'YouTube' : 'Audius'}
+              </span>
+            </div>
+          )}
+
           {/* Duration / Format Tag in top right */}
           <div className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
             <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-zinc-300 border border-white/10">
@@ -231,6 +253,23 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
                   >
                     <ListPlus className="w-3.5 h-3.5 text-cyan-400" />
                     Add to Queue
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsMenuOpen(false);
+                      if (isInRoom) {
+                        roomAddTrack(track);
+                      } else {
+                        createRoom(`${track.title} Session`, track).then(() => {
+                          setCurrentView('listen-together');
+                        });
+                      }
+                    }}
+                    className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left"
+                  >
+                    <Users className="w-3.5 h-3.5 text-indigo-400" />
+                    {isInRoom ? 'Add to Shared Room' : 'Play in Listen Together'}
                   </button>
                   {onOpenPlaylistModal && (
                     <button
@@ -323,13 +362,25 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
 
         {/* Text */}
         <div className="min-w-0 flex-1">
-          <h4
-            className={`text-xs sm:text-sm font-medium truncate ${
-              isCurrent ? 'text-indigo-300 font-semibold' : 'text-zinc-200 group-hover:text-white'
-            }`}
-          >
-            {track.title}
-          </h4>
+          <div className="flex items-center gap-1.5">
+            <h4
+              className={`text-xs sm:text-sm font-medium truncate ${
+                isCurrent ? 'text-indigo-300 font-semibold' : 'text-zinc-200 group-hover:text-white'
+              }`}
+            >
+              {track.title}
+            </h4>
+            {track.source === 'youtube' && (
+              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-red-500/15 text-red-300 border border-red-500/25 shrink-0">
+                YouTube
+              </span>
+            )}
+            {track.source === 'audius' && (
+              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 shrink-0">
+                Audius
+              </span>
+            )}
+          </div>
           <p className="text-[11px] text-zinc-400 truncate mt-0.5 group-hover:text-zinc-300">
             {track.artist} {track.album ? `• ${track.album}` : ''}
           </p>
@@ -394,6 +445,23 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
               >
                 <ListPlus className="w-3.5 h-3.5 text-cyan-400" />
                 Add to Queue
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMenuOpen(false);
+                  if (isInRoom) {
+                    roomAddTrack(track);
+                  } else {
+                    createRoom(`${track.title} Session`, track).then(() => {
+                      setCurrentView('listen-together');
+                    });
+                  }
+                }}
+                className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left"
+              >
+                <Users className="w-3.5 h-3.5 text-indigo-400" />
+                {isInRoom ? 'Add to Shared Room' : 'Play in Listen Together'}
               </button>
               {onOpenPlaylistModal && (
                 <button

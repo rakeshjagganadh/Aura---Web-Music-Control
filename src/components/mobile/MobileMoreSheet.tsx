@@ -12,8 +12,10 @@ import {
   Sparkles, 
   UploadCloud, 
   HardDrive,
-  ChevronRight
+  ChevronRight,
+  Users
 } from 'lucide-react';
+import { useListenTogether } from '../../context/ListenTogetherContext';
 
 interface MobileMoreSheetProps {
   isOpen: boolean;
@@ -40,12 +42,15 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ isOpen, onClos
     onClose();
   };
 
+  const { isInRoom, participants } = useListenTogether();
+
   const formatStorageMB = (bytes: number) => {
     if (!bytes) return '0 MB';
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   const navItems = [
+    { id: 'listen-together' as NavView, label: 'Listen Together', icon: Users, badge: isInRoom ? participants.length : undefined, desc: 'Shared rooms & synchronized music' },
     { id: 'albums' as NavView, label: 'Albums Collection', icon: Disc, desc: 'Group by album releases' },
     { id: 'artists' as NavView, label: 'Artists Directory', icon: User, desc: 'Browse by song performers' },
     { id: 'favorites' as NavView, label: 'Favorites', icon: Heart, badge: favoriteIds.size, desc: 'Starred & liked tracks' },

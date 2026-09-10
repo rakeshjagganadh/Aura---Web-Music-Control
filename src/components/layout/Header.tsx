@@ -13,10 +13,16 @@ import {
   ChevronDown,
   ChevronUp,
   ListMusic,
-  ChevronLeft
+  ChevronLeft,
+  User,
+  Plus
 } from 'lucide-react';
 
-export const Header: React.FC<{ onOpenMobileSearch?: () => void }> = ({ onOpenMobileSearch }) => {
+export const Header: React.FC<{ 
+  onOpenMobileSearch?: () => void;
+  onOpenUniversalSearch?: () => void;
+  onOpenAccount?: () => void;
+}> = ({ onOpenMobileSearch, onOpenUniversalSearch, onOpenAccount }) => {
   const {
     searchQuery,
     setSearchQuery,
@@ -71,7 +77,7 @@ export const Header: React.FC<{ onOpenMobileSearch?: () => void }> = ({ onOpenMo
       if (e.ctrlKey || e.metaKey) {
         if (matchingTracks.length > 0) {
           const target = matchingTracks[activeSearchIndex] || matchingTracks[0];
-          playTrack(target, matchingTracks);
+          playTrack(target);
         }
       } else if (e.shiftKey) {
         prevSearchResult();
@@ -236,13 +242,13 @@ export const Header: React.FC<{ onOpenMobileSearch?: () => void }> = ({ onOpenMo
           Demo Pack
         </button>
 
-        {/* Upload Music Button */}
+        {/* Add Music Button */}
         <button
           onClick={() => setIsUploadModalOpen(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium shadow-md shadow-indigo-600/20 transition-all active:scale-95 cursor-pointer"
         >
-          <UploadCloud className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Upload</span>
+          <Plus className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Add Music</span>
         </button>
 
         {/* Queue Drawer Trigger */}
@@ -256,6 +262,17 @@ export const Header: React.FC<{ onOpenMobileSearch?: () => void }> = ({ onOpenMo
             <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-indigo-500" />
           )}
         </button>
+
+        {/* Account / Sync Profile */}
+        {onOpenAccount && (
+          <button
+            onClick={onOpenAccount}
+            className="p-2 rounded-xl text-zinc-400 hover:text-indigo-300 hover:bg-zinc-900 transition-colors cursor-pointer"
+            title="AURA Profile & Studio Sync"
+          >
+            <User className="w-4 h-4" />
+          </button>
+        )}
 
         {/* Shortcuts ? (Desktop) */}
         <button

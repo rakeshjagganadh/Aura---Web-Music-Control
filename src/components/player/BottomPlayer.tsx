@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useMusic } from '../../context/MusicContext';
+import { useListenTogether } from '../../context/ListenTogetherContext';
 import { WaveformScrubber } from '../waveform/WaveformScrubber';
 import { 
   Play, 
@@ -21,6 +22,7 @@ import {
   Music,
   Moon,
   Info,
+  Users,
 } from 'lucide-react';
 
 export const BottomPlayer: React.FC = () => {
@@ -29,6 +31,8 @@ export const BottomPlayer: React.FC = () => {
     isPlaying,
     currentTime,
     duration,
+    isSeeking,
+    setIsSeeking,
     volume,
     isMuted,
     playbackRate,
@@ -59,7 +63,18 @@ export const BottomPlayer: React.FC = () => {
     markers,
     jumpToMarker,
     loopAB,
+    setCurrentView,
   } = useMusic();
+
+  const {
+    isInRoom,
+    activeRoom,
+    participants,
+    roomTogglePlay,
+    roomNext,
+    roomPrev,
+    roomSeek,
+  } = useListenTogether();
 
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
 
@@ -142,17 +157,52 @@ export const BottomPlayer: React.FC = () => {
           </div>
 
           <div className="min-w-0 flex-1">
-            <button
+            <div
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setIsExpandedPlayerOpen(true);
+                }
+              }}
               onClick={() => setIsExpandedPlayerOpen(true)}
-              className="text-left w-full block group cursor-pointer"
+              className="text-left w-full block group cursor-pointer focus:outline-none"
             >
-              <h4 className="text-xs sm:text-sm font-semibold text-zinc-100 truncate group-hover:text-indigo-300 transition-colors">
-                {currentTrack.title}
-              </h4>
+              <div className="flex items-center gap-1.5 min-w-0">
+                <h4 className="text-xs sm:text-sm font-semibold text-zinc-100 truncate group-hover:text-indigo-300 transition-colors">
+                  {currentTrack.title}
+                </h4>
+                {currentTrack.source === 'youtube' && (
+                  <span className="text-[9px] font-mono font-medium px-1.5 py-0.2 rounded bg-red-500/15 text-red-300 border border-red-500/25 shrink-0">
+                    YouTube
+                  </span>
+                )}
+                {currentTrack.source === 'audius' && (
+                  <span className="text-[9px] font-mono font-medium px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 shrink-0">
+                    Audius
+                  </span>
+                )}
+                {isInRoom && activeRoom && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentView('listen-together');
+                    }}
+                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-[10px] font-mono hover:bg-indigo-500/25 transition-colors cursor-pointer shrink-0"
+                    title="In Listen Together Room. Click to view room."
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="truncate max-w-[110px]">Room: {activeRoom.roomName}</span>
+                    <span className="text-zinc-400">({participants.length})</span>
+                  </button>
+                )}
+              </div>
               <p className="text-[11px] text-zinc-400 truncate mt-0.5 group-hover:text-zinc-300">
                 {currentTrack.artist}
               </p>
-            </button>
+            </div>
           </div>
 
           <button
@@ -194,7 +244,7 @@ export const BottomPlayer: React.FC = () => {
 
             {/* Previous */}
             <button
-              onClick={prevTrack}
+              onClick={isInRoom ? roomPrev : prevTrack}
               title="Previous (P)"
               className="p-1.5 text-zinc-300 hover:text-white rounded-lg transition-colors cursor-pointer"
             >
@@ -203,7 +253,7 @@ export const BottomPlayer: React.FC = () => {
 
             {/* Signature AURA Play / Pause Button with Radiant Glow */}
             <button
-              onClick={togglePlay}
+              onClick={isInRoom ? roomTogglePlay : togglePlay}
               title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
               className={`p-2.5 rounded-full text-zinc-950 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer ${
                 isPlaying
@@ -220,7 +270,7 @@ export const BottomPlayer: React.FC = () => {
 
             {/* Next */}
             <button
-              onClick={nextTrack}
+              onClick={isInRoom ? roomNext : nextTrack}
               title="Next (N)"
               className="p-1.5 text-zinc-300 hover:text-white rounded-lg transition-colors cursor-pointer"
             >
@@ -259,7 +309,8 @@ export const BottomPlayer: React.FC = () => {
                 peaks={currentTrack.waveformPeaks}
                 currentTime={currentTime}
                 duration={duration}
-                onSeek={seek}
+                onSeek={isInRoom ? roomSeek : seek}
+                onSeekingChange={setIsSeeking}
                 height={20}
                 barWidth={2}
                 barGap={1.5}
@@ -348,15 +399,19 @@ export const BottomPlayer: React.FC = () => {
           {/* Audio Controls & EQ Studio Drawer Toggle */}
           <button
             onClick={() => setIsAudioControlsOpen(!isAudioControlsOpen)}
-            title="Audio Studio & Parametric EQ (E)"
+            title={
+              currentTrack?.source === 'youtube'
+                ? 'Audio Studio (Basic controls active; DSP effects apply to local audio files)'
+                : 'Audio Studio & Parametric EQ (E)'
+            }
             className={`relative p-2 rounded-xl transition-colors cursor-pointer ${
-              isAudioControlsOpen || isAudioEffectActive
+              isAudioControlsOpen || (isAudioEffectActive && currentTrack?.source !== 'youtube')
                 ? 'text-indigo-300 bg-indigo-500/20 border border-indigo-500/30'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
             }`}
           >
             <SlidersHorizontal className="w-4 h-4" />
-            {isAudioEffectActive && (
+            {isAudioEffectActive && currentTrack?.source !== 'youtube' && (
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-indigo-400" />
             )}
           </button>

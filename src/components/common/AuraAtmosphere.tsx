@@ -105,27 +105,39 @@ export const AuraAtmosphere: React.FC<AuraAtmosphereProps> = ({
 
     let lastTimestamp = performance.now();
 
+    const isYouTube = currentTrack?.source === 'youtube';
+
     const updateReactiveFields = (now: number) => {
       const delta = Math.min((now - lastTimestamp) / 1000, 0.1);
       lastTimestamp = now;
 
-      // Extract low-frequency energy (bass)
-      audioEngine.getFrequencyData(freqDataRef.current);
-      const freq = freqDataRef.current;
-      
-      // Calculate sub-bass & bass energy (first 8 bins ~ 0-170 Hz)
-      let bassSum = 0;
-      for (let i = 0; i < 8; i++) {
-        bassSum += freq[i];
-      }
-      const rawBass = (bassSum / (8 * 255)); // 0 to 1
+      let rawBass = 0;
+      let rawEnergy = 0;
 
-      // Overall average energy
-      let totalSum = 0;
-      for (let i = 0; i < 32; i++) {
-        totalSum += freq[i];
+      if (isYouTube) {
+        // Natural organic harmonic breathing for stream playback
+        const t = now * 0.0015;
+        rawBass = (Math.sin(t * 1.5) * 0.5 + 0.5) * 0.45;
+        rawEnergy = (Math.cos(t * 2.1) * 0.5 + 0.5) * 0.5;
+      } else {
+        // Extract low-frequency energy (bass) from local Web Audio engine
+        audioEngine.getFrequencyData(freqDataRef.current);
+        const freq = freqDataRef.current;
+        
+        // Calculate sub-bass & bass energy (first 8 bins ~ 0-170 Hz)
+        let bassSum = 0;
+        for (let i = 0; i < 8; i++) {
+          bassSum += freq[i];
+        }
+        rawBass = (bassSum / (8 * 255)); // 0 to 1
+
+        // Overall average energy
+        let totalSum = 0;
+        for (let i = 0; i < 32; i++) {
+          totalSum += freq[i];
+        }
+        rawEnergy = (totalSum / (32 * 255));
       }
-      const rawEnergy = (totalSum / (32 * 255));
 
       // Smooth with natural spring/decay (tau = 0.15s)
       const smoothingFactor = Math.min(1.0, delta * 7);

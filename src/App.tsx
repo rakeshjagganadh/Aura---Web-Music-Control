@@ -4,6 +4,7 @@ import { Header } from './components/layout/Header';
 import { Sidebar } from './components/layout/Sidebar';
 import { BottomPlayer } from './components/player/BottomPlayer';
 import { ExpandedPlayer } from './components/player/ExpandedPlayer';
+import { YouTubeEmbedPlayer } from './components/player/YouTubeEmbedPlayer';
 import { QueueDrawer } from './components/queue/QueueDrawer';
 import { UploadModal } from './components/upload/UploadModal';
 import { PlaylistModal } from './components/playlists/PlaylistModal';
@@ -15,6 +16,8 @@ import { DropzoneOverlay } from './components/upload/DropzoneOverlay';
 import { AudioControlCenter } from './components/audio-controls/AudioControlCenter';
 import { AuraAtmosphere } from './components/common/AuraAtmosphere';
 import { TrimExportModal } from './components/sound-lab/TrimExportModal';
+import { UniversalSearchModal } from './components/search/UniversalSearchModal';
+import { AuraAccountModal } from './components/account/AuraAccountModal';
 
 // Mobile-specific components
 import { MobileBottomNav } from './components/mobile/MobileBottomNav';
@@ -24,6 +27,7 @@ import { MobileSearchModal } from './components/mobile/MobileSearchModal';
 
 // Views
 import { HomeView } from './components/views/HomeView';
+import { SourcesView } from './components/views/SourcesView';
 import { SongsView } from './components/views/SongsView';
 import { AlbumsView } from './components/views/AlbumsView';
 import { ArtistsView } from './components/views/ArtistsView';
@@ -32,6 +36,8 @@ import { PlaylistDetailView } from './components/views/PlaylistDetailView';
 import { FavoritesView } from './components/views/FavoritesView';
 import { StudioView } from './components/views/StudioView';
 import { SettingsView } from './components/views/SettingsView';
+import { ListenTogetherView } from './components/views/ListenTogetherView';
+import { ListenTogetherProvider } from './context/ListenTogetherContext';
 
 const MainLayout: React.FC = () => {
   const {
@@ -61,10 +67,19 @@ const MainLayout: React.FC = () => {
 
   const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [isUniversalSearchOpen, setIsUniversalSearchOpen] = useState(false);
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
 
-  // Global Keyboard Shortcuts
+  // Global Keyboard Shortcuts (Space, ⌘K, ?, arrows, etc.)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // ⌘K or Ctrl+K for Universal Search
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsUniversalSearchOpen((prev) => !prev);
+        return;
+      }
+
       // Don't trigger if typing in an input or textarea
       if (
         document.activeElement?.tagName === 'INPUT' ||
@@ -139,6 +154,8 @@ const MainLayout: React.FC = () => {
           setIsAudioControlsOpen(!isAudioControlsOpen);
           break;
         case 'Escape':
+          if (isUniversalSearchOpen) setIsUniversalSearchOpen(false);
+          if (isAccountModalOpen) setIsAccountModalOpen(false);
           if (isExpandedPlayerOpen) setIsExpandedPlayerOpen(false);
           if (isShortcutsModalOpen) setIsShortcutsModalOpen(false);
           if (isQueueDrawerOpen) setIsQueueDrawerOpen(false);
@@ -179,6 +196,8 @@ const MainLayout: React.FC = () => {
     isAudioControlsOpen,
     setIsQueueDrawerOpen,
     isQueueDrawerOpen,
+    isUniversalSearchOpen,
+    isAccountModalOpen,
   ]);
 
   return (
@@ -187,7 +206,11 @@ const MainLayout: React.FC = () => {
       <AuraAtmosphere intensity="moderate" />
       
       {/* Top Header */}
-      <Header onOpenMobileSearch={() => setIsMobileSearchOpen(true)} />
+      <Header 
+        onOpenMobileSearch={() => setIsMobileSearchOpen(true)}
+        onOpenUniversalSearch={() => setIsUniversalSearchOpen(true)}
+        onOpenAccount={() => setIsAccountModalOpen(true)}
+      />
 
       {/* Main Workspace: Sidebar + View Content */}
       <div className="flex flex-1 relative overflow-hidden">
@@ -201,6 +224,10 @@ const MainLayout: React.FC = () => {
             <PlaylistDetailView />
           ) : currentView === 'home' ? (
             <HomeView />
+          ) : currentView === 'sources' ? (
+            <SourcesView />
+          ) : currentView === 'listen-together' ? (
+            <ListenTogetherView />
           ) : currentView === 'songs' ? (
             <SongsView />
           ) : currentView === 'albums' ? (
@@ -234,6 +261,9 @@ const MainLayout: React.FC = () => {
       {/* Full-screen / Expanded Studio Player Modal */}
       <ExpandedPlayer />
 
+      {/* Official YouTube Embed Audio Integration */}
+      <YouTubeEmbedPlayer />
+
       {/* Queue & History Drawer */}
       <QueueDrawer />
 
@@ -247,6 +277,18 @@ const MainLayout: React.FC = () => {
       <TrackInfoModal />
       <ToastContainer />
       <DropzoneOverlay />
+
+      {/* Universal Search Modal (⌘K) */}
+      <UniversalSearchModal
+        isOpen={isUniversalSearchOpen}
+        onClose={() => setIsUniversalSearchOpen(false)}
+      />
+
+      {/* Account & Cloud Sync Modal */}
+      <AuraAccountModal
+        isOpen={isAccountModalOpen}
+        onClose={() => setIsAccountModalOpen(false)}
+      />
 
       {/* Mobile Specific Sheets & Modals */}
       <MobileMoreSheet 
@@ -265,7 +307,9 @@ const MainLayout: React.FC = () => {
 export default function App() {
   return (
     <MusicProvider>
-      <MainLayout />
+      <ListenTogetherProvider>
+        <MainLayout />
+      </ListenTogetherProvider>
     </MusicProvider>
   );
 }

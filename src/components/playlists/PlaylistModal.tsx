@@ -78,11 +78,12 @@ export const PlaylistModal: React.FC = () => {
                   <button
                     key={grad}
                     type="button"
+                    aria-label={`Select gradient ${grad}`}
                     onClick={() => setSelectedGradient(grad)}
                     className={`w-6 h-6 rounded-full bg-gradient-to-br ${grad} border-2 transition-transform ${
                       selectedGradient === grad ? 'border-white scale-110' : 'border-transparent hover:scale-105'
                     }`}
-                  />
+                  ></button>
                 ))}
               </div>
             </div>

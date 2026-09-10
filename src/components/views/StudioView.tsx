@@ -61,6 +61,7 @@ export const StudioView: React.FC = () => {
     currentTime,
     duration,
     seek,
+    setIsSeeking,
     togglePlay,
     visualizerMode,
     setVisualizerMode,
@@ -222,6 +223,7 @@ export const StudioView: React.FC = () => {
               currentTime={currentTime}
               duration={duration}
               onSeek={seek}
+              onSeekingChange={setIsSeeking}
               height={36}
               barWidth={2.5}
               barGap={1.5}
