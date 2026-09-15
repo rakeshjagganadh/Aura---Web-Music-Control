@@ -468,41 +468,75 @@ const DEFAULT_SETTINGS: AppSettings = {
   useSongProfiles: true,
 };
 
+const pathToNavView = (pathname: string, search: string, hash: string): NavView => {
+  const p = pathname.toLowerCase();
+  const params = new URLSearchParams(search);
+  const h = hash.toLowerCase();
+
+  if (params.get('room') || p.startsWith('/listen') || h.includes('/listen')) {
+    return 'listen-together';
+  }
+  if (p === '/songs' || h === '#songs') return 'songs';
+  if (p === '/studio' || h === '#studio') return 'studio';
+  if (p === '/sources' || h === '#sources') return 'sources';
+  if (p === '/albums' || h === '#albums') return 'albums';
+  if (p === '/artists' || h === '#artists') return 'artists';
+  if (p === '/playlists' || h === '#playlists') return 'playlists';
+  if (p === '/favorites' || h === '#favorites') return 'favorites';
+  if (p === '/settings' || h === '#settings') return 'settings';
+  if (p === '/playlist-detail') return 'playlist-detail';
+  return 'home';
+};
+
+const navViewToPath = (view: NavView): string => {
+  switch (view) {
+    case 'home': return '/';
+    case 'songs': return '/songs';
+    case 'studio': return '/studio';
+    case 'sources': return '/sources';
+    case 'albums': return '/albums';
+    case 'artists': return '/artists';
+    case 'playlists': return '/playlists';
+    case 'favorites': return '/favorites';
+    case 'settings': return '/settings';
+    case 'listen-together': return '/listen';
+    default: return '/';
+  }
+};
+
 const MusicContext = createContext<MusicContextType | null>(null);
 
 export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Navigation & View
-  const [currentView, setCurrentView] = useState<NavView>(() => {
+  const [currentView, setCurrentViewState] = useState<NavView>(() => {
     if (typeof window !== 'undefined') {
-      const path = window.location.pathname;
-      const params = new URLSearchParams(window.location.search);
-      const hash = window.location.hash;
-      if (
-        params.get('room') ||
-        path.startsWith('/listen/') ||
-        hash.includes('/listen/')
-      ) {
-        return 'listen-together';
-      }
+      return pathToNavView(window.location.pathname, window.location.search, window.location.hash);
     }
     return 'home';
   });
+
+  const setCurrentView = useCallback((view: NavView) => {
+    setCurrentViewState(view);
+    if (typeof window !== 'undefined') {
+      const currentPath = window.location.pathname;
+      // Preserve active room invite URLs like /listen/ABC123
+      if (view === 'listen-together' && (currentPath.startsWith('/listen/') || window.location.search.includes('room='))) {
+        return;
+      }
+      const targetPath = navViewToPath(view);
+      if (currentPath !== targetPath && !(currentPath === '/' && targetPath === '/')) {
+        window.history.pushState(null, '', targetPath);
+      }
+    }
+  }, []);
 
   // Keep navigation in sync with browser forward/back buttons and hash navigation
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const handleLocationChange = () => {
-      const path = window.location.pathname;
-      const params = new URLSearchParams(window.location.search);
-      const hash = window.location.hash;
-      if (
-        params.get('room') ||
-        path.startsWith('/listen/') ||
-        hash.includes('/listen/')
-      ) {
-        setCurrentView('listen-together');
-      }
+      const detected = pathToNavView(window.location.pathname, window.location.search, window.location.hash);
+      setCurrentViewState(detected);
     };
 
     window.addEventListener('popstate', handleLocationChange);

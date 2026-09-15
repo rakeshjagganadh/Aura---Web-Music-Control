@@ -66,7 +66,8 @@ class RoomService {
     // If query string with room=
     try {
       if (clean.includes('?room=') || clean.includes('&room=')) {
-        const parsed = new URL(clean.startsWith('http') ? clean : `https://aura.local/${clean}`);
+        const base = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://app.internal';
+        const parsed = new URL(clean.startsWith('http') ? clean : `${base}/${clean.replace(/^\/+/, '')}`);
         const r = parsed.searchParams.get('room');
         if (r) return r.trim().toLowerCase();
       }
@@ -89,12 +90,12 @@ class RoomService {
 
   /**
    * Generates full shareable URL using current window origin
-   * Uses ?room= query parameter for 100% universal compatibility across all hosts & proxies
+   * Returns https://<current-origin>/listen/<roomId>
    */
   public getShareableUrl(roomId: string): string {
     const clean = this.cleanRoomCode(roomId);
-    if (typeof window === 'undefined') return `/?room=${clean}`;
-    return `${window.location.origin}/?room=${clean}`;
+    if (typeof window === 'undefined') return `/listen/${clean}`;
+    return `${window.location.origin}/listen/${clean}`;
   }
 
   /**

@@ -351,7 +351,7 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
           setCurrentView('listen-together');
 
           if (typeof window !== 'undefined') {
-            window.history.pushState(null, '', `/?room=${cleanId}`);
+            window.history.pushState(null, '', `/listen/${cleanId}`);
           }
 
           showToast(`Joined room "${state.roomName}"`, 'success');
