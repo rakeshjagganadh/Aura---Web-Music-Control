@@ -92,10 +92,10 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
         {/* Artwork Container as the Core Physical/Digital Music Object */}
         <div
           onClick={handleCardClick}
-          className={`relative w-full aspect-square rounded-2xl overflow-hidden bg-[#0c0d12] transition-all duration-300 ease-out ${
+          className={`relative w-full aspect-square rounded-xl overflow-hidden bg-[#10121a] border border-white/[0.06] transition-all duration-300 ease-out ${
             isCurrent
-              ? 'ring-1 ring-indigo-500/40 shadow-[0_12px_36px_rgba(99,102,241,0.22)] scale-[1.01]'
-              : 'shadow-lg shadow-black/40 group-hover:shadow-2xl group-hover:shadow-indigo-500/10 group-hover:scale-[1.025]'
+              ? 'ring-1 ring-white/40 shadow-xl scale-[1.01]'
+              : 'shadow-md group-hover:shadow-xl group-hover:scale-[1.02]'
           }`}
         >
           {/* Track Artwork */}
@@ -104,70 +104,57 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
               src={track.coverUrl}
               alt={track.title}
               className={`w-full h-full object-cover transition-transform duration-500 ease-out ${
-                isActivelyPlaying ? 'scale-[1.03]' : 'group-hover:scale-[1.04]'
+                isActivelyPlaying ? 'scale-[1.02]' : 'group-hover:scale-[1.03]'
               }`}
               referrerPolicy="no-referrer"
               loading="lazy"
             />
           ) : (
-            <div className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-indigo-600 via-zinc-900 to-zinc-950'} flex flex-col items-center justify-center p-4 text-white/90`}>
-              <Disc className="w-10 h-10 opacity-60 mb-2 stroke-1 group-hover:rotate-12 transition-transform duration-500" />
-              <span className="text-[10px] font-mono tracking-widest uppercase opacity-60 font-semibold">
+            <div className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-zinc-800 via-zinc-900 to-black'} flex flex-col items-center justify-center p-4 text-white/90`}>
+              <Disc className="w-10 h-10 opacity-40 mb-2 stroke-1 group-hover:rotate-12 transition-transform duration-500" />
+              <span className="text-[10px] font-mono tracking-widest uppercase opacity-40 font-semibold">
                 {track.fileFormat || 'AURA'}
               </span>
             </div>
           )}
 
-          {/* Atmospheric Soft Light Spill on Hover & Playing */}
-          <div
-            className={`absolute inset-0 transition-opacity duration-300 pointer-events-none ${
-              isCurrent
-                ? 'opacity-30 bg-gradient-to-t from-indigo-950/80 via-transparent to-transparent'
-                : 'opacity-0 group-hover:opacity-20 bg-gradient-to-t from-black/80 to-transparent'
-            }`}
-          />
-
           {/* Integrated Floating Play / Active Signal Control */}
           <div
-            className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
+            className={`absolute inset-0 flex items-center justify-center transition-all duration-200 ${
               isCurrent || isHovered
-                ? 'opacity-100 backdrop-blur-[1.5px] bg-black/30'
+                ? 'opacity-100 bg-black/35'
                 : 'opacity-0 pointer-events-none'
             }`}
           >
             <div
-              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
+              className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 ${
                 isActivelyPlaying
-                  ? 'bg-white text-zinc-950 shadow-[0_0_24px_rgba(255,255,255,0.4)] scale-100'
-                  : 'bg-white/90 hover:bg-white text-zinc-950 hover:scale-105 shadow-xl shadow-black/50'
+                  ? 'bg-white text-zinc-950 shadow-md scale-100'
+                  : 'bg-white/95 hover:bg-white text-zinc-950 hover:scale-105 shadow-md'
               }`}
             >
               {isActivelyPlaying ? (
-                <Pause className="w-5 h-5 fill-current" />
+                <Pause className="w-4 h-4 fill-current" />
               ) : (
-                <Play className="w-5 h-5 fill-current translate-x-0.5" />
+                <Play className="w-4 h-4 fill-current translate-x-0.5" />
               )}
             </div>
           </div>
 
           {/* Live Frequency Equalizer Animation for Active Track */}
           {isActivelyPlaying && (
-            <div className="absolute bottom-2.5 left-2.5 flex items-end gap-0.5 px-2 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 shadow-sm pointer-events-none">
-              <span className="w-0.5 h-3 bg-indigo-400 rounded-full animate-[pulse_0.6s_ease-in-out_infinite]" />
-              <span className="w-0.5 h-4 bg-indigo-300 rounded-full animate-[pulse_0.9s_ease-in-out_infinite_0.2s]" />
-              <span className="w-0.5 h-2 bg-cyan-400 rounded-full animate-[pulse_0.7s_ease-in-out_infinite_0.4s]" />
-              <span className="w-0.5 h-3.5 bg-violet-400 rounded-full animate-[pulse_0.8s_ease-in-out_infinite_0.1s]" />
+            <div className="absolute bottom-2.5 left-2.5 flex items-end gap-0.5 px-2 py-1 rounded-md bg-black/80 backdrop-blur-md border border-white/10 shadow-sm pointer-events-none">
+              <span className="w-0.5 h-3 bg-white rounded-full animate-[pulse_0.6s_ease-in-out_infinite]" />
+              <span className="w-0.5 h-4 bg-zinc-300 rounded-full animate-[pulse_0.9s_ease-in-out_infinite_0.2s]" />
+              <span className="w-0.5 h-2 bg-zinc-400 rounded-full animate-[pulse_0.7s_ease-in-out_infinite_0.4s]" />
+              <span className="w-0.5 h-3.5 bg-white rounded-full animate-[pulse_0.8s_ease-in-out_infinite_0.1s]" />
             </div>
           )}
 
           {/* Top Left Source Badge if Audius or YouTube */}
           {(track.source === 'youtube' || track.source === 'audius') && (
             <div className="absolute top-2.5 left-2.5 pointer-events-none">
-              <span className={`text-[9px] font-mono font-medium px-2 py-0.5 rounded-md backdrop-blur-md border shadow-sm ${
-                track.source === 'youtube'
-                  ? 'bg-red-950/80 text-red-300 border-red-500/30'
-                  : 'bg-purple-950/80 text-purple-300 border-purple-500/30'
-              }`}>
+              <span className="text-[9px] font-mono font-medium px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-zinc-300 border border-white/10 shadow-sm">
                 {track.source === 'youtube' ? 'YouTube' : 'Audius'}
               </span>
             </div>
@@ -175,19 +162,19 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
 
           {/* Duration / Format Tag in top right */}
           <div className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-zinc-300 border border-white/10">
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-zinc-300 border border-white/10">
               {formatTime(track.duration)}
             </span>
           </div>
         </div>
 
         {/* Object Metadata & Subtle Controls */}
-        <div className="flex items-start justify-between gap-2 mt-3 px-0.5">
+        <div className="flex items-start justify-between gap-2 mt-2.5 px-0.5">
           <div className="min-w-0 flex-1" onClick={handleCardClick}>
             <h3
-              className={`text-xs sm:text-sm font-semibold truncate transition-colors leading-snug ${
+              className={`text-xs sm:text-sm font-medium truncate transition-colors leading-snug ${
                 isCurrent
-                  ? 'text-indigo-300 font-bold'
+                  ? 'text-white font-semibold'
                   : 'text-zinc-200 group-hover:text-white'
               }`}
               title={track.title}
@@ -203,7 +190,7 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
           <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => toggleFavorite(track.id)}
-              className="p-1 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-white/5 transition-colors"
+              className="p-1 rounded text-zinc-400 hover:text-rose-400 hover:bg-white/5 transition-colors"
               title={track.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             >
               <Heart className={`w-3.5 h-3.5 ${track.isFavorite ? 'fill-rose-500 text-rose-500' : ''}`} />
@@ -213,7 +200,7 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
             <div className="relative">
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-1 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-white/5 transition-colors"
+                className="p-1 rounded text-zinc-400 hover:text-zinc-200 hover:bg-white/5 transition-colors"
                 title="More options"
               >
                 <MoreHorizontal className="w-3.5 h-3.5" />
@@ -221,7 +208,7 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
 
               {isMenuOpen && (
                 <div 
-                  className="absolute right-0 bottom-full mb-1.5 w-44 rounded-xl bg-[#12141c] border border-white/10 shadow-2xl p-1.5 z-50 flex flex-col gap-1 backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-100"
+                  className="absolute right-0 bottom-full mb-1.5 w-44 rounded-xl bg-[#161922] border border-white/[0.08] shadow-2xl p-1.5 z-50 flex flex-col gap-1 backdrop-blur-2xl"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
@@ -231,7 +218,7 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
                     }}
                     className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left"
                   >
-                    <Info className="w-3.5 h-3.5 text-indigo-400" />
+                    <Info className="w-3.5 h-3.5 text-zinc-400" />
                     Track Info & Metadata
                   </button>
                   <button
@@ -241,7 +228,7 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
                     }}
                     className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left"
                   >
-                    <ListMusic className="w-3.5 h-3.5 text-indigo-400" />
+                    <ListMusic className="w-3.5 h-3.5 text-zinc-400" />
                     Play Next
                   </button>
                   <button
@@ -251,7 +238,7 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
                     }}
                     className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left"
                   >
-                    <ListPlus className="w-3.5 h-3.5 text-cyan-400" />
+                    <ListPlus className="w-3.5 h-3.5 text-zinc-400" />
                     Add to Queue
                   </button>
                   <button
@@ -313,10 +300,10 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
         setIsHovered(false);
         setIsMenuOpen(false);
       }}
-      className={`group relative flex items-center justify-between p-2.5 sm:px-3.5 rounded-xl transition-all duration-200 cursor-pointer select-none ${
+      className={`group relative flex items-center justify-between p-2.5 sm:px-3 rounded-lg transition-all duration-150 cursor-pointer select-none ${
         isCurrent
-          ? 'bg-indigo-950/30 text-indigo-200 border-l-2 border-indigo-500 pl-3'
-          : 'hover:bg-white/[0.03] text-zinc-300'
+          ? 'bg-white/[0.08] text-white font-medium'
+          : 'hover:bg-white/[0.04] text-zinc-300'
       } ${className}`}
       onClick={handleCardClick}
     >
@@ -324,7 +311,7 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
         {showIndex !== undefined && (
           <span className="text-xs font-mono text-zinc-500 w-5 shrink-0 text-center">
             {isActivelyPlaying ? (
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping" />
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             ) : (
               showIndex
             )}
@@ -342,7 +329,7 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
               loading="lazy"
             />
           ) : (
-            <div className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-indigo-600 to-zinc-900'} flex items-center justify-center`}>
+            <div className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-zinc-800 to-zinc-950'} flex items-center justify-center`}>
               <Music className="w-4 h-4 text-white/80" />
             </div>
           )}
@@ -365,7 +352,7 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
           <div className="flex items-center gap-1.5">
             <h4
               className={`text-xs sm:text-sm font-medium truncate ${
-                isCurrent ? 'text-indigo-300 font-semibold' : 'text-zinc-200 group-hover:text-white'
+                isCurrent ? 'text-white font-semibold' : 'text-zinc-200 group-hover:text-white'
               }`}
             >
               {track.title}

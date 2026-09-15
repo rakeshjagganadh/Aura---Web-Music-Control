@@ -42,6 +42,7 @@ import { AudioAnalysisService } from '../services/audioAnalysis';
 import { SOUND_LAB_PRESETS } from '../services/soundLabPresets';
 import { formatSeconds } from '../utils/formatTime';
 import { youtubePlayerBridge } from '../services/youtubePlayerBridge';
+import { backgroundAudioKeepAlive } from '../services/backgroundAudioKeepAlive';
 
 interface Toast {
   id: string;
@@ -95,6 +96,7 @@ export interface MusicContextType {
   isShuffle: boolean;
   repeatMode: RepeatMode;
   queue: Track[];
+  setQueue: React.Dispatch<React.SetStateAction<Track[]>>;
   queueIndex: number;
   history: Track[];
 
@@ -292,13 +294,14 @@ export interface MusicContextType {
   setIsDraggingFile: (dragging: boolean) => void;
 
   // Player Actions
-  switchToTrack: (track: Track | null, options?: { autoplay?: boolean; newQueue?: Track[]; index?: number }) => Promise<void>;
+  switchToTrack: (track: Track | null, options?: { autoplay?: boolean; newQueue?: Track[]; index?: number; startTime?: number }) => Promise<void>;
   playTrack: (track: Track, fromQueue?: Track[]) => Promise<void>;
   togglePlay: () => void;
   seek: (seconds: number) => void;
   seekRelative: (delta: number) => void;
   nextTrack: () => void;
   prevTrack: () => void;
+  registerTrackEndedHandler: (handler: () => boolean) => () => void;
   setVolume: (vol: number) => void;
   toggleMute: () => void;
   setPlaybackRate: (rate: number) => void;
@@ -469,7 +472,46 @@ const MusicContext = createContext<MusicContextType | null>(null);
 
 export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Navigation & View
-  const [currentView, setCurrentView] = useState<NavView>('home');
+  const [currentView, setCurrentView] = useState<NavView>(() => {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname;
+      const params = new URLSearchParams(window.location.search);
+      const hash = window.location.hash;
+      if (
+        params.get('room') ||
+        path.startsWith('/listen/') ||
+        hash.includes('/listen/')
+      ) {
+        return 'listen-together';
+      }
+    }
+    return 'home';
+  });
+
+  // Keep navigation in sync with browser forward/back buttons and hash navigation
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleLocationChange = () => {
+      const path = window.location.pathname;
+      const params = new URLSearchParams(window.location.search);
+      const hash = window.location.hash;
+      if (
+        params.get('room') ||
+        path.startsWith('/listen/') ||
+        hash.includes('/listen/')
+      ) {
+        setCurrentView('listen-together');
+      }
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+    };
+  }, []);
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
   const [searchQuery, setSearchQueryState] = useState<string>('');
   const [activeSearchIndex, setActiveSearchIndex] = useState<number>(0);
@@ -640,6 +682,18 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [sleepTimerRemainingSecs, setSleepTimerRemainingSecs] = useState<number | null>(null);
   const sleepTimerMinutesRef = useRef<number | null>(null);
   sleepTimerMinutesRef.current = sleepTimerMinutes;
+
+  // External track ended interceptor (e.g. Listen Together room queue advancement)
+  const externalTrackEndedHandlerRef = useRef<(() => boolean) | null>(null);
+
+  const registerTrackEndedHandler = useCallback((handler: () => boolean) => {
+    externalTrackEndedHandlerRef.current = handler;
+    return () => {
+      if (externalTrackEndedHandlerRef.current === handler) {
+        externalTrackEndedHandlerRef.current = null;
+      }
+    };
+  }, []);
 
   // Memory cache of audio blobs
   const audioBlobCache = useRef<Map<string, Blob>>(new Map());
@@ -874,10 +928,13 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Unified Single-Pipeline Track Switcher
   const switchToTrack = useCallback(async (
     track: Track | null,
-    options?: { autoplay?: boolean; newQueue?: Track[]; index?: number }
+    options?: { autoplay?: boolean; newQueue?: Track[]; index?: number; startTime?: number }
   ) => {
     const requestId = ++playbackRequestIdRef.current;
     const shouldAutoplay = options?.autoplay ?? true;
+    const initialStartTime = (typeof options?.startTime === 'number' && options.startTime > 0)
+      ? Math.max(0, options.startTime)
+      : 0;
 
     // STEP 1: Handle null track (stop everything)
     if (!track) {
@@ -909,7 +966,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     // STEP 3: Reset source-specific playback state & UI counters
-    setCurrentTime(0);
+    setCurrentTime(initialStartTime);
     setDuration(track.duration || 0);
     setIsPlaying(false); // Only confirmed when engine starts playing
     setTrimFadeState({
@@ -959,6 +1016,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         isMuted,
         playbackRate,
         requestId,
+        startTime: initialStartTime,
       });
     } else {
       // Local source: retrieve blob or URL
@@ -1016,9 +1074,9 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       // Load into local audio engine
       try {
         if (blob) {
-          await audioEngine.loadTrack(track, blob, shouldAutoplay);
+          await audioEngine.loadTrack(track, blob, shouldAutoplay, initialStartTime);
         } else if (track.audioUrl) {
-          await audioEngine.loadTrack(track, track.audioUrl, shouldAutoplay);
+          await audioEngine.loadTrack(track, track.audioUrl, shouldAutoplay, initialStartTime);
         }
       } catch (err) {
         if (requestId === playbackRequestIdRef.current) {
@@ -1092,6 +1150,11 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [currentTime, duration]);
 
   const handleTrackEnded = useCallback(() => {
+    // 0. Check external interceptor (e.g. ListenTogether room shared queue)
+    if (externalTrackEndedHandlerRef.current && externalTrackEndedHandlerRef.current()) {
+      return;
+    }
+
     // 1. Sleep timer reached
     if (sleepTimerMinutesRef.current === -1) {
       if (activeSourceRef.current === 'youtube') {
@@ -1264,6 +1327,12 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     if ('mediaSession' in navigator) {
       navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+    }
+
+    if (isPlaying) {
+      backgroundAudioKeepAlive.startKeepAlive();
+    } else {
+      backgroundAudioKeepAlive.stopKeepAlive();
     }
   }, [isPlaying]);
 
@@ -2455,6 +2524,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         isShuffle,
         repeatMode,
         queue,
+        setQueue,
         queueIndex,
         history,
         bass,
@@ -2613,6 +2683,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setIsSeeking,
         nextTrack,
         prevTrack,
+        registerTrackEndedHandler,
         setVolume,
         toggleMute,
         setPlaybackRate,

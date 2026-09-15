@@ -1,12 +1,14 @@
 import React, { useRef } from 'react';
 import { useMusic } from '../../context/MusicContext';
+import { useListenTogether } from '../../context/ListenTogetherContext';
 import { 
   Play, 
   Pause, 
   SkipForward, 
   Heart, 
   Music,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Users,
 } from 'lucide-react';
 
 export const MobileMiniPlayer: React.FC = () => {
@@ -23,9 +25,19 @@ export const MobileMiniPlayer: React.FC = () => {
     setIsAudioControlsOpen,
     eqPreset,
     effects,
+    currentView,
+    showToast,
   } = useMusic();
 
+  const listenTogether = useListenTogether();
+  const isInRoom = Boolean(listenTogether?.activeRoom);
+  const isOwner = listenTogether?.isOwner ?? false;
+  const isLocallySilenced = listenTogether?.isLocallySilenced ?? false;
+
   const progressRef = useRef<HTMLDivElement>(null);
+
+  // Crucial: When on the Listen Together view, hide the mini player to prevent duplicate stacked players
+  if (!currentTrack || currentView === 'listen-together') return null;
 
   const isAudioEffectActive = 
     eqPreset !== 'flat' || 
@@ -35,17 +47,23 @@ export const MobileMiniPlayer: React.FC = () => {
     (effects?.bassBoost ?? 0) > 0 || 
     (effects?.trebleBoost ?? 0) > 0;
 
-  if (!currentTrack) return null;
-
   const progressPercent = duration > 0 ? Math.min(100, Math.max(0, (currentTime / duration) * 100)) : 0;
 
   const handleProgressBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
     if (!progressRef.current || duration <= 0) return;
+    if (isInRoom && !isOwner) {
+      showToast?.('Only the host can seek the track.', 'info');
+      return;
+    }
     const rect = progressRef.current.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const ratio = Math.max(0, Math.min(1, clickX / rect.width));
-    seek(ratio * duration);
+    if (isInRoom && listenTogether) {
+      listenTogether.roomSeek(ratio * duration);
+    } else {
+      seek(ratio * duration);
+    }
   };
 
   return (
@@ -155,11 +173,15 @@ export const MobileMiniPlayer: React.FC = () => {
             {/* Main Play/Pause Button */}
             <button
               type="button"
-              onClick={togglePlay}
-              className="w-10 h-10 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg active:scale-95 transition-all cursor-pointer"
-              title={isPlaying ? 'Pause' : 'Play'}
+              onClick={isInRoom && listenTogether ? listenTogether.roomTogglePlay : togglePlay}
+              className={`w-10 h-10 rounded-full text-zinc-950 flex items-center justify-center shadow-lg active:scale-95 transition-all cursor-pointer ${
+                isPlaying && !isLocallySilenced
+                  ? 'bg-white shadow-[0_0_15px_rgba(255,255,255,0.4)]'
+                  : 'bg-white hover:bg-zinc-100'
+              }`}
+              title={isPlaying && !isLocallySilenced ? 'Pause' : 'Play'}
             >
-              {isPlaying ? (
+              {isPlaying && !isLocallySilenced ? (
                 <Pause className="w-4 h-4 fill-current" />
               ) : (
                 <Play className="w-4 h-4 fill-current translate-x-0.5" />
@@ -169,7 +191,7 @@ export const MobileMiniPlayer: React.FC = () => {
             {/* Next Track */}
             <button
               type="button"
-              onClick={nextTrack}
+              onClick={isInRoom && listenTogether ? listenTogether.roomNext : nextTrack}
               className="p-2.5 rounded-xl text-zinc-300 hover:text-white transition-colors cursor-pointer"
               title="Next Track"
             >

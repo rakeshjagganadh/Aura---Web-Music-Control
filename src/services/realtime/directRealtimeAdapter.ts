@@ -243,23 +243,58 @@ export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
           timestamp: Date.now(),
         });
 
-        // If I have current state, respond with state sync
-        if (this.currentState) {
+        // ONLY the host / room owner should respond with state sync to avoid multi-peer state broadcast collisions
+        const isOwner =
+          this.currentParticipant &&
+          this.currentState &&
+          this.currentState.ownerId === this.currentParticipant.id;
+
+        if (isOwner && this.currentState) {
+          let liveState = this.currentState;
+          if (liveState.isPlaying && liveState.updatedAt) {
+            const elapsed = Math.max(0, (Date.now() - liveState.updatedAt) / 1000) * (liveState.playbackRate || 1);
+            const maxDur = liveState.currentTrack?.duration || 999999;
+            const livePos = Math.min(maxDur, (liveState.position || 0) + elapsed);
+            liveState = {
+              ...liveState,
+              position: livePos,
+              updatedAt: Date.now(),
+            };
+          }
+
           this.broadcastLocally({
             type: 'STATE_UPDATE',
             roomId: this.roomId!,
             senderId: this.currentParticipant!.id,
-            payload: this.currentState,
+            payload: liveState,
           });
         }
       }
     } else if (msg.type === 'SYNC_REQUEST') {
-      if (this.currentState) {
+      const isOwner =
+        this.currentParticipant &&
+        this.currentState &&
+        this.currentState.ownerId === this.currentParticipant.id;
+
+      // Only host or standalone peer in BroadcastChannel should reply with live state
+      if (this.currentState && (isOwner || !this.socket || this.socket.readyState !== WebSocket.OPEN)) {
+        let liveState = this.currentState;
+        if (liveState.isPlaying && liveState.updatedAt) {
+          const elapsed = Math.max(0, (Date.now() - liveState.updatedAt) / 1000) * (liveState.playbackRate || 1);
+          const maxDur = liveState.currentTrack?.duration || 999999;
+          const livePos = Math.min(maxDur, (liveState.position || 0) + elapsed);
+          liveState = {
+            ...liveState,
+            position: livePos,
+            updatedAt: Date.now(),
+          };
+        }
+
         this.broadcastLocally({
           type: 'STATE_UPDATE',
           roomId: this.roomId!,
           senderId: this.currentParticipant!.id,
-          payload: this.currentState,
+          payload: liveState,
         });
         if (this.socket?.readyState === WebSocket.OPEN) {
           this.socket.send(
@@ -267,7 +302,7 @@ export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
               type: 'STATE_UPDATE',
               roomId: this.roomId,
               senderId: this.currentParticipant?.id,
-              payload: this.currentState,
+              payload: liveState,
             })
           );
         }

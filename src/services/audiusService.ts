@@ -88,9 +88,10 @@ class AudiusService {
    * Generates public stream URL for an Audius track.
    * Redirects via HTTP 302 to high-speed CORS-enabled decentralized audio node.
    */
-  public getStreamUrl(trackId: string, host = this.resolvedHost || this.defaultHost): string {
+  public getStreamUrl(trackId: string | number, host = this.resolvedHost || this.defaultHost): string {
     const cleanHost = host.replace(/\/$/, '');
-    const cleanId = encodeURIComponent(trackId);
+    const rawClean = String(trackId).replace(/^audius-/, '').trim();
+    const cleanId = encodeURIComponent(rawClean);
     return `${cleanHost}/v1/tracks/${cleanId}/stream?app_name=${encodeURIComponent(this.appName)}`;
   }
 
@@ -105,10 +106,11 @@ class AudiusService {
       raw.artwork?.['150x150'];
 
     const streamUrl = this.getStreamUrl(raw.id, activeHost);
+    const cleanSourceId = String(raw.id).replace(/^audius-/, '');
 
     return {
-      id: `audius-${raw.id}`,
-      title: raw.title ? raw.title.trim() : `Audius Track (${raw.id})`,
+      id: `audius-${cleanSourceId}`,
+      title: raw.title ? raw.title.trim() : `Audius Track (${cleanSourceId})`,
       artist: raw.user?.name ? raw.user.name.trim() : raw.user?.handle || 'Audius Creator',
       album: raw.genre ? `${raw.genre} • Audius` : 'Audius Open Stream',
       duration: raw.duration || 0,
@@ -119,10 +121,11 @@ class AudiusService {
       coverColor: 'from-fuchsia-600 via-purple-800 to-zinc-950',
       genre: raw.genre,
       source: 'audius',
-      sourceId: raw.id,
+      sourceId: cleanSourceId,
       sourceName: 'Audius',
-      sourceUrl: `https://audius.co/tracks/${raw.id}`,
+      sourceUrl: `https://audius.co/tracks/${cleanSourceId}`,
       audioUrl: streamUrl,
+      externalStreamUrl: streamUrl,
       isAvailable: true,
       playbackCapability: AUDIUS_CAPABILITIES,
     };

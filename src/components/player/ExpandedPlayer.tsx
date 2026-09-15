@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 
 import { MobileExpandedPlayer } from '../mobile/MobileExpandedPlayer';
+import { useListenTogether } from '../../context/ListenTogetherContext';
 
 export const ExpandedPlayer: React.FC = () => {
   const {
@@ -63,7 +64,43 @@ export const ExpandedPlayer: React.FC = () => {
     toggleFavorite,
     visualizerMode,
     setVisualizerMode,
+    showToast,
   } = useMusic();
+
+  const {
+    isInRoom,
+    isOwner,
+    isLocallySilenced,
+    togglePersonalSilence,
+    roomTogglePlay,
+    roomNext,
+    roomPrev,
+    roomSeek,
+  } = useListenTogether();
+
+  const handleSeek = (pos: number) => {
+    if (isInRoom) {
+      if (!isOwner) {
+        showToast('Only the room host can seek the track.', 'info');
+        return;
+      }
+      roomSeek(pos);
+      return;
+    }
+    seek(pos);
+  };
+
+  const handleSeekRelative = (delta: number) => {
+    if (isInRoom) {
+      if (!isOwner) {
+        showToast('Only the room host can seek backward or forward.', 'info');
+        return;
+      }
+      roomSeek(currentTime + delta);
+      return;
+    }
+    seekRelative(delta);
+  };
 
   const [activeTab, setActiveTab] = useState<'visualizer' | 'eq' | 'effects' | 'stems'>('visualizer');
 
@@ -89,28 +126,28 @@ export const ExpandedPlayer: React.FC = () => {
       {/* Desktop Expanded Studio Player (100% preserved) */}
       <div
         id="expanded-player-modal"
-        className="hidden lg:flex fixed inset-0 z-50 bg-[#090a0d]/95 backdrop-blur-3xl overflow-y-auto flex-col justify-between p-4 sm:p-8 animate-in fade-in zoom-in-95 duration-200"
+        className="hidden lg:flex fixed inset-0 z-50 bg-[#0a0c12]/98 overflow-y-auto flex-col justify-between p-4 sm:p-8"
       >
       {/* Top Bar Navigation */}
-      <div className="flex items-center justify-between w-full max-w-6xl mx-auto pb-4 border-b border-white/5">
+      <div className="flex items-center justify-between w-full max-w-6xl mx-auto pb-4 border-b border-white/[0.06]">
         <div className="flex items-center gap-2.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 shadow-[0_0_10px_#818cf8]" />
-          <span className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
-            Aura Audio Studio
+          <span className="w-2 h-2 rounded-full bg-emerald-400" />
+          <span className="text-xs font-mono font-medium uppercase tracking-widest text-zinc-400">
+            AURA ACOUSTIC STUDIO
           </span>
-          <span className="text-xs px-2 py-0.5 rounded bg-zinc-800/80 text-zinc-400 font-mono">
+          <span className="text-xs px-2 py-0.5 rounded bg-white/[0.04] text-zinc-400 font-mono border border-white/[0.06]">
             {currentTrack.fileFormat} • {formatBytes(currentTrack.fileSize)}
           </span>
         </div>
 
         {/* Tab Selection */}
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-zinc-900/80 border border-white/5">
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06]">
           <button
             onClick={() => setActiveTab('visualizer')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
               activeTab === 'visualizer'
-                ? 'bg-indigo-600/30 text-indigo-200 border border-indigo-500/40 shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200'
+                ? 'bg-white text-zinc-950 shadow-sm'
+                : 'text-zinc-400 hover:text-white'
             }`}
           >
             <Activity className="w-3.5 h-3.5" />
@@ -120,8 +157,8 @@ export const ExpandedPlayer: React.FC = () => {
             onClick={() => setActiveTab('eq')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
               activeTab === 'eq'
-                ? 'bg-indigo-600/30 text-indigo-200 border border-indigo-500/40 shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200'
+                ? 'bg-white text-zinc-950 shadow-sm'
+                : 'text-zinc-400 hover:text-white'
             }`}
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -131,8 +168,8 @@ export const ExpandedPlayer: React.FC = () => {
             onClick={() => setActiveTab('effects')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
               activeTab === 'effects'
-                ? 'bg-indigo-600/30 text-indigo-200 border border-indigo-500/40 shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200'
+                ? 'bg-white text-zinc-950 shadow-sm'
+                : 'text-zinc-400 hover:text-white'
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
@@ -142,8 +179,8 @@ export const ExpandedPlayer: React.FC = () => {
             onClick={() => setActiveTab('stems')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
               activeTab === 'stems'
-                ? 'bg-indigo-600/30 text-indigo-200 border border-indigo-500/40 shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200'
+                ? 'bg-white text-zinc-950 shadow-sm'
+                : 'text-zinc-400 hover:text-white'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
@@ -155,7 +192,7 @@ export const ExpandedPlayer: React.FC = () => {
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => currentTrack && openTrackInfo(currentTrack)}
-            className="p-2 rounded-xl text-zinc-400 hover:text-white bg-zinc-900/60 hover:bg-zinc-800 border border-white/5 transition-colors cursor-pointer"
+            className="p-2 rounded-lg text-zinc-400 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] transition-colors cursor-pointer"
             title="Track Info & Metadata (I)"
           >
             <Info className="w-4 h-4" />
@@ -163,10 +200,10 @@ export const ExpandedPlayer: React.FC = () => {
 
           <button
             onClick={() => setIsSleepTimerModalOpen(true)}
-            className={`p-2 rounded-xl border transition-colors cursor-pointer ${
+            className={`p-2 rounded-lg border transition-colors cursor-pointer ${
               isSleepTimerActive
-                ? 'text-indigo-300 bg-indigo-500/20 border-indigo-500/30'
-                : 'text-zinc-400 hover:text-white bg-zinc-900/60 hover:bg-zinc-800 border-white/5'
+                ? 'text-white bg-white/10 border-white/20'
+                : 'text-zinc-400 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.06]'
             }`}
             title={isSleepTimerActive ? `Sleep Timer Active (${sleepTimerRemainingSecs ? Math.ceil(sleepTimerRemainingSecs/60) + 'm left' : 'End of track'})` : 'Set Sleep Timer'}
           >
@@ -176,7 +213,7 @@ export const ExpandedPlayer: React.FC = () => {
           {/* Close Button */}
           <button
             onClick={() => setIsExpandedPlayerOpen(false)}
-            className="p-2 rounded-xl text-zinc-400 hover:text-white bg-zinc-900/60 hover:bg-zinc-800 border border-white/5 transition-colors cursor-pointer"
+            className="p-2 rounded-lg text-zinc-400 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] transition-colors cursor-pointer"
             title="Minimize Player (Esc)"
           >
             <X className="w-5 h-5" />
@@ -189,41 +226,36 @@ export const ExpandedPlayer: React.FC = () => {
         
         {/* Left Column: Artwork & Core Metadata */}
         <div className="lg:col-span-5 flex flex-col items-center text-center">
-          <div className="relative group w-64 h-64 sm:w-80 sm:h-80 rounded-3xl overflow-hidden shadow-2xl border border-white/10 bg-zinc-900 flex items-center justify-center">
+          <div className="relative group w-64 h-64 sm:w-80 sm:h-80 rounded-2xl overflow-hidden shadow-xl border border-white/10 bg-[#12141c] flex items-center justify-center">
             {currentTrack.coverUrl ? (
               <img
                 src={currentTrack.coverUrl}
                 alt={currentTrack.title}
-                className={`w-full h-full object-cover transition-transform duration-700 ${
-                  isPlaying ? 'scale-105' : 'scale-100'
+                className={`w-full h-full object-cover transition-transform duration-500 ${
+                  isPlaying ? 'scale-[1.02]' : 'scale-100'
                 }`}
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <div className={`w-full h-full bg-gradient-to-br ${currentTrack.coverColor || 'from-indigo-600 to-zinc-900'} flex flex-col items-center justify-center p-6 text-white`}>
-                <Music className="w-20 h-20 opacity-40 mb-3" />
-                <span className="text-xs font-mono tracking-wider opacity-60">AURA AUDIO</span>
+              <div className={`w-full h-full bg-gradient-to-br ${currentTrack.coverColor || 'from-zinc-800 to-zinc-950'} flex flex-col items-center justify-center p-6 text-white`}>
+                <Music className="w-16 h-16 opacity-30 mb-3" />
+                <span className="text-xs font-mono tracking-wider opacity-40 uppercase font-semibold">AURA AUDIO</span>
               </div>
-            )}
-
-            {/* Glowing active ambient ring */}
-            {isPlaying && (
-              <div className="absolute inset-0 rounded-3xl border-2 border-indigo-500/30 animate-pulse pointer-events-none" />
             )}
           </div>
 
           <div className="mt-6 flex flex-col items-center">
             <div className="flex items-center gap-2 max-w-full">
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight truncate">
+              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight truncate font-display">
                 {currentTrack.title}
               </h2>
               {currentTrack.source === 'youtube' && (
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/30 shrink-0">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.06] text-zinc-300 border border-white/10 shrink-0">
                   YouTube
                 </span>
               )}
               {currentTrack.source === 'audius' && (
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 shrink-0">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.06] text-zinc-300 border border-white/10 shrink-0">
                   Audius
                 </span>
               )}
@@ -239,8 +271,8 @@ export const ExpandedPlayer: React.FC = () => {
           {activeTab === 'visualizer' && (
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                  Real-time Audio Spectrum
+                <span className="text-xs font-mono uppercase tracking-wider text-zinc-400 font-medium">
+                  Real-time Spectrum
                 </span>
                 <span className="text-xs font-mono text-zinc-500">
                   Mode: {visualizerMode.toUpperCase()}
@@ -271,7 +303,7 @@ export const ExpandedPlayer: React.FC = () => {
       </div>
 
       {/* Bottom Timeline & Extended Player Controls */}
-      <div className="w-full max-w-4xl mx-auto pt-6 border-t border-white/5 flex flex-col gap-4">
+      <div className="w-full max-w-4xl mx-auto pt-6 border-t border-white/[0.06] flex flex-col gap-4">
         
         {/* Full-width Waveform Scrubber */}
         <div className="flex flex-col gap-1.5">
@@ -279,18 +311,22 @@ export const ExpandedPlayer: React.FC = () => {
             peaks={currentTrack.waveformPeaks}
             currentTime={currentTime}
             duration={duration}
-            onSeek={seek}
+            onSeek={handleSeek}
             onSeekingChange={setIsSeeking}
             height={44}
             barWidth={3}
             barGap={2}
-            activeColor="#818cf8"
-            inactiveColor="rgba(255, 255, 255, 0.15)"
+            activeColor="#ffffff"
+            inactiveColor="rgba(255, 255, 255, 0.12)"
           />
 
           <div className="flex items-center justify-between text-xs font-mono text-zinc-400 px-1">
             <span>{formatTime(currentTime)}</span>
-            <span className="text-[11px] text-zinc-600">Drag or click waveform to scrub</span>
+            <span className="text-[11px] text-zinc-600">
+              {isInRoom && !isOwner
+                ? '★ Only the room host can seek'
+                : 'Drag or click waveform to scrub'}
+            </span>
             <span>{formatTime(duration)}</span>
           </div>
         </div>
@@ -302,7 +338,7 @@ export const ExpandedPlayer: React.FC = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => toggleFavorite(currentTrack.id)}
-              className="p-2.5 rounded-xl bg-zinc-900/60 hover:bg-zinc-800 border border-white/5 text-zinc-400 hover:text-rose-400 transition-colors"
+              className="p-2.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-zinc-400 hover:text-rose-400 transition-colors"
               title="Favorite"
             >
               <Heart
@@ -311,15 +347,15 @@ export const ExpandedPlayer: React.FC = () => {
             </button>
 
             {/* Speed pills */}
-            <div className="hidden sm:flex items-center gap-1 p-1 rounded-xl bg-zinc-900/60 border border-white/5">
+            <div className="hidden sm:flex items-center gap-1 p-1 rounded-lg bg-white/[0.04] border border-white/[0.06]">
               {[0.75, 1.0, 1.25, 1.5].map((rate) => (
                 <button
                   key={rate}
                   onClick={() => setPlaybackRate(rate)}
-                  className={`px-2 py-0.5 text-xs font-mono rounded-lg transition-colors ${
+                  className={`px-2 py-0.5 text-xs font-mono rounded-md transition-colors ${
                     Math.abs(playbackRate - rate) < 0.01
-                      ? 'bg-indigo-600 text-white font-semibold'
-                      : 'text-zinc-400 hover:text-zinc-200'
+                      ? 'bg-white text-zinc-950 font-semibold'
+                      : 'text-zinc-400 hover:text-white'
                   }`}
                 >
                   {rate}×
@@ -332,8 +368,8 @@ export const ExpandedPlayer: React.FC = () => {
           <div className="flex items-center gap-3 sm:gap-4">
             <button
               onClick={toggleShuffle}
-              className={`p-2 rounded-xl transition-colors ${
-                isShuffle ? 'text-indigo-400 bg-indigo-500/15' : 'text-zinc-400 hover:text-zinc-200'
+              className={`p-2 rounded-lg transition-colors ${
+                isShuffle ? 'text-white bg-white/10 border border-white/10' : 'text-zinc-400 hover:text-zinc-200'
               }`}
               title="Shuffle"
             >
@@ -341,27 +377,29 @@ export const ExpandedPlayer: React.FC = () => {
             </button>
 
             <button
-              onClick={() => seekRelative(-10)}
-              className="p-2 text-zinc-400 hover:text-zinc-200 rounded-xl transition-colors"
-              title="Rewind 10s"
+              onClick={() => handleSeekRelative(-10)}
+              className={`p-2 rounded-lg transition-colors ${
+                isInRoom && !isOwner ? 'text-zinc-600 cursor-not-allowed' : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+              title={isInRoom && !isOwner ? 'Only room host can seek' : 'Rewind 10s'}
             >
               <RotateCcw className="w-4 h-4" />
             </button>
 
             <button
-              onClick={prevTrack}
-              className="p-2 text-zinc-300 hover:text-white rounded-xl transition-colors"
+              onClick={isInRoom ? roomPrev : prevTrack}
+              className="p-2 text-zinc-300 hover:text-white rounded-lg transition-colors cursor-pointer"
               title="Previous"
             >
               <SkipBack className="w-5 h-5 fill-current" />
             </button>
 
             <button
-              onClick={togglePlay}
-              className="p-4 rounded-full bg-white text-zinc-950 hover:bg-zinc-200 active:scale-95 transition-all shadow-xl shadow-white/10"
-              title={isPlaying ? 'Pause' : 'Play'}
+              onClick={isInRoom ? roomTogglePlay : togglePlay}
+              className="p-3.5 rounded-full text-zinc-950 bg-white hover:bg-zinc-200 active:scale-95 transition-all shadow-md cursor-pointer"
+              title={isPlaying && !isLocallySilenced ? 'Pause' : 'Play'}
             >
-              {isPlaying ? (
+              {isPlaying && !isLocallySilenced ? (
                 <Pause className="w-6 h-6 fill-current" />
               ) : (
                 <Play className="w-6 h-6 fill-current translate-x-0.5" />
@@ -369,25 +407,27 @@ export const ExpandedPlayer: React.FC = () => {
             </button>
 
             <button
-              onClick={nextTrack}
-              className="p-2 text-zinc-300 hover:text-white rounded-xl transition-colors"
+              onClick={isInRoom ? roomNext : nextTrack}
+              className="p-2 text-zinc-300 hover:text-white rounded-lg transition-colors cursor-pointer"
               title="Next"
             >
               <SkipForward className="w-5 h-5 fill-current" />
             </button>
 
             <button
-              onClick={() => seekRelative(10)}
-              className="p-2 text-zinc-400 hover:text-zinc-200 rounded-xl transition-colors"
-              title="Forward 10s"
+              onClick={() => handleSeekRelative(10)}
+              className={`p-2 rounded-lg transition-colors ${
+                isInRoom && !isOwner ? 'text-zinc-600 cursor-not-allowed' : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+              title={isInRoom && !isOwner ? 'Only room host can seek' : 'Forward 10s'}
             >
               <RotateCw className="w-4 h-4" />
             </button>
 
             <button
               onClick={cycleRepeat}
-              className={`p-2 rounded-xl transition-colors ${
-                repeatMode !== 'off' ? 'text-indigo-400 bg-indigo-500/15' : 'text-zinc-400 hover:text-zinc-200'
+              className={`p-2 rounded-lg transition-colors ${
+                repeatMode !== 'off' ? 'text-white bg-white/10 border border-white/10' : 'text-zinc-400 hover:text-zinc-200'
               }`}
               title={`Repeat: ${repeatMode}`}
             >

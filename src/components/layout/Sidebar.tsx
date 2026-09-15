@@ -60,7 +60,7 @@ export const Sidebar: React.FC = () => {
   return (
     <aside
       id="main-sidebar"
-      className={`relative hidden lg:flex h-[calc(100vh-4rem-5rem)] border-r border-white/[0.06] bg-[#07080c]/80 backdrop-blur-2xl flex-col justify-between select-none transition-all duration-300 z-20 shrink-0 ${
+      className={`relative hidden lg:flex h-[calc(100vh-4rem-5rem)] border-r border-white/[0.06] bg-[#0d0f15] flex-col justify-between select-none transition-all duration-300 z-20 shrink-0 ${
         isCollapsed ? 'w-16' : 'w-56'
       }`}
     >
@@ -76,22 +76,22 @@ export const Sidebar: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => handleNav(item.id)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 cursor-pointer ${
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150 cursor-pointer ${
                   isActive
-                    ? 'bg-indigo-600/20 text-indigo-200 border border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.15)] font-semibold'
+                    ? 'bg-white/[0.08] text-white font-semibold shadow-none'
                     : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]'
                 }`}
                 title={isCollapsed ? item.label : undefined}
               >
-                <Icon className={`w-4 h-4 shrink-0 transition-colors ${isActive ? 'text-indigo-400' : 'text-zinc-400'}`} />
+                <Icon className={`w-4 h-4 shrink-0 transition-colors ${isActive ? 'text-white' : 'text-zinc-400'}`} />
                 
                 {!isCollapsed && (
                   <span className="truncate flex-1 text-left">{item.label}</span>
                 )}
 
                 {!isCollapsed && item.badge !== undefined && item.badge > 0 && (
-                  <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-md border flex items-center gap-1 ${
-                    item.dot ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' : 'bg-white/5 text-zinc-400 border-white/5'
+                  <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border flex items-center gap-1 ${
+                    item.dot ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25' : 'bg-white/[0.05] text-zinc-400 border-white/[0.06]'
                   }`}>
                     {item.dot && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
                     {item.badge}
@@ -104,14 +104,14 @@ export const Sidebar: React.FC = () => {
 
         {/* My Playlists Section */}
         {!isCollapsed && (
-          <div className="flex flex-col gap-2 pt-4 border-t border-white/5">
+          <div className="flex flex-col gap-2 pt-4 border-t border-white/[0.06]">
             <div className="flex items-center justify-between px-3">
               <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">
                 Spaces
               </span>
               <button
                 onClick={() => setIsPlaylistModalOpen(true)}
-                className="p-1 rounded text-zinc-500 hover:text-indigo-300 hover:bg-white/5 transition-colors cursor-pointer"
+                className="p-1 rounded text-zinc-500 hover:text-zinc-200 hover:bg-white/5 transition-colors cursor-pointer"
                 title="Create New Space"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -132,7 +132,7 @@ export const Sidebar: React.FC = () => {
                       onClick={() => handlePlaylistClick(pl.id)}
                       className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
                         isSelected
-                          ? 'bg-indigo-950/40 text-indigo-300 font-semibold'
+                          ? 'bg-white/[0.08] text-white font-semibold'
                           : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.03]'
                       }`}
                     >
@@ -152,19 +152,19 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* Bottom Sidebar Controls */}
-      <div className="p-3 border-t border-white/5 flex items-center justify-between">
+      <div className="p-3 border-t border-white/[0.06] flex items-center justify-between">
         {!isCollapsed ? (
           <button
             onClick={() => setIsPlaylistModalOpen(true)}
-            className="flex items-center gap-2 px-3 py-2 w-full text-xs font-medium text-zinc-300 bg-white/[0.04] hover:bg-white/[0.08] rounded-xl border border-white/5 transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-3 py-2 w-full text-xs font-medium text-zinc-300 bg-white/[0.04] hover:bg-white/[0.08] rounded-lg border border-white/[0.06] transition-colors cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5 text-indigo-400" />
+            <Plus className="w-3.5 h-3.5 text-zinc-400" />
             <span>New Space</span>
           </button>
         ) : (
           <button
             onClick={() => setIsPlaylistModalOpen(true)}
-            className="p-2 rounded-xl text-zinc-400 hover:text-indigo-300 bg-white/[0.04] hover:bg-white/[0.08] transition-colors mx-auto cursor-pointer"
+            className="p-2 rounded-lg text-zinc-400 hover:text-zinc-200 bg-white/[0.04] hover:bg-white/[0.08] transition-colors mx-auto cursor-pointer"
             title="New Space"
           >
             <Plus className="w-4 h-4" />

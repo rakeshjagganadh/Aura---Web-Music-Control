@@ -29,6 +29,15 @@ class RoomService {
   private statusListeners = new Set<(status: RoomConnectionStatus) => void>();
   private adapterUnsubscribers: (() => void)[] = [];
 
+  // Local clock-skew anchor: tracks local arrival time to prevent cross-device NTP clock differences (e.g. 33s fast jump)
+  private localSyncAnchor: {
+    trackId: string | null;
+    version: number;
+    position: number;
+    isPlaying: boolean;
+    localAnchorTime: number;
+  } | null = null;
+
   // Drift and synchronization settings (prompt section 13)
   public readonly DRIFT_TOLERANCE_LOW = 0.35; // < 350ms: do nothing
   public readonly DRIFT_TOLERANCE_MED = 0.70; // > 700ms: gentle correction
@@ -220,6 +229,8 @@ class RoomService {
     // Wire newly created adapter to persistent RoomService listeners
     this.adapterUnsubscribers.push(
       this.adapter.onStateUpdate((state) => {
+        // Record local arrival time with accurate elapsed compensation to prevent cross-device NTP clock skew
+        this.updateSyncAnchor(state);
         this.stateListeners.forEach((fn) => fn(state));
       }),
       this.adapter.onParticipantsUpdate((participants) => {
@@ -234,7 +245,34 @@ class RoomService {
     );
 
     const state = await this.adapter.connect(cleanRoomId, participant, initialState);
+    if (state) {
+      this.updateSyncAnchor(state);
+    }
     return state;
+  }
+
+  /**
+   * Records or updates local arrival anchor, taking into account elapsed time since state.updatedAt
+   */
+  private updateSyncAnchor(state: SharedRoomState): void {
+    if (!state.currentTrack) {
+      this.localSyncAnchor = null;
+      return;
+    }
+    const elapsedSinceUpdate = state.isPlaying
+      ? Math.max(0, (Date.now() - (state.updatedAt || Date.now())) / 1000) * (state.playbackRate || 1)
+      : 0;
+    const computedPosition = (state.position || 0) + elapsedSinceUpdate;
+    const maxDuration = state.currentTrack?.duration || 999999;
+    const anchorPosition = Math.min(maxDuration, Math.max(0, computedPosition));
+
+    this.localSyncAnchor = {
+      trackId: state.currentTrack.id,
+      version: state.version,
+      position: anchorPosition,
+      isPlaying: state.isPlaying,
+      localAnchorTime: Date.now(),
+    };
   }
 
   public leaveRoom(): void {
@@ -248,6 +286,7 @@ class RoomService {
     this.currentRoomId = null;
     this.currentParticipant = null;
     this.processedActionIds.clear();
+    this.localSyncAnchor = null;
 
     this.participantsListeners.forEach((fn) => fn([]));
     this.statusListeners.forEach((fn) => fn('DISCONNECTED'));
@@ -255,14 +294,32 @@ class RoomService {
 
   /**
    * Calculates the authoritative room position given elapsed time
-   * (prompt section 11: synchronized playback model)
+   * Uses local arrival anchor to eliminate cross-device NTP / phone clock skew
    */
   public calculateCurrentPosition(state: SharedRoomState): number {
     if (!state.isPlaying) {
-      return Math.max(0, state.position);
+      return Math.max(0, state.position || 0);
     }
-    const elapsedSeconds = (Date.now() - state.updatedAt) / 1000;
-    const computed = state.position + elapsedSeconds * (state.playbackRate || 1);
+
+    let elapsedSeconds = 0;
+
+    // 1. If we have a local arrival anchor for this state version, calculate elapsed time using local monotonic time
+    if (
+      this.localSyncAnchor &&
+      this.localSyncAnchor.trackId === (state.currentTrack?.id || null) &&
+      this.localSyncAnchor.version === state.version
+    ) {
+      elapsedSeconds = Math.max(0, (Date.now() - this.localSyncAnchor.localAnchorTime) / 1000);
+      const computed = this.localSyncAnchor.position + elapsedSeconds * (state.playbackRate || 1);
+      const maxDuration = state.currentTrack?.duration || 999999;
+      return Math.max(0, Math.min(maxDuration, computed));
+    }
+
+    // 2. Fallback: calculate using state.updatedAt with clock-skew protection
+    const rawElapsed = (Date.now() - (state.updatedAt || Date.now())) / 1000;
+    elapsedSeconds = Math.max(0, rawElapsed);
+
+    const computed = (state.position || 0) + elapsedSeconds * (state.playbackRate || 1);
     const maxDuration = state.currentTrack?.duration || 999999;
     return Math.max(0, Math.min(maxDuration, computed));
   }
@@ -277,6 +334,15 @@ class RoomService {
   ): Promise<boolean> {
     if (!this.adapter || !this.currentRoomId || !this.currentParticipant) {
       return false;
+    }
+
+    // SEEK RESTRICTION: Only the room host can seek position for the room
+    if (type === 'SEEK' && currentState) {
+      const isHost = currentState.ownerId === this.currentParticipant.id;
+      if (!isHost) {
+        console.warn('Seek ignored: Only room host can seek playback position.');
+        return false;
+      }
     }
 
     const actionId = `act_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -294,6 +360,14 @@ class RoomService {
     // Calculate new authoritative room state based on action
     if (currentState) {
       const nextState = this.reduceStateWithAction(currentState, action);
+      // Immediately update our own anchor for zero-latency local prediction
+      this.localSyncAnchor = {
+        trackId: nextState.currentTrack?.id || null,
+        version: nextState.version,
+        position: nextState.position,
+        isPlaying: nextState.isPlaying,
+        localAnchorTime: Date.now(),
+      };
       await this.adapter.updateRoomState(nextState);
     } else {
       await this.adapter.sendAction(action);
@@ -305,9 +379,16 @@ class RoomService {
   /**
    * State reducer ensuring server/client consistency
    */
-  private reduceStateWithAction(state: SharedRoomState, action: RoomActionPayload): SharedRoomState {
+  public reduceStateWithAction(state: SharedRoomState, action: RoomActionPayload): SharedRoomState {
     const updated: SharedRoomState = { ...state };
     const now = Date.now();
+
+    // Preserve and advance authoritative playback position if a track is currently playing
+    if (state.isPlaying && state.currentTrack) {
+      const currentPos = this.calculateCurrentPosition(state);
+      updated.position = currentPos;
+      updated.updatedAt = now;
+    }
 
     switch (action.type) {
       case 'PLAY': {

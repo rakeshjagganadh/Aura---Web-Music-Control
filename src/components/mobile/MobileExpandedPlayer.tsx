@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useMusic } from '../../context/MusicContext';
+import { useListenTogether } from '../../context/ListenTogetherContext';
 import { WaveformScrubber } from '../waveform/WaveformScrubber';
 import { 
   ChevronDown, 
@@ -61,7 +62,46 @@ export const MobileExpandedPlayer: React.FC = () => {
     effects,
     bass,
     treble,
+    showToast,
+    setCurrentView,
   } = useMusic();
+
+  const {
+    isInRoom,
+    activeRoom,
+    participants,
+    isOwner,
+    isLocallySilenced,
+    togglePersonalSilence,
+    roomTogglePlay,
+    roomNext,
+    roomPrev,
+    roomSeek,
+  } = useListenTogether();
+
+  const handleSeek = (pos: number) => {
+    if (isInRoom) {
+      if (!isOwner) {
+        showToast('Only the host can seek the track.', 'info');
+        return;
+      }
+      roomSeek(pos);
+      return;
+    }
+    seek(pos);
+  };
+
+  const handleSeekRelative = (delta: number) => {
+    if (isInRoom) {
+      if (!isOwner) {
+        showToast('Only the host can seek backward or forward.', 'info');
+        return;
+      }
+      roomSeek(currentTime + delta);
+      return;
+    }
+    seekRelative(delta);
+  };
 
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
@@ -115,7 +155,7 @@ export const MobileExpandedPlayer: React.FC = () => {
       id="mobile-expanded-player"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      className="lg:hidden fixed inset-0 z-50 bg-[#08090d]/98 backdrop-blur-3xl text-zinc-100 flex flex-col justify-between p-4 sm:p-6 overflow-y-auto pb-safe pt-safe select-none animate-in slide-in-from-bottom duration-300"
+      className="lg:hidden fixed inset-0 z-50 bg-[#0a0c12] text-zinc-100 flex flex-col justify-between p-4 sm:p-6 overflow-y-auto pb-safe pt-safe select-none animate-in slide-in-from-bottom duration-200"
     >
       {/* Top Navigation Bar */}
       <div className="flex items-center justify-between w-full shrink-0">
@@ -124,7 +164,7 @@ export const MobileExpandedPlayer: React.FC = () => {
         <button
           type="button"
           onClick={() => setIsExpandedPlayerOpen(false)}
-          className="p-2.5 -ml-2 rounded-2xl text-zinc-400 hover:text-white active:bg-zinc-800 transition-colors cursor-pointer"
+          className="p-2.5 -ml-2 rounded-xl text-zinc-400 hover:text-white active:bg-white/5 transition-colors cursor-pointer"
           title="Minimize Player"
           aria-label="Minimize Player"
         >
@@ -132,23 +172,42 @@ export const MobileExpandedPlayer: React.FC = () => {
         </button>
 
         {/* Center Title / Format Badge */}
-        <div className="flex flex-col items-center text-center">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-400">
-            Playing From Library
-          </span>
-          <span className="text-[11px] font-semibold text-zinc-200 truncate max-w-[180px]">
-            {currentTrack.album || 'Aura Audio'}
-          </span>
-        </div>
+        {isInRoom && activeRoom ? (
+          <button
+            type="button"
+            onClick={() => {
+              setIsExpandedPlayerOpen(false);
+              setCurrentView('listen-together');
+            }}
+            className="flex flex-col items-center text-center cursor-pointer active:opacity-80"
+          >
+            <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Room: {activeRoom.roomName}
+            </span>
+            <span className="text-[11px] font-semibold text-zinc-300 truncate max-w-[180px]">
+              {participants.length} listening • {isOwner ? 'You are Host' : `Host: ${activeRoom.ownerName}`}
+            </span>
+          </button>
+        ) : (
+          <div className="flex flex-col items-center text-center">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-400">
+              Playing From Library
+            </span>
+            <span className="text-[11px] font-semibold text-zinc-200 truncate max-w-[180px]">
+              {currentTrack.album || 'Aura Audio'}
+            </span>
+          </div>
+        )}
 
         {/* Audio Studio Trigger / Active EQ Pill */}
         <button
           type="button"
           onClick={() => setIsAudioControlsOpen(true)}
-          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-semibold font-mono transition-all cursor-pointer ${
+          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs font-semibold font-mono transition-all cursor-pointer ${
             isAudioEffectActive
-              ? 'bg-indigo-600/30 text-indigo-300 border-indigo-500/40'
-              : 'bg-zinc-900/80 text-zinc-400 border-white/10'
+              ? 'bg-white/10 text-white border-white/20'
+              : 'bg-white/[0.04] text-zinc-400 border-white/[0.08]'
           }`}
           title="Audio DSP Studio"
         >
@@ -161,24 +220,19 @@ export const MobileExpandedPlayer: React.FC = () => {
       <div className="flex-1 flex flex-col landscape:flex-row items-center justify-center gap-6 my-auto py-2 w-full max-w-lg mx-auto">
         
         {/* Album Artwork */}
-        <div className="relative group shrink-0 w-60 h-60 sm:w-72 sm:h-72 landscape:w-44 landscape:h-44 max-w-[70vw] max-h-[36vh] rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-white/10 bg-zinc-900 flex items-center justify-center transition-transform">
+        <div className="relative group shrink-0 w-60 h-60 sm:w-72 sm:h-72 landscape:w-44 landscape:h-44 max-w-[70vw] max-h-[36vh] rounded-2xl overflow-hidden shadow-xl border border-white/10 bg-[#12141c] flex items-center justify-center transition-transform">
           {currentTrack.coverUrl ? (
             <img
               src={currentTrack.coverUrl}
               alt={currentTrack.title}
-              className={`w-full h-full object-cover transition-transform duration-700 ${isPlaying ? 'scale-105' : 'scale-100'}`}
+              className={`w-full h-full object-cover transition-transform duration-500 ${isPlaying ? 'scale-[1.02]' : 'scale-100'}`}
               referrerPolicy="no-referrer"
             />
           ) : (
-            <div className={`w-full h-full bg-gradient-to-br ${currentTrack.coverColor || 'from-indigo-600 to-zinc-900'} flex flex-col items-center justify-center p-6 text-white`}>
-              <Music className="w-16 h-16 opacity-50 mb-2" />
-              <span className="text-[10px] font-mono tracking-widest opacity-60">AURA MUSIC</span>
+            <div className={`w-full h-full bg-gradient-to-br ${currentTrack.coverColor || 'from-zinc-800 to-zinc-950'} flex flex-col items-center justify-center p-6 text-white`}>
+              <Music className="w-16 h-16 opacity-40 mb-2" />
+              <span className="text-[10px] font-mono tracking-widest opacity-50 uppercase">AURA MUSIC</span>
             </div>
-          )}
-
-          {/* Active glow ring */}
-          {isPlaying && (
-            <div className="absolute inset-0 rounded-3xl border-2 border-indigo-500/30 animate-pulse pointer-events-none" />
           )}
         </div>
 
@@ -188,7 +242,7 @@ export const MobileExpandedPlayer: React.FC = () => {
           {/* Metadata Row */}
           <div className="flex items-center justify-between gap-4 w-full">
             <div className="min-w-0 flex-1">
-              <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight truncate leading-tight">
+              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight truncate leading-tight font-display">
                 {currentTrack.title}
               </h2>
               <p className="text-sm font-medium text-zinc-400 truncate mt-1">
@@ -199,10 +253,10 @@ export const MobileExpandedPlayer: React.FC = () => {
             <button
               type="button"
               onClick={() => toggleFavorite(currentTrack.id)}
-              className="p-3 rounded-2xl text-zinc-400 hover:text-rose-400 active:bg-zinc-800/80 transition-colors cursor-pointer shrink-0"
+              className="p-2.5 rounded-xl text-zinc-400 hover:text-rose-400 active:bg-white/5 transition-colors cursor-pointer shrink-0"
               title="Favorite Track"
             >
-              <Heart className={`w-6 h-6 transition-transform active:scale-125 ${
+              <Heart className={`w-5 h-5 transition-transform active:scale-125 ${
                 currentTrack.isFavorite ? 'fill-rose-500 text-rose-500' : ''
               }`} />
             </button>
@@ -214,18 +268,21 @@ export const MobileExpandedPlayer: React.FC = () => {
               peaks={currentTrack.waveformPeaks}
               currentTime={currentTime}
               duration={duration}
-              onSeek={seek}
+              onSeek={handleSeek}
               onSeekingChange={setIsSeeking}
               height={36}
               barWidth={2.5}
               barGap={1.5}
-              activeColor="#818cf8"
-              inactiveColor="rgba(255, 255, 255, 0.15)"
+              activeColor="#ffffff"
+              inactiveColor="rgba(255, 255, 255, 0.12)"
               showHoverTime={false}
             />
 
             <div className="flex items-center justify-between text-xs font-mono text-zinc-400 px-0.5">
               <span>{formatTime(currentTime)}</span>
+              {isInRoom && !isOwner && (
+                <span className="text-[10px] text-zinc-500 font-sans">Host seeks</span>
+              )}
               <span className="text-[10px] text-zinc-500">
                 {formatTime(Math.max(0, duration - currentTime))} left
               </span>
@@ -246,8 +303,8 @@ export const MobileExpandedPlayer: React.FC = () => {
           <button
             type="button"
             onClick={toggleShuffle}
-            className={`p-3 rounded-2xl transition-colors cursor-pointer ${
-              isShuffle ? 'text-indigo-400 bg-indigo-500/15' : 'text-zinc-400 hover:text-zinc-200'
+            className={`p-3 rounded-xl transition-colors cursor-pointer ${
+              isShuffle ? 'text-white bg-white/10 border border-white/15' : 'text-zinc-400 hover:text-zinc-200'
             }`}
             title={`Shuffle: ${isShuffle ? 'On' : 'Off'}`}
           >
@@ -257,7 +314,7 @@ export const MobileExpandedPlayer: React.FC = () => {
           {/* Rewind 10s */}
           <button
             type="button"
-            onClick={() => seekRelative(-10)}
+            onClick={() => handleSeekRelative(-10)}
             className="p-3 text-zinc-400 hover:text-zinc-200 active:scale-95 transition-all cursor-pointer"
             title="Rewind 10s"
           >
@@ -267,18 +324,18 @@ export const MobileExpandedPlayer: React.FC = () => {
           {/* Previous Track */}
           <button
             type="button"
-            onClick={prevTrack}
+            onClick={isInRoom ? roomPrev : prevTrack}
             className="p-3 text-zinc-200 hover:text-white active:scale-95 transition-all cursor-pointer"
             title="Previous"
           >
             <SkipBack className="w-6 h-6 fill-current" />
           </button>
 
-          {/* Large Main Play/Pause Button */}
+          {/* Large Main Play/Pause Button - Shared for everyone */}
           <button
             type="button"
-            onClick={togglePlay}
-            className="w-16 h-16 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-xl shadow-white/10 active:scale-90 transition-all cursor-pointer shrink-0"
+            onClick={isInRoom ? roomTogglePlay : togglePlay}
+            className="w-16 h-16 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-md active:scale-90 transition-all cursor-pointer shrink-0"
             title={isPlaying ? 'Pause' : 'Play'}
           >
             {isPlaying ? (
@@ -291,7 +348,7 @@ export const MobileExpandedPlayer: React.FC = () => {
           {/* Next Track */}
           <button
             type="button"
-            onClick={nextTrack}
+            onClick={isInRoom ? roomNext : nextTrack}
             className="p-3 text-zinc-200 hover:text-white active:scale-95 transition-all cursor-pointer"
             title="Next"
           >
@@ -301,7 +358,7 @@ export const MobileExpandedPlayer: React.FC = () => {
           {/* Fast Forward 10s */}
           <button
             type="button"
-            onClick={() => seekRelative(10)}
+            onClick={() => handleSeekRelative(10)}
             className="p-3 text-zinc-400 hover:text-zinc-200 active:scale-95 transition-all cursor-pointer"
             title="Forward 10s"
           >
@@ -312,8 +369,8 @@ export const MobileExpandedPlayer: React.FC = () => {
           <button
             type="button"
             onClick={cycleRepeat}
-            className={`p-3 rounded-2xl transition-colors cursor-pointer ${
-              repeatMode !== 'off' ? 'text-indigo-400 bg-indigo-500/15' : 'text-zinc-400 hover:text-zinc-200'
+            className={`p-3 rounded-xl transition-colors cursor-pointer ${
+              repeatMode !== 'off' ? 'text-white bg-white/10 border border-white/15' : 'text-zinc-400 hover:text-zinc-200'
             }`}
             title={`Repeat: ${repeatMode}`}
           >
@@ -323,14 +380,14 @@ export const MobileExpandedPlayer: React.FC = () => {
         </div>
 
         {/* Secondary Quick Action Bar: Volume, Speed, Queue, Audio Studio */}
-        <div className="flex items-center justify-between gap-2 p-2 rounded-2xl bg-zinc-900/60 border border-white/5 backdrop-blur-md">
+        <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/[0.04] border border-white/[0.06]">
           
           {/* Volume Control Toggle */}
           <div className="relative flex items-center">
             <button
               type="button"
               onClick={() => setShowVolumeSlider(!showVolumeSlider)}
-              className="flex items-center gap-1.5 p-2 rounded-xl text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 p-2 rounded-lg text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
               title="Volume"
             >
               {isMuted || volume === 0 ? (
@@ -342,7 +399,7 @@ export const MobileExpandedPlayer: React.FC = () => {
             </button>
 
             {showVolumeSlider && (
-              <div className="absolute bottom-full mb-2 left-0 p-3 rounded-2xl bg-zinc-900 border border-white/10 shadow-2xl flex items-center gap-2 z-50 w-44">
+              <div className="absolute bottom-full mb-2 left-0 p-3 rounded-xl bg-[#141720] border border-white/10 shadow-2xl flex items-center gap-2 z-50 w-44">
                 <input
                   type="range"
                   min="0"
@@ -361,14 +418,14 @@ export const MobileExpandedPlayer: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowSpeedMenu(!showSpeedMenu)}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-zinc-800/80 text-zinc-300 text-xs font-mono font-medium hover:bg-zinc-700 transition-colors cursor-pointer"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/[0.06] text-zinc-300 text-xs font-mono font-medium hover:bg-white/10 transition-colors cursor-pointer border border-white/[0.06]"
             >
               <Gauge className="w-3.5 h-3.5 text-zinc-400" />
               <span>{playbackRate}×</span>
             </button>
 
             {showSpeedMenu && (
-              <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 p-1.5 rounded-2xl bg-zinc-900 border border-white/10 shadow-2xl flex flex-col gap-1 z-50 min-w-[80px]">
+              <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 p-1.5 rounded-xl bg-[#141720] border border-white/10 shadow-2xl flex flex-col gap-1 z-50 min-w-[80px]">
                 {[0.5, 0.75, 1.0, 1.25, 1.5, 2.0].map((rate) => (
                   <button
                     key={rate}
@@ -377,10 +434,10 @@ export const MobileExpandedPlayer: React.FC = () => {
                       setPlaybackRate(rate);
                       setShowSpeedMenu(false);
                     }}
-                    className={`px-3 py-1.5 text-xs font-mono text-center rounded-lg transition-colors cursor-pointer ${
+                    className={`px-3 py-1.5 text-xs font-mono text-center rounded-md transition-colors cursor-pointer ${
                       Math.abs(playbackRate - rate) < 0.01
-                        ? 'bg-indigo-600 text-white font-bold'
-                        : 'text-zinc-300 hover:bg-zinc-800'
+                        ? 'bg-white text-zinc-950 font-bold'
+                        : 'text-zinc-300 hover:bg-white/5'
                     }`}
                   >
                     {rate}×
@@ -396,18 +453,18 @@ export const MobileExpandedPlayer: React.FC = () => {
             onClick={() => {
               setIsAudioControlsOpen(true);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-300 text-xs font-semibold transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white/10 border border-white/[0.08] text-white text-xs font-medium transition-colors cursor-pointer"
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
-            <span>Audio Studio</span>
+            <span>Studio</span>
           </button>
 
           {/* Sleep Timer */}
           <button
             type="button"
             onClick={() => setIsSleepTimerModalOpen(true)}
-            className={`p-2 rounded-xl transition-colors cursor-pointer ${
-              isSleepTimerActive ? 'text-indigo-300 bg-indigo-500/20' : 'text-zinc-400 hover:text-zinc-200'
+            className={`p-2 rounded-lg transition-colors cursor-pointer ${
+              isSleepTimerActive ? 'text-white bg-white/15' : 'text-zinc-400 hover:text-zinc-200'
             }`}
             title="Sleep Timer"
           >
@@ -418,7 +475,7 @@ export const MobileExpandedPlayer: React.FC = () => {
           <button
             type="button"
             onClick={() => openTrackInfo(currentTrack)}
-            className="p-2 rounded-xl text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+            className="p-2 rounded-lg text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
             title="Track Info"
           >
             <Info className="w-4 h-4" />
@@ -428,7 +485,7 @@ export const MobileExpandedPlayer: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsQueueDrawerOpen(true)}
-            className="p-2 rounded-xl text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+            className="p-2 rounded-lg text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
             title="Queue"
           >
             <ListMusic className="w-4 h-4" />

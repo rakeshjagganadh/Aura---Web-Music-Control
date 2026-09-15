@@ -58,7 +58,20 @@ export const YouTubeEmbedPlayer: React.FC = () => {
                   youtubePlayerBridge.updateState({ duration: dur });
                 }
               } else if (event.data === 2) {
-                // Confirmed Paused
+                // Check if this pause was involuntary (mobile browser minimizing / backgrounding tab)
+                const isTabHidden = typeof document !== 'undefined' && document.visibilityState === 'hidden';
+                const isExplicit = youtubePlayerBridge.isUserExplicitPause();
+
+                if (isTabHidden && !isExplicit) {
+                  // Involuntary pause caused by mobile browser switching to another app (e.g. WhatsApp)
+                  // Attempt immediate resume so playback stays alive in background
+                  try {
+                    event.target?.playVideo?.();
+                  } catch {}
+                  return;
+                }
+
+                // Confirmed intentional pause
                 youtubePlayerBridge.updateState({ isPlaying: false });
               } else if (event.data === 0) {
                 // Confirmed Ended
@@ -132,12 +145,31 @@ export const YouTubeEmbedPlayer: React.FC = () => {
       }
     }, 200);
 
+    // Auto-resume if user comes back to the browser tab
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const isExplicit = youtubePlayerBridge.isUserExplicitPause();
+        if (!isExplicit && playerRef.current) {
+          try {
+            const pState = playerRef.current.getPlayerState?.();
+            // If paused (2) or unstarted (-1), resume playback
+            if (pState === 2 || pState === -1) {
+              playerRef.current.playVideo?.();
+            }
+          } catch {}
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       isMounted = false;
       clearInterval(checkInterval);
       if (timeUpdateInterval.current) {
         clearInterval(timeUpdateInterval.current);
       }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       youtubePlayerBridge.unregisterPlayer();
     };
   }, []);
@@ -146,7 +178,7 @@ export const YouTubeEmbedPlayer: React.FC = () => {
     <div
       id="aura-youtube-engine"
       aria-hidden="true"
-      className="fixed -top-[9999px] -left-[9999px] w-[320px] h-[180px] opacity-0 pointer-events-none overflow-hidden -z-50 select-none"
+      className="fixed bottom-0 right-0 w-[1px] h-[1px] opacity-[0.01] pointer-events-none overflow-hidden z-0 select-none"
     >
       {/* Official YouTube IFrame Mounting Point */}
       <div id="aura-yt-iframe-slot" className="w-full h-full" />

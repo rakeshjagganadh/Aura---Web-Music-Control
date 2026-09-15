@@ -16,6 +16,7 @@ export interface YouTubePlayOptions {
   isMuted?: boolean;
   playbackRate?: number;
   requestId?: number;
+  startTime?: number;
 }
 
 type StateListener = (state: YouTubePlayerBridgeState) => void;
@@ -38,6 +39,7 @@ class YouTubePlayerBridge {
     isMuted?: boolean;
     playbackRate?: number;
     requestId: number;
+    startTime?: number;
   } | null = null;
 
   private currentState: YouTubePlayerBridgeState = {
@@ -54,6 +56,15 @@ class YouTubePlayerBridge {
 
   private isSeeking = false;
   private seekResumeTimeout: any = null;
+  private userExplicitPause: boolean = false;
+
+  public isUserExplicitPause(): boolean {
+    return this.userExplicitPause;
+  }
+
+  public setUserExplicitPause(val: boolean) {
+    this.userExplicitPause = val;
+  }
 
   public registerPlayer(player: any) {
     this.playerInstance = player;
@@ -178,8 +189,10 @@ class YouTubePlayerBridge {
   // --- Core Playback Execution ---
 
   public loadAndPlay(videoId: string, options: YouTubePlayOptions = {}) {
+    this.userExplicitPause = false;
     const autoplay = options.autoplay ?? true;
     const requestId = options.requestId ?? 0;
+    const startTime = options.startTime;
     const req = {
       videoId,
       autoplay,
@@ -187,11 +200,12 @@ class YouTubePlayerBridge {
       isMuted: options.isMuted,
       playbackRate: options.playbackRate,
       requestId,
+      startTime,
     };
 
     if (!this.isReady || !this.playerInstance) {
       this.pendingRequest = req;
-      this.updateState({ videoId, error: null, currentTime: 0 });
+      this.updateState({ videoId, error: null, currentTime: startTime || 0 });
       return;
     }
 
@@ -205,10 +219,12 @@ class YouTubePlayerBridge {
     isMuted?: boolean;
     playbackRate?: number;
     requestId: number;
+    startTime?: number;
   }) {
     if (!this.playerInstance) return;
 
-    this.updateState({ videoId: req.videoId, error: null, currentTime: 0 });
+    const startSeconds = (typeof req.startTime === 'number' && req.startTime > 0) ? req.startTime : 0;
+    this.updateState({ videoId: req.videoId, error: null, currentTime: startSeconds });
 
     try {
       // 1. Apply volume & mute
@@ -225,14 +241,33 @@ class YouTubePlayerBridge {
       // 2. Load or Cue video
       if (req.autoplay) {
         if (typeof this.playerInstance.loadVideoById === 'function') {
-          this.playerInstance.loadVideoById(req.videoId);
+          if (startSeconds > 0) {
+            this.playerInstance.loadVideoById({
+              videoId: req.videoId,
+              startSeconds: startSeconds,
+            });
+          } else {
+            this.playerInstance.loadVideoById(req.videoId);
+          }
         }
         if (typeof this.playerInstance.playVideo === 'function') {
           this.playerInstance.playVideo();
         }
+        if (startSeconds > 0 && typeof this.playerInstance.seekTo === 'function') {
+          try {
+            this.playerInstance.seekTo(startSeconds, true);
+          } catch {}
+        }
       } else {
         if (typeof this.playerInstance.cueVideoById === 'function') {
-          this.playerInstance.cueVideoById(req.videoId);
+          if (startSeconds > 0) {
+            this.playerInstance.cueVideoById({
+              videoId: req.videoId,
+              startSeconds: startSeconds,
+            });
+          } else {
+            this.playerInstance.cueVideoById(req.videoId);
+          }
         }
       }
 
@@ -249,6 +284,7 @@ class YouTubePlayerBridge {
   }
 
   public play() {
+    this.userExplicitPause = false;
     if (this.playerInstance && typeof this.playerInstance.playVideo === 'function') {
       try {
         this.playerInstance.playVideo();
@@ -259,6 +295,7 @@ class YouTubePlayerBridge {
   }
 
   public pause() {
+    this.userExplicitPause = true;
     if (this.playerInstance && typeof this.playerInstance.pauseVideo === 'function') {
       try {
         this.playerInstance.pauseVideo();
@@ -270,6 +307,7 @@ class YouTubePlayerBridge {
   }
 
   public stop() {
+    this.userExplicitPause = true;
     if (this.playerInstance && typeof this.playerInstance.stopVideo === 'function') {
       try {
         this.playerInstance.stopVideo();

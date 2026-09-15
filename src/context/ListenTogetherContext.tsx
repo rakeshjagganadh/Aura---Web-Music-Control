@@ -26,6 +26,10 @@ export interface ListenTogetherContextType {
   pendingJoinRoomId: string | null;
   setPendingJoinRoomId: (id: string | null) => void;
 
+  // Personal device playback isolation (take a call / work without disturbing others)
+  isLocallySilenced: boolean;
+  togglePersonalSilence: () => void;
+
   // Room lifecycle
   createRoom: (name: string, initialTrack?: Track | null) => Promise<string>;
   joinRoom: (roomId: string, displayName?: string) => Promise<boolean>;
@@ -58,8 +62,11 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
     seek,
     nextTrack,
     prevTrack,
+    registerTrackEndedHandler,
     showToast,
     setCurrentView,
+    switchToTrack,
+    setQueue,
   } = useMusic();
 
   const [activeRoom, setActiveRoom] = useState<SharedRoomState | null>(null);
@@ -70,6 +77,9 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
     return roomService.getOrCreateUserIdentity().name;
   });
   const [pendingJoinRoomId, setPendingJoinRoomId] = useState<string | null>(null);
+  const [isLocallySilenced, setIsLocallySilenced] = useState(false);
+  const isLocallySilencedRef = useRef(false);
+  isLocallySilencedRef.current = isLocallySilenced;
 
   // Guards to prevent feedback loop between local player events and remote room updates
   const isApplyingRemoteRef = useRef(false);
@@ -108,9 +118,8 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
     const cleanId = roomService.cleanRoomCode(roomIdFromUrl);
     if (cleanId) {
       setPendingJoinRoomId(cleanId);
-      setCurrentView('listen-together');
     }
-  }, [setCurrentView]);
+  }, []);
 
   const setUserDisplayName = useCallback((name: string) => {
     setUserDisplayNameState(name);
@@ -127,6 +136,11 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
         return;
       }
 
+      // If user locally silenced their audio (phone call / work), don't play locally
+      if (isLocallySilencedRef.current) {
+        return;
+      }
+
       const expectedPos = roomService.calculateCurrentPosition(incomingState);
       const isDifferentTrack = !currentTrackRef.current || currentTrackRef.current.id !== targetTrack.id;
 
@@ -136,27 +150,51 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
         if (isDifferentTrack) {
           const trackToPlay = sharedTrackToTrack(targetTrack);
           const queueTracks = incomingState.queue.map(sharedTrackToTrack);
-          await playTrack(trackToPlay, {
+          await switchToTrack(trackToPlay, {
             autoplay: incomingState.isPlaying,
             newQueue: queueTracks,
             index: queueTracks.findIndex((t) => t.id === trackToPlay.id),
+            startTime: expectedPos,
           });
 
-          // Late join / mid-track synchronization
+          // Late join / mid-track synchronization: ensure client jumps directly to where song is currently playing
           if (expectedPos > 0.5) {
             setTimeout(() => {
               seek(expectedPos);
-            }, 100);
+            }, 120);
+            setTimeout(() => {
+              if (Math.abs(currentTimeRef.current - expectedPos) > 1.2) {
+                seek(expectedPos);
+              }
+            }, 600);
           }
         } else {
+          // Check if remote update is purely a queue alteration (ADD_TRACK, REMOVE_TRACK, REORDER_QUEUE)
+          const isQueueAction =
+            incomingState.lastAction?.type === 'ADD_TRACK' ||
+            incomingState.lastAction?.type === 'REMOVE_TRACK' ||
+            incomingState.lastAction?.type === 'REORDER_QUEUE';
+
+          // Keep local queue in sync with remote room queue
+          if (incomingState.queue) {
+            const queueTracks = incomingState.queue.map(sharedTrackToTrack);
+            setQueue(queueTracks);
+          }
+
+          // CRUCIAL BUG FIX: Adding or removing a song in the queue MUST NEVER seek or restart the currently playing track
+          if (isQueueAction) {
+            return;
+          }
+
           // Track is same; synchronize play/pause state
           if (incomingState.isPlaying !== isPlayingRef.current) {
             togglePlay();
           }
 
-          // Check drift (tolerance >= 0.70s)
+          // Check drift: only seek if it was an explicit host SEEK action or significant genuine drift
+          const isSeekAction = incomingState.lastAction?.type === 'SEEK';
           const drift = Math.abs(currentTimeRef.current - expectedPos);
-          if (drift >= roomService.DRIFT_TOLERANCE_MED) {
+          if (isSeekAction || drift >= roomService.DRIFT_TOLERANCE_HIGH) {
             seek(expectedPos);
           }
         }
@@ -168,7 +206,7 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
         }, 300);
       }
     },
-    [playTrack, togglePlay, seek]
+    [switchToTrack, togglePlay, seek, setQueue]
   );
 
   // Periodic drift check for subtle background sync
@@ -215,6 +253,53 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
     };
   }, [handleRemoteStateUpdate]);
 
+  // Register track completion callback with MusicContext:
+  // When a song finishes, loop smoothly to the next song in the room queue
+  useEffect(() => {
+    if (!isInRoom || !activeRoom) return;
+
+    const unregister = registerTrackEndedHandler(() => {
+      const room = activeRoomRef.current;
+      if (!room || room.queue.length === 0) return false;
+
+      // The host dispatches NEXT so all clients transition together
+      const currentParticipantId = roomService.getCurrentParticipant()?.id;
+      const isRoomHost = room.ownerId === currentParticipantId;
+
+      if (isRoomHost) {
+        roomService.dispatchAction('NEXT', {}, room);
+      }
+      return true;
+    });
+
+    return () => {
+      unregister();
+    };
+  }, [isInRoom, activeRoom, registerTrackEndedHandler]);
+
+  // Personal device playback isolation (take a call / work without disturbing others)
+  const togglePersonalSilence = useCallback(() => {
+    setIsLocallySilenced((prev) => {
+      const next = !prev;
+      if (next) {
+        if (isPlayingRef.current) {
+          togglePlay();
+        }
+        showToast('Personal Solo Break / On-Call Mode active. Paused only on your device!', 'info');
+      } else {
+        if (activeRoomRef.current) {
+          const expected = roomService.calculateCurrentPosition(activeRoomRef.current);
+          seek(expected);
+          if (activeRoomRef.current.isPlaying && !isPlayingRef.current) {
+            togglePlay();
+          }
+        }
+        showToast('Resumed sync with shared room!', 'success');
+      }
+      return next;
+    });
+  }, [togglePlay, seek, showToast]);
+
   // Create room
   const createRoom = useCallback(
     async (name: string, initialTrack?: Track | null): Promise<string> => {
@@ -231,6 +316,7 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
       setActiveRoom(state);
       setConnectionStatus('CONNECTED');
       setPendingJoinRoomId(null);
+      setCurrentView('listen-together');
 
       // Update URL without reloading page
       if (typeof window !== 'undefined') {
@@ -240,7 +326,7 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
       showToast(`Created room "${state.roomName}"`, 'success');
       return roomId;
     },
-    [currentTrack, userDisplayName, showToast]
+    [currentTrack, userDisplayName, showToast, setCurrentView]
   );
 
   // Join room
@@ -262,6 +348,7 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
           setActiveRoom(state);
           setConnectionStatus('CONNECTED');
           setPendingJoinRoomId(null);
+          setCurrentView('listen-together');
 
           if (typeof window !== 'undefined') {
             window.history.pushState(null, '', `/?room=${cleanId}`);
@@ -285,7 +372,7 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
         return false;
       }
     },
-    [userDisplayName, setUserDisplayName, showToast, handleRemoteStateUpdate]
+    [userDisplayName, setUserDisplayName, showToast, handleRemoteStateUpdate, setCurrentView]
   );
 
   // Leave room
@@ -297,12 +384,15 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
     setConnectionStatus('DISCONNECTED');
     setPendingJoinRoomId(null);
 
+    // Stop playback completely so room audio doesn't linger in regular AURA player
+    switchToTrack(null);
+
     if (typeof window !== 'undefined') {
       window.history.pushState(null, '', '/');
     }
 
     showToast('Left listening room', 'info');
-  }, [showToast]);
+  }, [showToast, switchToTrack]);
 
   // Copy share link
   const copyInviteLink = useCallback(async (): Promise<boolean> => {
@@ -368,9 +458,14 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
   const roomSeek = useCallback(
     async (seconds: number) => {
       if (!activeRoom) return;
+      if (!isOwner) {
+        showToast('Only the host can seek the track.', 'info');
+        return;
+      }
+      seek(seconds);
       await roomService.dispatchAction('SEEK', { position: seconds }, activeRoom);
     },
-    [activeRoom]
+    [activeRoom, isOwner, seek, showToast]
   );
 
   const roomNext = useCallback(async () => {
@@ -397,8 +492,31 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
       }
 
       const sharedTrack = trackToSharedTrack(track);
-      await roomService.dispatchAction('ADD_TRACK', { track: sharedTrack }, activeRoom);
+
+      // Instant optimistic UI update preserving current playback position
+      const currentPos = currentTimeRef.current || (activeRoom ? roomService.calculateCurrentPosition(activeRoom) : 0);
+      setActiveRoom((prev) => {
+        if (!prev) return prev;
+        const exists = prev.queue.some((t) => t.id === sharedTrack.id);
+        const newQueue = exists ? prev.queue : [...prev.queue, sharedTrack];
+        const newCurrent = prev.currentTrack || sharedTrack;
+        return {
+          ...prev,
+          queue: newQueue,
+          currentTrack: newCurrent,
+          position: currentPos,
+          isPlaying: prev.currentTrack ? prev.isPlaying : true,
+          version: (prev.version || 0) + 1,
+          updatedAt: Date.now(),
+        };
+      });
+
       showToast(`Added "${track.title}" to shared queue`, 'success');
+      await roomService.dispatchAction('ADD_TRACK', { track: sharedTrack }, {
+        ...activeRoom,
+        position: currentPos,
+        updatedAt: Date.now(),
+      });
       return true;
     },
     [activeRoom, showToast]
@@ -407,6 +525,17 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
   const roomRemoveTrack = useCallback(
     async (trackId: string) => {
       if (!activeRoom) return;
+      setActiveRoom((prev) => {
+        if (!prev) return prev;
+        const currentPos = roomService.calculateCurrentPosition(prev);
+        return {
+          ...prev,
+          position: currentPos,
+          queue: prev.queue.filter((t) => t.id !== trackId),
+          version: (prev.version || 0) + 1,
+          updatedAt: Date.now(),
+        };
+      });
       await roomService.dispatchAction('REMOVE_TRACK', { trackId }, activeRoom);
     },
     [activeRoom]
@@ -415,6 +544,17 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
   const roomReorderQueue = useCallback(
     async (newQueue: SharedRoomTrack[]) => {
       if (!activeRoom) return;
+      setActiveRoom((prev) => {
+        if (!prev) return prev;
+        const currentPos = roomService.calculateCurrentPosition(prev);
+        return {
+          ...prev,
+          position: currentPos,
+          queue: newQueue,
+          version: (prev.version || 0) + 1,
+          updatedAt: Date.now(),
+        };
+      });
       await roomService.dispatchAction('REORDER_QUEUE', { queue: newQueue }, activeRoom);
     },
     [activeRoom]
@@ -433,6 +573,23 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
       }
 
       const shared = trackToSharedTrack(track);
+
+      // Instant optimistic UI update
+      setActiveRoom((prev) => {
+        if (!prev) return prev;
+        const exists = prev.queue.some((t) => t.id === shared.id);
+        const newQueue = exists ? prev.queue : [...prev.queue, shared];
+        return {
+          ...prev,
+          currentTrack: shared,
+          queue: newQueue,
+          position: 0,
+          isPlaying: true,
+          version: (prev.version || 0) + 1,
+          updatedAt: Date.now(),
+        };
+      });
+
       await roomService.dispatchAction('CHANGE_TRACK', { track: shared }, activeRoom);
     },
     [activeRoom, showToast]
@@ -450,6 +607,9 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
     isOwner,
     pendingJoinRoomId,
     setPendingJoinRoomId,
+
+    isLocallySilenced,
+    togglePersonalSilence,
 
     createRoom,
     joinRoom,

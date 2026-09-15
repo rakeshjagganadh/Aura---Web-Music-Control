@@ -62,6 +62,8 @@ export const EQ_PRESETS = SYSTEM_EQ_PRESETS;
 export class AudioEngine {
   private ctx: AudioContext | null = null;
   private audioEl: HTMLAudioElement | null = null;
+  private directAudioEl: HTMLAudioElement | null = null;
+  private isDirectStreaming = false;
   private sourceNode: MediaElementAudioSourceNode | null = null;
 
   // Graph Structure
@@ -183,12 +185,74 @@ export class AudioEngine {
     this.audioEl = new Audio();
     this.audioEl.crossOrigin = 'anonymous';
     this.audioEl.preload = 'auto';
+    this.audioEl.id = 'aura-engine-audio-webaudio';
+    this.audioEl.style.position = 'fixed';
+    this.audioEl.style.bottom = '0px';
+    this.audioEl.style.right = '0px';
+    this.audioEl.style.width = '1px';
+    this.audioEl.style.height = '1px';
+    this.audioEl.style.opacity = '0.01';
+    this.audioEl.style.pointerEvents = 'none';
+    this.audioEl.setAttribute('aria-hidden', 'true');
 
-    // Hook standard events
-    this.audioEl.addEventListener('timeupdate', () => {
-      if (this.audioEl) {
-        const time = this.audioEl.currentTime;
-        const dur = this.audioEl.duration || 0;
+    // directAudioEl is for cross-origin streaming (e.g. Audius) where CORS WebAudio creates silence or fails
+    this.directAudioEl = new Audio();
+    this.directAudioEl.preload = 'auto';
+    this.directAudioEl.id = 'aura-engine-audio-direct';
+    this.directAudioEl.style.position = 'fixed';
+    this.directAudioEl.style.bottom = '0px';
+    this.directAudioEl.style.right = '0px';
+    this.directAudioEl.style.width = '1px';
+    this.directAudioEl.style.height = '1px';
+    this.directAudioEl.style.opacity = '0.01';
+    this.directAudioEl.style.pointerEvents = 'none';
+    this.directAudioEl.setAttribute('aria-hidden', 'true');
+
+    // Attach to DOM so mobile browsers treat them as active media elements for background playback
+    if (typeof document !== 'undefined') {
+      const mountNodes = () => {
+        if (document.body) {
+          if (!document.getElementById('aura-engine-audio-webaudio')) {
+            document.body.appendChild(this.audioEl);
+          }
+          if (!document.getElementById('aura-engine-audio-direct')) {
+            document.body.appendChild(this.directAudioEl);
+          }
+        }
+      };
+      if (document.body) {
+        mountNodes();
+      } else {
+        document.addEventListener('DOMContentLoaded', mountNodes);
+      }
+
+      // Automatically resume AudioContext if suspended by mobile OS on tab minimize
+      document.addEventListener('visibilitychange', () => {
+        if (this.ctx && this.ctx.state === 'suspended' && this.isPlaying()) {
+          this.ctx.resume().catch(() => {});
+        }
+        if (document.visibilityState === 'visible' && this.isPlaying()) {
+          const activeEl = this.isDirectStreaming ? this.directAudioEl : this.audioEl;
+          if (activeEl && activeEl.paused) {
+            activeEl.play().catch(() => {});
+          }
+        }
+      });
+    }
+
+    if (this.ctx) {
+      this.ctx.onstatechange = () => {
+        if (this.ctx && this.ctx.state === 'suspended' && this.isPlaying()) {
+          this.ctx.resume().catch(() => {});
+        }
+      };
+    }
+
+    const setupListeners = (el: HTMLAudioElement, isDirect: boolean) => {
+      el.addEventListener('timeupdate', () => {
+        if (this.isDirectStreaming !== isDirect) return;
+        const time = el.currentTime;
+        const dur = el.duration || 0;
 
         // Loop A/B seamless jump check
         if (
@@ -219,20 +283,29 @@ export class AudioEngine {
         if (this.onTimeUpdateCallback) {
           this.onTimeUpdateCallback(time, dur);
         }
-      }
-    });
+      });
 
-    this.audioEl.addEventListener('ended', () => {
-      this.onEndedCallback?.();
-    });
+      el.addEventListener('ended', () => {
+        if (this.isDirectStreaming === isDirect) {
+          this.onEndedCallback?.();
+        }
+      });
 
-    this.audioEl.addEventListener('play', () => {
-      this.onStateChangeCallback?.(true);
-    });
+      el.addEventListener('play', () => {
+        if (this.isDirectStreaming === isDirect) {
+          this.onStateChangeCallback?.(true);
+        }
+      });
 
-    this.audioEl.addEventListener('pause', () => {
-      this.onStateChangeCallback?.(false);
-    });
+      el.addEventListener('pause', () => {
+        if (this.isDirectStreaming === isDirect) {
+          this.onStateChangeCallback?.(false);
+        }
+      });
+    };
+
+    setupListeners(this.audioEl, false);
+    setupListeners(this.directAudioEl, true);
 
     // 1. Source & Preamp
     this.sourceNode = this.ctx.createMediaElementSource(this.audioEl);
@@ -556,9 +629,13 @@ export class AudioEngine {
     }
   }
 
+  public getActiveAudioEl(): HTMLAudioElement | null {
+    return this.isDirectStreaming ? this.directAudioEl : this.audioEl;
+  }
+
   // --- Track Loading & Playback ---
 
-  public async loadTrack(track: Track, audioSource: Blob | string, autoPlay = true): Promise<void> {
+  public async loadTrack(track: Track, audioSource: Blob | string, autoPlay = true, startTime: number = 0): Promise<void> {
     this.init();
     await this.resumeContext();
 
@@ -577,15 +654,85 @@ export class AudioEngine {
 
     this.currentTrack = track;
 
-    if (this.audioEl) {
-      this.audioEl.src = url;
-      this.audioEl.load();
+    // Detect external/cross-origin stream (Audius or remote stream)
+    const isExternalStream =
+      track.source === 'audius' ||
+      (typeof audioSource === 'string' &&
+        (audioSource.includes('audius.co') ||
+          audioSource.includes('monophonic.digital') ||
+          audioSource.includes('cidstream') ||
+          (audioSource.startsWith('http') && !audioSource.startsWith(window.location.origin))));
 
-      if (autoPlay) {
-        try {
-          await this.audioEl.play();
-        } catch (e) {
-          console.warn('Autoplay waiting for user gesture:', e);
+    this.isDirectStreaming = isExternalStream;
+
+    if (isExternalStream) {
+      // Pause WebAudio element to avoid conflicts
+      if (this.audioEl) {
+        this.audioEl.pause();
+        this.audioEl.removeAttribute('src');
+      }
+      if (this.directAudioEl) {
+        this.directAudioEl.src = url;
+        this.directAudioEl.load();
+
+        if (startTime > 0) {
+          try {
+            this.directAudioEl.currentTime = startTime;
+          } catch {}
+          const onMeta = () => {
+            try {
+              if (this.directAudioEl) this.directAudioEl.currentTime = startTime;
+            } catch {}
+          };
+          this.directAudioEl.addEventListener('loadedmetadata', onMeta, { once: true });
+        }
+
+        if (autoPlay) {
+          try {
+            await this.directAudioEl.play();
+            if (startTime > 0) {
+              try {
+                this.directAudioEl.currentTime = startTime;
+              } catch {}
+            }
+          } catch (e) {
+            console.warn('Direct stream autoplay waiting for gesture:', e);
+          }
+        }
+      }
+    } else {
+      // Pause direct element
+      if (this.directAudioEl) {
+        this.directAudioEl.pause();
+        this.directAudioEl.removeAttribute('src');
+      }
+      if (this.audioEl) {
+        this.audioEl.src = url;
+        this.audioEl.load();
+
+        if (startTime > 0) {
+          try {
+            this.audioEl.currentTime = startTime;
+          } catch {}
+          const onMeta = () => {
+            try {
+              if (this.audioEl) this.audioEl.currentTime = startTime;
+            } catch {}
+          };
+          this.audioEl.addEventListener('loadedmetadata', onMeta, { once: true });
+        }
+
+        if (autoPlay) {
+          try {
+            await this.audioEl.play();
+            if (startTime > 0) {
+              try {
+                this.audioEl.currentTime = startTime;
+              } catch {}
+            }
+          } catch (e) {
+            console.warn('WebAudio autoplay waiting for gesture:', e);
+          }
         }
       }
     }
@@ -594,14 +741,18 @@ export class AudioEngine {
   public async play(): Promise<void> {
     this.init();
     await this.resumeContext();
-    if (this.audioEl) {
-      await this.audioEl.play();
+    const el = this.getActiveAudioEl();
+    if (el) {
+      await el.play();
     }
   }
 
   public pause(): void {
     if (this.audioEl) {
       this.audioEl.pause();
+    }
+    if (this.directAudioEl) {
+      this.directAudioEl.pause();
     }
   }
 
@@ -614,14 +765,16 @@ export class AudioEngine {
   }
 
   public seek(seconds: number): void {
-    if (this.audioEl && !isNaN(seconds)) {
-      this.audioEl.currentTime = Math.max(0, Math.min(seconds, this.audioEl.duration || seconds));
+    const el = this.getActiveAudioEl();
+    if (el && !isNaN(seconds)) {
+      el.currentTime = Math.max(0, Math.min(seconds, el.duration || seconds));
     }
   }
 
   public seekRelative(deltaSeconds: number): void {
-    if (this.audioEl) {
-      this.seek(this.audioEl.currentTime + deltaSeconds);
+    const el = this.getActiveAudioEl();
+    if (el) {
+      this.seek(el.currentTime + deltaSeconds);
     }
   }
 
@@ -633,23 +786,36 @@ export class AudioEngine {
     if (this.audioEl) {
       this.audioEl.volume = clamped;
     }
+    if (this.directAudioEl) {
+      this.directAudioEl.volume = clamped;
+    }
   }
 
   public setMute(muted: boolean): void {
     if (this.audioEl) {
       this.audioEl.muted = muted;
     }
+    if (this.directAudioEl) {
+      this.directAudioEl.muted = muted;
+    }
   }
 
   public setPlaybackRate(rate: number): void {
+    const clampedRate = Math.max(0.25, Math.min(3.0, rate));
     if (this.audioEl) {
-      this.audioEl.playbackRate = Math.max(0.25, Math.min(3.0, rate));
+      this.audioEl.playbackRate = clampedRate;
+    }
+    if (this.directAudioEl) {
+      this.directAudioEl.playbackRate = clampedRate;
     }
   }
 
   public setPreservePitch(preserve: boolean): void {
     if (this.audioEl && 'preservesPitch' in this.audioEl) {
       (this.audioEl as unknown as { preservesPitch: boolean }).preservesPitch = preserve;
+    }
+    if (this.directAudioEl && 'preservesPitch' in this.directAudioEl) {
+      (this.directAudioEl as unknown as { preservesPitch: boolean }).preservesPitch = preserve;
     }
   }
 
@@ -1359,27 +1525,31 @@ export class AudioEngine {
   // --- Playback State Getters ---
 
   public isPlaying(): boolean {
-    return !!(this.audioEl && !this.audioEl.paused && !this.audioEl.ended);
+    const el = this.getActiveAudioEl();
+    return !!(el && !el.paused && !el.ended);
   }
 
   public getCurrentTime(): number {
-    return this.audioEl ? this.audioEl.currentTime : 0;
+    return this.getActiveAudioEl()?.currentTime || 0;
   }
 
   public getDuration(): number {
-    return this.audioEl ? this.audioEl.duration || 0 : 0;
+    return this.getActiveAudioEl()?.duration || 0;
   }
 
   public getVolume(): number {
-    return this.audioEl ? this.audioEl.volume : 0.85;
+    const el = this.getActiveAudioEl();
+    return el ? el.volume : 0.85;
   }
 
   public isMuted(): boolean {
-    return !!(this.audioEl && this.audioEl.muted);
+    const el = this.getActiveAudioEl();
+    return !!(el && el.muted);
   }
 
   public getPlaybackRate(): number {
-    return this.audioEl ? this.audioEl.playbackRate : 1.0;
+    const el = this.getActiveAudioEl();
+    return el ? el.playbackRate : 1.0;
   }
 
   public getCurrentTrack(): Track | null {

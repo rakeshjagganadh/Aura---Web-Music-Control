@@ -63,18 +63,35 @@ export const BottomPlayer: React.FC = () => {
     markers,
     jumpToMarker,
     loopAB,
+    currentView,
     setCurrentView,
+    showToast,
   } = useMusic();
 
   const {
     isInRoom,
     activeRoom,
     participants,
+    isOwner,
+    isLocallySilenced,
+    togglePersonalSilence,
     roomTogglePlay,
     roomNext,
     roomPrev,
     roomSeek,
   } = useListenTogether();
+
+  const handleSeekRelative = (delta: number) => {
+    if (isInRoom) {
+      if (!isOwner) {
+        showToast('Only the host can seek backward or forward.', 'info');
+        return;
+      }
+      roomSeek(currentTime + delta);
+      return;
+    }
+    seekRelative(delta);
+  };
 
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
 
@@ -93,6 +110,11 @@ export const BottomPlayer: React.FC = () => {
     const s = Math.floor(secs % 60);
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
+
+  // When inside the Listen Together view, the dedicated room player is already active
+  if (currentView === 'listen-together') {
+    return null;
+  }
 
   if (!currentTrack) {
     return (
@@ -124,10 +146,10 @@ export const BottomPlayer: React.FC = () => {
   return (
     <div
       id="bottom-player-bar"
-      className="hidden lg:flex fixed bottom-0 left-0 right-0 h-20 bg-[#080a0f]/95 border-t border-white/[0.08] backdrop-blur-3xl z-40 px-4 sm:px-8 flex-col justify-center select-none shadow-[0_-16px_40px_rgba(0,0,0,0.8)]"
+      className="hidden lg:flex fixed bottom-0 left-0 right-0 h-20 bg-[#0c0e14] border-t border-white/[0.08] z-40 px-4 sm:px-8 flex-col justify-center select-none shadow-2xl"
     >
-      {/* Top subtle highlight aura hairline */}
-      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent pointer-events-none" />
+      {/* Top subtle structural hairline */}
+      <div className="absolute top-0 left-0 right-0 h-[1px] bg-white/[0.06] pointer-events-none" />
 
       <div className="flex items-center justify-between gap-4 w-full max-w-7xl mx-auto">
         
@@ -135,17 +157,17 @@ export const BottomPlayer: React.FC = () => {
         <div className="flex items-center gap-3.5 min-w-0 w-1/4">
           <div
             onClick={() => setIsExpandedPlayerOpen(true)}
-            className="relative group cursor-pointer shrink-0 w-12 h-12 rounded-xl overflow-hidden border border-white/10 shadow-lg bg-[#0e1017]"
+            className="relative group cursor-pointer shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-white/10 shadow bg-[#12141c]"
           >
             {currentTrack.coverUrl ? (
               <img
                 src={currentTrack.coverUrl}
                 alt={currentTrack.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <div className={`w-full h-full bg-gradient-to-br ${currentTrack.coverColor || 'from-indigo-600 to-zinc-900'} flex items-center justify-center`}>
+              <div className={`w-full h-full bg-gradient-to-br ${currentTrack.coverColor || 'from-zinc-800 to-zinc-950'} flex items-center justify-center`}>
                 <Music className="w-5 h-5 text-white/80" />
               </div>
             )}
@@ -170,16 +192,16 @@ export const BottomPlayer: React.FC = () => {
               className="text-left w-full block group cursor-pointer focus:outline-none"
             >
               <div className="flex items-center gap-1.5 min-w-0">
-                <h4 className="text-xs sm:text-sm font-semibold text-zinc-100 truncate group-hover:text-indigo-300 transition-colors">
+                <h4 className="text-xs sm:text-sm font-semibold text-zinc-100 truncate group-hover:text-white transition-colors">
                   {currentTrack.title}
                 </h4>
                 {currentTrack.source === 'youtube' && (
-                  <span className="text-[9px] font-mono font-medium px-1.5 py-0.2 rounded bg-red-500/15 text-red-300 border border-red-500/25 shrink-0">
+                  <span className="text-[9px] font-mono font-medium px-1.5 py-0.2 rounded bg-white/[0.06] text-zinc-300 border border-white/10 shrink-0">
                     YouTube
                   </span>
                 )}
                 {currentTrack.source === 'audius' && (
-                  <span className="text-[9px] font-mono font-medium px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 shrink-0">
+                  <span className="text-[9px] font-mono font-medium px-1.5 py-0.2 rounded bg-white/[0.06] text-zinc-300 border border-white/10 shrink-0">
                     Audius
                   </span>
                 )}
@@ -190,12 +212,12 @@ export const BottomPlayer: React.FC = () => {
                       e.stopPropagation();
                       setCurrentView('listen-together');
                     }}
-                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-[10px] font-mono hover:bg-indigo-500/25 transition-colors cursor-pointer shrink-0"
+                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/[0.06] border border-white/10 text-zinc-300 text-[10px] font-mono hover:bg-white/[0.1] transition-colors cursor-pointer shrink-0"
                     title="In Listen Together Room. Click to view room."
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     <span className="truncate max-w-[110px]">Room: {activeRoom.roomName}</span>
-                    <span className="text-zinc-400">({participants.length})</span>
+                    <span className="text-zinc-500">({participants.length})</span>
                   </button>
                 )}
               </div>
@@ -227,7 +249,7 @@ export const BottomPlayer: React.FC = () => {
               onClick={toggleShuffle}
               title={`Shuffle: ${isShuffle ? 'On' : 'Off'}`}
               className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                isShuffle ? 'text-indigo-400 bg-indigo-500/10' : 'text-zinc-400 hover:text-zinc-200'
+                isShuffle ? 'text-white bg-white/10 border border-white/10' : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
               <Shuffle className="w-3.5 h-3.5" />
@@ -235,9 +257,11 @@ export const BottomPlayer: React.FC = () => {
 
             {/* Seek Back 10s */}
             <button
-              onClick={() => seekRelative(-10)}
-              title="Rewind 10s (←)"
-              className="p-1.5 text-zinc-400 hover:text-zinc-200 rounded-lg transition-colors cursor-pointer hidden md:block"
+              onClick={() => handleSeekRelative(-10)}
+              title={isInRoom && !isOwner ? 'Only room host can seek' : 'Rewind 10s (←)'}
+              className={`p-1.5 rounded-lg transition-colors cursor-pointer hidden md:block ${
+                isInRoom && !isOwner ? 'text-zinc-600 cursor-not-allowed' : 'text-zinc-400 hover:text-zinc-200'
+              }`}
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </button>
@@ -251,17 +275,13 @@ export const BottomPlayer: React.FC = () => {
               <SkipBack className="w-4 h-4 fill-current" />
             </button>
 
-            {/* Signature AURA Play / Pause Button with Radiant Glow */}
+            {/* Signature AURA Play / Pause Button */}
             <button
               onClick={isInRoom ? roomTogglePlay : togglePlay}
-              title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
-              className={`p-2.5 rounded-full text-zinc-950 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer ${
-                isPlaying
-                  ? 'bg-white shadow-[0_0_20px_rgba(255,255,255,0.4)]'
-                  : 'bg-white hover:bg-zinc-100 shadow-md'
-              }`}
+              title={isPlaying && !isLocallySilenced ? 'Pause (Space)' : 'Play (Space)'}
+              className="p-2.5 rounded-full text-zinc-950 bg-white hover:bg-zinc-200 active:scale-95 transition-all duration-150 shadow-md cursor-pointer"
             >
-              {isPlaying ? (
+              {isPlaying && !isLocallySilenced ? (
                 <Pause className="w-4 h-4 sm:w-4.5 sm:h-4.5 fill-current" />
               ) : (
                 <Play className="w-4 h-4 sm:w-4.5 sm:h-4.5 fill-current translate-x-0.5" />
@@ -279,9 +299,11 @@ export const BottomPlayer: React.FC = () => {
 
             {/* Seek Forward 10s */}
             <button
-              onClick={() => seekRelative(10)}
-              title="Forward 10s (→)"
-              className="p-1.5 text-zinc-400 hover:text-zinc-200 rounded-lg transition-colors cursor-pointer hidden md:block"
+              onClick={() => handleSeekRelative(10)}
+              title={isInRoom && !isOwner ? 'Only room host can seek' : 'Forward 10s (→)'}
+              className={`p-1.5 rounded-lg transition-colors cursor-pointer hidden md:block ${
+                isInRoom && !isOwner ? 'text-zinc-600 cursor-not-allowed' : 'text-zinc-400 hover:text-zinc-200'
+              }`}
             >
               <RotateCw className="w-3.5 h-3.5" />
             </button>
@@ -291,7 +313,7 @@ export const BottomPlayer: React.FC = () => {
               onClick={cycleRepeat}
               title={`Repeat: ${repeatMode}`}
               className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                repeatMode !== 'off' ? 'text-indigo-400 bg-indigo-500/10' : 'text-zinc-400 hover:text-zinc-200'
+                repeatMode !== 'off' ? 'text-white bg-white/10 border border-white/10' : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
               {repeatMode === 'one' ? <Repeat1 className="w-3.5 h-3.5" /> : <Repeat className="w-3.5 h-3.5" />}
@@ -314,8 +336,8 @@ export const BottomPlayer: React.FC = () => {
                 height={20}
                 barWidth={2}
                 barGap={1.5}
-                activeColor="#818cf8"
-                inactiveColor="rgba(255, 255, 255, 0.12)"
+                activeColor="#ffffff"
+                inactiveColor="rgba(255, 255, 255, 0.14)"
                 showHoverTime={true}
                 markers={markers}
                 onMarkerClick={jumpToMarker}
@@ -348,7 +370,7 @@ export const BottomPlayer: React.FC = () => {
 
             {showSpeedMenu && (
               <div 
-                className="absolute bottom-full mb-2 right-0 p-1.5 rounded-xl bg-[#12141c] border border-white/10 shadow-2xl backdrop-blur-2xl flex flex-col gap-1 z-50 min-w-[75px]"
+                className="absolute bottom-full mb-2 right-0 p-1.5 rounded-xl bg-[#141720] border border-white/[0.08] shadow-2xl flex flex-col gap-1 z-50 min-w-[75px]"
                 onMouseLeave={() => setShowSpeedMenu(false)}
               >
                 {[0.5, 0.75, 1.0, 1.25, 1.5, 2.0].map((rate) => (
@@ -360,7 +382,7 @@ export const BottomPlayer: React.FC = () => {
                     }}
                     className={`px-2.5 py-1 text-xs font-mono text-left rounded-md transition-colors cursor-pointer ${
                       Math.abs(playbackRate - rate) < 0.01
-                        ? 'bg-indigo-600 text-white font-semibold'
+                        ? 'bg-white text-zinc-950 font-semibold'
                         : 'text-zinc-300 hover:bg-white/5'
                     }`}
                   >
@@ -375,7 +397,7 @@ export const BottomPlayer: React.FC = () => {
           <button
             onClick={() => currentTrack && openTrackInfo(currentTrack)}
             title="Track Info & Metadata"
-            className="p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-white/5 transition-colors cursor-pointer"
+            className="p-2 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-white/5 transition-colors cursor-pointer"
           >
             <Info className="w-4 h-4" />
           </button>
@@ -384,15 +406,15 @@ export const BottomPlayer: React.FC = () => {
           <button
             onClick={() => setIsSleepTimerModalOpen(true)}
             title={isSleepTimerActive ? `Sleep Timer Active (${sleepTimerRemainingSecs ? Math.ceil(sleepTimerRemainingSecs/60) + 'm left' : 'End of track'})` : 'Sleep Timer'}
-            className={`relative p-2 rounded-xl transition-colors cursor-pointer ${
+            className={`relative p-2 rounded-lg transition-colors cursor-pointer ${
               isSleepTimerActive
-                ? 'text-indigo-300 bg-indigo-500/20 border border-indigo-500/30'
+                ? 'text-white bg-white/10 border border-white/15'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
             }`}
           >
             <Moon className="w-4 h-4" />
             {isSleepTimerActive && (
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
             )}
           </button>
 
@@ -404,15 +426,15 @@ export const BottomPlayer: React.FC = () => {
                 ? 'Audio Studio (Basic controls active; DSP effects apply to local audio files)'
                 : 'Audio Studio & Parametric EQ (E)'
             }
-            className={`relative p-2 rounded-xl transition-colors cursor-pointer ${
+            className={`relative p-2 rounded-lg transition-colors cursor-pointer ${
               isAudioControlsOpen || (isAudioEffectActive && currentTrack?.source !== 'youtube')
-                ? 'text-indigo-300 bg-indigo-500/20 border border-indigo-500/30'
+                ? 'text-white bg-white/10 border border-white/15'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
             }`}
           >
             <SlidersHorizontal className="w-4 h-4" />
             {isAudioEffectActive && currentTrack?.source !== 'youtube' && (
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-indigo-400" />
+              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-white" />
             )}
           </button>
 
@@ -420,9 +442,9 @@ export const BottomPlayer: React.FC = () => {
           <button
             onClick={() => setIsQueueDrawerOpen(!isQueueDrawerOpen)}
             title="Up Next Queue (Q)"
-            className={`p-2 rounded-xl transition-colors cursor-pointer ${
+            className={`p-2 rounded-lg transition-colors cursor-pointer ${
               isQueueDrawerOpen
-                ? 'text-indigo-300 bg-indigo-500/20 border border-indigo-500/30'
+                ? 'text-white bg-white/10 border border-white/15'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
             }`}
           >
@@ -463,7 +485,7 @@ export const BottomPlayer: React.FC = () => {
           <button
             onClick={() => setIsExpandedPlayerOpen(true)}
             title="Open Studio Atmosphere (F)"
-            className="p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-white/5 transition-colors cursor-pointer"
+            className="p-2 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-white/5 transition-colors cursor-pointer"
           >
             <Maximize2 className="w-4 h-4" />
           </button>

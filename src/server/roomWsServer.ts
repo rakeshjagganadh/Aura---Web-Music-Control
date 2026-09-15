@@ -98,26 +98,50 @@ export function attachRoomWebSocketServer(httpServer: any) {
           if (msg.payload.initialState && !room.state) {
             room.state = msg.payload.initialState;
           }
-          // If server already has room state, reply back to the newly joined client immediately
+          // If server already has room state, reply back to the newly joined client with live elapsed position
           if (room.state && ws.readyState === WebSocket.OPEN) {
+            let stateToSend = room.state;
+            if (stateToSend.isPlaying && stateToSend.updatedAt) {
+              const elapsedSec = Math.max(0, (Date.now() - stateToSend.updatedAt) / 1000) * (stateToSend.playbackRate || 1);
+              const maxDur = stateToSend.currentTrack?.duration || 999999;
+              const livePos = Math.min(maxDur, (stateToSend.position || 0) + elapsedSec);
+              stateToSend = {
+                ...stateToSend,
+                position: livePos,
+                updatedAt: Date.now(),
+              };
+              room.state = stateToSend;
+            }
             ws.send(
               JSON.stringify({
                 type: 'STATE_UPDATE',
                 roomId,
                 senderId: 'server',
-                payload: room.state,
+                payload: stateToSend,
               })
             );
           }
           broadcastParticipants(room);
         } else if (msg.type === 'SYNC_REQUEST') {
           if (room.state && ws.readyState === WebSocket.OPEN) {
+            let stateToSend = room.state;
+            if (stateToSend.isPlaying && stateToSend.updatedAt) {
+              const elapsedSec = Math.max(0, (Date.now() - stateToSend.updatedAt) / 1000) * (stateToSend.playbackRate || 1);
+              const maxDur = stateToSend.currentTrack?.duration || 999999;
+              const livePos = Math.min(maxDur, (stateToSend.position || 0) + elapsedSec);
+              stateToSend = {
+                ...stateToSend,
+                position: livePos,
+                updatedAt: Date.now(),
+              };
+              room.state = stateToSend;
+            }
             ws.send(
               JSON.stringify({
                 type: 'STATE_UPDATE',
                 roomId,
                 senderId: 'server',
-                payload: room.state,
+                payload: stateToSend,
               })
             );
           } else {

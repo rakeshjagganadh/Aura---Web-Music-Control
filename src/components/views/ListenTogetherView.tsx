@@ -40,6 +40,8 @@ export const ListenTogetherView: React.FC = () => {
     isOwner,
     pendingJoinRoomId,
     setPendingJoinRoomId,
+    isLocallySilenced,
+    togglePersonalSilence,
     createRoom,
     joinRoom,
     leaveRoom,
@@ -198,7 +200,7 @@ export const ListenTogetherView: React.FC = () => {
   // =========================================================================
   if (!isInRoom || !activeRoom) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-12 lg:py-16 flex flex-col items-center text-center select-none">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-8 sm:py-12 lg:py-16 flex flex-col items-center text-center select-none overflow-x-hidden">
         
         {/* Visual Badge */}
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-medium mb-6">
@@ -207,18 +209,18 @@ export const ListenTogetherView: React.FC = () => {
         </div>
 
         {/* Main Heading */}
-        <h1 className="text-3xl lg:text-5xl font-extrabold text-white tracking-tight mb-4">
+        <h1 className="text-2xl sm:text-3xl lg:text-5xl font-extrabold text-white tracking-tight mb-3 sm:mb-4">
           Listen Together
         </h1>
-        <p className="text-base lg:text-lg text-zinc-400 max-w-lg mb-10 leading-relaxed">
+        <p className="text-sm sm:text-base lg:text-lg text-zinc-400 max-w-lg mb-8 sm:mb-10 leading-relaxed">
           Share a room. Pick a song. Listen in sync.
         </p>
 
         {/* Primary Actions */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 w-full max-w-md justify-center mb-16">
+        <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full max-w-md justify-center mb-12 sm:mb-16">
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="w-full sm:w-auto flex-1 py-3.5 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full sm:w-auto flex-1 py-3 sm:py-3.5 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
           >
             <Plus className="w-4 h-4" />
             <span>Create a Room</span>
@@ -226,7 +228,7 @@ export const ListenTogetherView: React.FC = () => {
 
           <button
             onClick={() => setIsJoinModalOpen(true)}
-            className="w-full sm:w-auto flex-1 py-3.5 px-6 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-white/10 font-semibold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full sm:w-auto flex-1 py-3 sm:py-3.5 px-6 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-white/10 font-semibold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
           >
             <Users className="w-4 h-4 text-zinc-400" />
             <span>Join a Room</span>
@@ -234,8 +236,8 @@ export const ListenTogetherView: React.FC = () => {
         </div>
 
         {/* Feature Highlights Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-left">
-          <div className="p-6 rounded-2xl bg-[#0b0d13]/70 border border-white/[0.07] backdrop-blur-xl">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 w-full text-left">
+          <div className="p-5 sm:p-6 rounded-2xl bg-[#0b0d13]/70 border border-white/[0.07] backdrop-blur-xl">
             <div className="p-2.5 rounded-xl bg-indigo-600/15 text-indigo-400 border border-indigo-500/20 w-fit mb-4">
               <Radio className="w-5 h-5" />
             </div>
@@ -245,7 +247,7 @@ export const ListenTogetherView: React.FC = () => {
             </p>
           </div>
 
-          <div className="p-6 rounded-2xl bg-[#0b0d13]/70 border border-white/[0.07] backdrop-blur-xl">
+          <div className="p-5 sm:p-6 rounded-2xl bg-[#0b0d13]/70 border border-white/[0.07] backdrop-blur-xl">
             <div className="p-2.5 rounded-xl bg-purple-600/15 text-purple-400 border border-purple-500/20 w-fit mb-4">
               <Sparkles className="w-5 h-5" />
             </div>
@@ -255,13 +257,13 @@ export const ListenTogetherView: React.FC = () => {
             </p>
           </div>
 
-          <div className="p-6 rounded-2xl bg-[#0b0d13]/70 border border-white/[0.07] backdrop-blur-xl">
+          <div className="p-5 sm:p-6 rounded-2xl bg-[#0b0d13]/70 border border-white/[0.07] backdrop-blur-xl">
             <div className="p-2.5 rounded-xl bg-emerald-600/15 text-emerald-400 border border-emerald-500/20 w-fit mb-4">
               <ShieldCheck className="w-5 h-5" />
             </div>
-            <h3 className="text-sm font-bold text-white mb-1.5">Everyone Can Control</h3>
+            <h3 className="text-sm font-bold text-white mb-1.5">Shared Play/Pause Control</h3>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Play, pause, skip, seek, and add music collaboratively without complicated permissions or account walls.
+              Anyone can play, pause, skip, and queue tracks. Scrubbing and seeking are reserved for the host.
             </p>
           </div>
         </div>
@@ -417,55 +419,55 @@ export const ListenTogetherView: React.FC = () => {
   const progressPercent = currentDuration > 0 ? (displayCurrentTime / currentDuration) * 100 : 0;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 flex flex-col gap-6 select-none">
+    <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 flex flex-col gap-4 sm:gap-6 select-none overflow-x-hidden">
       
       {/* 1. ROOM HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 lg:p-6 rounded-3xl bg-[#0b0c12]/80 border border-white/10 backdrop-blur-xl shadow-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-5 lg:p-6 rounded-2xl sm:rounded-3xl bg-[#0b0c12]/80 border border-white/10 backdrop-blur-xl shadow-xl">
         
         {/* Left: Back / Title / Presence count */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
           <button
             onClick={leaveRoom}
-            className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+            className="p-2 sm:p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors cursor-pointer shrink-0"
             title="Leave room"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
 
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-xl lg:text-2xl font-bold text-white tracking-tight">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+              <h1 className="text-base sm:text-xl lg:text-2xl font-bold text-white tracking-tight truncate max-w-[180px] xs:max-w-[260px] sm:max-w-md">
                 {activeRoom.roomName}
               </h1>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 shrink-0">
                 #{activeRoom.roomId}
               </span>
             </div>
 
-            <div className="flex items-center gap-3 mt-1 text-xs">
-              <div className="flex items-center gap-1.5 text-emerald-400 font-medium">
+            <div className="flex items-center gap-2 sm:gap-3 mt-1 text-xs flex-wrap">
+              <div className="flex items-center gap-1.5 text-emerald-400 font-medium shrink-0">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span>{participants.length || 1} listening</span>
               </div>
-              <span className="text-zinc-600">•</span>
-              <span className="text-zinc-400">Host: {activeRoom.ownerName}</span>
+              <span className="text-zinc-600 hidden xs:inline">•</span>
+              <span className="text-zinc-400 truncate max-w-[140px] sm:max-w-none">Host: {activeRoom.ownerName}</span>
             </div>
           </div>
         </div>
 
         {/* Right: Copy Link & Share Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0 pt-1 sm:pt-0 justify-end">
           <button
             onClick={handleCopyLink}
-            className="py-2 px-3.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-200 border border-white/10 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="py-1.5 sm:py-2 px-3 sm:px-3.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-200 border border-white/10 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-zinc-400" />}
-            <span>{copied ? 'Copied Link' : 'Copy Invite Link'}</span>
+            <span>{copied ? 'Copied' : 'Invite'}</span>
           </button>
 
           <button
             onClick={shareInviteLink}
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 transition-colors cursor-pointer"
+            className="p-1.5 sm:p-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 transition-colors cursor-pointer"
             title="Share room"
           >
             <Share2 className="w-4 h-4" />
@@ -473,7 +475,7 @@ export const ListenTogetherView: React.FC = () => {
 
           <button
             onClick={leaveRoom}
-            className="py-2 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 text-xs font-medium transition-colors cursor-pointer"
+            className="py-1.5 sm:py-2 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 text-xs font-medium transition-colors cursor-pointer"
           >
             Leave
           </button>
@@ -481,13 +483,13 @@ export const ListenTogetherView: React.FC = () => {
       </div>
 
       {/* 2. MAIN ROOM CONTENT GRID */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         
         {/* LEFT COLUMN: NOW PLAYING & QUEUE (Span 2) */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
+        <div className="lg:col-span-2 flex flex-col gap-4 sm:gap-6">
           
           {/* NOW PLAYING CARD */}
-          <div className="p-6 rounded-3xl bg-[#0d0f18]/80 border border-white/10 backdrop-blur-xl shadow-xl flex flex-col gap-6">
+          <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#0d0f18]/80 border border-white/10 backdrop-blur-xl shadow-xl flex flex-col gap-5 sm:gap-6 overflow-hidden">
             <div className="flex items-center justify-between text-xs text-zinc-400 border-b border-white/5 pb-3">
               <span className="font-mono uppercase tracking-widest text-[10px] text-zinc-500 font-semibold">
                 NOW PLAYING
@@ -500,9 +502,9 @@ export const ListenTogetherView: React.FC = () => {
               </div>
             </div>
 
-            {/* Artwork & Info */}
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 text-center sm:text-left">
-              <div className="relative w-28 h-28 lg:w-36 lg:h-36 rounded-2xl overflow-hidden bg-zinc-900 border border-white/10 shrink-0 shadow-lg group">
+            {/* Artwork & Info - Perfectly constrained for mobile screens */}
+            <div className="w-full min-w-0 flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5 text-center sm:text-left">
+              <div className="relative w-32 h-32 sm:w-28 sm:h-28 lg:w-36 lg:h-36 rounded-2xl overflow-hidden bg-zinc-900 border border-white/10 shrink-0 shadow-lg group">
                 {currentTrack?.coverUrl ? (
                   <img
                     src={currentTrack.coverUrl}
@@ -525,29 +527,42 @@ export const ListenTogetherView: React.FC = () => {
                 )}
               </div>
 
-              <div className="flex-1 min-w-0 flex flex-col justify-center">
-                <h2 className="text-xl lg:text-2xl font-bold text-white truncate mb-1">
+              <div className="w-full min-w-0 max-w-full flex flex-col justify-center overflow-hidden">
+                <h2 
+                  className="text-base sm:text-xl lg:text-2xl font-bold text-white leading-snug break-words line-clamp-2 sm:truncate mb-1 w-full"
+                  title={currentTrack?.title}
+                >
                   {currentTrack?.title || 'No Track Playing'}
                 </h2>
-                <p className="text-sm text-zinc-400 truncate mb-3">
+                <p 
+                  className="text-xs sm:text-sm text-zinc-400 truncate w-full mb-2"
+                  title={currentTrack?.artist}
+                >
                   {currentTrack?.artist || 'Add a song to start listening together'}
                 </p>
 
                 {currentTrack && (
-                  <div className="flex items-center gap-2 justify-center sm:justify-start text-xs font-mono text-zinc-500">
-                    <span>{currentTrack.album || 'Single'}</span>
+                  <div className="flex items-center gap-2 justify-center sm:justify-start text-[11px] sm:text-xs font-mono text-zinc-500 truncate w-full">
+                    <span className="truncate max-w-[140px] sm:max-w-none">{currentTrack.album || 'Single'}</span>
                     <span>•</span>
-                    <span>{formatSeconds(currentTrack.duration)}</span>
+                    <span className="shrink-0">{formatSeconds(currentTrack.duration)}</span>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Scrubber Progress Bar */}
-            <div className="flex flex-col gap-1.5 pt-2">
+            <div className="flex flex-col gap-1.5 pt-1 w-full">
               <div
-                className="relative h-2 rounded-full bg-white/10 overflow-hidden cursor-pointer group"
+                className={`relative h-2.5 sm:h-2 rounded-full bg-white/10 overflow-hidden ${
+                  isOwner ? 'cursor-pointer group' : 'cursor-not-allowed opacity-85'
+                }`}
+                title={isOwner ? 'Click to seek (Host)' : 'Only the host can seek'}
                 onClick={(e) => {
+                  if (!isOwner) {
+                    showToast('Only the host can seek the track backwards or forwards.', 'info');
+                    return;
+                  }
                   if (!currentDuration) return;
                   const rect = e.currentTarget.getBoundingClientRect();
                   const clickX = e.clientX - rect.left;
@@ -561,17 +576,20 @@ export const ListenTogetherView: React.FC = () => {
                 />
               </div>
 
-              <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400">
+              <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400 px-0.5">
                 <span>{formatSeconds(displayCurrentTime)}</span>
+                <span className="text-[10px] text-zinc-500 font-sans">
+                  {isOwner ? '★ Host Seek' : 'Host Controls Seek'}
+                </span>
                 <span>{formatSeconds(currentDuration)}</span>
               </div>
             </div>
 
-            {/* Playback Controls */}
-            <div className="flex items-center justify-center gap-4 pt-1">
+            {/* Playback Controls - Open to everyone in the room */}
+            <div className="flex items-center justify-center gap-4 sm:gap-6 pt-1">
               <button
                 onClick={() => roomPrev()}
-                className="p-3 rounded-2xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                className="p-2.5 sm:p-3 rounded-2xl text-zinc-400 hover:text-white hover:bg-white/5 active:scale-95 transition-all cursor-pointer"
                 title="Previous track"
               >
                 <SkipBack className="w-5 h-5 fill-current" />
@@ -579,10 +597,10 @@ export const ListenTogetherView: React.FC = () => {
 
               <button
                 onClick={() => roomTogglePlay()}
-                className="p-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
-                title={isPlaying ? 'Pause' : 'Play'}
+                className="p-3.5 sm:p-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 active:scale-95 transition-all cursor-pointer"
+                title={isPlaying && !isLocallySilenced ? 'Pause Room' : 'Play Room'}
               >
-                {isPlaying ? (
+                {isPlaying && !isLocallySilenced ? (
                   <Pause className="w-6 h-6 fill-current" />
                 ) : (
                   <Play className="w-6 h-6 fill-current ml-0.5" />
@@ -591,19 +609,44 @@ export const ListenTogetherView: React.FC = () => {
 
               <button
                 onClick={() => roomNext()}
-                className="p-3 rounded-2xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                className="p-2.5 sm:p-3 rounded-2xl text-zinc-400 hover:text-white hover:bg-white/5 active:scale-95 transition-all cursor-pointer"
                 title="Next track"
               >
                 <SkipForward className="w-5 h-5 fill-current" />
               </button>
             </div>
+
+            {/* Solo Break / Personal Silence */}
+            <div className="pt-1 flex justify-center w-full">
+              <button
+                onClick={togglePersonalSilence}
+                className={`max-w-full px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-2 border transition-all cursor-pointer ${
+                  isLocallySilenced
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/30 shadow-[0_0_12px_rgba(245,158,11,0.2)]'
+                    : 'bg-white/5 text-zinc-400 border-white/10 hover:text-white hover:bg-white/10'
+                }`}
+                title="Pause or resume audio on your device only"
+              >
+                {isLocallySilenced ? (
+                  <>
+                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                    <span className="truncate">Solo Break Active (Muted for You) • Resume</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                    <span className="truncate">Solo Break / Take Call (Personal Mute)</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* SHARED QUEUE (UP NEXT) */}
-          <div className="p-6 rounded-3xl bg-[#0b0c12]/80 border border-white/10 backdrop-blur-xl shadow-xl flex flex-col gap-4">
+          <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#0b0c12]/80 border border-white/10 backdrop-blur-xl shadow-xl flex flex-col gap-4 overflow-hidden">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-white">Up Next</h3>
+                <h3 className="text-sm sm:text-base font-bold text-white">Up Next</h3>
                 <p className="text-xs text-zinc-400">
                   Shared queue • {activeRoom.queue.length} track{activeRoom.queue.length === 1 ? '' : 's'}
                 </p>
@@ -611,7 +654,7 @@ export const ListenTogetherView: React.FC = () => {
 
               <button
                 onClick={() => setIsAddMusicModalOpen(true)}
-                className="py-2 px-3 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="py-1.5 sm:py-2 px-3 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>+ Add Music</span>
@@ -620,7 +663,7 @@ export const ListenTogetherView: React.FC = () => {
 
             {/* Queue List */}
             {activeRoom.queue.length === 0 ? (
-              <div className="py-12 text-center flex flex-col items-center gap-3 text-zinc-500 border border-dashed border-white/10 rounded-2xl">
+              <div className="py-10 text-center flex flex-col items-center gap-3 text-zinc-500 border border-dashed border-white/10 rounded-2xl">
                 <Music2 className="w-8 h-8 stroke-1 text-zinc-600" />
                 <p className="text-xs">The shared queue is empty.</p>
                 <button
@@ -637,14 +680,14 @@ export const ListenTogetherView: React.FC = () => {
                   return (
                     <div
                       key={`${track.id}-${idx}`}
-                      className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${
+                      className={`flex items-center justify-between p-2 sm:p-2.5 rounded-xl border transition-all gap-2 w-full min-w-0 ${
                         isCurrent
                           ? 'bg-indigo-950/40 border-indigo-500/30 text-white'
                           : 'bg-white/[0.02] border-white/5 text-zinc-300 hover:bg-white/[0.04]'
                       }`}
                     >
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <span className="text-xs font-mono text-zinc-500 w-5 text-right shrink-0">
+                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 overflow-hidden">
+                        <span className="text-xs font-mono text-zinc-500 w-4 sm:w-5 text-right shrink-0">
                           {idx + 1}
                         </span>
 
@@ -656,19 +699,24 @@ export const ListenTogetherView: React.FC = () => {
                           )}
                         </div>
 
-                        <div className="min-w-0 flex-1">
-                          <p className={`text-xs font-medium truncate ${isCurrent ? 'text-indigo-200 font-bold' : 'text-zinc-200'}`}>
+                        <div className="min-w-0 flex-1 overflow-hidden">
+                          <p 
+                            className={`text-xs font-medium truncate ${isCurrent ? 'text-indigo-200 font-bold' : 'text-zinc-200'}`}
+                            title={track.title}
+                          >
                             {track.title}
                           </p>
-                          <p className="text-[11px] text-zinc-400 truncate">
+                          <p className="text-[11px] text-zinc-400 truncate" title={track.artist}>
                             {track.artist}
                           </p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2.5 shrink-0">
-                        {renderSourceBadge(track.source)}
-                        <span className="text-[11px] font-mono text-zinc-500">
+                      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                        <span className="hidden sm:inline-flex">
+                          {renderSourceBadge(track.source)}
+                        </span>
+                        <span className="text-[11px] font-mono text-zinc-500 hidden xs:inline-block">
                           {formatSeconds(track.duration)}
                         </span>
 
@@ -698,10 +746,10 @@ export const ListenTogetherView: React.FC = () => {
         </div>
 
         {/* RIGHT COLUMN: PARTICIPANTS & ACTIVITY (Span 1) */}
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4 sm:gap-6">
           
           {/* PARTICIPANTS CARD */}
-          <div className="p-6 rounded-3xl bg-[#0b0c12]/80 border border-white/10 backdrop-blur-xl shadow-xl flex flex-col gap-4">
+          <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#0b0c12]/80 border border-white/10 backdrop-blur-xl shadow-xl flex flex-col gap-4">
             <div className="flex items-center justify-between border-b border-white/5 pb-3">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <Users className="w-4 h-4 text-indigo-400" />
@@ -729,20 +777,20 @@ export const ListenTogetherView: React.FC = () => {
                   key={p.id}
                   className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.02] border border-white/5"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div className="relative">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="relative shrink-0">
                       <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-[11px] font-bold text-white">
                         {p.name.charAt(0).toUpperCase()}
                       </div>
                       <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#0b0c12]" />
                     </div>
-                    <span className="text-xs font-medium text-zinc-200">
+                    <span className="text-xs font-medium text-zinc-200 truncate">
                       {p.name} {p.isSelf && <span className="text-zinc-500 text-[10px]">(You)</span>}
                     </span>
                   </div>
 
                   {p.isOwner && (
-                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">
                       Host
                     </span>
                   )}
@@ -752,7 +800,7 @@ export const ListenTogetherView: React.FC = () => {
           </div>
 
           {/* ROOM ACTIVITY CARD */}
-          <div className="p-6 rounded-3xl bg-[#0b0c12]/80 border border-white/10 backdrop-blur-xl shadow-xl flex flex-col gap-4">
+          <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#0b0c12]/80 border border-white/10 backdrop-blur-xl shadow-xl flex flex-col gap-4">
             <div className="flex items-center justify-between border-b border-white/5 pb-3">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <Activity className="w-4 h-4 text-indigo-400" />
@@ -761,14 +809,14 @@ export const ListenTogetherView: React.FC = () => {
               <span className="text-[10px] font-mono text-zinc-500">Live</span>
             </div>
 
-            <div className="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">
+            <div className="flex flex-col gap-2 max-h-52 sm:max-h-60 overflow-y-auto pr-1">
               {activities.length === 0 ? (
                 <p className="text-xs text-zinc-500 italic py-2">No activity yet</p>
               ) : (
                 activities.map((act) => (
                   <div key={act.id} className="text-xs text-zinc-400 flex items-start gap-2 py-1">
                     <span className="text-zinc-600 text-[10px] font-mono mt-0.5">•</span>
-                    <p className="leading-tight">
+                    <p className="leading-tight break-words">
                       <strong className="text-zinc-200 font-semibold">{act.userName}</strong>{' '}
                       {act.actionText}
                     </p>
@@ -779,7 +827,7 @@ export const ListenTogetherView: React.FC = () => {
           </div>
 
           {/* ROOM DETAILS & CONNECTION INFO */}
-          <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col gap-2 text-xs text-zinc-500 font-mono">
+          <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col gap-2 text-xs text-zinc-500 font-mono">
             <div className="flex items-center justify-between">
               <span>Sync Backend:</span>
               <span className="text-zinc-300 capitalize">{backendType}</span>
@@ -789,8 +837,12 @@ export const ListenTogetherView: React.FC = () => {
               <span className="text-zinc-300">Server Realtime</span>
             </div>
             <div className="flex items-center justify-between">
-              <span>Permissions:</span>
-              <span className="text-emerald-400">Collaborative (All)</span>
+              <span>Seek Control:</span>
+              <span className="text-amber-400">Host Exclusive</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Play/Pause:</span>
+              <span className="text-emerald-400">All Members</span>
             </div>
           </div>
 

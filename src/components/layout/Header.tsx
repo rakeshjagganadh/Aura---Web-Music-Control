@@ -102,7 +102,7 @@ export const Header: React.FC<{
   };
 
   return (
-    <header className="h-16 border-b border-white/5 bg-[#090a0d]/90 backdrop-blur-xl px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 sticky top-0 z-30 select-none">
+    <header className="h-16 border-b border-white/[0.06] bg-[#0d0f15] px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 sticky top-0 z-30 select-none">
       
       {/* Brand Logo or Back Button if inside Playlist Detail on mobile */}
       <div className="flex items-center gap-2">
@@ -113,7 +113,7 @@ export const Header: React.FC<{
               setSelectedPlaylistId(null);
               setCurrentView('playlists');
             }}
-            className="lg:hidden p-2 -ml-1 rounded-xl text-zinc-400 hover:text-white active:bg-zinc-800 transition-colors"
+            className="lg:hidden p-2 -ml-1 rounded-lg text-zinc-400 hover:text-white active:bg-white/5 transition-colors"
             title="Back to Playlists"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -128,11 +128,11 @@ export const Header: React.FC<{
           className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group"
           id="header-brand-logo"
         >
-          <AuraBrandMark isPlaying={isPlaying} size={32} />
+          <AuraBrandMark isPlaying={isPlaying} size={30} />
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="text-sm font-extrabold text-white tracking-widest font-sans">AURA</span>
-              <span className="text-[9px] font-mono font-bold tracking-wider px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/25">
+              <span className="text-sm font-bold text-white tracking-tight font-display">AURA</span>
+              <span className="text-[9px] font-mono font-medium tracking-wider px-1.5 py-0.5 rounded bg-white/[0.06] text-zinc-400 border border-white/[0.08]">
                 STUDIO
               </span>
             </div>
@@ -146,7 +146,7 @@ export const Header: React.FC<{
         <input
           ref={searchInputRef}
           type="text"
-          placeholder="Search songs, artists... (Enter for next, / to focus)"
+          placeholder="Search songs, artists, spaces... (/ to focus)"
           value={searchQuery}
           onKeyDown={handleSearchKeyDown}
           onChange={(e) => {
@@ -155,7 +155,7 @@ export const Header: React.FC<{
               setCurrentView('songs');
             }
           }}
-          className="w-full pl-9 pr-28 py-2 rounded-xl bg-zinc-900/70 hover:bg-zinc-900 focus:bg-zinc-900 border border-white/5 focus:border-indigo-500/50 text-xs text-zinc-200 placeholder:text-zinc-500 focus:outline-none transition-all"
+          className="w-full pl-9 pr-28 py-2 rounded-lg bg-[#131620] hover:bg-[#161a26] focus:bg-[#161a26] border border-white/[0.08] focus:border-white/20 text-xs text-zinc-100 placeholder:text-zinc-500 focus:outline-none transition-all"
         />
         
         {searchQuery ? (
@@ -201,7 +201,7 @@ export const Header: React.FC<{
             </button>
           </div>
         ) : (
-          <kbd className="hidden sm:inline-block absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-mono text-zinc-500 bg-zinc-800 rounded border border-white/5">
+          <kbd className="hidden sm:inline-block absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-mono text-zinc-500 bg-white/[0.04] rounded border border-white/[0.06]">
             /
           </kbd>
         )}
@@ -215,7 +215,7 @@ export const Header: React.FC<{
           <button
             type="button"
             onClick={onOpenMobileSearch}
-            className="sm:hidden p-2 rounded-xl text-zinc-400 hover:text-white active:bg-zinc-800 transition-colors"
+            className="sm:hidden p-2 rounded-lg text-zinc-400 hover:text-white active:bg-white/5 transition-colors"
             title="Search"
           >
             <Search className="w-4 h-4" />
@@ -225,27 +225,27 @@ export const Header: React.FC<{
         {/* Local Storage badge */}
         <div 
           onClick={() => setCurrentView('settings')}
-          className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900/50 border border-white/5 text-[11px] text-zinc-400 font-mono cursor-pointer hover:border-white/10 transition-colors"
-          title="Local IndexedDB storage usage"
+          className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-[11px] text-zinc-400 font-mono cursor-pointer hover:border-white/10 transition-colors"
+          title="Local storage database usage"
         >
-          <HardDrive className="w-3.5 h-3.5 text-emerald-400" />
+          <HardDrive className="w-3.5 h-3.5 text-zinc-400" />
           <span>{formatStorageMB(storageUsage.approxBytes)}</span>
         </div>
 
         {/* Demo Pack Loader */}
         <button
           onClick={loadDemoPack}
-          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 border border-white/5 text-zinc-300 text-xs font-medium transition-colors cursor-pointer"
+          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.09] border border-white/[0.08] text-zinc-300 text-xs font-medium transition-colors cursor-pointer"
           title="Synthesize royalty-free sample music"
         >
-          <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+          <Sparkles className="w-3.5 h-3.5 text-zinc-400" />
           Demo Pack
         </button>
 
         {/* Add Music Button */}
         <button
           onClick={() => setIsUploadModalOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium shadow-md shadow-indigo-600/20 transition-all active:scale-95 cursor-pointer"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-semibold transition-all active:scale-95 cursor-pointer shadow-sm"
         >
           <Plus className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Add Music</span>
@@ -254,12 +254,12 @@ export const Header: React.FC<{
         {/* Queue Drawer Trigger */}
         <button
           onClick={() => setIsQueueDrawerOpen(true)}
-          className="relative p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 transition-colors cursor-pointer"
+          className="relative p-2 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.05] transition-colors cursor-pointer"
           title="Play Queue"
         >
           <ListMusic className="w-4 h-4" />
           {queue.length > 0 && (
-            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-indigo-500" />
+            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400" />
           )}
         </button>
 
@@ -267,7 +267,7 @@ export const Header: React.FC<{
         {onOpenAccount && (
           <button
             onClick={onOpenAccount}
-            className="p-2 rounded-xl text-zinc-400 hover:text-indigo-300 hover:bg-zinc-900 transition-colors cursor-pointer"
+            className="p-2 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.05] transition-colors cursor-pointer"
             title="AURA Profile & Studio Sync"
           >
             <User className="w-4 h-4" />
@@ -277,7 +277,7 @@ export const Header: React.FC<{
         {/* Shortcuts ? (Desktop) */}
         <button
           onClick={() => setIsShortcutsModalOpen(true)}
-          className="hidden sm:flex p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 transition-colors cursor-pointer"
+          className="hidden sm:flex p-2 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.05] transition-colors cursor-pointer"
           title="Keyboard Shortcuts (?)"
         >
           <Keyboard className="w-4 h-4" />
