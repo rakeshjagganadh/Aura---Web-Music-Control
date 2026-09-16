@@ -1,5 +1,6 @@
 import {
   IRoomRealtimeAdapter,
+  LivePlaybackPositionProvider,
   RealtimeBackendType,
   RoomActionPayload,
   RoomActivityItem,
@@ -24,11 +25,51 @@ export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
   private currentParticipant: RoomParticipant | null = null;
   private currentState: SharedRoomState | null = null;
   private participants: Map<string, RoomParticipant> = new Map();
+  private livePositionProvider: LivePlaybackPositionProvider | null = null;
 
   private stateListeners = new Set<(state: SharedRoomState) => void>();
   private participantsListeners = new Set<(participants: RoomParticipant[]) => void>();
   private activityListeners = new Set<(activity: RoomActivityItem) => void>();
   private statusListeners = new Set<(status: RoomConnectionStatus) => void>();
+
+  public setLivePositionProvider(provider: LivePlaybackPositionProvider | null): void {
+    this.livePositionProvider = provider;
+  }
+
+  private getAuthoritativeHostState(): SharedRoomState {
+    if (!this.currentState) return this.currentState as any;
+    let liveState = { ...this.currentState };
+
+    if (this.livePositionProvider) {
+      try {
+        const live = this.livePositionProvider();
+        if (live && typeof live.position === 'number' && !isNaN(live.position)) {
+          liveState.position = Math.max(0, live.position);
+          if (typeof live.isPlaying === 'boolean') {
+            liveState.isPlaying = live.isPlaying;
+          }
+          if (typeof live.playbackRate === 'number' && live.playbackRate > 0) {
+            liveState.playbackRate = live.playbackRate;
+          }
+          liveState.updatedAt = Date.now();
+          this.currentState = liveState;
+          return liveState;
+        }
+      } catch (err) {
+        console.warn('Error querying live playback position in direct adapter:', err);
+      }
+    }
+
+    if (liveState.isPlaying && liveState.updatedAt) {
+      const rawElapsed = (Date.now() - liveState.updatedAt) / 1000;
+      const elapsed = Math.max(0, Math.min(3, rawElapsed)) * (liveState.playbackRate || 1);
+      const maxDur = liveState.currentTrack?.duration || 999999;
+      liveState.position = Math.min(maxDur, (liveState.position || 0) + elapsed);
+      liveState.updatedAt = Date.now();
+      this.currentState = liveState;
+    }
+    return liveState;
+  }
 
   private pingInterval: any = null;
   private reconnectTimeout: any = null;
@@ -250,18 +291,7 @@ export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
           this.currentState.ownerId === this.currentParticipant.id;
 
         if (isOwner && this.currentState) {
-          let liveState = this.currentState;
-          if (liveState.isPlaying && liveState.updatedAt) {
-            const elapsed = Math.max(0, (Date.now() - liveState.updatedAt) / 1000) * (liveState.playbackRate || 1);
-            const maxDur = liveState.currentTrack?.duration || 999999;
-            const livePos = Math.min(maxDur, (liveState.position || 0) + elapsed);
-            liveState = {
-              ...liveState,
-              position: livePos,
-              updatedAt: Date.now(),
-            };
-          }
-
+          const liveState = this.getAuthoritativeHostState();
           this.broadcastLocally({
             type: 'STATE_UPDATE',
             roomId: this.roomId!,
@@ -278,18 +308,7 @@ export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
 
       // Only host or standalone peer in BroadcastChannel should reply with live state
       if (this.currentState && (isOwner || !this.socket || this.socket.readyState !== WebSocket.OPEN)) {
-        let liveState = this.currentState;
-        if (liveState.isPlaying && liveState.updatedAt) {
-          const elapsed = Math.max(0, (Date.now() - liveState.updatedAt) / 1000) * (liveState.playbackRate || 1);
-          const maxDur = liveState.currentTrack?.duration || 999999;
-          const livePos = Math.min(maxDur, (liveState.position || 0) + elapsed);
-          liveState = {
-            ...liveState,
-            position: livePos,
-            updatedAt: Date.now(),
-          };
-        }
-
+        const liveState = this.getAuthoritativeHostState();
         this.broadcastLocally({
           type: 'STATE_UPDATE',
           roomId: this.roomId!,

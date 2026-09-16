@@ -53,25 +53,13 @@ export const YouTubeEmbedPlayer: React.FC = () => {
               if (event.data === 1) {
                 // Confirmed Playing
                 youtubePlayerBridge.updateState({ isPlaying: true });
+                youtubePlayerBridge.applyPendingSyncSeekIfNeeded();
                 const dur = event.target?.getDuration?.();
                 if (typeof dur === 'number' && !isNaN(dur) && dur > 0) {
                   youtubePlayerBridge.updateState({ duration: dur });
                 }
               } else if (event.data === 2) {
-                // Check if this pause was involuntary (mobile browser minimizing / backgrounding tab)
-                const isTabHidden = typeof document !== 'undefined' && document.visibilityState === 'hidden';
-                const isExplicit = youtubePlayerBridge.isUserExplicitPause();
-
-                if (isTabHidden && !isExplicit) {
-                  // Involuntary pause caused by mobile browser switching to another app (e.g. WhatsApp)
-                  // Attempt immediate resume so playback stays alive in background
-                  try {
-                    event.target?.playVideo?.();
-                  } catch {}
-                  return;
-                }
-
-                // Confirmed intentional pause
+                // Confirmed Pause (standard YouTube IFrame behavior)
                 youtubePlayerBridge.updateState({ isPlaying: false });
               } else if (event.data === 0) {
                 // Confirmed Ended

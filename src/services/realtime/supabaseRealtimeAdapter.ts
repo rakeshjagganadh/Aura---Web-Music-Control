@@ -2,6 +2,7 @@ import { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 import { getSupabaseClient } from './supabaseClient';
 import {
   IRoomRealtimeAdapter,
+  LivePlaybackPositionProvider,
   RealtimeBackendType,
   RoomActionPayload,
   RoomActivityItem,
@@ -18,6 +19,7 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
   private roomId: string | null = null;
   private currentParticipant: RoomParticipant | null = null;
   private currentState: SharedRoomState | null = null;
+  private livePositionProvider: LivePlaybackPositionProvider | null = null;
 
   private stateListeners = new Set<(state: SharedRoomState) => void>();
   private participantsListeners = new Set<(participants: RoomParticipant[]) => void>();
@@ -26,6 +28,52 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
 
   constructor() {
     this.client = getSupabaseClient();
+  }
+
+  public setLivePositionProvider(provider: LivePlaybackPositionProvider | null): void {
+    this.livePositionProvider = provider;
+  }
+
+  /**
+   * Captures the host's actual live playback position directly from the player engine.
+   * Updates position and sets updatedAt = Date.now() so joining participants never extrapolate stale time.
+   */
+  private getAuthoritativeHostState(): SharedRoomState {
+    if (!this.currentState) return this.currentState as any;
+    let liveState = { ...this.currentState };
+
+    if (this.livePositionProvider) {
+      try {
+        const live = this.livePositionProvider();
+        if (live && typeof live.position === 'number' && !isNaN(live.position)) {
+          liveState.position = Math.max(0, live.position);
+          if (typeof live.isPlaying === 'boolean') {
+            liveState.isPlaying = live.isPlaying;
+          }
+          if (typeof live.playbackRate === 'number' && live.playbackRate > 0) {
+            liveState.playbackRate = live.playbackRate;
+          }
+          liveState.updatedAt = Date.now();
+          this.currentState = liveState;
+          return liveState;
+        }
+      } catch (err) {
+        console.warn('Error querying live playback position provider on host:', err);
+      }
+    }
+
+    // Fallback if no live provider registered: calculate elapsed since last update
+    if (liveState.isPlaying && liveState.updatedAt) {
+      const rawElapsed = (Date.now() - liveState.updatedAt) / 1000;
+      // Cap at 3s if unanchored to avoid large jumps
+      const elapsed = Math.max(0, Math.min(3, rawElapsed)) * (liveState.playbackRate || 1);
+      const maxDur = liveState.currentTrack?.duration || 999999;
+      liveState.position = Math.min(maxDur, (liveState.position || 0) + elapsed);
+      liveState.updatedAt = Date.now();
+      this.currentState = liveState;
+    }
+
+    return liveState;
   }
 
   public async connect(
@@ -128,8 +176,9 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
       const incomingState = payload as SharedRoomState;
       if (!incomingState || (incomingState.roomId && incomingState.roomId.toLowerCase() !== this.roomId)) return;
 
-      // Version monotonic guard: do not accept stale updates
-      if (this.currentState && incomingState.version < this.currentState.version) {
+      // Version monotonic guard: do not accept stale updates unless it is a fresh live sync response from the host
+      const isFreshHostSync = Math.abs(Date.now() - (incomingState.updatedAt || 0)) < 4000;
+      if (this.currentState && incomingState.version < this.currentState.version && !isFreshHostSync) {
         return;
       }
 
@@ -149,13 +198,20 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
       }
     });
 
-    // Listen for state requests from joining peers (Host answers with current state)
+    // Listen for state requests from joining peers (Host answers with fresh live state)
     this.channel.on('broadcast', { event: 'REQUEST_ROOM_STATE' }, () => {
-      if (this.currentState && this.channel) {
+      const isOwner =
+        this.currentParticipant &&
+        this.currentState &&
+        this.currentState.ownerId === this.currentParticipant.id;
+
+      // ONLY the room host/owner answers to avoid multi-peer state collision
+      if (isOwner && this.channel && this.currentState) {
+        const liveState = this.getAuthoritativeHostState();
         this.channel.send({
           type: 'broadcast',
           event: 'ROOM_STATE_UPDATED',
-          payload: this.currentState,
+          payload: liveState,
         });
       }
     });
@@ -293,20 +349,21 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
             timestamp: Date.now(),
           });
 
-          // Creator or existing state already known
-          if (this.currentState) {
+          // Creator / Room Owner: resolves immediately with authoritative current state
+          if (participant.isOwner && this.currentState) {
             resolveConnection(this.currentState);
             return;
           }
 
-          // Guest: Request current state from existing room peers
+          // Guest / Joining Participant:
+          // ALWAYS send REQUEST_ROOM_STATE to the active Host, even if this.currentState was loaded from DB!
           this.channel?.send({
             type: 'broadcast',
             event: 'REQUEST_ROOM_STATE',
             payload: { requesterId: participant.id },
           });
 
-          // Retries at 400ms and 1000ms for instant handshake
+          // Fast retries at 250ms and 650ms for instant handshake with Host
           setTimeout(() => {
             if (!isConnectResolved && this.channel) {
               this.channel.send({
@@ -315,7 +372,7 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
                 payload: { requesterId: participant.id },
               });
             }
-          }, 400);
+          }, 250);
 
           setTimeout(() => {
             if (!isConnectResolved && this.channel) {
@@ -325,12 +382,13 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
                 payload: { requesterId: participant.id },
               });
             }
-          }, 1000);
+          }, 650);
 
-          // Grace period timeout: If after 3.5s no state was received and presence is empty
+          // Grace period timeout: If after 1200ms no active host responded
           setTimeout(() => {
             if (!isConnectResolved) {
               if (this.currentState) {
+                // If database snapshot exists but host is not active, resolve with snapshot without extrapolating stale time
                 resolveConnection(this.currentState);
               } else {
                 const presenceState = this.channel?.presenceState() || {};

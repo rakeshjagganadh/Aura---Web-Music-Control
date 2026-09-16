@@ -57,6 +57,7 @@ class YouTubePlayerBridge {
   private isSeeking = false;
   private seekResumeTimeout: any = null;
   private userExplicitPause: boolean = false;
+  private pendingSyncSeek: number | null = null;
 
   public isUserExplicitPause(): boolean {
     return this.userExplicitPause;
@@ -64,6 +65,37 @@ class YouTubePlayerBridge {
 
   public setUserExplicitPause(val: boolean) {
     this.userExplicitPause = val;
+  }
+
+  public setPendingSyncSeek(seconds: number): void {
+    const safeSecs = Math.max(0, isNaN(seconds) ? 0 : seconds);
+    this.pendingSyncSeek = safeSecs;
+    if (this.isPlayerReady() && this.currentState.isPlaying) {
+      const current = this.getCurrentTime();
+      if (Math.abs(current - safeSecs) > 1.0) {
+        this.seekTo(safeSecs);
+      }
+      this.pendingSyncSeek = null;
+    }
+  }
+
+  public getPendingSyncSeek(): number | null {
+    return this.pendingSyncSeek;
+  }
+
+  public clearPendingSyncSeek(): void {
+    this.pendingSyncSeek = null;
+  }
+
+  public applyPendingSyncSeekIfNeeded(): void {
+    if (this.pendingSyncSeek !== null && this.isPlayerReady()) {
+      const target = this.pendingSyncSeek;
+      this.pendingSyncSeek = null;
+      const current = this.getCurrentTime();
+      if (Math.abs(current - target) > 1.0) {
+        this.seekTo(target);
+      }
+    }
   }
 
   public registerPlayer(player: any) {
@@ -77,6 +109,8 @@ class YouTubePlayerBridge {
       this.pendingRequest = null;
       this.executeLoadAndPlay(req);
     }
+
+    this.applyPendingSyncSeekIfNeeded();
   }
 
   public unregisterPlayer() {

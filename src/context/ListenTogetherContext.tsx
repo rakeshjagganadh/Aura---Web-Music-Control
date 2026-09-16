@@ -11,6 +11,8 @@ import {
   trackToSharedTrack,
 } from '../services/realtime/types';
 import { roomService } from '../services/realtime/roomService';
+import { audioEngine } from '../services/audioEngine';
+import { youtubePlayerBridge } from '../services/youtubePlayerBridge';
 import { Track } from '../types';
 
 export interface ListenTogetherContextType {
@@ -98,6 +100,45 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
     activeRoom && roomService.getCurrentParticipant()?.id === activeRoom.ownerId
   );
 
+  // Register authoritative live playback position provider with RoomService
+  useEffect(() => {
+    const provider = () => {
+      const track = currentTrackRef.current;
+      if (!track) return null;
+
+      const isYT = track.source === 'youtube' && !!track.sourceId;
+      let pos = 0;
+      let playing = isPlayingRef.current;
+      let rate = 1;
+
+      if (isYT) {
+        pos = youtubePlayerBridge.getCurrentTime();
+        playing = youtubePlayerBridge.getState().isPlaying;
+        rate = youtubePlayerBridge.getState().playbackRate || 1;
+      } else {
+        pos = audioEngine.getCurrentTime();
+        playing = audioEngine.isPlaying();
+      }
+
+      if (pos <= 0 && currentTimeRef.current > 0) {
+        pos = currentTimeRef.current;
+      }
+
+      return {
+        position: Math.max(0, pos),
+        isPlaying: playing,
+        playbackRate: rate,
+        trackId: track.id,
+        source: track.source || 'local',
+      };
+    };
+
+    roomService.setLivePositionProvider(provider);
+    return () => {
+      roomService.setLivePositionProvider(null);
+    };
+  }, []);
+
   // Parse room ID from URL path, query param, or hash on initial load
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -150,6 +191,13 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
         if (isDifferentTrack) {
           const trackToPlay = sharedTrackToTrack(targetTrack);
           const queueTracks = incomingState.queue.map(sharedTrackToTrack);
+
+          // For YouTube playback: store the desired synchronization position
+          // so it is applied cleanly the moment the player is ready/playing
+          if (targetTrack.source === 'youtube') {
+            youtubePlayerBridge.setPendingSyncSeek(expectedPos);
+          }
+
           await switchToTrack(trackToPlay, {
             autoplay: incomingState.isPlaying,
             newQueue: queueTracks,
@@ -157,16 +205,15 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
             startTime: expectedPos,
           });
 
-          // Late join / mid-track synchronization: ensure client jumps directly to where song is currently playing
-          if (expectedPos > 0.5) {
+          // Late join / mid-track synchronization for local/audius:
+          if (targetTrack.source !== 'youtube' && expectedPos > 0.5) {
             setTimeout(() => {
               seek(expectedPos);
-            }, 120);
-            setTimeout(() => {
-              if (Math.abs(currentTimeRef.current - expectedPos) > 1.2) {
-                seek(expectedPos);
-              }
-            }, 600);
+            }, 100);
+          } else if (targetTrack.source === 'youtube') {
+            if (youtubePlayerBridge.isPlayerReady()) {
+              youtubePlayerBridge.applyPendingSyncSeekIfNeeded();
+            }
           }
         } else {
           // Check if remote update is purely a queue alteration (ADD_TRACK, REMOVE_TRACK, REORDER_QUEUE)
@@ -195,7 +242,15 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
           const isSeekAction = incomingState.lastAction?.type === 'SEEK';
           const drift = Math.abs(currentTimeRef.current - expectedPos);
           if (isSeekAction || drift >= roomService.DRIFT_TOLERANCE_HIGH) {
-            seek(expectedPos);
+            if (targetTrack.source === 'youtube') {
+              if (youtubePlayerBridge.isPlayerReady()) {
+                seek(expectedPos);
+              } else {
+                youtubePlayerBridge.setPendingSyncSeek(expectedPos);
+              }
+            } else {
+              seek(expectedPos);
+            }
           }
         }
       } catch (err) {

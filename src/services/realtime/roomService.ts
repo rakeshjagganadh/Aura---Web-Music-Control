@@ -1,5 +1,6 @@
 import {
   IRoomRealtimeAdapter,
+  LivePlaybackPositionProvider,
   RealtimeBackendType,
   RoomActionPayload,
   RoomActionType,
@@ -21,6 +22,7 @@ class RoomService {
   private currentRoomId: string | null = null;
   private currentParticipant: RoomParticipant | null = null;
   private processedActionIds = new Set<string>();
+  private livePositionProvider: LivePlaybackPositionProvider | null = null;
 
   // Persistent event listeners that stay alive even before an adapter is created
   private stateListeners = new Set<(state: SharedRoomState) => void>();
@@ -228,6 +230,10 @@ class RoomService {
     this.adapterUnsubscribers = [];
 
     // Wire newly created adapter to persistent RoomService listeners
+    if (this.adapter.setLivePositionProvider) {
+      this.adapter.setLivePositionProvider(this.livePositionProvider);
+    }
+
     this.adapterUnsubscribers.push(
       this.adapter.onStateUpdate((state) => {
         // Record local arrival time with accurate elapsed compensation to prevent cross-device NTP clock skew
@@ -252,17 +258,42 @@ class RoomService {
     return state;
   }
 
+  public setLivePositionProvider(provider: LivePlaybackPositionProvider | null): void {
+    this.livePositionProvider = provider;
+    if (this.adapter && typeof this.adapter.setLivePositionProvider === 'function') {
+      this.adapter.setLivePositionProvider(provider);
+    }
+  }
+
+  public getLivePosition(): number | null {
+    if (this.livePositionProvider) {
+      try {
+        const live = this.livePositionProvider();
+        if (live && typeof live.position === 'number' && !isNaN(live.position)) {
+          return live.position;
+        }
+      } catch {}
+    }
+    return null;
+  }
+
   /**
-   * Records or updates local arrival anchor, taking into account elapsed time since state.updatedAt
+   * Records or updates local arrival anchor, taking into account elapsed time since state.updatedAt.
+   * Stale states (> 3s old, such as database snapshots) are not extrapolated into the future.
    */
   private updateSyncAnchor(state: SharedRoomState): void {
     if (!state.currentTrack) {
       this.localSyncAnchor = null;
       return;
     }
-    const elapsedSinceUpdate = state.isPlaying
-      ? Math.max(0, (Date.now() - (state.updatedAt || Date.now())) / 1000) * (state.playbackRate || 1)
-      : 0;
+
+    const rawElapsed = (Date.now() - (state.updatedAt || Date.now())) / 1000;
+    // Account for small network transit time only if state was freshly generated (< 3s ago)
+    const elapsedSinceUpdate =
+      state.isPlaying && rawElapsed >= 0 && rawElapsed < 3
+        ? rawElapsed * (state.playbackRate || 1)
+        : 0;
+
     const computedPosition = (state.position || 0) + elapsedSinceUpdate;
     const maxDuration = state.currentTrack?.duration || 999999;
     const anchorPosition = Math.min(maxDuration, Math.max(0, computedPosition));
@@ -318,7 +349,8 @@ class RoomService {
 
     // 2. Fallback: calculate using state.updatedAt with clock-skew protection
     const rawElapsed = (Date.now() - (state.updatedAt || Date.now())) / 1000;
-    elapsedSeconds = Math.max(0, rawElapsed);
+    // Guard against stale snapshots (e.g. database rows loaded on join)
+    elapsedSeconds = rawElapsed >= 0 && rawElapsed < 3 ? rawElapsed : 0;
 
     const computed = (state.position || 0) + elapsedSeconds * (state.playbackRate || 1);
     const maxDuration = state.currentTrack?.duration || 999999;
@@ -384,16 +416,24 @@ class RoomService {
     const updated: SharedRoomState = { ...state };
     const now = Date.now();
 
+    const getBestPosition = () => {
+      const live = this.livePositionProvider?.();
+      if (live && typeof live.position === 'number' && !isNaN(live.position)) {
+        return Math.max(0, live.position);
+      }
+      return this.calculateCurrentPosition(state);
+    };
+
     // Preserve and advance authoritative playback position if a track is currently playing
     if (state.isPlaying && state.currentTrack) {
-      const currentPos = this.calculateCurrentPosition(state);
+      const currentPos = getBestPosition();
       updated.position = currentPos;
       updated.updatedAt = now;
     }
 
     switch (action.type) {
       case 'PLAY': {
-        const currentPos = this.calculateCurrentPosition(state);
+        const currentPos = getBestPosition();
         updated.isPlaying = true;
         updated.position = currentPos;
         updated.updatedAt = now;
@@ -408,7 +448,7 @@ class RoomService {
       }
 
       case 'PAUSE': {
-        const currentPos = this.calculateCurrentPosition(state);
+        const currentPos = getBestPosition();
         updated.isPlaying = false;
         updated.position = currentPos;
         updated.updatedAt = now;

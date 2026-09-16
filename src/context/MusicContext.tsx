@@ -1016,6 +1016,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     activeSourceRef.current = targetSource;
     setActiveSource(targetSource);
 
+    if (shouldAutoplay && targetSource !== 'youtube') {
+      backgroundAudioKeepAlive.startKeepAlive();
+    }
+
     // STEP 5: Update Queue
     if (options?.newQueue && options.newQueue.length > 0) {
       setQueue(options.newQueue);
@@ -1127,12 +1131,18 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Handle Play Track
   const playTrack = useCallback(async (track: Track, newQueue?: Track[]) => {
+    if (track.source !== 'youtube') {
+      backgroundAudioKeepAlive.startKeepAlive();
+    }
     await switchToTrack(track, { autoplay: true, newQueue });
   }, [switchToTrack]);
 
   const togglePlay = useCallback(() => {
     if (!currentTrackRef.current) {
       if (tracks.length > 0) {
+        if (tracks[0].source !== 'youtube') {
+          backgroundAudioKeepAlive.startKeepAlive();
+        }
         switchToTrack(tracks[0], { autoplay: true, newQueue: tracks });
       } else {
         showToast('No tracks in your library. Upload music or try the demo pack!', 'info');
@@ -1148,8 +1158,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     } else {
       if (isPlaying) {
+        backgroundAudioKeepAlive.stopKeepAlive();
         audioEngine.pause();
       } else {
+        backgroundAudioKeepAlive.startKeepAlive();
         audioEngine.play();
       }
     }
@@ -1326,6 +1338,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (activeSourceRef.current === 'youtube') {
           youtubePlayerBridge.play();
         } else {
+          backgroundAudioKeepAlive.startKeepAlive();
           audioEngine.play();
         }
       });
@@ -1333,6 +1346,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (activeSourceRef.current === 'youtube') {
           youtubePlayerBridge.pause();
         } else {
+          backgroundAudioKeepAlive.stopKeepAlive();
           audioEngine.pause();
         }
       });

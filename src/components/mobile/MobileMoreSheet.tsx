@@ -34,6 +34,8 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ isOpen, onClos
     loadDemoPack,
   } = useMusic();
 
+  const { isInRoom, participants } = useListenTogether();
+
   if (!isOpen) return null;
 
   const navigateTo = (view: NavView) => {
@@ -41,8 +43,6 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ isOpen, onClos
     setCurrentView(view);
     onClose();
   };
-
-  const { isInRoom, participants } = useListenTogether();
 
   const formatStorageMB = (bytes: number) => {
     if (!bytes) return '0 MB';

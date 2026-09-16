@@ -91,6 +91,14 @@ export type RoomConnectionStatus =
 
 export type RealtimeBackendType = 'supabase' | 'websocket' | 'broadcast';
 
+export type LivePlaybackPositionProvider = () => {
+  position: number;
+  isPlaying: boolean;
+  playbackRate?: number;
+  trackId?: string | null;
+  source?: string;
+} | null;
+
 export interface IRoomRealtimeAdapter {
   backendType: RealtimeBackendType;
   connect(
@@ -105,6 +113,7 @@ export interface IRoomRealtimeAdapter {
   onParticipantsUpdate(listener: (participants: RoomParticipant[]) => void): () => void;
   onActivity(listener: (activity: RoomActivityItem) => void): () => void;
   onStatusChange(listener: (status: RoomConnectionStatus) => void): () => void;
+  setLivePositionProvider?(provider: LivePlaybackPositionProvider | null): void;
 }
 
 // Helper to convert Track to SharedRoomTrack

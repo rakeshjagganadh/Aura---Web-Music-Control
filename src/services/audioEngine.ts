@@ -196,9 +196,13 @@ export class AudioEngine {
     this.audioEl.setAttribute('aria-hidden', 'true');
 
     // directAudioEl is for cross-origin streaming (e.g. Audius) where CORS WebAudio creates silence or fails
+    this.audioEl.setAttribute('playsinline', 'true');
+    this.audioEl.setAttribute('webkit-playsinline', 'true');
     this.directAudioEl = new Audio();
     this.directAudioEl.preload = 'auto';
     this.directAudioEl.id = 'aura-engine-audio-direct';
+    this.directAudioEl.setAttribute('playsinline', 'true');
+    this.directAudioEl.setAttribute('webkit-playsinline', 'true');
     this.directAudioEl.style.position = 'fixed';
     this.directAudioEl.style.bottom = '0px';
     this.directAudioEl.style.right = '0px';
@@ -226,12 +230,12 @@ export class AudioEngine {
         document.addEventListener('DOMContentLoaded', mountNodes);
       }
 
-      // Automatically resume AudioContext if suspended by mobile OS on tab minimize
+      // Automatically resume AudioContext and active playback if throttled on tab minimize
       document.addEventListener('visibilitychange', () => {
         if (this.ctx && this.ctx.state === 'suspended' && this.isPlaying()) {
           this.ctx.resume().catch(() => {});
         }
-        if (document.visibilityState === 'visible' && this.isPlaying()) {
+        if (this.isPlaying()) {
           const activeEl = this.isDirectStreaming ? this.directAudioEl : this.audioEl;
           if (activeEl && activeEl.paused) {
             activeEl.play().catch(() => {});
@@ -740,7 +744,9 @@ export class AudioEngine {
 
   public async play(): Promise<void> {
     this.init();
-    await this.resumeContext();
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume().catch(() => {});
+    }
     const el = this.getActiveAudioEl();
     if (el) {
       await el.play();
