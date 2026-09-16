@@ -95,20 +95,15 @@ class BackgroundAudioKeepAlive {
     if (typeof document === 'undefined') return;
 
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') {
-        // Tab went to background: make sure keepalive is humming if music was playing
-        if (this.isKeepAliveActive && this.audioEl && this.audioEl.paused) {
-          this.audioEl.play().catch(() => {});
-        }
-      } else if (document.visibilityState === 'visible') {
-        // Re-acquire wake lock if needed
+      if (document.visibilityState === 'visible') {
+        // Re-acquire wake lock if active when returning to foreground
         if (this.isKeepAliveActive) {
           this.requestWakeLock();
-          if (this.audioEl && this.audioEl.paused) {
-            this.audioEl.play().catch(() => {});
-          }
         }
       }
+      // Note: We deliberately do NOT call audioEl.play() on 'hidden' because native media playback
+      // (audioEngine) already holds the valid background audio session. Calling play() on a secondary
+      // audio element forces the mobile OS (Chromium / iOS WebKit) to pause the primary audio track.
     });
   }
 
@@ -139,26 +134,13 @@ class BackgroundAudioKeepAlive {
   }
 
   /**
-   * Starts background keep-alive to hold mobile OS audio session priority.
+   * Starts background keep-alive to hold mobile OS wake lock and session priority.
    * Can be called synchronously inside user click/tap handlers.
+   * Note: We avoid playing unnecessary silent audio elements because native media playback
+   * (audioEngine.audioEl / directAudioEl) already provides a valid background audio session.
    */
   public startKeepAlive(): void {
     this.isKeepAliveActive = true;
-    if (!this.audioEl) {
-      this.initElement();
-    }
-
-    if (this.audioEl) {
-      this.audioEl.muted = false;
-      this.audioEl.volume = 0.001;
-      if (this.audioEl.paused) {
-        const playPromise = this.audioEl.play();
-        if (playPromise && typeof playPromise.catch === 'function') {
-          playPromise.catch(() => {});
-        }
-      }
-    }
-
     this.requestWakeLock();
   }
 

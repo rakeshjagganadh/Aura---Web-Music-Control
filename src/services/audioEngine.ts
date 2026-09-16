@@ -175,6 +175,7 @@ export class AudioEngine {
   private onTimeUpdateCallback: ((time: number, duration: number) => void) | null = null;
   private onEndedCallback: (() => void) | null = null;
   private onStateChangeCallback: ((isPlaying: boolean) => void) | null = null;
+  private isUserPlaying: boolean = false;
 
   public init(): void {
     if (this.isInitialized) return;
@@ -232,13 +233,31 @@ export class AudioEngine {
 
       // Automatically resume AudioContext and active playback if throttled on tab minimize
       document.addEventListener('visibilitychange', () => {
-        if (this.ctx && this.ctx.state === 'suspended' && this.isPlaying()) {
+        const activeEl = this.getActiveAudioEl();
+        console.log('[AURA BG DEBUG] visibilitychange event:', {
+          visibilityState: document.visibilityState,
+          documentHidden: document.hidden,
+          currentSource: this.isDirectStreaming ? 'audius/direct' : 'local/webaudio',
+          trackId: this.currentTrack ? this.currentTrack.id : null,
+          audioPaused: activeEl ? activeEl.paused : true,
+          audioCurrentTime: activeEl ? activeEl.currentTime : 0,
+          isUserPlaying: this.isUserPlaying,
+          isPlaying: this.isPlaying(),
+          audioContextState: this.ctx ? this.ctx.state : 'none',
+          mediaSessionPlaybackState:
+            typeof navigator !== 'undefined' && 'mediaSession' in navigator
+              ? navigator.mediaSession.playbackState
+              : 'unsupported',
+        });
+
+        if (this.ctx && this.ctx.state === 'suspended' && this.isUserPlaying) {
           this.ctx.resume().catch(() => {});
         }
-        if (this.isPlaying()) {
-          const activeEl = this.isDirectStreaming ? this.directAudioEl : this.audioEl;
+        if (this.isUserPlaying) {
           if (activeEl && activeEl.paused) {
-            activeEl.play().catch(() => {});
+            activeEl.play().catch((err) => {
+              console.warn('[AURA BG DEBUG] Auto-resume on visibilitychange failed:', err);
+            });
           }
         }
       });
@@ -246,7 +265,7 @@ export class AudioEngine {
 
     if (this.ctx) {
       this.ctx.onstatechange = () => {
-        if (this.ctx && this.ctx.state === 'suspended' && this.isPlaying()) {
+        if (this.ctx && this.ctx.state === 'suspended' && this.isUserPlaying) {
           this.ctx.resume().catch(() => {});
         }
       };
@@ -291,18 +310,35 @@ export class AudioEngine {
 
       el.addEventListener('ended', () => {
         if (this.isDirectStreaming === isDirect) {
+          this.isUserPlaying = false;
           this.onEndedCallback?.();
         }
       });
 
       el.addEventListener('play', () => {
         if (this.isDirectStreaming === isDirect) {
+          this.isUserPlaying = true;
           this.onStateChangeCallback?.(true);
         }
       });
 
       el.addEventListener('pause', () => {
         if (this.isDirectStreaming === isDirect) {
+          // If the user intended playback to continue, but the browser/OS paused the element
+          // due to the document becoming hidden / minimized / backgrounded:
+          if (this.isUserPlaying && typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+            console.log('[AURA BG DEBUG] OS/browser pause event fired while tab hidden; preserving user playing state and attempting auto-recovery');
+            if (this.ctx && this.ctx.state === 'suspended') {
+              this.ctx.resume().catch(() => {});
+            }
+            el.play().catch((err) => {
+              console.warn('[AURA BG DEBUG] Background auto-recovery failed:', err);
+            });
+            // Do not broadcast pause to UI because user intent is still playing
+            return;
+          }
+
+          console.log('[AURA BG DEBUG] audio element fired pause event. User paused:', !this.isUserPlaying);
           this.onStateChangeCallback?.(false);
         }
       });
@@ -668,6 +704,7 @@ export class AudioEngine {
           (audioSource.startsWith('http') && !audioSource.startsWith(window.location.origin))));
 
     this.isDirectStreaming = isExternalStream;
+    this.isUserPlaying = autoPlay;
 
     if (isExternalStream) {
       // Pause WebAudio element to avoid conflicts
@@ -743,6 +780,7 @@ export class AudioEngine {
   }
 
   public async play(): Promise<void> {
+    this.isUserPlaying = true;
     this.init();
     if (this.ctx && this.ctx.state === 'suspended') {
       this.ctx.resume().catch(() => {});
@@ -754,6 +792,8 @@ export class AudioEngine {
   }
 
   public pause(): void {
+    console.log('[AURA BG DEBUG] pause requested: audioEngine.pause() called by AURA');
+    this.isUserPlaying = false;
     if (this.audioEl) {
       this.audioEl.pause();
     }

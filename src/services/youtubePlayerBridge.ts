@@ -329,6 +329,7 @@ class YouTubePlayerBridge {
   }
 
   public pause() {
+    console.log('[AURA BG DEBUG] pause requested: youtubePlayerBridge.pause() called by AURA');
     this.userExplicitPause = true;
     if (this.playerInstance && typeof this.playerInstance.pauseVideo === 'function') {
       try {
@@ -341,6 +342,7 @@ class YouTubePlayerBridge {
   }
 
   public stop() {
+    console.log('[AURA BG DEBUG] pause requested: youtubePlayerBridge.stop() called by AURA');
     this.userExplicitPause = true;
     if (this.playerInstance && typeof this.playerInstance.stopVideo === 'function') {
       try {
