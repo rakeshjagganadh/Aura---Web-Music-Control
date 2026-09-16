@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useMemo } from 'react';
 import { useMusic } from '../../context/MusicContext';
 import { AuraBrandMark } from '../common/AuraBrandMark';
+import { PWAInstallButton } from '../pwa/PWAInstallButton';
 import { 
   Search, 
   UploadCloud, 
@@ -22,7 +23,17 @@ export const Header: React.FC<{
   onOpenMobileSearch?: () => void;
   onOpenUniversalSearch?: () => void;
   onOpenAccount?: () => void;
-}> = ({ onOpenMobileSearch, onOpenUniversalSearch, onOpenAccount }) => {
+  canInstall?: boolean;
+  isInstalled?: boolean;
+  onInstall?: () => void;
+}> = ({ 
+  onOpenMobileSearch, 
+  onOpenUniversalSearch, 
+  onOpenAccount,
+  canInstall = false,
+  isInstalled = false,
+  onInstall
+}) => {
   const {
     searchQuery,
     setSearchQuery,
@@ -241,6 +252,15 @@ export const Header: React.FC<{
           <Sparkles className="w-3.5 h-3.5 text-zinc-400" />
           Demo Pack
         </button>
+
+        {/* PWA Install Button (When installable and not yet installed) */}
+        {onInstall && (
+          <PWAInstallButton
+            canInstall={canInstall}
+            isInstalled={isInstalled}
+            onInstall={onInstall}
+          />
+        )}
 
         {/* Add Music Button */}
         <button

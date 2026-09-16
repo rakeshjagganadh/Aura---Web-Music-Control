@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useMusic } from '../../context/MusicContext';
+import { usePWAInstall } from '../../hooks/usePWAInstall';
+import { PWAInstallModal } from '../pwa/PWAInstallModal';
 import { 
   Settings, 
   HardDrive, 
@@ -16,7 +18,9 @@ import {
   Radio,
   Moon,
   Zap,
-  Gauge
+  Gauge,
+  Smartphone,
+  Download
 } from 'lucide-react';
 
 export const SettingsView: React.FC = () => {
@@ -63,6 +67,15 @@ export const SettingsView: React.FC = () => {
     const s = seconds % 60;
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
+
+  const {
+    isInstalled,
+    canInstall,
+    isIOS,
+    promptInstall,
+    isInstructionsOpen,
+    setIsInstructionsOpen
+  } = usePWAInstall();
 
   return (
     <div className="flex flex-col gap-8 p-4 sm:p-8 max-w-4xl mx-auto">
@@ -426,6 +439,65 @@ export const SettingsView: React.FC = () => {
           View Shortcuts (?)
         </button>
       </div>
+
+      {/* PWA Application & Install Status */}
+      <div className="flex flex-col gap-4 p-6 rounded-3xl bg-zinc-900/40 border border-white/5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <Smartphone className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-zinc-100">Progressive Web App (PWA)</h3>
+              <p className="text-xs text-zinc-400">Standalone installability, shell caching, and local storage</p>
+            </div>
+          </div>
+
+          {isInstalled ? (
+            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-medium font-mono">
+              <CheckCircle className="w-3.5 h-3.5" />
+              Standalone Mode
+            </span>
+          ) : canInstall ? (
+            <button
+              type="button"
+              onClick={promptInstall}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Install AURA</span>
+            </button>
+          ) : (
+            <span className="px-2.5 py-1 rounded-lg bg-white/5 text-zinc-400 text-xs font-mono">
+              Browser Web Mode
+            </span>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-2 text-xs text-zinc-300 pt-2 border-t border-white/5">
+          <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/60">
+            <span>App Shell Cache & Service Worker</span>
+            <span className="font-mono text-emerald-400">Active (v1 shell precached)</span>
+          </div>
+          <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/60">
+            <span>Local Music Storage</span>
+            <span className="font-mono text-zinc-400">Local Browser IndexedDB (Private)</span>
+          </div>
+          <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/60">
+            <span>Display Environment</span>
+            <span className="font-mono text-zinc-400">
+              {isInstalled ? 'Standalone Window (Zero URL bar)' : 'Standard Browser View'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* PWA iOS / Browser Instructions Modal */}
+      <PWAInstallModal
+        isOpen={isInstructionsOpen}
+        onClose={() => setIsInstructionsOpen(false)}
+        isIOS={isIOS}
+      />
 
     </div>
   );

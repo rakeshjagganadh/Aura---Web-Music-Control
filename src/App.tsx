@@ -18,6 +18,9 @@ import { AuraAtmosphere } from './components/common/AuraAtmosphere';
 import { TrimExportModal } from './components/sound-lab/TrimExportModal';
 import { UniversalSearchModal } from './components/search/UniversalSearchModal';
 import { AuraAccountModal } from './components/account/AuraAccountModal';
+import { PWAInstallBanner } from './components/pwa/PWAInstallBanner';
+import { PWAInstallModal } from './components/pwa/PWAInstallModal';
+import { usePWAInstall } from './hooks/usePWAInstall';
 
 // Mobile-specific components
 import { MobileBottomNav } from './components/mobile/MobileBottomNav';
@@ -69,6 +72,9 @@ const MainLayout: React.FC = () => {
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [isUniversalSearchOpen, setIsUniversalSearchOpen] = useState(false);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+
+  // Progressive Web App installability & standalone detection
+  const pwa = usePWAInstall();
 
   // Global Keyboard Shortcuts (Space, ⌘K, ?, arrows, etc.)
   useEffect(() => {
@@ -210,6 +216,9 @@ const MainLayout: React.FC = () => {
         onOpenMobileSearch={() => setIsMobileSearchOpen(true)}
         onOpenUniversalSearch={() => setIsUniversalSearchOpen(true)}
         onOpenAccount={() => setIsAccountModalOpen(true)}
+        canInstall={pwa.canInstall}
+        isInstalled={pwa.isInstalled}
+        onInstall={pwa.promptInstall}
       />
 
       {/* Main Workspace: Sidebar + View Content */}
@@ -294,10 +303,29 @@ const MainLayout: React.FC = () => {
       <MobileMoreSheet 
         isOpen={isMobileMoreOpen} 
         onClose={() => setIsMobileMoreOpen(false)} 
+        canInstall={pwa.canInstall}
+        isInstalled={pwa.isInstalled}
+        onInstall={pwa.promptInstall}
       />
       <MobileSearchModal 
         isOpen={isMobileSearchOpen} 
         onClose={() => setIsMobileSearchOpen(false)} 
+      />
+
+      {/* PWA Install Banner (Non-aggressive, delayed, dismissible) */}
+      <PWAInstallBanner
+        canInstall={pwa.canInstall}
+        isInstalled={pwa.isInstalled}
+        isBannerDismissed={pwa.isBannerDismissed}
+        onInstall={pwa.promptInstall}
+        onDismiss={pwa.dismissBanner}
+      />
+
+      {/* PWA iOS / Safari Manual Instructions Modal */}
+      <PWAInstallModal
+        isOpen={pwa.isInstructionsOpen}
+        onClose={() => pwa.setIsInstructionsOpen(false)}
+        isIOS={pwa.isIOS}
       />
 
     </div>

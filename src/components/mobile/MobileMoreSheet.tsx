@@ -13,16 +13,26 @@ import {
   UploadCloud, 
   HardDrive,
   ChevronRight,
-  Users
+  Users,
+  Download
 } from 'lucide-react';
 import { useListenTogether } from '../../context/ListenTogetherContext';
 
 interface MobileMoreSheetProps {
   isOpen: boolean;
   onClose: () => void;
+  canInstall?: boolean;
+  isInstalled?: boolean;
+  onInstall?: () => void;
 }
 
-export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ isOpen, onClose }) => {
+export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ 
+  isOpen, 
+  onClose,
+  canInstall = false,
+  isInstalled = false,
+  onInstall
+}) => {
   const {
     setCurrentView,
     setSelectedPlaylistId,
@@ -120,6 +130,34 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ isOpen, onClos
               </button>
             );
           })}
+
+          {/* PWA Install Tile if installable and not installed */}
+          {canInstall && !isInstalled && onInstall && (
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onInstall();
+              }}
+              className="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-indigo-950/40 to-zinc-900 border border-indigo-500/30 text-left transition-colors cursor-pointer mt-1"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shrink-0">
+                  <Download className="w-4 h-4 text-indigo-300" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-bold text-white">Install AURA Studio</span>
+                    <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                      APP
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-zinc-400 block mt-0.5">Standalone mobile app & home screen launcher</span>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-zinc-400 shrink-0" />
+            </button>
+          )}
 
           {/* Quick Action Tiles */}
           <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-white/5">
