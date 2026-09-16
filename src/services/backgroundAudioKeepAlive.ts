@@ -150,6 +150,12 @@ class BackgroundAudioKeepAlive {
   public stopKeepAlive(): void {
     this.isKeepAliveActive = false;
     if (this.audioEl && !this.audioEl.paused) {
+      console.log('[AURA BG DEBUG] EXPLICIT PAUSE FROM AURA', {
+        service: 'backgroundAudioKeepAlive.stopKeepAlive()',
+        visibilityState: typeof document !== 'undefined' ? document.visibilityState : 'unknown',
+        documentHidden: typeof document !== 'undefined' ? document.hidden : false,
+        stack: new Error().stack,
+      });
       try {
         this.audioEl.pause();
       } catch {

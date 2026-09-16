@@ -1152,12 +1152,21 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     if (activeSourceRef.current === 'youtube') {
       if (isPlaying) {
+        console.log('[AURA BG DEBUG] EXPLICIT PAUSE FROM AURA: togglePlay pausing youtube', {
+          visibilityState: typeof document !== 'undefined' ? document.visibilityState : 'unknown',
+          documentHidden: typeof document !== 'undefined' ? document.hidden : false,
+        });
         youtubePlayerBridge.pause();
       } else {
         youtubePlayerBridge.play();
       }
     } else {
       if (isPlaying) {
+        console.log('[AURA BG DEBUG] EXPLICIT PAUSE FROM AURA: togglePlay pausing audio', {
+          visibilityState: typeof document !== 'undefined' ? document.visibilityState : 'unknown',
+          documentHidden: typeof document !== 'undefined' ? document.hidden : false,
+          activeSource: activeSourceRef.current,
+        });
         backgroundAudioKeepAlive.stopKeepAlive();
         audioEngine.pause();
       } else {
@@ -1343,6 +1352,13 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       });
       navigator.mediaSession.setActionHandler('pause', () => {
+        console.log('[AURA BG DEBUG] MediaSession action handler "pause" invoked by OS/system', {
+          visibilityState: typeof document !== 'undefined' ? document.visibilityState : 'unknown',
+          documentHidden: typeof document !== 'undefined' ? document.hidden : false,
+          activeSource: activeSourceRef.current,
+          currentTrackId: currentTrackRef.current?.id,
+          stack: new Error().stack,
+        });
         if (activeSourceRef.current === 'youtube') {
           youtubePlayerBridge.pause();
         } else {

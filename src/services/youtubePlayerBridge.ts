@@ -329,7 +329,12 @@ class YouTubePlayerBridge {
   }
 
   public pause() {
-    console.log('[AURA BG DEBUG] pause requested: youtubePlayerBridge.pause() called by AURA');
+    console.log('[AURA BG DEBUG] EXPLICIT PAUSE FROM AURA', {
+      service: 'youtubePlayerBridge.pause()',
+      visibilityState: typeof document !== 'undefined' ? document.visibilityState : 'unknown',
+      documentHidden: typeof document !== 'undefined' ? document.hidden : false,
+      stack: new Error().stack,
+    });
     this.userExplicitPause = true;
     if (this.playerInstance && typeof this.playerInstance.pauseVideo === 'function') {
       try {
@@ -342,7 +347,12 @@ class YouTubePlayerBridge {
   }
 
   public stop() {
-    console.log('[AURA BG DEBUG] pause requested: youtubePlayerBridge.stop() called by AURA');
+    console.log('[AURA BG DEBUG] EXPLICIT PAUSE FROM AURA', {
+      service: 'youtubePlayerBridge.stop()',
+      visibilityState: typeof document !== 'undefined' ? document.visibilityState : 'unknown',
+      documentHidden: typeof document !== 'undefined' ? document.hidden : false,
+      stack: new Error().stack,
+    });
     this.userExplicitPause = true;
     if (this.playerInstance && typeof this.playerInstance.stopVideo === 'function') {
       try {
