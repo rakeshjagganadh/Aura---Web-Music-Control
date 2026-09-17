@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { youtubePlayerBridge } from '../../services/youtubePlayerBridge';
 import { youtubeService } from '../../services/youtubeService';
+import { backgroundAudioKeepAlive } from '../../services/backgroundAudioKeepAlive';
 
 declare global {
   interface Window {
@@ -39,6 +40,7 @@ export const YouTubeEmbedPlayer: React.FC = () => {
             modestbranding: 1,
             rel: 0,
             playsinline: 1,
+            enablejsapi: 1,
             origin: window.location.origin,
           },
           events: {
@@ -59,7 +61,35 @@ export const YouTubeEmbedPlayer: React.FC = () => {
                   youtubePlayerBridge.updateState({ duration: dur });
                 }
               } else if (event.data === 2) {
-                // Paused - cleanly sync state so MediaSession and UI accurately reflect paused status
+                // Paused: Check if this was an unwanted OS/browser backgrounding pause
+                const isExplicit = youtubePlayerBridge.isUserExplicitPause();
+                const isDocHidden = typeof document !== 'undefined' && (document.hidden || document.visibilityState === 'hidden');
+
+                if (!isExplicit && isDocHidden) {
+                  // OS / mobile browser forced a pause due to minimization/tab change.
+                  // Maintain isPlaying: true so lock screen controls and MediaSession stay alive!
+                  youtubePlayerBridge.updateState({ isPlaying: true });
+                  backgroundAudioKeepAlive.startYouTubeKeepAlive();
+
+                  const triggerPlay = () => {
+                    if (youtubePlayerBridge.isUserExplicitPause()) return;
+                    try {
+                      playerRef.current?.playVideo?.();
+                    } catch {}
+                    try {
+                      const iframe = document.querySelector('#aura-yt-iframe-slot iframe') as HTMLIFrameElement;
+                      if (iframe?.contentWindow) {
+                        iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+                      }
+                    } catch {}
+                  };
+
+                  setTimeout(triggerPlay, 60);
+                  setTimeout(triggerPlay, 250);
+                  return;
+                }
+
+                // Confirmed User-Initiated Pause
                 youtubePlayerBridge.updateState({ isPlaying: false });
               } else if (event.data === 0) {
                 // Confirmed Ended
@@ -133,17 +163,31 @@ export const YouTubeEmbedPlayer: React.FC = () => {
       }
     }, 200);
 
-    // Safe foreground auto-restore: only resume playback when returning to the FOREGROUND (visible).
-    // Never attempt to force playVideo() while document is hidden, which triggers aggressive loops and OS termination.
+    // Visibility change handler for both foreground restore and background reinforcement
     const handleVisibilityChange = () => {
-      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-        const isExplicit = youtubePlayerBridge.isUserExplicitPause();
+      if (typeof document === 'undefined') return;
+      const isExplicit = youtubePlayerBridge.isUserExplicitPause();
+
+      if (document.visibilityState === 'visible') {
         if (!isExplicit && playerRef.current) {
           try {
             const pState = playerRef.current.getPlayerState?.();
-            // If paused while backgrounded, restore playback cleanly upon returning to foreground
-            if (pState === 2) {
+            if (pState === 2 || pState === -1) {
               playerRef.current.playVideo?.();
+            }
+          } catch {}
+        }
+      } else if (document.visibilityState === 'hidden') {
+        // App just minimized: ensure silent audio keepalive is active to hold Android audio focus
+        if (!isExplicit && playerRef.current) {
+          backgroundAudioKeepAlive.startYouTubeKeepAlive();
+          try {
+            playerRef.current.playVideo?.();
+          } catch {}
+          try {
+            const iframe = document.querySelector('#aura-yt-iframe-slot iframe') as HTMLIFrameElement;
+            if (iframe?.contentWindow) {
+              iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
             }
           } catch {}
         }
@@ -167,7 +211,7 @@ export const YouTubeEmbedPlayer: React.FC = () => {
     <div
       id="aura-youtube-engine"
       aria-hidden="true"
-      className="fixed bottom-0 right-0 w-[320px] h-[180px] -z-50 pointer-events-none opacity-0 overflow-hidden select-none"
+      className="fixed bottom-0 right-0 w-[240px] h-[160px] -z-10 pointer-events-none opacity-[0.005] overflow-hidden select-none"
     >
       {/* Official YouTube IFrame Mounting Point */}
       <div id="aura-yt-iframe-slot" className="w-full h-full" />

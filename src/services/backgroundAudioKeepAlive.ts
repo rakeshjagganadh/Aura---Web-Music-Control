@@ -136,12 +136,35 @@ class BackgroundAudioKeepAlive {
   /**
    * Starts background keep-alive to hold mobile OS wake lock and session priority.
    * Can be called synchronously inside user click/tap handlers.
-   * Note: We avoid playing unnecessary silent audio elements because native media playback
-   * (audioEngine.audioEl / directAudioEl) already provides a valid background audio session.
+   * Note: For native media playback (audioEngine), the audio element already holds an audio session.
    */
   public startKeepAlive(): void {
     this.isKeepAliveActive = true;
     this.requestWakeLock();
+  }
+
+  /**
+   * Specifically for YouTube IFrame playback:
+   * Starts the background silent carrier audio element to maintain an active Android/iOS
+   * top-level audio focus session. This prevents the OS from suspending the browser process
+   * or discarding the media session when the PWA or browser tab is minimized.
+   */
+  public startYouTubeKeepAlive(): void {
+    this.isKeepAliveActive = true;
+    this.requestWakeLock();
+    if (!this.audioEl) {
+      this.initElement();
+    }
+    if (this.audioEl) {
+      this.audioEl.volume = 0.001;
+      this.audioEl.muted = false;
+      const playPromise = this.audioEl.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.debug('[AURA BG] Keepalive audio play prevented:', err);
+        });
+      }
+    }
   }
 
   /**
@@ -150,12 +173,6 @@ class BackgroundAudioKeepAlive {
   public stopKeepAlive(): void {
     this.isKeepAliveActive = false;
     if (this.audioEl && !this.audioEl.paused) {
-      console.log('[AURA BG DEBUG] EXPLICIT PAUSE FROM AURA', {
-        service: 'backgroundAudioKeepAlive.stopKeepAlive()',
-        visibilityState: typeof document !== 'undefined' ? document.visibilityState : 'unknown',
-        documentHidden: typeof document !== 'undefined' ? document.hidden : false,
-        stack: new Error().stack,
-      });
       try {
         this.audioEl.pause();
       } catch {

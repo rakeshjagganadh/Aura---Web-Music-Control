@@ -1016,8 +1016,12 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     activeSourceRef.current = targetSource;
     setActiveSource(targetSource);
 
-    if (shouldAutoplay && targetSource !== 'youtube') {
-      backgroundAudioKeepAlive.startKeepAlive();
+    if (shouldAutoplay) {
+      if (targetSource === 'youtube') {
+        backgroundAudioKeepAlive.startYouTubeKeepAlive();
+      } else {
+        backgroundAudioKeepAlive.startKeepAlive();
+      }
     }
 
     // STEP 5: Update Queue
@@ -1152,12 +1156,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     if (activeSourceRef.current === 'youtube') {
       if (isPlaying) {
-        console.log('[AURA BG DEBUG] EXPLICIT PAUSE FROM AURA: togglePlay pausing youtube', {
-          visibilityState: typeof document !== 'undefined' ? document.visibilityState : 'unknown',
-          documentHidden: typeof document !== 'undefined' ? document.hidden : false,
-        });
+        backgroundAudioKeepAlive.stopKeepAlive();
         youtubePlayerBridge.pause();
       } else {
+        backgroundAudioKeepAlive.startYouTubeKeepAlive();
         youtubePlayerBridge.play();
       }
     } else {
@@ -1345,6 +1347,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       navigator.mediaSession.setActionHandler('play', () => {
         if (activeSourceRef.current === 'youtube') {
+          backgroundAudioKeepAlive.startYouTubeKeepAlive();
           youtubePlayerBridge.play();
           if ('mediaSession' in navigator) {
             navigator.mediaSession.playbackState = 'playing';
@@ -1359,6 +1362,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       });
       navigator.mediaSession.setActionHandler('pause', () => {
         if (activeSourceRef.current === 'youtube') {
+          backgroundAudioKeepAlive.stopKeepAlive();
           youtubePlayerBridge.pause();
           if ('mediaSession' in navigator) {
             navigator.mediaSession.playbackState = 'paused';
@@ -1429,7 +1433,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       if (activeSourceRef.current === 'youtube') {
         const ytState = youtubePlayerBridge.getState();
-        navigator.mediaSession.playbackState = ytState.isPlaying ? 'playing' : 'paused';
+        const isExplicit = youtubePlayerBridge.isUserExplicitPause();
+        navigator.mediaSession.playbackState = (!isExplicit || ytState.isPlaying) ? 'playing' : 'paused';
 
         if ('setPositionState' in navigator.mediaSession && ytState.duration > 0) {
           try {
