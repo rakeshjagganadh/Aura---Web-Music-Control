@@ -13,9 +13,14 @@ export const YouTubeEmbedPlayer: React.FC = () => {
   const playerRef = useRef<any>(null);
   const isInitializingRef = useRef<boolean>(false);
   const timeUpdateInterval = useRef<any>(null);
+  const lastLifecycleTransitionTime = useRef<number>(0);
 
   useEffect(() => {
     let isMounted = true;
+
+    const markLifecycle = () => {
+      lastLifecycleTransitionTime.current = Date.now();
+    };
 
     const createPlayer = () => {
       if (!isMounted) return;
@@ -59,7 +64,25 @@ export const YouTubeEmbedPlayer: React.FC = () => {
                   youtubePlayerBridge.updateState({ duration: dur });
                 }
               } else if (event.data === 2) {
-                // Confirmed Pause (standard YouTube IFrame behavior)
+                // Check if this pause is an unwanted OS/browser backgrounding pause
+                const isExplicit = youtubePlayerBridge.isUserExplicitPause();
+                const isDocHidden = typeof document !== 'undefined' && (document.hidden || document.visibilityState === 'hidden');
+                const recentTransition = (Date.now() - lastLifecycleTransitionTime.current) < 3500;
+
+                if (!isExplicit && (isDocHidden || recentTransition)) {
+                  // OS or mobile browser forced a pause due to minimization/tab change.
+                  // Do not broadcast isPlaying: false, which would pause the MediaSession!
+                  setTimeout(() => {
+                    if (!youtubePlayerBridge.isUserExplicitPause() && playerRef.current) {
+                      try {
+                        playerRef.current.playVideo?.();
+                      } catch {}
+                    }
+                  }, 60);
+                  return;
+                }
+
+                // Confirmed User-Initiated Pause
                 youtubePlayerBridge.updateState({ isPlaying: false });
               } else if (event.data === 0) {
                 // Confirmed Ended
@@ -133,23 +156,24 @@ export const YouTubeEmbedPlayer: React.FC = () => {
       }
     }, 200);
 
-    // Auto-resume if user comes back to the browser tab
+    // Auto-resume and lifecycle tracking
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        const isExplicit = youtubePlayerBridge.isUserExplicitPause();
-        if (!isExplicit && playerRef.current) {
-          try {
-            const pState = playerRef.current.getPlayerState?.();
-            // If paused (2) or unstarted (-1), resume playback
-            if (pState === 2 || pState === -1) {
-              playerRef.current.playVideo?.();
-            }
-          } catch {}
-        }
+      markLifecycle();
+      const isExplicit = youtubePlayerBridge.isUserExplicitPause();
+      if (!isExplicit && playerRef.current) {
+        try {
+          const pState = playerRef.current.getPlayerState?.();
+          // If paused (2) or unstarted (-1), resume playback
+          if (pState === 2 || pState === -1) {
+            playerRef.current.playVideo?.();
+          }
+        } catch {}
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', markLifecycle);
+    window.addEventListener('blur', markLifecycle);
 
     return () => {
       isMounted = false;
@@ -158,6 +182,8 @@ export const YouTubeEmbedPlayer: React.FC = () => {
         clearInterval(timeUpdateInterval.current);
       }
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', markLifecycle);
+      window.removeEventListener('blur', markLifecycle);
       youtubePlayerBridge.unregisterPlayer();
     };
   }, []);
@@ -166,7 +192,7 @@ export const YouTubeEmbedPlayer: React.FC = () => {
     <div
       id="aura-youtube-engine"
       aria-hidden="true"
-      className="fixed bottom-0 right-0 w-[1px] h-[1px] opacity-[0.01] pointer-events-none overflow-hidden z-0 select-none"
+      className="fixed bottom-0 right-0 w-[320px] h-[180px] -z-50 pointer-events-none opacity-0 overflow-hidden select-none"
     >
       {/* Official YouTube IFrame Mounting Point */}
       <div id="aura-yt-iframe-slot" className="w-full h-full" />

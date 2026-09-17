@@ -186,7 +186,6 @@ export class AudioEngine {
     this.ctx = new AudioContextClass();
 
     this.audioEl = new Audio();
-    this.audioEl.crossOrigin = 'anonymous';
     this.audioEl.preload = 'auto';
     this.audioEl.id = 'aura-engine-audio-webaudio';
     this.audioEl.style.position = 'fixed';
@@ -471,7 +470,7 @@ export class AudioEngine {
     this.reverbConvolver = this.ctx.createConvolver();
     this.reverbWetGain = this.ctx.createGain();
     this.reverbWetGain.gain.value = 0;
-    this.updateReverbImpulse(1.5, 0.5);
+    // Buffer is populated on demand when reverb is activated to conserve CPU
 
     // Echo / Delay
     this.delayNode = this.ctx.createDelay(3.0);
@@ -503,10 +502,10 @@ export class AudioEngine {
     this.chorusWetGain.gain.value = 0;
     this.chorusDelay.connect(this.chorusWetGain);
 
-    // Saturation / WaveShaper
+    // Saturation / WaveShaper (oversampling off when idle to prevent buffer underrun crackles)
     this.saturationShaper = this.ctx.createWaveShaper();
     this.saturationShaper.curve = this.makeDistortionCurve(0, 'tape');
-    this.saturationShaper.oversample = '4x';
+    this.saturationShaper.oversample = 'none';
     this.saturationWetGain = this.ctx.createGain();
     this.saturationWetGain.gain.value = 0;
     this.saturationBypassGain = this.ctx.createGain();
@@ -612,11 +611,11 @@ export class AudioEngine {
     this.normalizerGain.gain.value = 1.0;
 
     this.limiterCompressor = this.ctx.createDynamicsCompressor();
-    this.limiterCompressor.threshold.value = -0.5;
-    this.limiterCompressor.knee.value = 0;
-    this.limiterCompressor.ratio.value = 20; // Hard limiting ratio
-    this.limiterCompressor.attack.value = 0.001; // Ultra fast attack
-    this.limiterCompressor.release.value = 0.05;
+    this.limiterCompressor.threshold.value = -1.0;
+    this.limiterCompressor.knee.value = 6.0; // Soft knee for clean musical transition
+    this.limiterCompressor.ratio.value = 8.0; // Smooth peak control, avoids brickwall squashing
+    this.limiterCompressor.attack.value = 0.012; // 12ms attack: envelope level, avoids tracking bass sine waves (eliminates ghur-ghur)
+    this.limiterCompressor.release.value = 0.12; // 120ms release: prevents low-frequency pumping modulation
 
     this.limiterCeilingGain = this.ctx.createGain();
     this.limiterCeilingGain.gain.value = 1.0;
@@ -799,6 +798,12 @@ export class AudioEngine {
         this.directAudioEl.removeAttribute('src');
       }
       if (this.audioEl) {
+        // Strip crossOrigin for local blobs to prevent browser CORS sandbox bugs
+        if (typeof audioSource === 'string' && (audioSource.startsWith('http://') || audioSource.startsWith('https://'))) {
+          this.audioEl.crossOrigin = 'anonymous';
+        } else {
+          this.audioEl.removeAttribute('crossOrigin');
+        }
         this.audioEl.src = url;
         this.audioEl.load();
 
@@ -1038,10 +1043,15 @@ export class AudioEngine {
 
     if (settings.enabled) {
       this.limiterCompressor.threshold.setValueAtTime(settings.threshold, now);
-      this.limiterCompressor.release.setValueAtTime(settings.release, now);
-      const ceilingLinear = Math.pow(10, settings.ceiling / 20);
+      this.limiterCompressor.release.setValueAtTime(Math.max(0.08, settings.release || 0.12), now);
+      this.limiterCompressor.knee.setValueAtTime(6.0, now);
+      this.limiterCompressor.ratio.setValueAtTime(8.0, now);
+      this.limiterCompressor.attack.setValueAtTime(0.012, now);
+      const ceilingLinear = Math.pow(10, (settings.ceiling || -0.2) / 20);
       this.limiterCeilingGain.gain.setValueAtTime(ceilingLinear, now);
     } else {
+      // 1.0 ratio = transparent unity pass-through without dynamic modification
+      this.limiterCompressor.ratio.setValueAtTime(1.0, now);
       this.limiterCompressor.threshold.setValueAtTime(0, now);
       this.limiterCeilingGain.gain.setValueAtTime(1.0, now);
     }
@@ -1206,11 +1216,13 @@ export class AudioEngine {
 
     // Saturation
     if (this.saturationShaper && this.saturationWetGain && this.saturationBypassGain) {
-      if (effects.saturation.enabled) {
+      if (effects.saturation.enabled && (effects.saturation.drive || 0) > 0) {
+        this.saturationShaper.oversample = '2x';
         this.saturationShaper.curve = this.makeDistortionCurve(effects.saturation.drive, effects.saturation.type || 'tape');
         this.saturationWetGain.gain.setValueAtTime(1.0, now);
         this.saturationBypassGain.gain.setValueAtTime(0.0, now);
       } else {
+        this.saturationShaper.oversample = 'none';
         this.saturationWetGain.gain.setValueAtTime(0.0, now);
         this.saturationBypassGain.gain.setValueAtTime(1.0, now);
       }

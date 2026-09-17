@@ -369,8 +369,8 @@ const DEFAULT_COMPRESSOR: CompressorSettings = {
 const DEFAULT_LIMITER: LimiterSettings = {
   enabled: true,
   ceiling: -0.2,
-  threshold: -0.5,
-  release: 0.05,
+  threshold: -1.0,
+  release: 0.12,
 };
 
 const DEFAULT_LOUDNESS: LoudnessSettings = {
