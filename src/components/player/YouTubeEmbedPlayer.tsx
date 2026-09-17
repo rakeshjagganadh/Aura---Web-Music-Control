@@ -13,14 +13,9 @@ export const YouTubeEmbedPlayer: React.FC = () => {
   const playerRef = useRef<any>(null);
   const isInitializingRef = useRef<boolean>(false);
   const timeUpdateInterval = useRef<any>(null);
-  const lastLifecycleTransitionTime = useRef<number>(0);
 
   useEffect(() => {
     let isMounted = true;
-
-    const markLifecycle = () => {
-      lastLifecycleTransitionTime.current = Date.now();
-    };
 
     const createPlayer = () => {
       if (!isMounted) return;
@@ -64,25 +59,7 @@ export const YouTubeEmbedPlayer: React.FC = () => {
                   youtubePlayerBridge.updateState({ duration: dur });
                 }
               } else if (event.data === 2) {
-                // Check if this pause is an unwanted OS/browser backgrounding pause
-                const isExplicit = youtubePlayerBridge.isUserExplicitPause();
-                const isDocHidden = typeof document !== 'undefined' && (document.hidden || document.visibilityState === 'hidden');
-                const recentTransition = (Date.now() - lastLifecycleTransitionTime.current) < 3500;
-
-                if (!isExplicit && (isDocHidden || recentTransition)) {
-                  // OS or mobile browser forced a pause due to minimization/tab change.
-                  // Do not broadcast isPlaying: false, which would pause the MediaSession!
-                  setTimeout(() => {
-                    if (!youtubePlayerBridge.isUserExplicitPause() && playerRef.current) {
-                      try {
-                        playerRef.current.playVideo?.();
-                      } catch {}
-                    }
-                  }, 60);
-                  return;
-                }
-
-                // Confirmed User-Initiated Pause
+                // Paused - cleanly sync state so MediaSession and UI accurately reflect paused status
                 youtubePlayerBridge.updateState({ isPlaying: false });
               } else if (event.data === 0) {
                 // Confirmed Ended
@@ -156,24 +133,24 @@ export const YouTubeEmbedPlayer: React.FC = () => {
       }
     }, 200);
 
-    // Auto-resume and lifecycle tracking
+    // Safe foreground auto-restore: only resume playback when returning to the FOREGROUND (visible).
+    // Never attempt to force playVideo() while document is hidden, which triggers aggressive loops and OS termination.
     const handleVisibilityChange = () => {
-      markLifecycle();
-      const isExplicit = youtubePlayerBridge.isUserExplicitPause();
-      if (!isExplicit && playerRef.current) {
-        try {
-          const pState = playerRef.current.getPlayerState?.();
-          // If paused (2) or unstarted (-1), resume playback
-          if (pState === 2 || pState === -1) {
-            playerRef.current.playVideo?.();
-          }
-        } catch {}
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        const isExplicit = youtubePlayerBridge.isUserExplicitPause();
+        if (!isExplicit && playerRef.current) {
+          try {
+            const pState = playerRef.current.getPlayerState?.();
+            // If paused while backgrounded, restore playback cleanly upon returning to foreground
+            if (pState === 2) {
+              playerRef.current.playVideo?.();
+            }
+          } catch {}
+        }
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('pagehide', markLifecycle);
-    window.addEventListener('blur', markLifecycle);
 
     return () => {
       isMounted = false;
@@ -182,8 +159,6 @@ export const YouTubeEmbedPlayer: React.FC = () => {
         clearInterval(timeUpdateInterval.current);
       }
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('pagehide', markLifecycle);
-      window.removeEventListener('blur', markLifecycle);
       youtubePlayerBridge.unregisterPlayer();
     };
   }, []);
