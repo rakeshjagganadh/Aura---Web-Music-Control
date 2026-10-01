@@ -1433,8 +1433,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       if (activeSourceRef.current === 'youtube') {
         const ytState = youtubePlayerBridge.getState();
-        const isExplicit = youtubePlayerBridge.isUserExplicitPause();
-        navigator.mediaSession.playbackState = (!isExplicit || ytState.isPlaying) ? 'playing' : 'paused';
+        navigator.mediaSession.playbackState = ytState.isPlaying ? 'playing' : 'paused';
 
         if ('setPositionState' in navigator.mediaSession && ytState.duration > 0) {
           try {

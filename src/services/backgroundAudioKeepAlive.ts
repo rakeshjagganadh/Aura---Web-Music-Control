@@ -144,25 +144,19 @@ class BackgroundAudioKeepAlive {
   }
 
   /**
-   * Specifically for YouTube IFrame playback:
-   * Starts the background silent carrier audio element to maintain an active Android/iOS
-   * top-level audio focus session. This prevents the OS from suspending the browser process
-   * or discarding the media session when the PWA or browser tab is minimized.
+   * For YouTube playback:
+   * Requests wake lock to keep the PWA engine active. Does NOT start the silent audio carrier,
+   * avoiding OS-level audio session hijacking and phantom playback desync.
    */
   public startYouTubeKeepAlive(): void {
     this.isKeepAliveActive = true;
     this.requestWakeLock();
-    if (!this.audioEl) {
-      this.initElement();
-    }
-    if (this.audioEl) {
-      this.audioEl.volume = 0.001;
-      this.audioEl.muted = false;
-      const playPromise = this.audioEl.play();
-      if (playPromise !== undefined) {
-        playPromise.catch((err) => {
-          console.debug('[AURA BG] Keepalive audio play prevented:', err);
-        });
+    // Ensure any previously active silent audio carrier is stopped
+    if (this.audioEl && !this.audioEl.paused) {
+      try {
+        this.audioEl.pause();
+      } catch {
+        // ignore
       }
     }
   }

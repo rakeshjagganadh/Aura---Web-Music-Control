@@ -326,6 +326,14 @@ class YouTubePlayerBridge {
         console.warn('Could not play YouTube video:', err);
       }
     }
+    try {
+      const iframe = document.querySelector('#aura-yt-iframe-slot iframe') as HTMLIFrameElement;
+      if (iframe?.contentWindow) {
+        iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+      }
+    } catch {
+      // ignore
+    }
   }
 
   public pause() {

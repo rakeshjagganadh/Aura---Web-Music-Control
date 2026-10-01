@@ -1,13 +1,15 @@
 import express from 'express';
 import http from 'http';
 import path from 'path';
+import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { attachRoomWebSocketServer } from './src/server/roomWsServer';
+import { youtubeRouter } from './src/server/youtubeRouter';
 
 async function startServer() {
   const app = express();
   const server = http.createServer(app);
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   // Attach WebSocket server for Listen Together shared rooms
   attachRoomWebSocketServer(server);
@@ -17,8 +19,16 @@ async function startServer() {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
+  // YouTube stream resolution & search router (Phase 1)
+  app.use('/api/yt', youtubeRouter);
+
+  // Determine production mode: when running built bundle (dist/server.cjs), NODE_ENV=production, or when dist/index.html is served
+  const isProduction =
+    process.env.NODE_ENV === 'production' ||
+    (!process.argv[1]?.endsWith('server.ts') && fs.existsSync(path.join(process.cwd(), 'dist', 'index.html')));
+
   // Vite middleware for development mode / Static files for production
-  if (process.env.NODE_ENV !== 'production') {
+  if (!isProduction) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
@@ -33,7 +43,7 @@ async function startServer() {
   }
 
   server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT} (mode: ${isProduction ? 'production' : 'development'})`);
   });
 }
 
