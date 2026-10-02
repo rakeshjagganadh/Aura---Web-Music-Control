@@ -16,6 +16,7 @@ async function startServer() {
 
   // Health check endpoint for Cloud Run and monitoring
   app.get('/api/health', (_req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 

@@ -55,6 +55,133 @@ youtubeRouter.options('*', (_req: Request, res: Response) => {
 });
 
 /**
+ * Extracts ytInitialData from YouTube HTML using balanced-bracket JSON scanning
+ */
+function extractYtInitialData(html: string): any {
+  const marker = 'ytInitialData = ';
+  const startIdx = html.indexOf(marker);
+  if (startIdx === -1) return null;
+  const jsonStart = html.indexOf('{', startIdx);
+  if (jsonStart === -1) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  let jsonEnd = -1;
+
+  for (let i = jsonStart; i < html.length; i++) {
+    const char = html[i];
+    if (escape) {
+      escape = false;
+      continue;
+    }
+    if (char === '\\') {
+      escape = true;
+      continue;
+    }
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (!inString) {
+      if (char === '{') depth++;
+      else if (char === '}') {
+        depth--;
+        if (depth === 0) {
+          jsonEnd = i + 1;
+          break;
+        }
+      }
+    }
+  }
+
+  if (jsonEnd !== -1) {
+    try {
+      return JSON.parse(html.substring(jsonStart, jsonEnd));
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+/**
+ * High-resilience web scraper search that works consistently in datacenter/cloud environments
+ * without requiring Google YouTube Data API keys and without triggering Innertube 403 API blocks.
+ */
+async function searchYouTubeViaWeb(query: string, limit: number) {
+  const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      'Accept-Language': 'en-US,en;q=0.9',
+      Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`YouTube returned status ${res.status}`);
+  }
+
+  const html = await res.text();
+  const data = extractYtInitialData(html);
+  if (!data) {
+    throw new Error('Could not parse initial data from YouTube');
+  }
+
+  const sections =
+    data.contents?.twoColumnSearchResultsRenderer?.primaryContents?.sectionListRenderer?.contents || [];
+  const items: Array<{
+    id: string;
+    title: string;
+    artist: string;
+    duration: number;
+    thumbnail: string;
+    source: 'youtube';
+  }> = [];
+
+  for (const section of sections) {
+    const renderers = section.itemSectionRenderer?.contents || [];
+    for (const item of renderers) {
+      const v = item.videoRenderer;
+      if (!v || !v.videoId) continue;
+      const id = v.videoId;
+      const title =
+        v.title?.runs?.map((r: any) => r.text).join('') || v.title?.simpleText || 'YouTube Audio';
+      const artist =
+        v.ownerText?.runs?.map((r: any) => r.text).join('') ||
+        v.shortBylineText?.runs?.map((r: any) => r.text).join('') ||
+        'YouTube Creator';
+      const durationText = v.lengthText?.simpleText || '';
+      let durationSec = 0;
+      if (durationText) {
+        const parts = durationText.split(':').map((p: string) => parseInt(p, 10));
+        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+          durationSec = parts[0] * 60 + parts[1];
+        } else if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+          durationSec = parts[0] * 3600 + parts[1] * 60 + parts[2];
+        }
+      }
+      const thumbnail =
+        v.thumbnail?.thumbnails?.slice(-1)[0]?.url || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+      items.push({
+        id,
+        title,
+        artist,
+        duration: durationSec,
+        thumbnail,
+        source: 'youtube' as const,
+      });
+      if (items.length >= limit) break;
+    }
+    if (items.length >= limit) break;
+  }
+
+  return items;
+}
+
+/**
  * GET /api/yt/search?q=<query>&limit=15
  * Normalized search endpoint without requiring Google YouTube Data API v3 key
  */
@@ -69,6 +196,18 @@ youtubeRouter.get('/search', async (req: Request, res: Response) => {
     return;
   }
 
+  // 1. Primary Strategy: Direct web results scraper (resilient to datacenter IP 403 blocks)
+  try {
+    const webItems = await searchYouTubeViaWeb(query, limit);
+    if (webItems.length > 0) {
+      res.json({ items: webItems });
+      return;
+    }
+  } catch (webErr: any) {
+    console.warn('[YOUTUBE ROUTER] Web search scraper warning:', webErr?.message);
+  }
+
+  // 2. Secondary Strategy: Fallback to Innertube if web scraper returned 0 items
   try {
     const { web } = await getInnertubeInstances();
     const searchResult = await web.search(query);
@@ -103,11 +242,10 @@ youtubeRouter.get('/search', async (req: Request, res: Response) => {
 
     res.json({ items });
   } catch (err: any) {
-    console.error('[YOUTUBE ROUTER] Search error:', err);
-    res.status(500).json({
-      error: 'Failed to search YouTube stream catalog',
-      message: err?.message || 'Upstream search error',
+    console.error('[YOUTUBE ROUTER] Search fallback error:', err?.message || err);
+    res.json({
       items: [],
+      warning: 'Search currently limited by upstream YouTube bot-prevention.',
     });
   }
 });
