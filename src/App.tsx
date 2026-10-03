@@ -41,6 +41,7 @@ import { StudioView } from './components/views/StudioView';
 import { SettingsView } from './components/views/SettingsView';
 import { ListenTogetherView } from './components/views/ListenTogetherView';
 import { ListenTogetherProvider } from './context/ListenTogetherContext';
+import { Analytics } from '@vercel/analytics/react';
 
 const MainLayout: React.FC = () => {
   const {
@@ -337,6 +338,7 @@ export default function App() {
     <MusicProvider>
       <ListenTogetherProvider>
         <MainLayout />
+        <Analytics />
       </ListenTogetherProvider>
     </MusicProvider>
   );
