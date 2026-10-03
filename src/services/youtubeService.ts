@@ -18,7 +18,6 @@ export interface YouTubeOEmbedInfo {
 }
 
 const LOCAL_STORAGE_KEY_YT_API = 'aura_custom_youtube_api_key';
-const DEFAULT_FALLBACK_KEY = 'AIzaSyAHWH5BxyEjggLoe_UMCtN_loplgnWCQPg';
 
 export const youtubeService = {
   /**
@@ -39,7 +38,7 @@ export const youtubeService = {
     } catch {
       // ignore
     }
-    return DEFAULT_FALLBACK_KEY;
+    return '';
   },
 
   /**
@@ -200,8 +199,17 @@ export const youtubeService = {
 
     // 2. High-resilience fallback: query AURA's backend search (/api/yt/search)
     try {
-      const backendRes = await fetch(`/api/yt/search?q=${encodeURIComponent(q)}&limit=${maxResults}`);
-      if (backendRes.ok) {
+      const backendBase = (
+        (import.meta as any).env?.VITE_BACKEND_URL ||
+        (import.meta as any).env?.VITE_API_URL ||
+        ''
+      ).trim().replace(/\/+$/, '');
+
+      const searchUrl = `${backendBase}/api/yt/search?q=${encodeURIComponent(q)}&limit=${maxResults}`;
+      const backendRes = await fetch(searchUrl);
+      const contentType = backendRes.headers.get('content-type') || '';
+
+      if (backendRes.ok && contentType.includes('application/json')) {
         const backendData = await backendRes.json();
         if (backendData.items && Array.isArray(backendData.items) && backendData.items.length > 0) {
           const tracks: Track[] = backendData.items
