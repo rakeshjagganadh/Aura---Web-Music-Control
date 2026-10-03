@@ -1423,53 +1423,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [currentTime, duration, playbackRate]);
 
-  // Keep MediaSession strictly synchronized when document visibility changes
-  // to prevent OS MediaSession termination or desynchronization upon backgrounding/minimization
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-
-    const handleVisibilitySync = () => {
-      if (!('mediaSession' in navigator) || !currentTrack) return;
-
-      if (activeSourceRef.current === 'youtube') {
-        const ytState = youtubePlayerBridge.getState();
-        navigator.mediaSession.playbackState = ytState.isPlaying ? 'playing' : 'paused';
-
-        if ('setPositionState' in navigator.mediaSession && ytState.duration > 0) {
-          try {
-            navigator.mediaSession.setPositionState({
-              duration: Math.max(0, ytState.duration),
-              playbackRate: ytState.playbackRate || 1.0,
-              position: Math.min(Math.max(0, ytState.currentTime), ytState.duration),
-            });
-          } catch (err) {
-            console.debug('MediaSession setPositionState sync error on visibilitychange:', err);
-          }
-        }
-      } else {
-        const engPlaying = audioEngine.isPlaying();
-        navigator.mediaSession.playbackState = engPlaying ? 'playing' : 'paused';
-
-        if ('setPositionState' in navigator.mediaSession && duration > 0) {
-          try {
-            navigator.mediaSession.setPositionState({
-              duration: Math.max(0, duration),
-              playbackRate: playbackRate || 1.0,
-              position: Math.min(Math.max(0, currentTime), duration),
-            });
-          } catch (err) {
-            console.debug('MediaSession setPositionState sync error on visibilitychange:', err);
-          }
-        }
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilitySync);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilitySync);
-    };
-  }, [currentTrack, duration, playbackRate, currentTime]);
-
   const setVolume = (vol: number) => {
     const clamped = Math.max(0, Math.min(1, vol));
     setVolumeState(clamped);

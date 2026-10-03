@@ -149,32 +149,12 @@ export const YouTubeEmbedPlayer: React.FC = () => {
       }
     }, 200);
 
-    // Visibility change handler: when minimized or switched, Chrome/Safari pauses embedded video iframe.
-    // We maintain continuous background playback by automatically executing user-authorized play recovery
-    // and ensuring notification bar / lock-screen state remains in 'playing' status.
+    // Visibility change handler: auto-resume if playback was suspended merely due to minimization
     const handleVisibilityChange = () => {
       if (typeof document === 'undefined') return;
       const isExplicit = youtubePlayerBridge.isUserExplicitPause();
 
-      if (document.visibilityState === 'hidden') {
-        // App minimized or screen locked:
-        // If user was actively playing and did NOT tap pause, keep YouTube playing or immediately trigger recovery
-        if (!isExplicit && playerRef.current) {
-          try {
-            // Attempt to keep playing seamlessly
-            playerRef.current.playVideo?.();
-            const iframe = document.querySelector('#aura-yt-iframe-slot iframe') as HTMLIFrameElement;
-            if (iframe?.contentWindow) {
-              iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-            }
-          } catch {}
-
-          // Ensure MediaSession lock screen notification retains active 'playing' state
-          if ('mediaSession' in navigator) {
-            navigator.mediaSession.playbackState = 'playing';
-          }
-        }
-      } else if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'visible') {
         // App returned to foreground: auto-resume if it was paused merely due to minimization
         if (!isExplicit && playerRef.current) {
           try {
@@ -203,7 +183,7 @@ export const YouTubeEmbedPlayer: React.FC = () => {
   return (
     <div
       id="aura-youtube-engine"
-      className="fixed -left-[9999px] -top-[9999px] w-[320px] h-[180px] pointer-events-none select-none overflow-hidden"
+      className="fixed bottom-0 right-0 w-[1px] h-[1px] opacity-0 pointer-events-none select-none overflow-hidden"
     >
       {/* Official YouTube IFrame Mounting Point */}
       <div id="aura-yt-iframe-slot" className="w-full h-full" />
