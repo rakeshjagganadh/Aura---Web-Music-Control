@@ -43,6 +43,7 @@ import { SOUND_LAB_PRESETS } from '../services/soundLabPresets';
 import { formatSeconds } from '../utils/formatTime';
 import { youtubePlayerBridge } from '../services/youtubePlayerBridge';
 import { backgroundAudioKeepAlive } from '../services/backgroundAudioKeepAlive';
+import { WEB_STREAM_CAPABILITIES } from '../services/sourceService';
 
 interface Toast {
   id: string;
@@ -85,6 +86,7 @@ export interface MusicContextType {
   // Playback State
   currentTrack: Track | null;
   activeSource: PlaybackSource;
+  isDirectStreamActive: boolean;
   isPlaying: boolean;
   currentTime: number;
   duration: number;
@@ -591,6 +593,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Playback State
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [activeSource, setActiveSource] = useState<PlaybackSource>('none');
+  const [isDirectStreamActive, setIsDirectStreamActive] = useState<boolean>(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -1052,15 +1055,45 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setMarkers([]);
       setHasSongProfile(false);
 
-      youtubePlayerBridge.loadAndPlay(track.sourceId!, {
-        autoplay: shouldAutoplay,
-        volume: isMuted ? 0 : Math.round(volume * 100),
-        isMuted,
-        playbackRate,
-        requestId,
-        startTime: initialStartTime,
-      });
+      const videoId = track.sourceId!;
+      const directStreamUrl = `/api/yt/audio?id=${encodeURIComponent(videoId)}`;
+
+      let directStreamLoaded = false;
+      try {
+        const probeRes = await fetch(directStreamUrl, { method: 'HEAD', signal: AbortSignal.timeout(3000) });
+        if (probeRes.ok || probeRes.status === 206) {
+          const enrichedTrack: Track = {
+            ...track,
+            audioUrl: directStreamUrl,
+            fileFormat: 'YT AUDIO',
+            playbackCapability: WEB_STREAM_CAPABILITIES,
+          };
+          await audioEngine.loadTrack(enrichedTrack, directStreamUrl, shouldAutoplay, initialStartTime);
+          activeSourceRef.current = 'local';
+          setActiveSource('local');
+          setIsDirectStreamActive(true);
+          directStreamLoaded = true;
+          showToast('Direct stream active • Background playback enabled', 'info');
+        }
+      } catch (err) {
+        console.warn('[AURA NUCLEAR] Direct audio stream probe failed, using embed fallback:', err);
+      }
+
+      if (!directStreamLoaded) {
+        setIsDirectStreamActive(false);
+        activeSourceRef.current = 'youtube';
+        setActiveSource('youtube');
+        youtubePlayerBridge.loadAndPlay(videoId, {
+          autoplay: shouldAutoplay,
+          volume: isMuted ? 0 : Math.round(volume * 100),
+          isMuted,
+          playbackRate,
+          requestId,
+          startTime: initialStartTime,
+        });
+      }
     } else {
+      setIsDirectStreamActive(false);
       // Local source: retrieve blob or URL
       let blob = audioBlobCache.current.get(track.id);
       if (!blob) {
@@ -2588,6 +2621,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         isLoadingLibrary,
         currentTrack,
         activeSource,
+        isDirectStreamActive,
         isPlaying,
         currentTime,
         duration,

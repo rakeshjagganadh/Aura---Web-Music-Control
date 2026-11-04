@@ -35,6 +35,7 @@ import { useListenTogether } from '../../context/ListenTogetherContext';
 export const ExpandedPlayer: React.FC = () => {
   const {
     currentTrack,
+    isDirectStreamActive,
     isPlaying,
     currentTime,
     duration,
@@ -250,8 +251,13 @@ export const ExpandedPlayer: React.FC = () => {
                 {currentTrack.title}
               </h2>
               {currentTrack.source === 'youtube' && (
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.06] text-zinc-300 border border-white/10 shrink-0">
-                  YouTube
+                <span className={`text-[10px] font-mono px-2 py-0.5 rounded flex items-center gap-1.5 shrink-0 ${
+                  isDirectStreamActive
+                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.2)]'
+                    : 'bg-white/[0.06] text-zinc-300 border border-white/10'
+                }`}>
+                  {isDirectStreamActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+                  {isDirectStreamActive ? 'YT DIRECT • BG ON' : 'YouTube'}
                 </span>
               )}
               {currentTrack.source === 'audius' && (

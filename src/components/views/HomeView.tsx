@@ -144,7 +144,91 @@ export const HomeView: React.FC = () => {
       </section>
 
       {/* -------------------------------------------------------------
-          2. THREE GATEWAYS: CURATED CATALOG, SOURCES, AUDIO STUDIO
+          2. NUCLEAR MULTI-SOURCE STREAMING CHANNELS
+          ------------------------------------------------------------- */}
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2">
+            <Radio className="w-4 h-4 text-emerald-400" />
+            <h2 className="font-mono uppercase tracking-widest text-zinc-300 font-semibold text-[11px]">
+              Multi-Source Audio Engine
+            </h2>
+          </div>
+          <span className="font-mono text-[10px] text-emerald-400 flex items-center gap-1.5 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            BACKGROUND PLAY ACTIVE
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div 
+            onClick={() => setIsSearchModalOpen(true)}
+            className="p-3.5 rounded-xl bg-[#0e1017] hover:bg-[#131622] border border-white/[0.06] hover:border-red-500/40 transition-all cursor-pointer group flex flex-col justify-between gap-2 shadow-sm"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-red-500/15 text-red-400 border border-red-500/30 font-semibold">
+                YOUTUBE
+              </span>
+              <span className="text-[10px] font-mono text-zinc-500">M4A 128K</span>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-white group-hover:text-red-300 transition-colors">Direct Audio Stream</p>
+              <p className="text-[11px] text-zinc-400 mt-0.5">Full background play • No ads</p>
+            </div>
+          </div>
+
+          <div 
+            onClick={() => setCurrentView('sources')}
+            className="p-3.5 rounded-xl bg-[#0e1017] hover:bg-[#131622] border border-white/[0.06] hover:border-purple-500/40 transition-all cursor-pointer group flex flex-col justify-between gap-2 shadow-sm"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/15 text-purple-400 border border-purple-500/30 font-semibold">
+                AUDIUS
+              </span>
+              <span className="text-[10px] font-mono text-zinc-500">MP3 320K</span>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-white group-hover:text-purple-300 transition-colors">Decentralized Web3</p>
+              <p className="text-[11px] text-zinc-400 mt-0.5">Independent artists catalog</p>
+            </div>
+          </div>
+
+          <div 
+            onClick={() => playTrack(CURATED_DISCOVERY_TRACKS[0], CURATED_DISCOVERY_TRACKS)}
+            className="p-3.5 rounded-xl bg-[#0e1017] hover:bg-[#131622] border border-white/[0.06] hover:border-cyan-500/40 transition-all cursor-pointer group flex flex-col justify-between gap-2 shadow-sm"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 font-semibold">
+                OPEN AUDIO
+              </span>
+              <span className="text-[10px] font-mono text-zinc-500">FLAC / LOSSLESS</span>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-white group-hover:text-cyan-300 transition-colors">Curated Soundscapes</p>
+              <p className="text-[11px] text-zinc-400 mt-0.5">Binaural, Synthwave & Lo-Fi</p>
+            </div>
+          </div>
+
+          <div 
+            onClick={() => setCurrentView('library')}
+            className="p-3.5 rounded-xl bg-[#0e1017] hover:bg-[#131622] border border-white/[0.06] hover:border-indigo-500/40 transition-all cursor-pointer group flex flex-col justify-between gap-2 shadow-sm"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 font-semibold">
+                LOCAL DISK
+              </span>
+              <span className="text-[10px] font-mono text-zinc-500">{tracks.length} FILES</span>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-white group-hover:text-indigo-300 transition-colors">Offline Vault</p>
+              <p className="text-[11px] text-zinc-400 mt-0.5">100% private IndexedDB</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* -------------------------------------------------------------
+          3. THREE GATEWAYS: CURATED CATALOG, SOURCES, AUDIO STUDIO
           ------------------------------------------------------------- */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
         

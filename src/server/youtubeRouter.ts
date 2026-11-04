@@ -183,6 +183,75 @@ async function searchYouTubeViaWeb(query: string, limit: number) {
 }
 
 /**
+ * High-resilience public instances search fallback
+ */
+async function searchYouTubeViaPublicInstances(query: string, limit: number) {
+  const q = encodeURIComponent(query);
+  const instances = [
+    `https://inv.tux.pizza/api/v1/search?q=${q}&type=video`,
+    `https://invidious.nerdvpn.de/api/v1/search?q=${q}&type=video`,
+    `https://api.piped.video/search?q=${q}&filter=music_songs`,
+  ];
+
+  for (const url of instances) {
+    try {
+      const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+      if (!res.ok) continue;
+      const data = await res.json();
+
+      let rawItems: any[] = [];
+      if (Array.isArray(data)) {
+        rawItems = data;
+      } else if (data && Array.isArray(data.items)) {
+        rawItems = data.items;
+      }
+
+      if (rawItems.length > 0) {
+        const items = rawItems
+          .slice(0, limit)
+          .map((v: any) => {
+            const id =
+              v.videoId ||
+              (typeof v.url === 'string' ? v.url.replace('/watch?v=', '') : null);
+            if (!id || typeof id !== 'string' || !/^[a-zA-Z0-9_-]{11}$/.test(id)) {
+              return null;
+            }
+            const title = v.title || 'YouTube Audio';
+            const artist = v.author || v.uploaderName || 'YouTube Creator';
+            const durationSec =
+              typeof v.lengthSeconds === 'number'
+                ? v.lengthSeconds
+                : typeof v.duration === 'number'
+                ? v.duration
+                : 0;
+            const thumbnail =
+              v.videoThumbnails?.[0]?.url ||
+              v.thumbnail ||
+              `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+
+            return {
+              id,
+              title,
+              artist,
+              duration: durationSec,
+              thumbnail,
+              source: 'youtube' as const,
+            };
+          })
+          .filter(Boolean);
+
+        if (items.length > 0) {
+          return items;
+        }
+      }
+    } catch {
+      // try next instance
+    }
+  }
+  return [];
+}
+
+/**
  * GET /api/yt/search?q=<query>&limit=15
  * Normalized search endpoint without requiring Google YouTube Data API v3 key
  */
@@ -197,7 +266,18 @@ youtubeRouter.get('/search', async (req: Request, res: Response) => {
     return;
   }
 
-  // 1. Primary Strategy: Direct web results scraper (resilient to datacenter IP 403 blocks)
+  // 1. Primary Strategy: Public REST API instances (bypasses datacenter IP blocks completely)
+  try {
+    const publicItems = await searchYouTubeViaPublicInstances(query, limit);
+    if (publicItems.length > 0) {
+      res.json({ items: publicItems });
+      return;
+    }
+  } catch (pubErr: any) {
+    console.warn('[YOUTUBE ROUTER] Public instances search warning:', pubErr?.message);
+  }
+
+  // 2. Secondary Strategy: Direct web results scraper
   try {
     const webItems = await searchYouTubeViaWeb(query, limit);
     if (webItems.length > 0) {
@@ -208,7 +288,7 @@ youtubeRouter.get('/search', async (req: Request, res: Response) => {
     console.warn('[YOUTUBE ROUTER] Web search scraper warning:', webErr?.message);
   }
 
-  // 2. Secondary Strategy: Fallback to Innertube if web scraper returned 0 items
+  // 3. Tertiary Strategy: Fallback to Innertube if web scraper returned 0 items
   try {
     const { web } = await getInnertubeInstances();
     const searchResult = await web.search(query);

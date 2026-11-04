@@ -38,7 +38,8 @@ export const youtubeService = {
     } catch {
       // ignore
     }
-    return '';
+    // 3. Built-in default key provided by user
+    return 'AIzaSyAHWH5BxyEjggLoe_UMCtN_loplgnWCQPg';
   },
 
   /**
@@ -64,39 +65,114 @@ export const youtubeService = {
   },
 
   /**
+   * Client-side search via public Invidious / Piped instances for high reliability
+   */
+  async searchViaPublicInstances(query: string, maxResults = 12): Promise<Track[]> {
+    const q = encodeURIComponent(query.trim());
+    const instances = [
+      `https://inv.tux.pizza/api/v1/search?q=${q}&type=video`,
+      `https://invidious.nerdvpn.de/api/v1/search?q=${q}&type=video`,
+      `https://api.piped.video/search?q=${q}&filter=music_songs`,
+    ];
+
+    for (const url of instances) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!res.ok) continue;
+        const data = await res.json();
+
+        let items: any[] = [];
+        if (Array.isArray(data)) {
+          items = data;
+        } else if (data && Array.isArray(data.items)) {
+          items = data.items;
+        }
+
+        if (items.length > 0) {
+          const tracks: Track[] = items
+            .slice(0, maxResults)
+            .map((item: any) => {
+              const videoId =
+                item.videoId ||
+                (typeof item.url === 'string'
+                  ? item.url.replace('/watch?v=', '')
+                  : null);
+              if (!videoId || typeof videoId !== 'string' || !/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
+                return null;
+              }
+              const title = this.decodeHtmlEntities(item.title || 'YouTube Audio');
+              const artist = this.decodeHtmlEntities(
+                item.author || item.uploaderName || 'YouTube Artist'
+              );
+              const duration =
+                typeof item.lengthSeconds === 'number'
+                  ? item.lengthSeconds
+                  : typeof item.duration === 'number'
+                  ? item.duration
+                  : 0;
+              const coverUrl =
+                item.videoThumbnails?.[0]?.url ||
+                item.thumbnail ||
+                `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+
+              return {
+                id: `yt-${videoId}`,
+                title,
+                artist,
+                album: 'YouTube Stream',
+                duration,
+                fileFormat: 'YOUTUBE',
+                fileSize: 0,
+                dateAdded: Date.now(),
+                coverUrl,
+                coverColor: 'from-red-700 via-zinc-900 to-black',
+                source: 'youtube' as const,
+                sourceId: videoId,
+                sourceName: 'YouTube Embed',
+                sourceUrl: `https://www.youtube.com/watch?v=${videoId}`,
+                isAvailable: true,
+                playbackCapability: YOUTUBE_EMBED_CAPABILITIES,
+              };
+            })
+            .filter(Boolean) as Track[];
+
+          if (tracks.length > 0) {
+            return tracks;
+          }
+        }
+      } catch {
+        // try next instance
+      }
+    }
+    return [];
+  },
+
+  /**
    * Parse any YouTube URL or raw Video ID and extract the 11-char video ID.
-   * Handles:
-   * - https://www.youtube.com/watch?v=VIDEO_ID
-   * - https://m.youtube.com/watch?v=VIDEO_ID
-   * - https://youtu.be/VIDEO_ID
-   * - https://www.youtube.com/embed/VIDEO_ID
-   * - https://www.youtube.com/shorts/VIDEO_ID
-   * - URLs with timestamps & other parameters
-   * - Raw 11-character alphanumeric strings
    */
   parseVideoId(input: string): string | null {
     if (!input || typeof input !== 'string') return null;
     const clean = input.trim();
 
-    // Check raw 11-character ID (allows letters, digits, _, -)
     if (/^[a-zA-Z0-9_-]{11}$/.test(clean)) {
       return clean;
     }
 
     try {
-      // Match youtu.be/VIDEO_ID
       const youtuBeMatch = clean.match(/(?:youtu\.be\/|youtube\.com\/(?:embed|v|shorts)\/)([a-zA-Z0-9_-]{11})/i);
       if (youtuBeMatch && youtuBeMatch[1]) {
         return youtuBeMatch[1];
       }
 
-      // Match youtube.com/watch?v=VIDEO_ID
       const watchMatch = clean.match(/[?&]v=([a-zA-Z0-9_-]{11})/i);
       if (watchMatch && watchMatch[1]) {
         return watchMatch[1];
       }
 
-      // Match URL object parsing if available
       if (clean.startsWith('http://') || clean.startsWith('https://')) {
         const url = new URL(clean);
         const vParam = url.searchParams.get('v');
@@ -139,7 +215,7 @@ export const youtubeService = {
 
   /**
    * Search YouTube: attempts official Google YouTube Data API v3 first,
-   * with seamless fallback to AURA backend search (/api/yt/search) if the key is restricted or quota exceeded.
+   * then public instances fallback, and finally AURA backend search (/api/yt/search).
    */
   async search(query: string, maxResults = 12): Promise<YouTubeSearchResult> {
     const q = query.trim();
@@ -193,11 +269,21 @@ export const youtubeService = {
           }
         }
       } catch {
-        // Fall back to backend search bridge
+        // Fall back
       }
     }
 
-    // 2. High-resilience fallback: query AURA's backend search (/api/yt/search)
+    // 2. Public Invidious / Piped API search fallback (resilient to browser CORS and serverless)
+    try {
+      const publicTracks = await this.searchViaPublicInstances(q, maxResults);
+      if (publicTracks.length > 0) {
+        return { items: publicTracks, isConfigured: true };
+      }
+    } catch {
+      // Fall back
+    }
+
+    // 3. High-resilience fallback: query AURA's backend search (/api/yt/search)
     try {
       const backendBase = (
         (import.meta as any).env?.VITE_BACKEND_URL ||
