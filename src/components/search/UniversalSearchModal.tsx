@@ -30,7 +30,7 @@ interface UniversalSearchModalProps {
   title?: string;
 }
 
-type SearchTab = 'all' | 'songs' | 'audius' | 'youtube' | 'artists' | 'albums' | 'playlists';
+type SearchTab = 'all' | 'songs' | 'jamendo' | 'audius' | 'radio' | 'youtube' | 'artists' | 'albums' | 'playlists';
 
 const HighlightMatch: React.FC<{ text: string; query: string; className?: string }> = ({ text, query, className = '' }) => {
   if (!query || !query.trim()) return <span className={className}>{text}</span>;
@@ -113,7 +113,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
     const results = await universalSearchCoordinator.search(
       q, 
       { tracks, playlists }, 
-      { includeYouTube: false, includeAudius: false }
+      { includeYouTube: false, includeAudius: false, includeJamendo: false, includeRadio: false }
     );
     setSearchResults(results);
     setSelectedIndex(0);
@@ -133,6 +133,8 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
           { 
             includeYouTube: isDirectYt || youtubeService.isConfigured(),
             includeAudius: true,
+            includeJamendo: true,
+            includeRadio: true,
           }
         );
         setSearchResults(fullResults);
@@ -166,14 +168,23 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
     if (activeTab === 'audius') {
       return searchResults.songs.filter((s) => s.source === 'audius');
     }
+    if (activeTab === 'jamendo') {
+      return searchResults.songs.filter((s) => s.source === 'jamendo');
+    }
+    if (activeTab === 'radio') {
+      return searchResults.songs.filter((s) => s.source === 'radiobrowser' || s.source === 'radio');
+    }
     if (activeTab === 'songs') {
       return searchResults.songs;
     }
-    // 'all' tab: Group naturally by source: YouTube, Audius, then Local/catalog
-    const yt = searchResults.songs.filter((s) => s.source === 'youtube');
+    // 'all' tab: Group naturally by source: Local/catalog, Jamendo, Audius, Radio, YouTube
+    const loc = searchResults.songs.filter((s) => !s.source || s.source === 'local');
+    const jam = searchResults.songs.filter((s) => s.source === 'jamendo');
     const aud = searchResults.songs.filter((s) => s.source === 'audius');
-    const loc = searchResults.songs.filter((s) => s.source !== 'youtube' && s.source !== 'audius');
-    return [...yt, ...aud, ...loc];
+    const rad = searchResults.songs.filter((s) => s.source === 'radiobrowser' || s.source === 'radio');
+    const yt = searchResults.songs.filter((s) => s.source === 'youtube');
+    const curated = searchResults.songs.filter((s) => s.source === 'curated_stream' || s.source === 'web_stream');
+    return [...loc, ...jam, ...aud, ...rad, ...yt, ...curated];
   }, [searchResults.songs, activeTab]);
 
   const ytSongsCount = useMemo(() => {
@@ -182,6 +193,14 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
 
   const audiusSongsCount = useMemo(() => {
     return searchResults.songs.filter((s) => s.source === 'audius').length;
+  }, [searchResults.songs]);
+
+  const jamendoSongsCount = useMemo(() => {
+    return searchResults.songs.filter((s) => s.source === 'jamendo').length;
+  }, [searchResults.songs]);
+
+  const radioSongsCount = useMemo(() => {
+    return searchResults.songs.filter((s) => s.source === 'radiobrowser' || s.source === 'radio').length;
   }, [searchResults.songs]);
 
   // Keyboard navigation
@@ -405,6 +424,34 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
                 <span>Audius ({audiusSongsCount})</span>
               </button>
             )}
+
+            {jamendoSongsCount > 0 && (
+              <button
+                onClick={() => setActiveTab('jamendo')}
+                className={`flex items-center gap-1 px-3 py-1 rounded-xl font-medium transition-colors ${
+                  activeTab === 'jamendo'
+                    ? 'bg-amber-600 text-white shadow-sm'
+                    : 'text-amber-400 hover:text-amber-300 hover:bg-amber-950/30'
+                }`}
+              >
+                <Music className="w-3.5 h-3.5" />
+                <span>Jamendo ({jamendoSongsCount})</span>
+              </button>
+            )}
+
+            {radioSongsCount > 0 && (
+              <button
+                onClick={() => setActiveTab('radio')}
+                className={`flex items-center gap-1 px-3 py-1 rounded-xl font-medium transition-colors ${
+                  activeTab === 'radio'
+                    ? 'bg-cyan-600 text-white shadow-sm'
+                    : 'text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/30'
+                }`}
+              >
+                <Radio className="w-3.5 h-3.5" />
+                <span>Radio ({radioSongsCount})</span>
+              </button>
+            )}
           </div>
         )}
 
@@ -553,7 +600,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
           )}
 
           {/* Songs Section */}
-          {query && (activeTab === 'all' || activeTab === 'songs' || activeTab === 'youtube' || activeTab === 'audius') && songsToShow.length > 0 && (
+          {query && (activeTab === 'all' || activeTab === 'songs' || activeTab === 'youtube' || activeTab === 'audius' || activeTab === 'jamendo' || activeTab === 'radio') && songsToShow.length > 0 && (
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">
@@ -569,11 +616,15 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
                   const isSelected = idx === selectedIndex;
                   const isYouTube = song.source === 'youtube';
                   const isAudius = song.source === 'audius';
+                  const isJamendo = song.source === 'jamendo';
+                  const isRadio = song.source === 'radiobrowser' || song.source === 'radio';
 
                   // Group separators for 'all' tab
                   const getSourceGroup = (s: string) => {
                     if (s === 'youtube') return { label: 'YouTube Music', icon: Youtube, color: 'text-red-400' };
                     if (s === 'audius') return { label: 'Audius Catalog', icon: Radio, color: 'text-purple-400' };
+                    if (s === 'jamendo') return { label: 'Jamendo Music (Creative Commons)', icon: Music, color: 'text-amber-400' };
+                    if (s === 'radiobrowser' || s === 'radio') return { label: 'Live Radio Streams', icon: Radio, color: 'text-cyan-400' };
                     return { label: 'Local Library & Spaces', icon: HardDrive, color: 'text-emerald-400' };
                   };
 
@@ -628,6 +679,16 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
                                 <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 shrink-0 flex items-center gap-1 font-semibold">
                                   <Radio className="w-2.5 h-2.5" />
                                   AUDIUS
+                                </span>
+                              ) : isJamendo ? (
+                                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0 flex items-center gap-1 font-semibold">
+                                  <Music className="w-2.5 h-2.5" />
+                                  JAMENDO
+                                </span>
+                              ) : isRadio ? (
+                                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shrink-0 flex items-center gap-1 font-semibold">
+                                  <Radio className="w-2.5 h-2.5" />
+                                  RADIO
                                 </span>
                               ) : song.source === 'curated_stream' ? (
                                 <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shrink-0">

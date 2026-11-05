@@ -18,7 +18,7 @@ export interface SharedRoomTrack {
   artist: string;
   album: string;
   duration: number;
-  source: 'youtube' | 'audius' | 'curated_stream' | 'web_stream' | 'local' | 'radio';
+  source: 'youtube' | 'audius' | 'curated_stream' | 'web_stream' | 'local' | 'radio' | 'jamendo' | 'radiobrowser';
   sourceId?: string;
   sourceUrl?: string;
   externalStreamUrl?: string;

@@ -1,13 +1,15 @@
-import { Track, Playlist, AppSettings, UserPreset, SongAudioProfile, DeviceProfile, WaveformMarker, AuraMoment } from '../types';
+import { Track, Playlist, AppSettings, UserPreset, SongAudioProfile, DeviceProfile, WaveformMarker, AuraMoment, RecentlyPlayedItem, FavoriteItem } from '../types';
 
 const DB_NAME = 'AuraAudioStudioDB';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 const STORES = {
   TRACKS: 'tracks',
   AUDIO_BLOBS: 'audio_blobs',
   PLAYLISTS: 'playlists',
   FAVORITES: 'favorites',
+  FAVORITE_ITEMS: 'favorite_items',
+  RECENTLY_PLAYED: 'recently_played',
   SETTINGS: 'settings',
   USER_PRESETS: 'user_presets',
   SONG_PROFILES: 'song_profiles',
@@ -39,6 +41,12 @@ class StorageService {
         }
         if (!db.objectStoreNames.contains(STORES.FAVORITES)) {
           db.createObjectStore(STORES.FAVORITES, { keyPath: 'trackId' });
+        }
+        if (!db.objectStoreNames.contains(STORES.FAVORITE_ITEMS)) {
+          db.createObjectStore(STORES.FAVORITE_ITEMS, { keyPath: 'trackId' });
+        }
+        if (!db.objectStoreNames.contains(STORES.RECENTLY_PLAYED)) {
+          db.createObjectStore(STORES.RECENTLY_PLAYED, { keyPath: 'id' });
         }
         if (!db.objectStoreNames.contains(STORES.SETTINGS)) {
           db.createObjectStore(STORES.SETTINGS, { keyPath: 'key' });
@@ -197,16 +205,83 @@ class StorageService {
     });
   }
 
-  async setFavorite(trackId: string, isFav: boolean): Promise<void> {
+  async setFavorite(trackId: string, isFav: boolean, trackObj?: Track): Promise<void> {
     const db = await this.getDB();
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORES.FAVORITES, 'readwrite');
+      const tx = db.transaction([STORES.FAVORITES, STORES.FAVORITE_ITEMS], 'readwrite');
       const store = tx.objectStore(STORES.FAVORITES);
+      const itemsStore = tx.objectStore(STORES.FAVORITE_ITEMS);
       if (isFav) {
         store.put({ trackId, addedAt: Date.now() });
+        if (trackObj) {
+          itemsStore.put({ trackId, track: trackObj, addedAt: Date.now() });
+        }
       } else {
         store.delete(trackId);
+        itemsStore.delete(trackId);
       }
+
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  async getFavoriteItems(): Promise<FavoriteItem[]> {
+    const db = await this.getDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORES.FAVORITE_ITEMS, 'readonly');
+      const store = tx.objectStore(STORES.FAVORITE_ITEMS);
+      const request = store.getAll();
+
+      request.onsuccess = () => {
+        const items: FavoriteItem[] = request.result || [];
+        resolve(items.sort((a, b) => b.addedAt - a.addedAt));
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // --- Recently Played ---
+
+  async getRecentlyPlayed(): Promise<RecentlyPlayedItem[]> {
+    const db = await this.getDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORES.RECENTLY_PLAYED, 'readonly');
+      const store = tx.objectStore(STORES.RECENTLY_PLAYED);
+      const request = store.getAll();
+
+      request.onsuccess = () => {
+        const items: RecentlyPlayedItem[] = request.result || [];
+        resolve(items.sort((a, b) => b.playedAt - a.playedAt).slice(0, 50));
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async addRecentlyPlayed(track: Track): Promise<void> {
+    if (!track || !track.id) return;
+    const db = await this.getDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORES.RECENTLY_PLAYED, 'readwrite');
+      const store = tx.objectStore(STORES.RECENTLY_PLAYED);
+      const item: RecentlyPlayedItem = {
+        id: track.id,
+        track,
+        playedAt: Date.now(),
+      };
+      store.put(item);
+
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  async clearRecentlyPlayed(): Promise<void> {
+    const db = await this.getDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORES.RECENTLY_PLAYED, 'readwrite');
+      const store = tx.objectStore(STORES.RECENTLY_PLAYED);
+      store.clear();
 
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);

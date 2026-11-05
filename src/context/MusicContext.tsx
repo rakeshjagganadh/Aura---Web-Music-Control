@@ -32,7 +32,9 @@ import {
   ExportAudioOptions,
   WaveformMarker,
   AuraMoment,
-  MarkerType
+  MarkerType,
+  FavoriteItem,
+  RecentlyPlayedItem
 } from '../types';
 import { audioEngine, SYSTEM_EQ_PRESETS, EQ_10_BANDS } from '../services/audioEngine';
 import { storageService } from '../services/storage';
@@ -44,6 +46,7 @@ import { formatSeconds } from '../utils/formatTime';
 import { youtubePlayerBridge } from '../services/youtubePlayerBridge';
 import { backgroundAudioKeepAlive } from '../services/backgroundAudioKeepAlive';
 import { WEB_STREAM_CAPABILITIES } from '../services/sourceService';
+import { audiusService } from '../services/audiusService';
 
 interface Toast {
   id: string;
@@ -80,6 +83,9 @@ export interface MusicContextType {
   tracks: Track[];
   playlists: Playlist[];
   favoriteIds: Set<string>;
+  favoriteItems: FavoriteItem[];
+  recentlyPlayed: RecentlyPlayedItem[];
+  clearRecentlyPlayed: () => Promise<void>;
   storageUsage: { trackCount: number; approxBytes: number };
   isLoadingLibrary: boolean;
 
@@ -318,7 +324,7 @@ export interface MusicContextType {
   clearQueue: () => void;
 
   // Library Actions
-  toggleFavorite: (trackId: string) => Promise<void>;
+  toggleFavorite: (trackId: string, trackObj?: Track) => Promise<void>;
   uploadFiles: (files: FileList | File[]) => Promise<void>;
   deleteTrack: (trackId: string) => Promise<void>;
   loadDemoPack: () => Promise<void>;
@@ -556,6 +562,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [tracks, setTracks] = useState<Track[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  const [favoriteItems, setFavoriteItems] = useState<FavoriteItem[]>([]);
+  const [recentlyPlayed, setRecentlyPlayed] = useState<RecentlyPlayedItem[]>([]);
   const [storageUsage, setStorageUsage] = useState({ trackCount: 0, approxBytes: 0 });
   const [isLoadingLibrary, setIsLoadingLibrary] = useState(true);
 
@@ -844,6 +852,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           savedTracks, 
           savedPlaylists, 
           savedFavs, 
+          savedFavItems,
+          savedRecentlyPlayed,
           savedSettings,
           savedPresets,
           savedDevices
@@ -851,6 +861,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           storageService.getAllTracks(),
           storageService.getAllPlaylists(),
           storageService.getFavorites(),
+          storageService.getFavoriteItems(),
+          storageService.getRecentlyPlayed(),
           storageService.getSettings(),
           storageService.getAllUserPresets(),
           storageService.getAllDeviceProfiles(),
@@ -873,8 +885,25 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         setPlaylists(savedPlaylists);
         setFavoriteIds(new Set(savedFavs));
+        setFavoriteItems(savedFavItems);
+        setRecentlyPlayed(savedRecentlyPlayed);
         setUserPresets(savedPresets);
         setDeviceProfiles(savedDevices);
+
+        // Restore saved queue from localStorage if available
+        try {
+          const rawQ = localStorage.getItem('aura_v2_queue');
+          if (rawQ) {
+            const parsedQ = JSON.parse(rawQ);
+            if (Array.isArray(parsedQ.queue) && parsedQ.queue.length > 0) {
+              setQueue(parsedQ.queue);
+              setQueueIndex(typeof parsedQ.queueIndex === 'number' ? Math.min(parsedQ.queueIndex, parsedQ.queue.length - 1) : 0);
+              if (parsedQ.queue[0]) {
+                setCurrentTrack(parsedQ.queue[parsedQ.queueIndex || 0] || parsedQ.queue[0]);
+              }
+            }
+          }
+        } catch {}
 
         // Load moments
         try {
@@ -1047,51 +1076,31 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       });
     }
 
-    // STEP 6: History
+    // STEP 6: History & Recently Played
     setHistory((prev) => [track, ...prev.filter((t) => t.id !== track.id)].slice(0, 30));
+    try {
+      storageService.addRecentlyPlayed(track).then(() => {
+        storageService.getRecentlyPlayed().then((items) => setRecentlyPlayed(items));
+      });
+    } catch {}
 
     // STEP 7: Initialize & Load target playback engine
     if (targetSource === 'youtube') {
       setMarkers([]);
       setHasSongProfile(false);
+      setIsDirectStreamActive(false);
+      activeSourceRef.current = 'youtube';
+      setActiveSource('youtube');
 
       const videoId = track.sourceId!;
-      const directStreamUrl = `/api/yt/audio?id=${encodeURIComponent(videoId)}`;
-
-      let directStreamLoaded = false;
-      try {
-        const probeRes = await fetch(directStreamUrl, { method: 'HEAD', signal: AbortSignal.timeout(3000) });
-        if (probeRes.ok || probeRes.status === 206) {
-          const enrichedTrack: Track = {
-            ...track,
-            audioUrl: directStreamUrl,
-            fileFormat: 'YT AUDIO',
-            playbackCapability: WEB_STREAM_CAPABILITIES,
-          };
-          await audioEngine.loadTrack(enrichedTrack, directStreamUrl, shouldAutoplay, initialStartTime);
-          activeSourceRef.current = 'local';
-          setActiveSource('local');
-          setIsDirectStreamActive(true);
-          directStreamLoaded = true;
-          showToast('Direct stream active • Background playback enabled', 'info');
-        }
-      } catch (err) {
-        console.warn('[AURA NUCLEAR] Direct audio stream probe failed, using embed fallback:', err);
-      }
-
-      if (!directStreamLoaded) {
-        setIsDirectStreamActive(false);
-        activeSourceRef.current = 'youtube';
-        setActiveSource('youtube');
-        youtubePlayerBridge.loadAndPlay(videoId, {
-          autoplay: shouldAutoplay,
-          volume: isMuted ? 0 : Math.round(volume * 100),
-          isMuted,
-          playbackRate,
-          requestId,
-          startTime: initialStartTime,
-        });
-      }
+      youtubePlayerBridge.loadAndPlay(videoId, {
+        autoplay: shouldAutoplay,
+        volume: isMuted ? 0 : Math.round(volume * 100),
+        isMuted,
+        playbackRate,
+        requestId,
+        startTime: initialStartTime,
+      });
     } else {
       setIsDirectStreamActive(false);
       // Local source: retrieve blob or URL
@@ -1151,16 +1160,26 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (blob) {
           await audioEngine.loadTrack(track, blob, shouldAutoplay, initialStartTime);
         } else if (track.audioUrl) {
-          await audioEngine.loadTrack(track, track.audioUrl, shouldAutoplay, initialStartTime);
+          try {
+            await audioEngine.loadTrack(track, track.audioUrl, shouldAutoplay, initialStartTime);
+          } catch (firstErr) {
+            // If Audius track failed on primary gateway, attempt an alternate gateway node
+            if (track.source === 'audius' && track.sourceId) {
+              const fallbackUrl = audiusService.getAlternateStreamUrl(track.sourceId, track.audioUrl);
+              await audioEngine.loadTrack(track, fallbackUrl, shouldAutoplay, initialStartTime);
+            } else {
+              throw firstErr;
+            }
+          }
         }
       } catch (err) {
         if (requestId === playbackRequestIdRef.current) {
           console.error('Error loading audio track:', err);
-          const errorMsg = track.source === 'audius'
-            ? `Unable to stream Audius track "${track.title}".`
-            : `Error playing "${track.title}".`;
-          showToast(errorMsg, 'error');
           setIsPlaying(false);
+          const errorMsg = track.source === 'audius'
+            ? `Audius track "${track.title}" is currently unavailable on decentralized network nodes.`
+            : `Unable to play "${track.title}".`;
+          showToast(errorMsg, 'error');
         }
       }
     }
@@ -2369,15 +2388,29 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   // Favorites
-  const toggleFavorite = async (trackId: string) => {
+  const toggleFavorite = async (trackId: string, trackObj?: Track) => {
     const isFav = favoriteIds.has(trackId);
     const newFavs = new Set(favoriteIds);
     if (isFav) {
       newFavs.delete(trackId);
+      setFavoriteItems((prev) => prev.filter((fi) => fi.trackId !== trackId));
     } else {
       newFavs.add(trackId);
     }
     setFavoriteIds(newFavs);
+
+    const targetTrack =
+      trackObj ||
+      tracks.find((t) => t.id === trackId) ||
+      queue.find((t) => t.id === trackId) ||
+      (currentTrack && currentTrack.id === trackId ? currentTrack : undefined);
+
+    if (targetTrack && !isFav) {
+      setFavoriteItems((prev) => [
+        { trackId, track: targetTrack, addedAt: Date.now() },
+        ...prev.filter((fi) => fi.trackId !== trackId),
+      ]);
+    }
 
     setTracks((prev) =>
       prev.map((t) => (t.id === trackId ? { ...t, isFavorite: !isFav } : t))
@@ -2388,10 +2421,17 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     try {
-      await storageService.setFavorite(trackId, !isFav);
+      await storageService.setFavorite(trackId, !isFav, targetTrack);
+      showToast(isFav ? 'Removed from Favourites' : 'Added to Favourites', 'success');
     } catch (e) {
       console.error('Failed to save favorite state:', e);
     }
+  };
+
+  const clearRecentlyPlayed = async () => {
+    await storageService.clearRecentlyPlayed();
+    setRecentlyPlayed([]);
+    showToast('Recently played history cleared', 'info');
   };
 
   // Upload Files
@@ -2617,6 +2657,9 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         tracks,
         playlists,
         favoriteIds,
+        favoriteItems,
+        recentlyPlayed,
+        clearRecentlyPlayed,
         storageUsage,
         isLoadingLibrary,
         currentTrack,

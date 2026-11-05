@@ -60,6 +60,36 @@ export const AUDIUS_STREAM_CAPABILITIES: TrackCapabilities = {
   advancedProcessing: true, // Real-time analyser supported via Web Audio
 };
 
+export const JAMENDO_STREAM_CAPABILITIES: TrackCapabilities = {
+  basicPlayback: true,
+  seek: true,
+  volume: true,
+  eq: true,
+  effects: true,
+  spatial: true,
+  pitch: true,
+  tempo: true,
+  loop: true,
+  trim: false,
+  export: false,
+  advancedProcessing: true, // Full Web Audio DSP & visualizer supported via open CORS
+};
+
+export const RADIO_BROWSER_CAPABILITIES: TrackCapabilities = {
+  basicPlayback: true,
+  seek: false, // Live continuous stream
+  volume: true,
+  eq: true,
+  effects: true,
+  spatial: true,
+  pitch: false,
+  tempo: false,
+  loop: false,
+  trim: false,
+  export: false,
+  advancedProcessing: true, // Real-time audio analyser supported
+};
+
 export const DEFAULT_MUSIC_SOURCES: MusicSource[] = [
   {
     id: 'source-local',
@@ -74,6 +104,18 @@ export const DEFAULT_MUSIC_SOURCES: MusicSource[] = [
     badge: 'UNLOCKED DSP',
   },
   {
+    id: 'source-jamendo',
+    type: 'jamendo',
+    name: 'Jamendo Music Catalog',
+    description: 'Free independent artists & Creative Commons music with 100% open CORS and full Web Audio DSP.',
+    icon: 'Music',
+    isConnected: true,
+    isOfficial: true,
+    capabilities: JAMENDO_STREAM_CAPABILITIES,
+    category: 'stream',
+    badge: 'CREATIVE COMMONS',
+  },
+  {
     id: 'source-audius',
     type: 'audius',
     name: 'Audius Decentralized Catalog',
@@ -84,6 +126,18 @@ export const DEFAULT_MUSIC_SOURCES: MusicSource[] = [
     capabilities: AUDIUS_STREAM_CAPABILITIES,
     category: 'stream',
     badge: 'OPEN AUDIO',
+  },
+  {
+    id: 'source-radiobrowser',
+    type: 'radiobrowser',
+    name: 'Radio Browser Directory',
+    description: 'Global community directory with 30,000+ live internet radio stations, genres, and countries.',
+    icon: 'Radio',
+    isConnected: true,
+    isOfficial: true,
+    capabilities: RADIO_BROWSER_CAPABILITIES,
+    category: 'radio',
+    badge: '30,000+ STATIONS',
   },
   {
     id: 'source-youtube',
@@ -109,18 +163,6 @@ export const DEFAULT_MUSIC_SOURCES: MusicSource[] = [
     category: 'stream',
     badge: 'LOSSLESS DSP',
   },
-  {
-    id: 'source-radio',
-    type: 'radio',
-    name: 'Web Audio & Radio Streams',
-    description: 'Direct MP3/AAC internet radio and ambient streams with live spectral analysis.',
-    icon: 'Radio',
-    isConnected: true,
-    isOfficial: true,
-    capabilities: WEB_STREAM_CAPABILITIES,
-    category: 'radio',
-    badge: 'LIVE DSP',
-  },
 ];
 
 export function getTrackCapabilities(track: Track | null): TrackCapabilities {
@@ -131,11 +173,15 @@ export function getTrackCapabilities(track: Track | null): TrackCapabilities {
   switch (source) {
     case 'local':
       return FULL_DSP_CAPABILITIES;
+    case 'jamendo':
+      return JAMENDO_STREAM_CAPABILITIES;
     case 'audius':
       return AUDIUS_STREAM_CAPABILITIES;
+    case 'radiobrowser':
+    case 'radio':
+      return RADIO_BROWSER_CAPABILITIES;
     case 'curated_stream':
     case 'web_stream':
-    case 'radio':
       return WEB_STREAM_CAPABILITIES;
     case 'youtube':
       return YOUTUBE_EMBED_CAPABILITIES;

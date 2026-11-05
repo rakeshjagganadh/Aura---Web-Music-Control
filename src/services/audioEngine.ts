@@ -743,14 +743,16 @@ export class AudioEngine {
 
     this.currentTrack = track;
 
-    // Detect external/cross-origin stream (Audius or remote stream)
+    // Jamendo, Curated Streams, and standard audio files support open CORS Web Audio API processing
     const isExternalStream =
       track.source === 'audius' ||
+      track.source === 'radio' ||
       (typeof audioSource === 'string' &&
+        track.source !== 'jamendo' &&
+        track.source !== 'curated_stream' &&
         (audioSource.includes('audius.co') ||
           audioSource.includes('monophonic.digital') ||
-          audioSource.includes('cidstream') ||
-          (audioSource.startsWith('http') && !audioSource.startsWith(window.location.origin))));
+          audioSource.includes('cidstream')));
 
     this.isDirectStreaming = isExternalStream;
     this.isUserPlaying = autoPlay;
@@ -828,7 +830,21 @@ export class AudioEngine {
               } catch {}
             }
           } catch (e) {
-            console.warn('WebAudio autoplay waiting for gesture:', e);
+            console.warn('WebAudio play attempt:', e);
+            // Fallback to directAudioEl if WebAudio CORS or decode fails
+            if (typeof audioSource === 'string' && audioSource.startsWith('http')) {
+              try {
+                this.isDirectStreaming = true;
+                if (this.audioEl) this.audioEl.pause();
+                if (this.directAudioEl) {
+                  this.directAudioEl.src = url;
+                  this.directAudioEl.load();
+                  await this.directAudioEl.play();
+                }
+              } catch (fallbackErr) {
+                console.warn('Direct audio fallback also waiting for gesture:', fallbackErr);
+              }
+            }
           }
         }
       }

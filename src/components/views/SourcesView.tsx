@@ -5,6 +5,7 @@ import {
   HardDrive, 
   Sparkles, 
   Youtube, 
+  Music,
   CheckCircle2, 
   SlidersHorizontal, 
   ShieldCheck, 
@@ -15,6 +16,11 @@ import {
 import { DEFAULT_MUSIC_SOURCES, canApplyDSP, canTrimOrExport } from '../../services/sourceService';
 import { createWebStreamTrack, createYouTubeTrack, CURATED_DISCOVERY_TRACKS } from '../../services/discoveryService';
 import { audiusService } from '../../services/audiusService';
+import { jamendoProvider } from '../../services/providers/jamendoProvider';
+import { radioBrowserProvider } from '../../services/providers/radioBrowserProvider';
+import { unifiedTrackToAuraTrack, radioStationToAuraTrack } from '../../services/providers/types';
+
+import { providerRegistry } from '../../services/providers/providerRegistry';
 
 export const SourcesView: React.FC = () => {
   const {
@@ -32,6 +38,64 @@ export const SourcesView: React.FC = () => {
   const [showAddStream, setShowAddStream] = useState(false);
   const [showAddYoutube, setShowAddYoutube] = useState(false);
   const [isLoadingAudiusTrending, setIsLoadingAudiusTrending] = useState(false);
+  const [isLoadingJamendo, setIsLoadingJamendo] = useState(false);
+  const [isLoadingRadio, setIsLoadingRadio] = useState(false);
+  const [providerHealth, setProviderHealth] = useState<Record<string, boolean>>({});
+
+  React.useEffect(() => {
+    let isMounted = true;
+    async function checkHealth() {
+      const providers = providerRegistry.getAll();
+      const healthMap: Record<string, boolean> = {};
+      for (const p of providers) {
+        try {
+          const avail = await providerRegistry.isProviderAvailable(p.id);
+          if (isMounted) healthMap[p.id] = avail;
+        } catch {
+          if (isMounted) healthMap[p.id] = false;
+        }
+      }
+      if (isMounted) setProviderHealth(healthMap);
+    }
+    checkHealth();
+    return () => { isMounted = false; };
+  }, []);
+
+  const handlePlayJamendoTrending = async () => {
+    try {
+      setIsLoadingJamendo(true);
+      const tracks = await jamendoProvider.getTrending({ limit: 10 });
+      if (tracks.length > 0) {
+        const auraTracks = tracks.map((t) => unifiedTrackToAuraTrack(t));
+        await playTrack(auraTracks[0], auraTracks);
+        showToast(`Playing "${auraTracks[0].title}" from Jamendo Trending`, 'success');
+      } else {
+        showToast('Could not load Jamendo tracks. Please try searching directly.', 'warning');
+      }
+    } catch {
+      showToast('Failed to reach Jamendo API.', 'error');
+    } finally {
+      setIsLoadingJamendo(false);
+    }
+  };
+
+  const handlePlayRadioTop = async () => {
+    try {
+      setIsLoadingRadio(true);
+      const stations = await radioBrowserProvider.getFeaturedStations({ limit: 10 });
+      if (stations.length > 0) {
+        const auraTracks = stations.map((s) => radioStationToAuraTrack(s));
+        await playTrack(auraTracks[0], auraTracks);
+        showToast(`Connecting to live stream: "${auraTracks[0].title}"`, 'success');
+      } else {
+        showToast('Could not load radio stations.', 'warning');
+      }
+    } catch {
+      showToast('Failed to reach Radio Browser servers.', 'error');
+    } finally {
+      setIsLoadingRadio(false);
+    }
+  };
 
   const handlePlayAudiusTrending = async () => {
     try {
@@ -261,6 +325,110 @@ export const SourcesView: React.FC = () => {
           </div>
         </div>
 
+        {/* Source: Jamendo Music Catalog */}
+        <div className="p-6 rounded-3xl bg-[#0c0e15]/70 border border-white/10 backdrop-blur-xl flex flex-col justify-between gap-6 shadow-xl relative overflow-hidden">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  <Music className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Jamendo Music Catalog</h3>
+                  <span className="text-[10px] font-mono text-amber-400 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> Creative Commons API
+                  </span>
+                </div>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                OPEN CORS DSP
+              </span>
+            </div>
+
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Official Jamendo API integration. Free independent music under Creative Commons licenses with high-fidelity MP3 streams, full 10-band EQ, 3D audio, and waveform rendering.
+            </p>
+
+            <div className="flex items-center gap-4 text-xs font-mono text-zinc-400 pt-2 border-t border-white/5">
+              <span>600,000+ Tracks</span>
+              <span>•</span>
+              <span>100% Free & Legal</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handlePlayJamendoTrending}
+              disabled={isLoadingJamendo}
+              className="flex-1 py-2 px-3 rounded-xl bg-amber-600/20 hover:bg-amber-600/30 text-amber-200 border border-amber-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+            >
+              {isLoadingJamendo ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Loading Jamendo Tracks...</span>
+                </>
+              ) : (
+                <>
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <span>Play Trending Jamendo Tracks</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Source: Radio Browser Global Directory */}
+        <div className="p-6 rounded-3xl bg-[#0c0e15]/70 border border-white/10 backdrop-blur-xl flex flex-col justify-between gap-6 shadow-xl relative overflow-hidden">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                  <Radio className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Radio Browser Directory</h3>
+                  <span className="text-[10px] font-mono text-cyan-400 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> Live Internet Radio
+                  </span>
+                </div>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
+                LIVE DSP
+              </span>
+            </div>
+
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Global community directory with 30,000+ live internet radio stations. Filter by country, genre, and codec with real-time spectrum analysis.
+            </p>
+
+            <div className="flex items-center gap-4 text-xs font-mono text-zinc-400 pt-2 border-t border-white/5">
+              <span>30,000+ Global Stations</span>
+              <span>•</span>
+              <span>Open Community API</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handlePlayRadioTop}
+              disabled={isLoadingRadio}
+              className="flex-1 py-2 px-3 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-200 border border-cyan-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+            >
+              {isLoadingRadio ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Loading Stations...</span>
+                </>
+              ) : (
+                <>
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <span>Play Top Global Radio</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
         {/* Source 4: YouTube Web Embed Player */}
         <div className="p-6 rounded-3xl bg-[#0c0e15]/70 border border-white/10 backdrop-blur-xl flex flex-col justify-between gap-6 shadow-xl">
           <div className="flex flex-col gap-3">
@@ -349,11 +517,19 @@ export const SourcesView: React.FC = () => {
                 <td className="py-2.5 text-emerald-400">✓ Lossless 32-bit</td>
               </tr>
               <tr>
-                <td className="py-2.5 font-bold text-white">Curated Open Audio</td>
+                <td className="py-2.5 font-bold text-amber-300">Jamendo (Creative Commons)</td>
                 <td className="py-2.5 text-emerald-400">✓ Full</td>
-                <td className="py-2.5 text-emerald-400">✓ Unlocked</td>
+                <td className="py-2.5 text-emerald-400">✓ Unlocked (Open CORS)</td>
                 <td className="py-2.5 text-emerald-400">✓ Supported</td>
-                <td className="py-2.5 text-emerald-400">✓ Web Audio Stream</td>
+                <td className="py-2.5 text-emerald-400">✓ Direct MP3 Stream</td>
+                <td className="py-2.5 text-zinc-500">— Stream Only</td>
+              </tr>
+              <tr>
+                <td className="py-2.5 font-bold text-cyan-300">Radio Browser (Live Radio)</td>
+                <td className="py-2.5 text-amber-400">✓ Live Stream (No Seek)</td>
+                <td className="py-2.5 text-emerald-400">✓ Unlocked (AudioContext)</td>
+                <td className="py-2.5 text-emerald-400">✓ Supported</td>
+                <td className="py-2.5 text-emerald-400">✓ Live ICY/AAC Stream</td>
                 <td className="py-2.5 text-zinc-500">— Stream Only</td>
               </tr>
               <tr>
@@ -362,6 +538,14 @@ export const SourcesView: React.FC = () => {
                 <td className="py-2.5 text-emerald-400">✓ Unlocked (AudioContext)</td>
                 <td className="py-2.5 text-emerald-400">✓ Supported</td>
                 <td className="py-2.5 text-emerald-400">✓ Public Direct Stream</td>
+                <td className="py-2.5 text-zinc-500">— Stream Only</td>
+              </tr>
+              <tr>
+                <td className="py-2.5 font-bold text-white">Curated Open Audio</td>
+                <td className="py-2.5 text-emerald-400">✓ Full</td>
+                <td className="py-2.5 text-emerald-400">✓ Unlocked</td>
+                <td className="py-2.5 text-emerald-400">✓ Supported</td>
+                <td className="py-2.5 text-emerald-400">✓ Web Audio Stream</td>
                 <td className="py-2.5 text-zinc-500">— Stream Only</td>
               </tr>
               <tr>

@@ -40,6 +40,14 @@ export interface AudiusRawTrack {
 
 class AudiusService {
   private defaultHost = 'https://api.audius.co';
+  private fallbackHosts = [
+    'https://api.audius.co',
+    'https://audius-dp.rosano.ca',
+    'https://discoveryprovider.audius.co',
+    'https://audius-metadata-1.figment.io',
+  ];
+  private hostsPool: string[] = [];
+  private currentHostIndex = 0;
   private appName = 'AURA_STUDIO';
   private resolvedHost: string | null = null;
   private isResolvingHost = false;
@@ -70,6 +78,7 @@ class AudiusService {
       if (res.ok) {
         const json = await res.json();
         if (Array.isArray(json.data) && json.data.length > 0) {
+          this.hostsPool = json.data;
           this.resolvedHost = json.data[0];
           return this.resolvedHost!;
         }
@@ -80,6 +89,7 @@ class AudiusService {
       this.isResolvingHost = false;
     }
 
+    this.hostsPool = this.fallbackHosts;
     this.resolvedHost = this.defaultHost;
     return this.resolvedHost;
   }
@@ -93,6 +103,17 @@ class AudiusService {
     const rawClean = String(trackId).replace(/^audius-/, '').trim();
     const cleanId = encodeURIComponent(rawClean);
     return `${cleanHost}/v1/tracks/${cleanId}/stream?app_name=${encodeURIComponent(this.appName)}`;
+  }
+
+  /**
+   * Attempts to get a fallback stream URL using an alternate gateway node
+   */
+  public getAlternateStreamUrl(trackId: string | number, currentUrl?: string): string {
+    const pool = this.hostsPool.length > 0 ? this.hostsPool : this.fallbackHosts;
+    this.currentHostIndex = (this.currentHostIndex + 1) % pool.length;
+    const nextHost = pool[this.currentHostIndex] || this.defaultHost;
+    this.resolvedHost = nextHost;
+    return this.getStreamUrl(trackId, nextHost);
   }
 
   /**

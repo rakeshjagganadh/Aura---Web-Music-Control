@@ -6,11 +6,14 @@ import { AddToPlaylistModal } from '../playlists/AddToPlaylistModal';
 import { Track } from '../../types';
 
 export const FavoritesView: React.FC = () => {
-  const { tracks, favoriteIds, playTrack } = useMusic();
+  const { tracks, favoriteIds, favoriteItems, playTrack } = useMusic();
   const [viewMode, setViewMode] = useState<'grid' | 'row'>('grid');
   const [playlistModalTrack, setPlaylistModalTrack] = useState<Track | null>(null);
 
-  const favoriteTracks = tracks.filter((t) => favoriteIds.has(t.id));
+  // Mixed-source favorites support
+  const favoriteTracks = favoriteItems && favoriteItems.length > 0
+    ? favoriteItems.map((f) => f.track)
+    : tracks.filter((t) => favoriteIds.has(t.id));
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-8 max-w-7xl mx-auto select-none">

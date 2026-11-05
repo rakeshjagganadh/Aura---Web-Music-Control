@@ -2,6 +2,9 @@ import { Track, Playlist, MusicSourceType } from '../types';
 import { youtubeService } from './youtubeService';
 import { audiusService } from './audiusService';
 import { CURATED_DISCOVERY_TRACKS } from './discoveryService';
+import { jamendoProvider } from './providers/jamendoProvider';
+import { radioBrowserProvider } from './providers/radioBrowserProvider';
+import { unifiedTrackToAuraTrack, radioStationToAuraTrack } from './providers/types';
 
 export interface SearchMatchArtist {
   name: string;
@@ -44,6 +47,10 @@ export interface UniversalSearchResults {
     youtubeError?: string;
     audius: 'ready' | 'searching' | 'error' | 'disabled';
     audiusError?: string;
+    jamendo?: 'ready' | 'searching' | 'error' | 'disabled';
+    jamendoError?: string;
+    radiobrowser?: 'ready' | 'searching' | 'error' | 'disabled';
+    radiobrowserError?: string;
   };
 }
 
@@ -275,18 +282,92 @@ export class AudiusSourceAdapter implements ISourceSearchAdapter {
 }
 
 /**
+ * Jamendo Source Adapter: Queries free Creative Commons tracks via Jamendo API
+ */
+export class JamendoSourceAdapter implements ISourceSearchAdapter {
+  sourceId: MusicSourceType = 'jamendo';
+  name = 'Jamendo';
+
+  async search(query: string, _context: { tracks: Track[]; playlists: Playlist[] }) {
+    const q = query.trim();
+    if (!q) {
+      return { songs: [], status: 'ready' };
+    }
+
+    try {
+      const res = await jamendoProvider.search(q, { limit: 12 });
+      const auraTracks = res.tracks.map((u) => unifiedTrackToAuraTrack(u));
+      return {
+        songs: auraTracks,
+        status: res.status === 'success' ? 'ready' : res.status,
+        error: res.error,
+      };
+    } catch (err: any) {
+      return {
+        songs: [],
+        status: 'error',
+        error: err?.message || 'Jamendo search failed',
+      };
+    }
+  }
+}
+
+/**
+ * Radio Browser Source Adapter: Queries global internet radio stations
+ */
+export class RadioBrowserSourceAdapter implements ISourceSearchAdapter {
+  sourceId: MusicSourceType = 'radiobrowser';
+  name = 'Radio Browser';
+
+  async search(query: string, _context: { tracks: Track[]; playlists: Playlist[] }) {
+    const q = query.trim();
+    if (!q) {
+      return { songs: [], status: 'ready' };
+    }
+
+    try {
+      const res = await radioBrowserProvider.search(q, { limit: 12 });
+      const auraTracks = res.tracks.map((u) => unifiedTrackToAuraTrack(u));
+      return {
+        songs: auraTracks,
+        status: res.status === 'success' ? 'ready' : res.status,
+        error: res.error,
+      };
+    } catch (err: any) {
+      return {
+        songs: [],
+        status: 'error',
+        error: err?.message || 'Radio Browser search failed',
+      };
+    }
+  }
+}
+
+/**
  * Universal Search Coordinator orchestrates all adapters cleanly
  */
 export class UniversalSearchCoordinator {
   private localAdapter = new LocalSourceAdapter();
   private youtubeAdapter = new YouTubeSourceAdapter();
   private audiusAdapter = new AudiusSourceAdapter();
+  private jamendoAdapter = new JamendoSourceAdapter();
+  private radioBrowserAdapter = new RadioBrowserSourceAdapter();
   private openCatalogAdapter = new OpenCatalogSourceAdapter();
 
   async search(
     query: string,
     context: { tracks: Track[]; playlists: Playlist[] },
-    options: { includeYouTube?: boolean; includeAudius?: boolean } = { includeYouTube: true, includeAudius: true }
+    options: { 
+      includeYouTube?: boolean; 
+      includeAudius?: boolean;
+      includeJamendo?: boolean;
+      includeRadio?: boolean;
+    } = { 
+      includeYouTube: true, 
+      includeAudius: true,
+      includeJamendo: true,
+      includeRadio: true,
+    }
   ): Promise<UniversalSearchResults> {
     const cleanQuery = query.trim();
 
@@ -313,50 +394,121 @@ export class UniversalSearchCoordinator {
     // 2. Run open catalog search
     const openCatalogResult = await this.openCatalogAdapter.search(cleanQuery);
 
-    // 3. Run YouTube search if requested and not just local
+    // 3. Parallel federated remote queries with complete error isolation
+    const shouldSearchExternal = cleanQuery.length > 1;
+
     let ytSongs: Track[] = [];
     let ytStatus: 'ready' | 'not_configured' | 'searching' | 'error' | 'disabled' = 'disabled';
     let ytError: string | undefined;
 
-    if (options.includeYouTube && cleanQuery.length > 1) {
-      if (detectedDirectTrack) {
-        ytSongs = [detectedDirectTrack];
-        ytStatus = 'ready';
-      } else {
-        const ytRes = await this.youtubeAdapter.search(cleanQuery, context);
-        ytSongs = ytRes.songs;
-        ytStatus = ytRes.status as any;
-        ytError = ytRes.error;
-      }
-    } else if (!youtubeService.isConfigured()) {
-      ytStatus = 'not_configured';
-    } else {
-      ytStatus = 'ready';
-    }
-
-    // 4. Run Audius search in parallel if requested
     let audiusSongs: Track[] = [];
     let audiusStatus: 'ready' | 'searching' | 'error' | 'disabled' = 'disabled';
     let audiusError: string | undefined;
 
-    if (options.includeAudius && cleanQuery.length > 1) {
-      try {
-        const audiusRes = await this.audiusAdapter.search(cleanQuery, context);
-        audiusSongs = audiusRes.songs;
-        audiusStatus = audiusRes.status as any;
-        audiusError = audiusRes.error;
-      } catch (err: any) {
-        audiusStatus = 'error';
-        audiusError = err?.message || 'Audius search failed';
+    let jamendoSongs: Track[] = [];
+    let jamendoStatus: 'ready' | 'searching' | 'error' | 'disabled' = 'disabled';
+    let jamendoError: string | undefined;
+
+    let radioSongs: Track[] = [];
+    let radioStatus: 'ready' | 'searching' | 'error' | 'disabled' = 'disabled';
+    let radioError: string | undefined;
+
+    if (shouldSearchExternal) {
+      const tasks: Promise<void>[] = [];
+
+      // YouTube
+      if (options.includeYouTube !== false) {
+        if (detectedDirectTrack) {
+          ytSongs = [detectedDirectTrack];
+          ytStatus = 'ready';
+        } else if (youtubeService.isConfigured()) {
+          tasks.push(
+            (async () => {
+              try {
+                const ytRes = await this.youtubeAdapter.search(cleanQuery, context);
+                ytSongs = ytRes.songs;
+                ytStatus = ytRes.status as any;
+                ytError = ytRes.error;
+              } catch (e: any) {
+                ytStatus = 'error';
+                ytError = e?.message;
+              }
+            })()
+          );
+        } else {
+          ytStatus = 'not_configured';
+        }
       }
+
+      // Audius
+      if (options.includeAudius !== false) {
+        tasks.push(
+          (async () => {
+            try {
+              const res = await this.audiusAdapter.search(cleanQuery, context);
+              audiusSongs = res.songs;
+              audiusStatus = res.status as any;
+              audiusError = res.error;
+            } catch (e: any) {
+              audiusStatus = 'error';
+              audiusError = e?.message;
+            }
+          })()
+        );
+      }
+
+      // Jamendo
+      if (options.includeJamendo !== false) {
+        tasks.push(
+          (async () => {
+            try {
+              const res = await this.jamendoAdapter.search(cleanQuery, context);
+              jamendoSongs = res.songs;
+              jamendoStatus = res.status as any;
+              jamendoError = res.error;
+            } catch (e: any) {
+              jamendoStatus = 'error';
+              jamendoError = e?.message;
+            }
+          })()
+        );
+      }
+
+      // Radio Browser
+      if (options.includeRadio !== false) {
+        tasks.push(
+          (async () => {
+            try {
+              const res = await this.radioBrowserAdapter.search(cleanQuery, context);
+              radioSongs = res.songs;
+              radioStatus = res.status as any;
+              radioError = res.error;
+            } catch (e: any) {
+              radioStatus = 'error';
+              radioError = e?.message;
+            }
+          })()
+        );
+      }
+
+      await Promise.allSettled(tasks);
     } else {
+      ytStatus = youtubeService.isConfigured() ? 'ready' : 'not_configured';
       audiusStatus = 'ready';
+      jamendoStatus = 'ready';
+      radioStatus = 'ready';
     }
 
     // Deduplicate songs by ID
     const songMap = new Map<string, Track>();
     localResult.songs.forEach((s) => songMap.set(s.id, s));
+    jamendoSongs.forEach((s) => {
+      if (!songMap.has(s.id)) songMap.set(s.id, s);
+    });
     audiusSongs.forEach((s) => {
+      if (!songMap.has(s.id)) songMap.set(s.id, s);
+    });
+    radioSongs.forEach((s) => {
       if (!songMap.has(s.id)) songMap.set(s.id, s);
     });
     ytSongs.forEach((s) => {
@@ -366,9 +518,32 @@ export class UniversalSearchCoordinator {
       if (!songMap.has(s.id)) songMap.set(s.id, s);
     });
 
+    const allSongs = Array.from(songMap.values());
+
+    // Provider-aware relevance ranking (Exact Match > Title Prefix > Artist Match > Partial)
+    const qLower = cleanQuery.toLowerCase();
+    const rankedSongs = allSongs.sort((a, b) => {
+      const titleA = a.title.toLowerCase();
+      const titleB = b.title.toLowerCase();
+      const artistA = a.artist.toLowerCase();
+      const artistB = b.artist.toLowerCase();
+
+      const getScore = (t: string, art: string) => {
+        if (t === qLower) return 100;
+        if (art === qLower) return 90;
+        if (t.startsWith(qLower)) return 80;
+        if (art.startsWith(qLower)) return 70;
+        if (t.includes(qLower)) return 50;
+        if (art.includes(qLower)) return 40;
+        return 10;
+      };
+
+      return getScore(titleB, artistB) - getScore(titleA, artistA);
+    });
+
     return {
       query: cleanQuery,
-      songs: Array.from(songMap.values()),
+      songs: rankedSongs,
       artists: localResult.artists || [],
       albums: localResult.albums || [],
       playlists: localResult.playlists || [],
@@ -379,6 +554,10 @@ export class UniversalSearchCoordinator {
         youtubeError: ytError,
         audius: audiusStatus,
         audiusError: audiusError,
+        jamendo: jamendoStatus,
+        jamendoError: jamendoError,
+        radiobrowser: radioStatus,
+        radiobrowserError: radioError,
       },
     };
   }

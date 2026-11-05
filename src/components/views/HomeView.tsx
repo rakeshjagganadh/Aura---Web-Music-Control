@@ -1,31 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMusic } from '../../context/MusicContext';
 import { AuraBrandMark } from '../common/AuraBrandMark';
-import { AuraEmptyState } from '../common/AuraEmptyState';
 import { SongObjectCard } from '../common/SongObjectCard';
 import { 
   Play, 
-  UploadCloud, 
   Sparkles, 
-  ListPlus, 
-  Disc, 
   Clock, 
   ChevronRight, 
   Activity,
-  Layers,
   SlidersHorizontal,
   Search,
   Radio,
   HardDrive,
   Compass,
-  ArrowUpRight,
   Music,
-  Plus
+  Plus,
+  Heart,
+  Globe,
+  Flame
 } from 'lucide-react';
 import { AudioVisualizer } from '../visualizer/AudioVisualizer';
 import { AddToPlaylistModal } from '../playlists/AddToPlaylistModal';
 import { UniversalSearchModal } from '../search/UniversalSearchModal';
 import { CURATED_DISCOVERY_TRACKS, CURATED_COLLECTIONS } from '../../services/discoveryService';
+import { jamendoProvider } from '../../services/providers/jamendoProvider';
+import { audiusService } from '../../services/audiusService';
+import { radioBrowserProvider } from '../../services/providers/radioBrowserProvider';
+import { unifiedTrackToAuraTrack, radioStationToAuraTrack } from '../../services/providers/types';
 import { Track } from '../../types';
 
 export const HomeView: React.FC = () => {
@@ -35,21 +36,71 @@ export const HomeView: React.FC = () => {
     currentTrack,
     isPlaying,
     setIsUploadModalOpen,
-    setIsPlaylistModalOpen,
     loadDemoPack,
     setCurrentView,
-    setSelectedPlaylistId,
     history,
-    eqPreset,
-    togglePlay,
+    recentlyPlayed,
+    favoriteItems,
     playTrack,
+    toggleFavorite,
+    isFavorite,
   } = useMusic();
 
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [playlistModalTrack, setPlaylistModalTrack] = useState<Track | null>(null);
 
+  // Dynamic Discovery States
+  const [jamendoTrending, setJamendoTrending] = useState<Track[]>([]);
+  const [audiusTrending, setAudiusTrending] = useState<Track[]>([]);
+  const [topRadioStations, setTopRadioStations] = useState<Track[]>([]);
+  const [isLoadingDiscovery, setIsLoadingDiscovery] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadDiscoveries() {
+      setIsLoadingDiscovery(true);
+      try {
+        const [jamRes, audRes, radioRes] = await Promise.allSettled([
+          jamendoProvider.getTrending({ limit: 6 }),
+          audiusService.getTrending(6),
+          radioBrowserProvider.getTopVotedStations(6),
+        ]);
+
+        if (isMounted) {
+          if (jamRes.status === 'fulfilled') {
+            const mapped = jamRes.value.map((u) => unifiedTrackToAuraTrack(u));
+            setJamendoTrending(mapped);
+          }
+          if (audRes.status === 'fulfilled' && audRes.value.items) {
+            setAudiusTrending(audRes.value.items);
+          }
+          if (radioRes.status === 'fulfilled') {
+            const mappedRadio = radioRes.value.map((st) => radioStationToAuraTrack(st));
+            setTopRadioStations(mappedRadio);
+          }
+        }
+      } catch (err) {
+        console.warn('HomeView discovery load error:', err);
+      } finally {
+        if (isMounted) setIsLoadingDiscovery(false);
+      }
+    }
+
+    loadDiscoveries();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const recentlyAdded = [...tracks].sort((a, b) => b.dateAdded - a.dateAdded).slice(0, 8);
-  const continueListening = history.slice(0, 4);
+  const continueListening = (recentlyPlayed && recentlyPlayed.length > 0
+    ? recentlyPlayed.map((rp) => rp.track)
+    : history
+  ).slice(0, 6);
+
+  // Favorited tracks converted to list
+  const favoritedTracks = favoriteItems.slice(0, 6).map((f) => f.track);
 
   return (
     <div className="flex flex-col gap-10 p-4 sm:p-8 max-w-7xl mx-auto select-none">
@@ -69,15 +120,15 @@ export const HomeView: React.FC = () => {
                 AURA STUDIO ENVIRONMENT
               </span>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.06] text-zinc-300 border border-white/[0.08]">
-                DSP ACTIVE
+                UNIVERSAL DSP
               </span>
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight font-display">
-              Acoustic Precision. Pure Listening.
+              Acoustic Precision. Pure Universal Listening.
             </h1>
             <p className="text-xs sm:text-sm text-zinc-400">
-              Listen seamlessly across your local library, curated ambient streams, and web audio with studio acoustic control.
+              Listen seamlessly across local IndexedDB music, Jamendo Creative Commons, Audius Web3, Radio Browser continuous streams, and YouTube with studio acoustic DSP.
             </p>
           </div>
 
@@ -104,7 +155,7 @@ export const HomeView: React.FC = () => {
           <div className="flex items-center gap-3">
             <Search className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
             <span className="text-xs sm:text-sm text-zinc-400 group-hover:text-zinc-200">
-              Search any song, artist, space, or paste an audio stream / YouTube link...
+              Search any track across Local, Jamendo, Audius, YouTube & Radio Browser...
             </span>
           </div>
 
@@ -113,14 +164,14 @@ export const HomeView: React.FC = () => {
               ⌘K
             </kbd>
             <span className="px-3 py-1 rounded-lg bg-white text-zinc-950 text-xs font-semibold group-hover:bg-zinc-200 transition-all shadow-sm">
-              Explore
+              Universal Search
             </span>
           </div>
         </div>
 
         {/* Quick Action Pills */}
         <div className="flex flex-wrap items-center gap-2 z-10 text-xs">
-          <span className="text-[11px] font-mono text-zinc-500 mr-1">Quick Play:</span>
+          <span className="text-[11px] font-mono text-zinc-500 mr-1">Quick Stream:</span>
           {CURATED_DISCOVERY_TRACKS.slice(0, 3).map((stream) => (
             <button
               key={stream.id}
@@ -144,7 +195,7 @@ export const HomeView: React.FC = () => {
       </section>
 
       {/* -------------------------------------------------------------
-          2. NUCLEAR MULTI-SOURCE STREAMING CHANNELS
+          2. MULTI-SOURCE AUDIO ENGINE CHANNELS
           ------------------------------------------------------------- */}
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between text-xs">
@@ -160,7 +211,7 @@ export const HomeView: React.FC = () => {
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           <div 
             onClick={() => setIsSearchModalOpen(true)}
             className="p-3.5 rounded-xl bg-[#0e1017] hover:bg-[#131622] border border-white/[0.06] hover:border-red-500/40 transition-all cursor-pointer group flex flex-col justify-between gap-2 shadow-sm"
@@ -169,11 +220,27 @@ export const HomeView: React.FC = () => {
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-red-500/15 text-red-400 border border-red-500/30 font-semibold">
                 YOUTUBE
               </span>
-              <span className="text-[10px] font-mono text-zinc-500">M4A 128K</span>
+              <span className="text-[10px] font-mono text-zinc-500">IFRAME API</span>
             </div>
             <div>
-              <p className="text-xs font-semibold text-white group-hover:text-red-300 transition-colors">Direct Audio Stream</p>
-              <p className="text-[11px] text-zinc-400 mt-0.5">Full background play • No ads</p>
+              <p className="text-xs font-semibold text-white group-hover:text-red-300 transition-colors">Audio Player Bridge</p>
+              <p className="text-[11px] text-zinc-400 mt-0.5">Background audio keep-alive</p>
+            </div>
+          </div>
+
+          <div 
+            onClick={() => setCurrentView('sources')}
+            className="p-3.5 rounded-xl bg-[#0e1017] hover:bg-[#131622] border border-white/[0.06] hover:border-emerald-500/40 transition-all cursor-pointer group flex flex-col justify-between gap-2 shadow-sm"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-semibold">
+                JAMENDO
+              </span>
+              <span className="text-[10px] font-mono text-zinc-500">MP3 320K</span>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-white group-hover:text-emerald-300 transition-colors">Creative Commons</p>
+              <p className="text-[11px] text-zinc-400 mt-0.5">Direct open streaming</p>
             </div>
           </div>
 
@@ -185,27 +252,27 @@ export const HomeView: React.FC = () => {
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/15 text-purple-400 border border-purple-500/30 font-semibold">
                 AUDIUS
               </span>
-              <span className="text-[10px] font-mono text-zinc-500">MP3 320K</span>
+              <span className="text-[10px] font-mono text-zinc-500">DECENTRALIZED</span>
             </div>
             <div>
-              <p className="text-xs font-semibold text-white group-hover:text-purple-300 transition-colors">Decentralized Web3</p>
-              <p className="text-[11px] text-zinc-400 mt-0.5">Independent artists catalog</p>
+              <p className="text-xs font-semibold text-white group-hover:text-purple-300 transition-colors">Web3 Music Catalog</p>
+              <p className="text-[11px] text-zinc-400 mt-0.5">Independent artist streams</p>
             </div>
           </div>
 
           <div 
-            onClick={() => playTrack(CURATED_DISCOVERY_TRACKS[0], CURATED_DISCOVERY_TRACKS)}
-            className="p-3.5 rounded-xl bg-[#0e1017] hover:bg-[#131622] border border-white/[0.06] hover:border-cyan-500/40 transition-all cursor-pointer group flex flex-col justify-between gap-2 shadow-sm"
+            onClick={() => setCurrentView('sources')}
+            className="p-3.5 rounded-xl bg-[#0e1017] hover:bg-[#131622] border border-white/[0.06] hover:border-amber-500/40 transition-all cursor-pointer group flex flex-col justify-between gap-2 shadow-sm"
           >
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 font-semibold">
-                OPEN AUDIO
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30 font-semibold">
+                RADIO BROWSER
               </span>
-              <span className="text-[10px] font-mono text-zinc-500">FLAC / LOSSLESS</span>
+              <span className="text-[10px] font-mono text-zinc-500">LIVE STREAMS</span>
             </div>
             <div>
-              <p className="text-xs font-semibold text-white group-hover:text-cyan-300 transition-colors">Curated Soundscapes</p>
-              <p className="text-[11px] text-zinc-400 mt-0.5">Binaural, Synthwave & Lo-Fi</p>
+              <p className="text-xs font-semibold text-white group-hover:text-amber-300 transition-colors">Global Internet Radio</p>
+              <p className="text-[11px] text-zinc-400 mt-0.5">50,000+ continuous stations</p>
             </div>
           </div>
 
@@ -220,119 +287,202 @@ export const HomeView: React.FC = () => {
               <span className="text-[10px] font-mono text-zinc-500">{tracks.length} FILES</span>
             </div>
             <div>
-              <p className="text-xs font-semibold text-white group-hover:text-indigo-300 transition-colors">Offline Vault</p>
-              <p className="text-[11px] text-zinc-400 mt-0.5">100% private IndexedDB</p>
+              <p className="text-xs font-semibold text-white group-hover:text-indigo-300 transition-colors">Private Vault</p>
+              <p className="text-[11px] text-zinc-400 mt-0.5">100% offline IndexedDB</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* -------------------------------------------------------------
-          3. THREE GATEWAYS: CURATED CATALOG, SOURCES, AUDIO STUDIO
+          3. CONTINUE LISTENING (Recently Played Persistent History)
           ------------------------------------------------------------- */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        
-        {/* Card 1: Curated Open Streams */}
-        <div 
-          onClick={() => playTrack(CURATED_DISCOVERY_TRACKS[0], CURATED_DISCOVERY_TRACKS)}
-          className="group cursor-pointer p-5 rounded-xl bg-[#0e1017] hover:bg-[#12151f] border border-white/[0.06] hover:border-white/20 transition-all flex flex-col justify-between gap-4 shadow-sm"
-        >
+      {continueListening.length > 0 && (
+        <section className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <div className="p-2 rounded-lg bg-white/[0.06] text-zinc-200 border border-white/[0.08] group-hover:scale-105 transition-transform">
-              <Sparkles className="w-4 h-4" />
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-emerald-400" />
+              <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">
+                Recently Played Across All Sources
+              </h2>
             </div>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.04] text-zinc-400 border border-white/[0.06]">
-              OPEN CATALOG
-            </span>
+            <span className="text-[11px] text-zinc-500 font-mono">Persistent Listening Log</span>
           </div>
 
-          <div>
-            <h3 className="text-sm font-semibold text-white group-hover:text-zinc-100 transition-colors">
-              Curated Soundscapes
-            </h3>
-            <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-              Lossless ambient drones, cyber synthwave, and lo-fi focus beats ready to stream.
-            </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+            {continueListening.map((track) => (
+              <SongObjectCard
+                key={`hist-${track.id}`}
+                track={track}
+                playlistContext={continueListening}
+                variant="grid"
+                onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* -------------------------------------------------------------
+          4. FAVORITES QUICK ROW
+          ------------------------------------------------------------- */}
+      {favoritedTracks.length > 0 && (
+        <section className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Heart className="w-4 h-4 text-rose-400 fill-current" />
+              <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">
+                Your Favorites Quick Row
+              </h2>
+            </div>
+            <button
+              onClick={() => setCurrentView('favorites')}
+              className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors flex items-center gap-1 cursor-pointer font-mono"
+            >
+              View All Favorites <ChevronRight className="w-3.5 h-3.5" />
+            </button>
           </div>
 
-          <div className="flex items-center gap-1 text-xs font-medium text-zinc-300 group-hover:text-white group-hover:translate-x-1 transition-all">
-            <span>Listen Now</span>
-            <ChevronRight className="w-3.5 h-3.5" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+            {favoritedTracks.map((track) => (
+              <SongObjectCard
+                key={`fav-${track.id}`}
+                track={track}
+                playlistContext={favoritedTracks}
+                variant="grid"
+                onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
+              />
+            ))}
           </div>
+        </section>
+      )}
+
+      {/* -------------------------------------------------------------
+          5. JAMENDO CREATIVE COMMONS TRENDING
+          ------------------------------------------------------------- */}
+      <section className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Flame className="w-4 h-4 text-emerald-400" />
+            <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">
+              Jamendo Creative Commons Trending
+            </h2>
+          </div>
+          <button
+            onClick={() => setCurrentView('sources')}
+            className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors flex items-center gap-1 cursor-pointer font-mono"
+          >
+            Explore Jamendo Provider <ChevronRight className="w-3.5 h-3.5" />
+          </button>
         </div>
 
-        {/* Card 2: Music Sources */}
-        <div 
-          onClick={() => setCurrentView('sources')}
-          className="group cursor-pointer p-5 rounded-xl bg-[#0e1017] hover:bg-[#12151f] border border-white/[0.06] hover:border-white/20 transition-all flex flex-col justify-between gap-4 shadow-sm"
-        >
-          <div className="flex items-center justify-between">
-            <div className="p-2 rounded-lg bg-white/[0.06] text-zinc-200 border border-white/[0.08] group-hover:scale-105 transition-transform">
-              <Radio className="w-4 h-4" />
-            </div>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.04] text-zinc-400 border border-white/[0.06]">
-              CONNECTED
-            </span>
+        {jamendoTrending.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+            {jamendoTrending.map((track) => (
+              <SongObjectCard
+                key={track.id}
+                track={track}
+                playlistContext={jamendoTrending}
+                variant="grid"
+                onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
+              />
+            ))}
           </div>
-
-          <div>
-            <h3 className="text-sm font-semibold text-white group-hover:text-zinc-100 transition-colors">
-              Music Sources & Streams
-            </h3>
-            <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-              Local library files, internet radio streams, and official YouTube player connections.
-            </p>
+        ) : (
+          <div className="p-6 rounded-xl bg-[#0e1017] border border-white/[0.06] text-center text-xs text-zinc-500 font-mono">
+            {isLoadingDiscovery ? 'Loading Jamendo Creative Commons trending tracks...' : 'Jamendo trending tracks currently unavailable.'}
           </div>
-
-          <div className="flex items-center gap-1 text-xs font-medium text-zinc-300 group-hover:text-white group-hover:translate-x-1 transition-all">
-            <span>Manage Sources</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </div>
-        </div>
-
-        {/* Card 3: Personal Audio Studio */}
-        <div 
-          onClick={() => setCurrentView('studio')}
-          className="group cursor-pointer p-5 rounded-xl bg-[#0e1017] hover:bg-[#12151f] border border-white/[0.06] hover:border-white/20 transition-all flex flex-col justify-between gap-4 shadow-sm"
-        >
-          <div className="flex items-center justify-between">
-            <div className="p-2 rounded-lg bg-white/[0.06] text-zinc-200 border border-white/[0.08] group-hover:scale-105 transition-transform">
-              <SlidersHorizontal className="w-4 h-4" />
-            </div>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.04] text-zinc-400 border border-white/[0.06]">
-              SOUND LAB
-            </span>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-semibold text-white group-hover:text-zinc-100 transition-colors">
-              Acoustic Studio & DSP
-            </h3>
-            <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-              10-Band EQ, 3D Binaural Spatializer, Phase telemetry, and Loop A/B studio.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-1 text-xs font-medium text-zinc-300 group-hover:text-white group-hover:translate-x-1 transition-all">
-            <span>Open Audio Studio</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </div>
-        </div>
-
+        )}
       </section>
 
       {/* -------------------------------------------------------------
-          3. DISCOVER SONIC WORLDS (Curated Collections)
+          6. AUDIUS DECENTRALIZED TRENDING
+          ------------------------------------------------------------- */}
+      <section className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-purple-400" />
+            <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">
+              Audius Decentralized Discoveries
+            </h2>
+          </div>
+          <button
+            onClick={() => setCurrentView('sources')}
+            className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors flex items-center gap-1 cursor-pointer font-mono"
+          >
+            Explore Audius Provider <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {audiusTrending.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+            {audiusTrending.map((track) => (
+              <SongObjectCard
+                key={track.id}
+                track={track}
+                playlistContext={audiusTrending}
+                variant="grid"
+                onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="p-6 rounded-xl bg-[#0e1017] border border-white/[0.06] text-center text-xs text-zinc-500 font-mono">
+            {isLoadingDiscovery ? 'Connecting to Audius decentralized nodes...' : 'Audius discoveries currently unavailable.'}
+          </div>
+        )}
+      </section>
+
+      {/* -------------------------------------------------------------
+          7. TOP GLOBAL INTERNET RADIO STATIONS
+          ------------------------------------------------------------- */}
+      <section className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Globe className="w-4 h-4 text-amber-400" />
+            <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">
+              Top Global Internet Radio
+            </h2>
+          </div>
+          <button
+            onClick={() => setCurrentView('sources')}
+            className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors flex items-center gap-1 cursor-pointer font-mono"
+          >
+            Manage Internet Radio <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {topRadioStations.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+            {topRadioStations.map((stationTrack) => (
+              <SongObjectCard
+                key={stationTrack.id}
+                track={stationTrack}
+                playlistContext={topRadioStations}
+                variant="grid"
+                onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="p-6 rounded-xl bg-[#0e1017] border border-white/[0.06] text-center text-xs text-zinc-500 font-mono">
+            {isLoadingDiscovery ? 'Querying Radio Browser global directory...' : 'Internet radio stations currently unavailable.'}
+          </div>
+        )}
+      </section>
+
+      {/* -------------------------------------------------------------
+          8. DISCOVER SONIC WORLDS (Curated Soundscapes)
           ------------------------------------------------------------- */}
       <section className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Compass className="w-4 h-4 text-zinc-400" />
             <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-400 font-semibold">
-              Curated Collections
+              Curated Soundscapes
             </h2>
           </div>
-          <span className="text-xs text-zinc-500 font-mono">Lossless Audio</span>
+          <span className="text-xs text-zinc-500 font-mono">Open Ambient Streams</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -374,41 +524,7 @@ export const HomeView: React.FC = () => {
       </section>
 
       {/* -------------------------------------------------------------
-          4. CONTINUE LISTENING (History)
-          ------------------------------------------------------------- */}
-      {continueListening.length > 0 && (
-        <section className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-zinc-400" />
-              <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-400 font-semibold">
-                Continue Listening
-              </h2>
-            </div>
-            <button
-              onClick={() => setCurrentView('library')}
-              className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors flex items-center gap-1 cursor-pointer"
-            >
-              View Full Library <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {continueListening.map((track) => (
-              <SongObjectCard
-                key={`hist-${track.id}`}
-                track={track}
-                playlistContext={history}
-                variant="grid"
-                onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* -------------------------------------------------------------
-          5. YOUR LIBRARY TRACKS
+          9. YOUR LOCAL LIBRARY FILES
           ------------------------------------------------------------- */}
       <section className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
@@ -422,7 +538,7 @@ export const HomeView: React.FC = () => {
         </div>
 
         {tracks.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
             {recentlyAdded.map((track) => (
               <SongObjectCard
                 key={track.id}
@@ -438,18 +554,18 @@ export const HomeView: React.FC = () => {
             <Music className="w-8 h-8 text-zinc-600" />
             <p className="text-sm font-semibold text-zinc-200">Your local library is waiting</p>
             <p className="text-xs text-zinc-500 max-w-sm">
-              Add audio files from your computer, or listen right now to the Curated Open Soundscapes above.
+              Add audio files from your computer, or listen right now to Jamendo, Audius, or Radio Browser open soundscapes above.
             </p>
             <div className="flex items-center gap-2 mt-2">
               <button
                 onClick={() => setIsUploadModalOpen(true)}
-                className="px-4 py-2 rounded-lg bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-semibold shadow-sm transition-colors"
+                className="px-4 py-2 rounded-lg bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-semibold shadow-sm transition-colors cursor-pointer"
               >
                 Import Local Files
               </button>
               <button
                 onClick={loadDemoPack}
-                className="px-4 py-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-zinc-300 text-xs font-semibold border border-white/[0.08] transition-colors"
+                className="px-4 py-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-zinc-300 text-xs font-semibold border border-white/[0.08] transition-colors cursor-pointer"
               >
                 Load Demo Pack
               </button>

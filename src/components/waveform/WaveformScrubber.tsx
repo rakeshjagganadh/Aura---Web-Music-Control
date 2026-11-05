@@ -218,7 +218,7 @@ export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
   };
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || !duration || duration <= 0) return;
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
     } catch {

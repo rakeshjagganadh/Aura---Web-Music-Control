@@ -13,7 +13,7 @@ export type NavView =
   | 'studio'
   | 'settings';
 
-export type MusicSourceType = 'local' | 'curated_stream' | 'youtube' | 'web_stream' | 'radio' | 'audius';
+export type MusicSourceType = 'local' | 'curated_stream' | 'youtube' | 'web_stream' | 'radio' | 'audius' | 'jamendo' | 'radiobrowser';
 
 export interface TrackCapabilities {
   basicPlayback: boolean; // Play, pause, stop
@@ -94,8 +94,21 @@ export interface Playlist {
   description?: string;
   coverGradient: string;
   trackIds: string[];
+  tracks?: Track[]; // Optional full track objects for remote/mixed-source resilience
   createdAt: number;
   updatedAt: number;
+}
+
+export interface RecentlyPlayedItem {
+  id: string; // track or station ID
+  track: Track;
+  playedAt: number; // timestamp
+}
+
+export interface FavoriteItem {
+  trackId: string;
+  track: Track;
+  addedAt: number;
 }
 
 export type RepeatMode = 'off' | 'all' | 'one';
