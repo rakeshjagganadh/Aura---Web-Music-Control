@@ -7,21 +7,42 @@
     --font-mono: 'JetBrains Mono', monospace;
 
     /* AURA Studio Architectural Color Tokens - Inspired by luxury audio hardware */
-    --aura-void: #090a0f;
-    --aura-carbon: #0d0f15;
-    --aura-graphite: #13151d;
-    --aura-elevated: #1a1d27;
+    --aura-void: #06070a;
+    --aura-carbon: #0b0d13;
+    --aura-graphite: #11131b;
+    --aura-elevated: #171a24;
     --aura-mist: #f4f5f8;
     --aura-haze: #9ca3af;
     --aura-ash: #6b7280;
     --aura-border: rgba(255, 255, 255, 0.06);
     --aura-border-strong: rgba(255, 255, 255, 0.12);
+
+    /* Obsidian Liquid Glass Material System Tokens */
+    --aura-obsidian-void: #06070a;
+    --aura-obsidian-carbon: #0b0d13;
+    --aura-obsidian-graphite: #11131b;
+    --aura-obsidian-milled: #171a24;
+    --aura-obsidian-border: rgba(255, 255, 255, 0.08);
+
+    --aura-glass-bg: rgba(12, 14, 20, 0.78);
+    --aura-glass-blur: 20px;
+    --aura-glass-border: rgba(255, 255, 255, 0.10);
+    --aura-glass-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+
+    --aura-atmosphere-opacity: 0.35;
+
+    /* Telemetry & Signal Accents */
+    --aura-signal-active: #ffffff;
+    --aura-signal-amber: #d97706;
+    --aura-signal-cyan: #0284c7;
+    --aura-signal-emerald: #059669;
+    --aura-signal-rose: #e11d48;
   }
 
   body {
     font-family: var(--font-sans);
     color-scheme: dark;
-    background-color: var(--aura-void);
+    background-color: var(--aura-obsidian-void);
     color: var(--aura-mist);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -161,3 +182,12 @@ input[type="range"].slider-vertical::-webkit-slider-thumb {
   font-family: var(--font-mono);
 }
 
+/* Reduced motion accessibility constraint */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

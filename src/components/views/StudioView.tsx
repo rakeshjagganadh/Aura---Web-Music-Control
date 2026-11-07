@@ -16,53 +16,131 @@ import { StemsPlaceholderPanel } from '../audio-controls/StemsPlaceholderPanel';
 import { AudioVisualizer } from '../visualizer/AudioVisualizer';
 import { WaveformScrubber } from '../waveform/WaveformScrubber';
 import { 
-  SlidersHorizontal, 
   Sparkles, 
-  Layers, 
+  SlidersHorizontal, 
+  Compass, 
+  Repeat, 
+  BarChart3, 
   Activity, 
-  Compass,
-  Split,
-  BarChart3,
+  Scissors, 
+  Radio, 
+  Zap, 
+  RefreshCw, 
+  Maximize2, 
+  Music,
   Bookmark,
-  Play, 
-  Pause, 
-  Volume2, 
-  Music, 
-  Maximize2,
-  RefreshCw,
-  Radio,
-  Zap,
-  Repeat,
-  Scissors,
   Flag,
   Wand2,
-  Download
+  Split,
+  Layers
 } from 'lucide-react';
 
-type StudioTab = 
+export type StudioCategory = 
+  | 'tuning' 
+  | 'eq_dynamics' 
+  | 'spatial_fx' 
+  | 'time_cues' 
+  | 'mastering_analysis';
+
+export type StudioSubModule = 
   | 'soundlab'
+  | 'eq'
+  | 'dynamics'
+  | 'spatial'
+  | 'effects'
+  | 'channels'
   | 'loop'
   | 'stereo'
   | 'markers'
   | 'moments'
-  | 'eq' 
-  | 'dynamics' 
-  | 'spatial' 
-  | 'effects' 
-  | 'channels' 
-  | 'analysis' 
-  | 'presets' 
+  | 'analysis'
+  | 'presets'
   | 'stems';
+
+interface CategoryConfig {
+  id: StudioCategory;
+  label: string;
+  shortLabel: string;
+  icon: React.ReactNode;
+  description: string;
+  defaultSubModule: StudioSubModule;
+  subModules?: {
+    id: StudioSubModule;
+    label: string;
+    icon: React.ReactNode;
+  }[];
+}
+
+const CATEGORIES: CategoryConfig[] = [
+  {
+    id: 'tuning',
+    label: 'Tuning & Tone',
+    shortLabel: 'Tuning',
+    icon: <Sparkles className="w-4 h-4 text-cyan-400" />,
+    description: 'Aura Sound Lab macro acoustic shapers & one-click mood profiles',
+    defaultSubModule: 'soundlab',
+  },
+  {
+    id: 'eq_dynamics',
+    label: 'EQ & Dynamics',
+    shortLabel: 'EQ & Dyn',
+    icon: <SlidersHorizontal className="w-4 h-4 text-indigo-400" />,
+    description: '10-band studio parametric EQ and precision dynamic range control',
+    defaultSubModule: 'eq',
+    subModules: [
+      { id: 'eq', label: '10-Band EQ', icon: <SlidersHorizontal className="w-3.5 h-3.5" /> },
+      { id: 'dynamics', label: 'Dynamics & Limiter', icon: <Activity className="w-3.5 h-3.5" /> },
+    ],
+  },
+  {
+    id: 'spatial_fx',
+    label: 'Spatial & FX',
+    shortLabel: 'Spatial & FX',
+    icon: <Compass className="w-4 h-4 text-emerald-400" />,
+    description: '3D soundstage immersion, hardware effects rack & channel routing',
+    defaultSubModule: 'spatial',
+    subModules: [
+      { id: 'spatial', label: 'Spatial 3D Audio', icon: <Compass className="w-3.5 h-3.5" /> },
+      { id: 'effects', label: 'Effects Rack', icon: <Wand2 className="w-3.5 h-3.5" /> },
+      { id: 'channels', label: 'Pitch & Channels', icon: <Split className="w-3.5 h-3.5" /> },
+    ],
+  },
+  {
+    id: 'time_cues',
+    label: 'Time & Cues',
+    shortLabel: 'Time & Cues',
+    icon: <Repeat className="w-4 h-4 text-purple-400" />,
+    description: 'Zero-gap A/B looping, cue markers, phase correlation & Aura moments',
+    defaultSubModule: 'loop',
+    subModules: [
+      { id: 'loop', label: 'Loop A/B', icon: <Repeat className="w-3.5 h-3.5" /> },
+      { id: 'stereo', label: 'Stereo & Phase', icon: <Compass className="w-3.5 h-3.5" /> },
+      { id: 'markers', label: 'Cue Markers', icon: <Flag className="w-3.5 h-3.5" /> },
+      { id: 'moments', label: 'Aura Moments', icon: <Bookmark className="w-3.5 h-3.5" /> },
+    ],
+  },
+  {
+    id: 'mastering_analysis',
+    label: 'Mastering & Analysis',
+    shortLabel: 'Analysis',
+    icon: <BarChart3 className="w-4 h-4 text-amber-400" />,
+    description: 'High-resolution telemetry meters, hardware calibration & stem separation',
+    defaultSubModule: 'analysis',
+    subModules: [
+      { id: 'analysis', label: 'Meters & Analysis', icon: <BarChart3 className="w-3.5 h-3.5" /> },
+      { id: 'presets', label: 'Hardware Presets', icon: <Bookmark className="w-3.5 h-3.5" /> },
+      { id: 'stems', label: 'Stem Separation (Lab)', icon: <Layers className="w-3.5 h-3.5" /> },
+    ],
+  },
+];
 
 export const StudioView: React.FC = () => {
   const {
     currentTrack,
-    isPlaying,
     currentTime,
     duration,
     seek,
     setIsSeeking,
-    togglePlay,
     visualizerMode,
     setVisualizerMode,
     resetAllAudioProcessing,
@@ -78,7 +156,28 @@ export const StudioView: React.FC = () => {
     setIsTrimExportModalOpen,
   } = useMusic();
 
-  const [activeTab, setActiveTab] = useState<StudioTab>('soundlab');
+  const [activeCategory, setActiveCategory] = useState<StudioCategory>('tuning');
+  const [subModuleState, setSubModuleState] = useState<Record<StudioCategory, StudioSubModule>>({
+    tuning: 'soundlab',
+    eq_dynamics: 'eq',
+    spatial_fx: 'spatial',
+    time_cues: 'loop',
+    mastering_analysis: 'analysis',
+  });
+
+  const currentCategoryConfig = CATEGORIES.find((c) => c.id === activeCategory) || CATEGORIES[0];
+  const activeSubModule = subModuleState[activeCategory] || currentCategoryConfig.defaultSubModule;
+
+  const handleSelectCategory = (catId: StudioCategory) => {
+    setActiveCategory(catId);
+  };
+
+  const handleSelectSubModule = (subId: StudioSubModule) => {
+    setSubModuleState((prev) => ({
+      ...prev,
+      [activeCategory]: subId,
+    }));
+  };
 
   const formatTime = (secs: number) => {
     if (isNaN(secs) || secs < 0) return '0:00';
@@ -87,135 +186,135 @@ export const StudioView: React.FC = () => {
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  const STUDIO_TABS: { id: StudioTab; label: string; icon: React.ReactNode; badge?: string }[] = [
-    { id: 'soundlab', label: 'Sound Lab', icon: <Sparkles className="w-3.5 h-3.5 text-cyan-400" />, badge: 'NEW' },
-    { id: 'loop', label: 'Loop A/B', icon: <Repeat className="w-3.5 h-3.5 text-purple-400" /> },
-    { id: 'stereo', label: 'Stereo & Phase', icon: <Compass className="w-3.5 h-3.5 text-blue-400" /> },
-    { id: 'markers', label: 'Cue Markers', icon: <Flag className="w-3.5 h-3.5 text-pink-400" /> },
-    { id: 'moments', label: 'Aura Moments', icon: <Bookmark className="w-3.5 h-3.5 text-violet-400" /> },
-    { id: 'eq', label: '10-Band EQ', icon: <SlidersHorizontal className="w-3.5 h-3.5" /> },
-    { id: 'dynamics', label: 'Dynamics & Limiter', icon: <Activity className="w-3.5 h-3.5" /> },
-    { id: 'spatial', label: 'Spatial 3D', icon: <Compass className="w-3.5 h-3.5" /> },
-    { id: 'effects', label: 'Effects Rack', icon: <Wand2 className="w-3.5 h-3.5" /> },
-    { id: 'channels', label: 'Pitch & Channels', icon: <Split className="w-3.5 h-3.5" /> },
-    { id: 'analysis', label: 'Meters & Analysis', icon: <BarChart3 className="w-3.5 h-3.5" /> },
-    { id: 'presets', label: 'Hardware Presets', icon: <Bookmark className="w-3.5 h-3.5" /> },
-    { id: 'stems', label: 'Stems (Lab)', icon: <Layers className="w-3.5 h-3.5" /> },
-  ];
-
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-8 max-w-7xl mx-auto select-none pb-28">
+    <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto select-none pb-28">
       
-      {/* Studio Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-cyan-600/20 text-cyan-400 border border-cyan-500/30">
-            <Sparkles className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-white tracking-tight">AURA SOUND LAB & Audio Studio</h1>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                PHASE 2
-              </span>
+      {/* ======================================================== */}
+      {/* ZONE 1: MASTER SIGNAL & TIMELINE HEADER                  */}
+      {/* ======================================================== */}
+      <section 
+        aria-label="Master Signal and Timeline"
+        className="rounded-2xl bg-zinc-950/80 border border-white/10 backdrop-blur-xl p-4 sm:p-5 shadow-2xl flex flex-col gap-4"
+      >
+        {/* Top Bar: Track Info & Quick Master Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-3.5">
+          {/* Active Track Identity */}
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-white/10 overflow-hidden shrink-0 flex items-center justify-center">
+              {currentTrack?.artwork ? (
+                <img 
+                  src={currentTrack.artwork} 
+                  alt={currentTrack.title} 
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover" 
+                />
+              ) : (
+                <Music className="w-5 h-5 text-zinc-500" />
+              )}
             </div>
-            <p className="text-xs text-zinc-400 mt-0.5">
-              Personal audio playground: Macro tuning, zero-gap A/B looping, cue markers, phase correlation, and lossless WAV master export.
-            </p>
-          </div>
-        </div>
 
-        {/* Quick actions */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Export / Trim modal launcher */}
-          <button
-            onClick={() => setIsTrimExportModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition-all"
-            title="Open Audio Trimmer & Lossless WAV Master Export"
-          >
-            <Scissors className="w-3.5 h-3.5" />
-            <span>Trim & Export</span>
-          </button>
-
-          {/* A/B comparison button */}
-          <button
-            onClick={toggleABBypass}
-            title="A/B Comparison: Toggle between original audio and studio DSP"
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all border shadow-sm ${
-              isABBypassed
-                ? 'bg-zinc-800 text-zinc-300 border-white/20'
-                : 'bg-emerald-600/25 text-emerald-300 border-emerald-500/40 shadow-emerald-500/10'
-            }`}
-          >
-            <Radio className={`w-3.5 h-3.5 ${!isABBypassed ? 'text-emerald-400 animate-pulse' : 'text-zinc-500'}`} />
-            <span>{isABBypassed ? 'A: RAW' : 'B: DSP'}</span>
-          </button>
-
-          {/* Pro Mode toggle */}
-          <button
-            onClick={toggleAdvancedMode}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/10 rounded-xl transition-colors"
-          >
-            <Zap className="w-3.5 h-3.5 text-amber-400" />
-            {isAdvancedMode ? 'Simple View' : 'Pro Controls'}
-          </button>
-
-          {/* Reset button */}
-          <button
-            onClick={resetAllAudioProcessing}
-            title="Reset all audio DSP to flat defaults"
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 border border-white/5 rounded-xl transition-colors"
-          >
-            <RefreshCw className="w-3 h-3" />
-            Reset All
-          </button>
-
-          {/* Full Screen */}
-          <button
-            onClick={() => setIsExpandedPlayerOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/10 rounded-xl transition-colors"
-          >
-            <Maximize2 className="w-3.5 h-3.5" />
-            Full Screen
-          </button>
-        </div>
-      </div>
-
-      {/* Top Section: Live Visualizer & Interactive Waveform with Markers & Loops */}
-      <div className="p-5 rounded-3xl bg-zinc-900/40 border border-white/5 backdrop-blur-xl flex flex-col gap-4 shadow-xl">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-semibold text-zinc-200">
-            <Activity className="w-4 h-4 text-cyan-400" />
-            <span>Live Output Spectrum & Cue Timeline</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {currentTrack ? (
-              <div className="flex items-center gap-2 text-xs text-zinc-300">
-                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                <span className="font-semibold truncate max-w-[180px] sm:max-w-xs">{currentTrack.title}</span>
-                <span className="text-zinc-500 text-[11px] font-mono">({currentTrack.fileFormat})</span>
+            <div className="min-w-0 flex flex-col">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-white truncate max-w-[220px] sm:max-w-md">
+                  {currentTrack ? currentTrack.title : 'No Audio Track Loaded'}
+                </span>
                 {hasSongProfile && (
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 border border-violet-500/30">
-                    SONG PROFILE
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 shrink-0">
+                    Profile Active
                   </span>
                 )}
               </div>
-            ) : (
-              <span className="text-xs text-zinc-500">No active track playing</span>
-            )}
+              <div className="flex items-center gap-2 text-xs text-zinc-400 truncate">
+                <span>{currentTrack ? currentTrack.artist : 'Select a track to apply DSP processing'}</span>
+                {currentTrack?.fileFormat && (
+                  <>
+                    <span aria-hidden="true" className="text-zinc-600">·</span>
+                    <span className="font-mono text-[11px] text-zinc-500 uppercase">{currentTrack.fileFormat}</span>
+                  </>
+                )}
+                {currentTrack?.source && (
+                  <>
+                    <span aria-hidden="true" className="text-zinc-600">·</span>
+                    <span className="text-[11px] text-zinc-500 capitalize">{currentTrack.source}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Master Signal Controls */}
+          <div className="flex items-center gap-2 flex-wrap shrink-0">
+            {/* A/B Compare Button */}
+            <button
+              onClick={toggleABBypass}
+              title="A/B Comparison: Toggle between original unprocessed audio (A: RAW) and studio DSP (B: DSP)"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all border ${
+                isABBypassed
+                  ? 'bg-zinc-900 text-amber-300 border-amber-500/30 shadow-sm'
+                  : 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40 shadow-cyan-500/10 shadow-sm'
+              }`}
+            >
+              <Radio className={`w-3.5 h-3.5 ${!isABBypassed ? 'text-cyan-400' : 'text-amber-400'}`} />
+              <span>{isABBypassed ? 'A: RAW' : 'B: DSP'}</span>
+            </button>
+
+            {/* Lossless Export / Trim Modal Launcher */}
+            <button
+              onClick={() => setIsTrimExportModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600/90 hover:bg-emerald-500 text-white shadow-sm transition-all"
+              title="Open Lossless Audio Trimmer & WAV Master Export"
+            >
+              <Scissors className="w-3.5 h-3.5" />
+              <span>Trim & Export</span>
+            </button>
+
+            {/* Pro / Simple Mode Toggle */}
+            <button
+              onClick={toggleAdvancedMode}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border transition-colors ${
+                isAdvancedMode 
+                  ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30' 
+                  : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border-white/5'
+              }`}
+              title="Toggle between Pro engineering controls and simplified macro view"
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
+              <span>{isAdvancedMode ? 'Pro Mode' : 'Simple'}</span>
+            </button>
+
+            {/* Master Reset All */}
+            <button
+              onClick={resetAllAudioProcessing}
+              title="Reset all studio audio processing, filters, and effects to flat defaults"
+              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-xl transition-colors"
+            >
+              <RefreshCw className="w-3 h-3" />
+              <span>Reset All</span>
+            </button>
+
+            {/* Full Screen Expanded Player */}
+            <button
+              onClick={() => setIsExpandedPlayerOpen(true)}
+              className="p-1.5 text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-xl transition-colors"
+              title="Open Fullscreen Visual Player"
+              aria-label="Open Fullscreen Visual Player"
+            >
+              <Maximize2 className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
-        {/* Audio Visualizer */}
-        <AudioVisualizer
-          mode={visualizerMode}
-          onModeChange={setVisualizerMode}
-          height={150}
-          showControls={true}
-        />
+        {/* Real-time Spectrum Visualizer (Restrained compact height) */}
+        <div className="w-full">
+          <AudioVisualizer
+            mode={visualizerMode}
+            onModeChange={setVisualizerMode}
+            height={100}
+            showControls={true}
+          />
+        </div>
 
-        {/* Waveform Scrubber in Studio with Markers & Loop Region */}
+        {/* Compact Waveform Scrubber with Cue & Loop Indicators */}
         {currentTrack && (
           <div className="flex flex-col gap-1 pt-2 border-t border-white/5">
             <WaveformScrubber
@@ -224,11 +323,11 @@ export const StudioView: React.FC = () => {
               duration={duration}
               onSeek={seek}
               onSeekingChange={setIsSeeking}
-              height={36}
+              height={30}
               barWidth={2.5}
               barGap={1.5}
               activeColor="#22d3ee"
-              inactiveColor="rgba(255, 255, 255, 0.15)"
+              inactiveColor="rgba(255, 255, 255, 0.12)"
               markers={markers}
               onMarkerClick={jumpToMarker}
               loopRegion={{
@@ -237,104 +336,143 @@ export const StudioView: React.FC = () => {
                 enabled: loopAB.enabled,
               }}
             />
-            <div className="flex items-center justify-between text-[11px] font-mono text-zinc-500">
+            <div className="flex items-center justify-between text-[11px] font-mono text-zinc-500 tabular-nums">
               <span>{formatTime(currentTime)}</span>
-              {loopAB.enabled && loopAB.pointA !== null && loopAB.pointB !== null && (
-                <span className="text-purple-400 font-semibold">
+              {loopAB.enabled && loopAB.pointA !== null && loopAB.pointB !== null ? (
+                <span className="text-purple-400 font-medium">
                   Loop: {formatTime(loopAB.pointA)} - {formatTime(loopAB.pointB)}
                 </span>
+              ) : (
+                <span className="text-zinc-600 text-[10px]">64-BIT DSP TIMELINE</span>
               )}
               <span>{formatTime(duration)}</span>
             </div>
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Section 2: Studio Tabs & Control Surface */}
-      <div className="flex flex-col gap-4">
-        
-        {/* Tab Buttons */}
-        <div className="flex items-center gap-1.5 border-b border-white/5 pb-2 overflow-x-auto scrollbar-none">
-          {STUDIO_TABS.map((tab) => {
-            const isActive = activeTab === tab.id;
+      {/* ======================================================== */}
+      {/* ZONE 2: 5-CATEGORY STUDIO NAVIGATION                     */}
+      {/* ======================================================== */}
+      <nav aria-label="Studio Categories" className="flex flex-col gap-3">
+        {/* Primary 5-Category Tabs Bar */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 p-1.5 rounded-2xl bg-zinc-950/60 border border-white/10 backdrop-blur-md">
+          {CATEGORIES.map((cat) => {
+            const isActive = activeCategory === cat.id;
             return (
               <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-xl whitespace-nowrap transition-all ${
+                key={cat.id}
+                onClick={() => handleSelectCategory(cat.id)}
+                className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all text-left ${
                   isActive
-                    ? 'bg-cyan-600/25 text-cyan-200 border border-cyan-500/40 shadow-sm'
-                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+                    ? 'bg-zinc-800 text-white border border-white/15 shadow-sm'
+                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 border border-transparent'
                 }`}
               >
-                {tab.icon}
-                <span>{tab.label}</span>
-                {tab.badge && (
-                  <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-cyan-500/30 text-cyan-300">
-                    {tab.badge}
-                  </span>
-                )}
+                <div className="shrink-0">{cat.icon}</div>
+                <div className="truncate">
+                  <span className="block truncate">{cat.label}</span>
+                </div>
               </button>
             );
           })}
         </div>
 
-        {/* Tab Content Panes */}
-        <div className="p-1 sm:p-2">
-          {activeTab === 'soundlab' && (
+        {/* Sub-Navigation if category has multiple modules */}
+        {currentCategoryConfig.subModules && currentCategoryConfig.subModules.length > 1 && (
+          <div className="flex items-center gap-1.5 px-1 overflow-x-auto scrollbar-none">
+            {currentCategoryConfig.subModules.map((sub) => {
+              const isSubActive = activeSubModule === sub.id;
+              return (
+                <button
+                  key={sub.id}
+                  onClick={() => handleSelectSubModule(sub.id)}
+                  className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-all ${
+                    isSubActive
+                      ? 'bg-zinc-800 text-cyan-300 border border-cyan-500/30 shadow-sm'
+                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60 border border-white/5'
+                  }`}
+                >
+                  <span className={isSubActive ? 'text-cyan-400' : 'text-zinc-500'}>{sub.icon}</span>
+                  <span>{sub.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </nav>
+
+      {/* ======================================================== */}
+      {/* ZONE 3: CONTEXTUAL CONTROL SURFACE                       */}
+      {/* ======================================================== */}
+      <main aria-label="Studio Workspace" className="w-full">
+        {/* Category 1: Tuning & Tone */}
+        {activeCategory === 'tuning' && (
+          <div className="animate-in fade-in duration-150">
             <QuickSoundControls />
-          )}
+          </div>
+        )}
 
-          {activeTab === 'loop' && (
-            <LoopABController />
-          )}
+        {/* Category 2: EQ & Dynamics */}
+        {activeCategory === 'eq_dynamics' && (
+          <div className="animate-in fade-in duration-150">
+            {activeSubModule === 'eq' && (
+              <Equalizer10Band />
+            )}
+            {activeSubModule === 'dynamics' && (
+              <DynamicsPanel />
+            )}
+          </div>
+        )}
 
-          {activeTab === 'stereo' && (
-            <StereoPhaseController />
-          )}
+        {/* Category 3: Spatial & FX */}
+        {activeCategory === 'spatial_fx' && (
+          <div className="animate-in fade-in duration-150">
+            {activeSubModule === 'spatial' && (
+              <SpatialAudioPanel />
+            )}
+            {activeSubModule === 'effects' && (
+              <EffectsRackPanel />
+            )}
+            {activeSubModule === 'channels' && (
+              <ChannelMatrixPanel />
+            )}
+          </div>
+        )}
 
-          {activeTab === 'markers' && (
-            <WaveformMarkersOverlay />
-          )}
+        {/* Category 4: Time & Cues */}
+        {activeCategory === 'time_cues' && (
+          <div className="animate-in fade-in duration-150">
+            {activeSubModule === 'loop' && (
+              <LoopABController />
+            )}
+            {activeSubModule === 'stereo' && (
+              <StereoPhaseController />
+            )}
+            {activeSubModule === 'markers' && (
+              <WaveformMarkersOverlay />
+            )}
+            {activeSubModule === 'moments' && (
+              <AuraMomentsPanel />
+            )}
+          </div>
+        )}
 
-          {activeTab === 'moments' && (
-            <AuraMomentsPanel />
-          )}
-
-          {activeTab === 'eq' && (
-            <Equalizer10Band className="animate-in fade-in duration-150" />
-          )}
-
-          {activeTab === 'dynamics' && (
-            <DynamicsPanel className="animate-in fade-in duration-150" />
-          )}
-
-          {activeTab === 'spatial' && (
-            <SpatialAudioPanel className="animate-in fade-in duration-150" />
-          )}
-
-          {activeTab === 'effects' && (
-            <EffectsRackPanel className="animate-in fade-in duration-150" />
-          )}
-
-          {activeTab === 'channels' && (
-            <ChannelMatrixPanel className="animate-in fade-in duration-150" />
-          )}
-
-          {activeTab === 'analysis' && (
-            <AudioAnalysisPanel className="animate-in fade-in duration-150" />
-          )}
-
-          {activeTab === 'presets' && (
-            <PresetsProfilesPanel className="animate-in fade-in duration-150" />
-          )}
-
-          {activeTab === 'stems' && (
-            <StemsPlaceholderPanel className="animate-in fade-in duration-150" />
-          )}
-        </div>
-
-      </div>
+        {/* Category 5: Mastering & Analysis */}
+        {activeCategory === 'mastering_analysis' && (
+          <div className="animate-in fade-in duration-150">
+            {activeSubModule === 'analysis' && (
+              <AudioAnalysisPanel />
+            )}
+            {activeSubModule === 'presets' && (
+              <PresetsProfilesPanel />
+            )}
+            {activeSubModule === 'stems' && (
+              <StemsPlaceholderPanel />
+            )}
+          </div>
+        )}
+      </main>
 
     </div>
   );

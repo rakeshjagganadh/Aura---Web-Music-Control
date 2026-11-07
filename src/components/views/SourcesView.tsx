@@ -42,6 +42,12 @@ export const SourcesView: React.FC = () => {
   const [isLoadingRadio, setIsLoadingRadio] = useState(false);
   const [providerHealth, setProviderHealth] = useState<Record<string, boolean>>({});
 
+  // Radio Browser Interactive Explorer State
+  const [showRadioExplorer, setShowRadioExplorer] = useState(false);
+  const [radioActiveFilter, setRadioActiveFilter] = useState<'top' | 'jazz' | 'electronic' | 'ambient' | 'classical' | 'rock' | 'news'>('top');
+  const [radioStationsList, setRadioStationsList] = useState<any[]>([]);
+  const [isLoadingExplorer, setIsLoadingExplorer] = useState(false);
+
   React.useEffect(() => {
     let isMounted = true;
     async function checkHealth() {
@@ -79,21 +85,21 @@ export const SourcesView: React.FC = () => {
     }
   };
 
-  const handlePlayRadioTop = async () => {
+  const loadRadioCategory = async (filter: 'top' | 'jazz' | 'electronic' | 'ambient' | 'classical' | 'rock' | 'news') => {
     try {
-      setIsLoadingRadio(true);
-      const stations = await radioBrowserProvider.getFeaturedStations({ limit: 10 });
-      if (stations.length > 0) {
-        const auraTracks = stations.map((s) => radioStationToAuraTrack(s));
-        await playTrack(auraTracks[0], auraTracks);
-        showToast(`Connecting to live stream: "${auraTracks[0].title}"`, 'success');
+      setIsLoadingExplorer(true);
+      setRadioActiveFilter(filter);
+      let stations: any[] = [];
+      if (filter === 'top') {
+        stations = await radioBrowserProvider.getTopVotedStations(12);
       } else {
-        showToast('Could not load radio stations.', 'warning');
+        stations = await radioBrowserProvider.getStationsByTag(filter, 12);
       }
+      setRadioStationsList(stations);
     } catch {
-      showToast('Failed to reach Radio Browser servers.', 'error');
+      showToast(`Could not load ${filter} stations.`, 'error');
     } finally {
-      setIsLoadingRadio(false);
+      setIsLoadingExplorer(false);
     }
   };
 
@@ -398,36 +404,140 @@ export const SourcesView: React.FC = () => {
             </div>
 
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Global community directory with 30,000+ live internet radio stations. Filter by country, genre, and codec with real-time spectrum analysis.
+              Global community directory with 60,000+ live internet radio stations. Filter by genre, country, and codec with continuous live audio streaming.
             </p>
 
             <div className="flex items-center gap-4 text-xs font-mono text-zinc-400 pt-2 border-t border-white/5">
-              <span>30,000+ Global Stations</span>
+              <span>60,000+ Stations</span>
               <span>•</span>
-              <span>Open Community API</span>
+              <span>Live Broadcast</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2">
             <button
-              onClick={handlePlayRadioTop}
-              disabled={isLoadingRadio}
-              className="flex-1 py-2 px-3 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-200 border border-cyan-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+              onClick={() => {
+                setShowRadioExplorer(true);
+                if (radioStationsList.length === 0) {
+                  loadRadioCategory('top');
+                }
+              }}
+              className="w-full py-2 px-3 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-200 border border-cyan-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
-              {isLoadingRadio ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Loading Stations...</span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-3.5 h-3.5 fill-current" />
-                  <span>Play Top Global Radio</span>
-                </>
-              )}
+              <Radio className="w-3.5 h-3.5" />
+              <span>Explore Radio Stations</span>
             </button>
           </div>
         </div>
+
+        {/* Radio Explorer Modal / Drawer */}
+        {showRadioExplorer && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="bg-[#0e1017] border border-white/10 rounded-3xl p-6 w-full max-w-2xl shadow-2xl flex flex-col gap-4 max-h-[85vh]">
+              <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                    <Radio className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-white">Global Radio Explorer</h2>
+                    <p className="text-xs text-zinc-400">Filter stations by category or top votes</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowRadioExplorer(false)}
+                  className="px-2.5 py-1 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white hover:bg-white/5 border border-white/10"
+                >
+                  Close
+                </button>
+              </div>
+
+              {/* Filter Pills */}
+              <div className="flex flex-wrap gap-1.5 text-xs">
+                {(['top', 'ambient', 'jazz', 'electronic', 'classical', 'rock', 'news'] as const).map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => loadRadioCategory(cat)}
+                    className={`px-3 py-1 rounded-xl font-mono text-[11px] capitalize transition-colors ${
+                      radioActiveFilter === cat
+                        ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-semibold'
+                        : 'bg-white/[0.03] text-zinc-400 hover:text-zinc-200 border border-white/5'
+                    }`}
+                  >
+                    {cat === 'top' ? '★ Top Voted' : cat}
+                  </button>
+                ))}
+              </div>
+
+              {/* Stations Grid / List */}
+              <div className="flex-1 overflow-y-auto flex flex-col gap-2 pr-1 min-h-[250px]">
+                {isLoadingExplorer ? (
+                  <div className="flex flex-col items-center justify-center p-12 text-zinc-500 text-xs font-mono gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin text-cyan-400" />
+                    <span>Loading {radioActiveFilter} stations...</span>
+                  </div>
+                ) : radioStationsList.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center p-12 text-zinc-500 text-xs font-mono">
+                    <span>No stations found for this category.</span>
+                  </div>
+                ) : (
+                  radioStationsList.map((st) => {
+                    const auraTrack = radioStationToAuraTrack(st);
+                    const isCurrent = currentTrack?.id === auraTrack.id;
+                    const isHls = st.codec?.toLowerCase().includes('hls') || st.streamUrl?.includes('.m3u8');
+                    return (
+                      <div
+                        key={st.id}
+                        className={`p-3 rounded-xl border flex items-center justify-between gap-3 transition-colors ${
+                          isCurrent
+                            ? 'bg-cyan-950/40 border-cyan-500/40 text-white'
+                            : 'bg-white/[0.02] border-white/5 text-zinc-300 hover:bg-white/[0.04]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="w-9 h-9 rounded-lg bg-zinc-900 border border-white/10 overflow-hidden flex items-center justify-center shrink-0">
+                            {st.favicon ? (
+                              <img src={st.favicon} alt={st.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <Radio className="w-4 h-4 text-zinc-600" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-semibold truncate text-white">{st.name}</p>
+                            <p className="text-[10px] font-mono text-zinc-400 truncate">
+                              {st.country || 'Global'} • {st.tags.slice(0, 3).join(', ') || 'Live Broadcast'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          {isHls && (
+                            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                              HLS
+                            </span>
+                          )}
+                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/[0.06] text-zinc-400 border border-white/10">
+                            {st.codec || 'MP3'}
+                          </span>
+                          <button
+                            onClick={() => {
+                              playTrack(auraTrack);
+                              showToast(`Connecting to "${st.name}"...`, 'info');
+                            }}
+                            className="p-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white transition-colors cursor-pointer"
+                            title="Play Station"
+                          >
+                            <Play className="w-3.5 h-3.5 fill-current" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Source 4: YouTube Web Embed Player */}
         <div className="p-6 rounded-3xl bg-[#0c0e15]/70 border border-white/10 backdrop-blur-xl flex flex-col justify-between gap-6 shadow-xl">

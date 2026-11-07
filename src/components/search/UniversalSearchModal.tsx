@@ -8,17 +8,17 @@ import {
   Music, 
   Disc, 
   User, 
-  ListMusic, 
   Radio, 
   Youtube, 
   HardDrive,
   Plus, 
   Key,
-  AlertCircle,
-  ExternalLink,
   Sparkles,
-  ArrowRight,
-  FolderOpen
+  FolderOpen,
+  History,
+  Tag,
+  ListMusic,
+  ExternalLink
 } from 'lucide-react';
 import { universalSearchCoordinator, UniversalSearchResults, SearchMatchArtist, SearchMatchAlbum, SearchMatchPlaylist } from '../../services/sourceAdapters';
 import { youtubeService } from '../../services/youtubeService';
@@ -30,7 +30,8 @@ interface UniversalSearchModalProps {
   title?: string;
 }
 
-type SearchTab = 'all' | 'songs' | 'jamendo' | 'audius' | 'radio' | 'youtube' | 'artists' | 'albums' | 'playlists';
+type CategoryTab = 'all' | 'songs' | 'artists' | 'albums' | 'playlists' | 'radio';
+type SourceFilter = 'all' | 'local' | 'jamendo' | 'audius' | 'radiobrowser' | 'youtube';
 
 const HighlightMatch: React.FC<{ text: string; query: string; className?: string }> = ({ text, query, className = '' }) => {
   if (!query || !query.trim()) return <span className={className}>{text}</span>;
@@ -64,7 +65,8 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
   } = useMusic();
 
   const [query, setQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<SearchTab>('all');
+  const [activeTab, setActiveTab] = useState<CategoryTab>('all');
+  const [activeSourceFilter, setActiveSourceFilter] = useState<SourceFilter>('all');
   const [searchResults, setSearchResults] = useState<UniversalSearchResults>({
     query: '',
     songs: [],
@@ -78,6 +80,44 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [customApiKey, setCustomApiKey] = useState(youtubeService.getApiKey());
 
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('aura_recent_searches');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const saveRecentSearch = useCallback((term: string) => {
+    const clean = term.trim();
+    if (!clean || clean.length < 2) return;
+    setRecentSearches((prev) => {
+      const updated = [clean, ...prev.filter((item) => item.toLowerCase() !== clean.toLowerCase())].slice(0, 8);
+      try {
+        localStorage.setItem('aura_recent_searches', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  }, []);
+
+  const removeRecentSearch = useCallback((termToRemove: string) => {
+    setRecentSearches((prev) => {
+      const updated = prev.filter((item) => item.toLowerCase() !== termToRemove.toLowerCase());
+      try {
+        localStorage.setItem('aura_recent_searches', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  }, []);
+
+  const clearRecentSearches = useCallback(() => {
+    setRecentSearches([]);
+    try {
+      localStorage.removeItem('aura_recent_searches');
+    } catch {}
+  }, []);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceTimerRef = useRef<any>(null);
 
@@ -88,7 +128,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
     }
   }, [isOpen]);
 
-  // Execute search when query or tracks change
+  // Execute search when query changes
   const executeSearch = useCallback(async (searchQuery: string) => {
     const q = searchQuery.trim();
     if (!q) {
@@ -118,7 +158,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
     setSearchResults(results);
     setSelectedIndex(0);
 
-    // 2. Debounced External execution (YouTube & Audius)
+    // 2. Debounced External execution
     const isDirectYt = !!youtubeService.parseVideoId(q);
     const shouldSearchExternal = isDirectYt || (youtubeService.isConfigured() && q.length > 1) || q.length > 1;
 
@@ -160,47 +200,36 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
     executeSearch(query);
   };
 
-  // Filtered lists based on active tab
+  // Filter songs by source if source filter is active
+  const songsFilteredBySource = useMemo(() => {
+    if (activeSourceFilter === 'all') return searchResults.songs;
+    if (activeSourceFilter === 'local') return searchResults.songs.filter((s) => !s.source || s.source === 'local');
+    if (activeSourceFilter === 'youtube') return searchResults.songs.filter((s) => s.source === 'youtube');
+    if (activeSourceFilter === 'audius') return searchResults.songs.filter((s) => s.source === 'audius');
+    if (activeSourceFilter === 'jamendo') return searchResults.songs.filter((s) => s.source === 'jamendo');
+    if (activeSourceFilter === 'radiobrowser') return searchResults.songs.filter((s) => s.source === 'radiobrowser' || s.source === 'radio');
+    return searchResults.songs;
+  }, [searchResults.songs, activeSourceFilter]);
+
+  // Filter final display songs based on active Category Tab
   const songsToShow = useMemo(() => {
-    if (activeTab === 'youtube') {
-      return searchResults.songs.filter((s) => s.source === 'youtube');
-    }
-    if (activeTab === 'audius') {
-      return searchResults.songs.filter((s) => s.source === 'audius');
-    }
-    if (activeTab === 'jamendo') {
-      return searchResults.songs.filter((s) => s.source === 'jamendo');
-    }
     if (activeTab === 'radio') {
-      return searchResults.songs.filter((s) => s.source === 'radiobrowser' || s.source === 'radio');
+      return songsFilteredBySource.filter((s) => s.source === 'radiobrowser' || s.source === 'radio');
     }
-    if (activeTab === 'songs') {
-      return searchResults.songs;
-    }
-    // 'all' tab: Group naturally by source: Local/catalog, Jamendo, Audius, Radio, YouTube
-    const loc = searchResults.songs.filter((s) => !s.source || s.source === 'local');
-    const jam = searchResults.songs.filter((s) => s.source === 'jamendo');
-    const aud = searchResults.songs.filter((s) => s.source === 'audius');
-    const rad = searchResults.songs.filter((s) => s.source === 'radiobrowser' || s.source === 'radio');
-    const yt = searchResults.songs.filter((s) => s.source === 'youtube');
-    const curated = searchResults.songs.filter((s) => s.source === 'curated_stream' || s.source === 'web_stream');
-    return [...loc, ...jam, ...aud, ...rad, ...yt, ...curated];
-  }, [searchResults.songs, activeTab]);
+    return songsFilteredBySource;
+  }, [songsFilteredBySource, activeTab]);
 
-  const ytSongsCount = useMemo(() => {
-    return searchResults.songs.filter((s) => s.source === 'youtube').length;
-  }, [searchResults.songs]);
-
-  const audiusSongsCount = useMemo(() => {
-    return searchResults.songs.filter((s) => s.source === 'audius').length;
-  }, [searchResults.songs]);
-
-  const jamendoSongsCount = useMemo(() => {
-    return searchResults.songs.filter((s) => s.source === 'jamendo').length;
-  }, [searchResults.songs]);
-
-  const radioSongsCount = useMemo(() => {
-    return searchResults.songs.filter((s) => s.source === 'radiobrowser' || s.source === 'radio').length;
+  // Count matches per source
+  const sourceCounts = useMemo(() => {
+    const counts = { local: 0, youtube: 0, audius: 0, jamendo: 0, radiobrowser: 0 };
+    searchResults.songs.forEach((s) => {
+      if (!s.source || s.source === 'local') counts.local++;
+      else if (s.source === 'youtube') counts.youtube++;
+      else if (s.source === 'audius') counts.audius++;
+      else if (s.source === 'jamendo') counts.jamendo++;
+      else if (s.source === 'radiobrowser' || s.source === 'radio') counts.radiobrowser++;
+    });
+    return counts;
   }, [searchResults.songs]);
 
   // Keyboard navigation
@@ -228,12 +257,10 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
 
     if (e.key === 'Enter') {
       e.preventDefault();
-      // If direct URL is detected, play it immediately
       if (searchResults.detectedDirectTrack) {
         handlePlayTrack(searchResults.detectedDirectTrack);
         return;
       }
-      // Otherwise play currently highlighted song
       if (songsToShow.length > 0 && songsToShow[selectedIndex]) {
         handlePlayTrack(songsToShow[selectedIndex]);
       }
@@ -241,6 +268,9 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
   };
 
   const handlePlayTrack = (track: Track) => {
+    if (query.trim()) {
+      saveRecentSearch(query.trim());
+    }
     if (onSelectTrack) {
       onSelectTrack(track);
     } else {
@@ -277,9 +307,9 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
   return (
     <div
       id="aura-universal-search-modal"
-      className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex items-start justify-center p-3 sm:p-6 sm:pt-14 animate-in fade-in duration-150 select-none"
+      className="fixed inset-0 z-50 bg-black/85 backdrop-blur-2xl flex items-start justify-center p-3 sm:p-6 sm:pt-14 animate-in fade-in duration-150 select-none"
     >
-      <div className="relative w-full max-w-3xl max-h-[88vh] rounded-3xl bg-[#0b0d14] border border-white/10 shadow-2xl flex flex-col overflow-hidden">
+      <div className="relative w-full max-w-3xl max-h-[88vh] rounded-3xl bg-[#0a0d16]/90 border border-white/10 shadow-2xl flex flex-col overflow-hidden">
         
         {/* Search Header Bar */}
         <div className="p-4 sm:p-5 border-b border-white/10 flex items-center gap-3 bg-zinc-950/80">
@@ -292,21 +322,21 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
             onKeyDown={handleKeyDown}
             placeholder={
               youtubeService.isConfigured()
-                ? 'Search your library, YouTube music, or paste a link...'
-                : 'Search your library (songs, artists, albums) or paste a YouTube link...'
+                ? 'Search tracks, artists, albums, playlists, radio stations or paste a YouTube link...'
+                : 'Search your library, Jamendo, Audius, Radio or paste a YouTube link...'
             }
             className="flex-1 bg-transparent text-sm sm:text-base text-white placeholder-zinc-500 focus:outline-none"
           />
           
           {isSearchingExternal && (
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 text-[10px] font-mono border border-indigo-500/20 animate-pulse">
-              <Sparkles className="w-3 h-3" />
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-indigo-500/10 text-indigo-400 text-[11px] font-mono border border-indigo-500/20 animate-pulse shrink-0">
+              <Sparkles className="w-3.5 h-3.5" />
               <span>Searching online...</span>
             </div>
           )}
 
           {onSelectTrack && (
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-semibold border border-indigo-500/30 shrink-0">
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-indigo-500/20 text-indigo-300 text-xs font-semibold border border-indigo-500/30 shrink-0">
               {title || 'Adding to Shared Room'}
             </span>
           )}
@@ -317,7 +347,8 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
                 setQuery('');
                 inputRef.current?.focus();
               }}
-              className="p-1 rounded-lg text-zinc-500 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+              className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              title="Clear search query"
             >
               <X className="w-4 h-4" />
             </button>
@@ -325,132 +356,181 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
 
           <button
             onClick={onClose}
-            className="px-2.5 py-1 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white hover:bg-white/5 border border-white/10 transition-colors cursor-pointer"
+            className="px-2.5 py-1 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white hover:bg-white/10 border border-white/10 transition-colors cursor-pointer"
           >
             ESC
           </button>
         </div>
 
-        {/* Dynamic Category Tabs */}
+        {/* Categories & Source Filter Tabs */}
         {query && hasAnyResults && (
-          <div className="px-4 py-2 bg-zinc-950/90 border-b border-white/5 flex items-center gap-2 overflow-x-auto text-xs scrollbar-none">
-            <button
-              onClick={() => setActiveTab('all')}
-              className={`px-3 py-1 rounded-xl font-medium transition-colors ${
-                activeTab === 'all'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
-              }`}
-            >
-              All Results
-            </button>
-
-            {searchResults.songs.length > 0 && (
+          <div className="px-4 py-2 bg-zinc-950/90 border-b border-white/5 flex flex-col gap-2">
+            {/* Primary Category Tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto text-xs scrollbar-none">
               <button
-                onClick={() => setActiveTab('songs')}
-                className={`px-3 py-1 rounded-xl font-medium transition-colors ${
-                  activeTab === 'songs'
+                onClick={() => setActiveTab('all')}
+                className={`px-3 py-1 rounded-xl font-medium transition-colors cursor-pointer ${
+                  activeTab === 'all'
                     ? 'bg-indigo-600 text-white shadow-sm'
                     : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
                 }`}
               >
-                Songs ({searchResults.songs.length})
+                All Results
               </button>
-            )}
 
-            {searchResults.artists.length > 0 && (
-              <button
-                onClick={() => setActiveTab('artists')}
-                className={`px-3 py-1 rounded-xl font-medium transition-colors ${
-                  activeTab === 'artists'
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
-                }`}
-              >
-                Artists ({searchResults.artists.length})
-              </button>
-            )}
+              {searchResults.songs.length > 0 && (
+                <button
+                  onClick={() => setActiveTab('songs')}
+                  className={`px-3 py-1 rounded-xl font-medium transition-colors cursor-pointer ${
+                    activeTab === 'songs'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+                  }`}
+                >
+                  Songs ({searchResults.songs.length})
+                </button>
+              )}
 
-            {searchResults.albums.length > 0 && (
-              <button
-                onClick={() => setActiveTab('albums')}
-                className={`px-3 py-1 rounded-xl font-medium transition-colors ${
-                  activeTab === 'albums'
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
-                }`}
-              >
-                Albums ({searchResults.albums.length})
-              </button>
-            )}
+              {searchResults.artists.length > 0 && (
+                <button
+                  onClick={() => setActiveTab('artists')}
+                  className={`px-3 py-1 rounded-xl font-medium transition-colors cursor-pointer ${
+                    activeTab === 'artists'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+                  }`}
+                >
+                  Artists ({searchResults.artists.length})
+                </button>
+              )}
 
-            {searchResults.playlists.length > 0 && (
-              <button
-                onClick={() => setActiveTab('playlists')}
-                className={`px-3 py-1 rounded-xl font-medium transition-colors ${
-                  activeTab === 'playlists'
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
-                }`}
-              >
-                Spaces ({searchResults.playlists.length})
-              </button>
-            )}
+              {searchResults.albums.length > 0 && (
+                <button
+                  onClick={() => setActiveTab('albums')}
+                  className={`px-3 py-1 rounded-xl font-medium transition-colors cursor-pointer ${
+                    activeTab === 'albums'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+                  }`}
+                >
+                  Albums ({searchResults.albums.length})
+                </button>
+              )}
 
-            {ytSongsCount > 0 && (
-              <button
-                onClick={() => setActiveTab('youtube')}
-                className={`flex items-center gap-1 px-3 py-1 rounded-xl font-medium transition-colors ${
-                  activeTab === 'youtube'
-                    ? 'bg-red-600 text-white shadow-sm'
-                    : 'text-red-400 hover:text-red-300 hover:bg-red-950/30'
-                }`}
-              >
-                <Youtube className="w-3.5 h-3.5" />
-                <span>YouTube ({ytSongsCount})</span>
-              </button>
-            )}
+              {searchResults.playlists.length > 0 && (
+                <button
+                  onClick={() => setActiveTab('playlists')}
+                  className={`px-3 py-1 rounded-xl font-medium transition-colors cursor-pointer ${
+                    activeTab === 'playlists'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+                  }`}
+                >
+                  Spaces ({searchResults.playlists.length})
+                </button>
+              )}
 
-            {audiusSongsCount > 0 && (
-              <button
-                onClick={() => setActiveTab('audius')}
-                className={`flex items-center gap-1 px-3 py-1 rounded-xl font-medium transition-colors ${
-                  activeTab === 'audius'
-                    ? 'bg-purple-600 text-white shadow-sm'
-                    : 'text-purple-400 hover:text-purple-300 hover:bg-purple-950/30'
-                }`}
-              >
-                <Radio className="w-3.5 h-3.5" />
-                <span>Audius ({audiusSongsCount})</span>
-              </button>
-            )}
+              {sourceCounts.radiobrowser > 0 && (
+                <button
+                  onClick={() => setActiveTab('radio')}
+                  className={`flex items-center gap-1 px-3 py-1 rounded-xl font-medium transition-colors cursor-pointer ${
+                    activeTab === 'radio'
+                      ? 'bg-cyan-600 text-white shadow-sm'
+                      : 'text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/30'
+                  }`}
+                >
+                  <Radio className="w-3.5 h-3.5" />
+                  <span>Radio ({sourceCounts.radiobrowser})</span>
+                </button>
+              )}
+            </div>
 
-            {jamendoSongsCount > 0 && (
-              <button
-                onClick={() => setActiveTab('jamendo')}
-                className={`flex items-center gap-1 px-3 py-1 rounded-xl font-medium transition-colors ${
-                  activeTab === 'jamendo'
-                    ? 'bg-amber-600 text-white shadow-sm'
-                    : 'text-amber-400 hover:text-amber-300 hover:bg-amber-950/30'
-                }`}
-              >
-                <Music className="w-3.5 h-3.5" />
-                <span>Jamendo ({jamendoSongsCount})</span>
-              </button>
-            )}
+            {/* Secondary Source Filter Pills (When 'songs' or 'all' is active) */}
+            {(activeTab === 'all' || activeTab === 'songs') && searchResults.songs.length > 0 && (
+              <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] scrollbar-none pt-1 border-t border-white/5">
+                <span className="text-zinc-500 font-mono uppercase text-[9px] mr-1">Source:</span>
+                
+                <button
+                  onClick={() => setActiveSourceFilter('all')}
+                  className={`px-2.5 py-0.5 rounded-lg transition-colors cursor-pointer ${
+                    activeSourceFilter === 'all'
+                      ? 'bg-white/15 text-white font-semibold'
+                      : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  All Sources
+                </button>
 
-            {radioSongsCount > 0 && (
-              <button
-                onClick={() => setActiveTab('radio')}
-                className={`flex items-center gap-1 px-3 py-1 rounded-xl font-medium transition-colors ${
-                  activeTab === 'radio'
-                    ? 'bg-cyan-600 text-white shadow-sm'
-                    : 'text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/30'
-                }`}
-              >
-                <Radio className="w-3.5 h-3.5" />
-                <span>Radio ({radioSongsCount})</span>
-              </button>
+                {sourceCounts.local > 0 && (
+                  <button
+                    onClick={() => setActiveSourceFilter('local')}
+                    className={`px-2.5 py-0.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
+                      activeSourceFilter === 'local'
+                        ? 'bg-emerald-500/30 text-emerald-300 font-semibold border border-emerald-500/40'
+                        : 'text-zinc-400 hover:text-emerald-300'
+                    }`}
+                  >
+                    <HardDrive className="w-3 h-3" />
+                    <span>Local ({sourceCounts.local})</span>
+                  </button>
+                )}
+
+                {sourceCounts.jamendo > 0 && (
+                  <button
+                    onClick={() => setActiveSourceFilter('jamendo')}
+                    className={`px-2.5 py-0.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
+                      activeSourceFilter === 'jamendo'
+                        ? 'bg-amber-500/30 text-amber-300 font-semibold border border-amber-500/40'
+                        : 'text-zinc-400 hover:text-amber-300'
+                    }`}
+                  >
+                    <Music className="w-3 h-3" />
+                    <span>Jamendo ({sourceCounts.jamendo})</span>
+                  </button>
+                )}
+
+                {sourceCounts.audius > 0 && (
+                  <button
+                    onClick={() => setActiveSourceFilter('audius')}
+                    className={`px-2.5 py-0.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
+                      activeSourceFilter === 'audius'
+                        ? 'bg-purple-500/30 text-purple-300 font-semibold border border-purple-500/40'
+                        : 'text-zinc-400 hover:text-purple-300'
+                    }`}
+                  >
+                    <Radio className="w-3 h-3" />
+                    <span>Audius ({sourceCounts.audius})</span>
+                  </button>
+                )}
+
+                {sourceCounts.radiobrowser > 0 && (
+                  <button
+                    onClick={() => setActiveSourceFilter('radiobrowser')}
+                    className={`px-2.5 py-0.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
+                      activeSourceFilter === 'radiobrowser'
+                        ? 'bg-cyan-500/30 text-cyan-300 font-semibold border border-cyan-500/40'
+                        : 'text-zinc-400 hover:text-cyan-300'
+                    }`}
+                  >
+                    <Radio className="w-3 h-3" />
+                    <span>Radio ({sourceCounts.radiobrowser})</span>
+                  </button>
+                )}
+
+                {sourceCounts.youtube > 0 && (
+                  <button
+                    onClick={() => setActiveSourceFilter('youtube')}
+                    className={`px-2.5 py-0.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
+                      activeSourceFilter === 'youtube'
+                        ? 'bg-red-500/30 text-red-300 font-semibold border border-red-500/40'
+                        : 'text-zinc-400 hover:text-red-300'
+                    }`}
+                  >
+                    <Youtube className="w-3 h-3" />
+                    <span>YouTube ({sourceCounts.youtube})</span>
+                  </button>
+                )}
+              </div>
             )}
           </div>
         )}
@@ -460,7 +540,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
           
           {/* Direct YouTube Video Link Card */}
           {searchResults.detectedDirectTrack && (
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-red-950/60 via-zinc-900 to-black border border-red-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-red-950/70 via-zinc-900 to-black border border-red-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
               <div className="flex items-center gap-3.5 min-w-0">
                 <div className="w-12 h-12 rounded-xl bg-red-600/20 border border-red-500/30 flex items-center justify-center text-red-400 shrink-0 overflow-hidden">
                   {searchResults.detectedDirectTrack.coverUrl ? (
@@ -479,7 +559,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
                     {searchResults.detectedDirectTrack.title}
                   </h4>
                   <p className="text-xs text-zinc-400 truncate">
-                    {searchResults.detectedDirectTrack.artist} • Ready to embed & play
+                    {searchResults.detectedDirectTrack.artist} • Ready to stream & play
                   </p>
                 </div>
               </div>
@@ -499,14 +579,55 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
             <div className="flex flex-col gap-6 py-2">
               <div>
                 <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">
-                  Local Library Quick Search
+                  Universal Music Search
                 </span>
                 <p className="text-xs text-zinc-400 mt-1">
-                  Type any song title, artist, album, or playlist name. Or paste any YouTube video link directly into the search bar.
+                  Type any song title, artist, album, playlist, radio station, or paste a direct YouTube video link.
                 </p>
               </div>
 
-              {/* Suggestions / Artists in user's library */}
+              {/* Recent Searches */}
+              {recentSearches.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold flex items-center gap-1.5">
+                      <History className="w-3 h-3 text-indigo-400" />
+                      Recent Searches
+                    </span>
+                    <button
+                      onClick={clearRecentSearches}
+                      className="text-[10px] font-mono text-zinc-500 hover:text-rose-400 transition-colors cursor-pointer"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {recentSearches.map((term) => (
+                      <div
+                        key={term}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 text-xs text-zinc-300 transition-colors group cursor-pointer"
+                        onClick={() => setQuery(term)}
+                      >
+                        <Search className="w-3 h-3 text-indigo-400" />
+                        <span>{term}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeRecentSearch(term);
+                          }}
+                          className="text-zinc-500 hover:text-rose-400 transition-colors p-0.5 rounded ml-0.5"
+                          title="Remove search"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Suggested Library Artists */}
               {tracks.length > 0 && (
                 <div className="flex flex-col gap-2">
                   <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">
@@ -528,11 +649,11 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
               )}
 
               {/* Audius Status Info Banner */}
-              <div className="p-3.5 rounded-2xl bg-zinc-950 border border-white/5 flex items-center justify-between gap-3">
+              <div className="p-3.5 rounded-2xl bg-zinc-950/80 border border-white/5 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
                   <Radio className="w-4 h-4 text-purple-400 shrink-0" />
                   <p className="text-xs text-zinc-400">
-                    <span className="text-purple-300 font-semibold">Audius Decentralized Network</span> is live. Full public streaming & discovery with DSP effects enabled.
+                    <span className="text-purple-300 font-semibold">Audius Decentralized Network</span> is live for universal discovery & audio streaming.
                   </p>
                 </div>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 shrink-0">
@@ -541,17 +662,17 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
               </div>
 
               {/* YouTube Status Info Banner */}
-              <div className="p-3.5 rounded-2xl bg-zinc-950 border border-white/5 flex items-center justify-between gap-3">
+              <div className="p-3.5 rounded-2xl bg-zinc-950/80 border border-white/5 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
                   <Youtube className="w-4 h-4 text-red-400 shrink-0" />
                   <p className="text-xs text-zinc-400">
                     {youtubeService.isConfigured() ? (
                       <span className="text-emerald-400">
-                        YouTube Data API Connected. Live universal search is active.
+                        YouTube Data API Connected. Live YouTube search is active.
                       </span>
                     ) : (
                       <span>
-                        YouTube URL embeds are active. Set <code className="text-indigo-300 font-mono">YOUTUBE_DATA_API_KEY</code> to enable live YouTube search.
+                        YouTube URL embeds active. Set <code className="text-indigo-300 font-mono">YOUTUBE_DATA_API_KEY</code> for live YouTube search.
                       </span>
                     )}
                   </p>
@@ -599,12 +720,12 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
             </div>
           )}
 
-          {/* Songs Section */}
-          {query && (activeTab === 'all' || activeTab === 'songs' || activeTab === 'youtube' || activeTab === 'audius' || activeTab === 'jamendo' || activeTab === 'radio') && songsToShow.length > 0 && (
+          {/* Songs & Radio Section */}
+          {query && (activeTab === 'all' || activeTab === 'songs' || activeTab === 'radio') && songsToShow.length > 0 && (
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">
-                  Songs ({songsToShow.length})
+                  Songs & Streams ({songsToShow.length})
                 </span>
                 <span className="text-[10px] font-mono text-zinc-500">
                   ↑↓ navigate • Enter to play
@@ -623,14 +744,14 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
                   const getSourceGroup = (s: string) => {
                     if (s === 'youtube') return { label: 'YouTube Music', icon: Youtube, color: 'text-red-400' };
                     if (s === 'audius') return { label: 'Audius Catalog', icon: Radio, color: 'text-purple-400' };
-                    if (s === 'jamendo') return { label: 'Jamendo Music (Creative Commons)', icon: Music, color: 'text-amber-400' };
-                    if (s === 'radiobrowser' || s === 'radio') return { label: 'Live Radio Streams', icon: Radio, color: 'text-cyan-400' };
-                    return { label: 'Local Library & Spaces', icon: HardDrive, color: 'text-emerald-400' };
+                    if (s === 'jamendo') return { label: 'Jamendo Music', icon: Music, color: 'text-amber-400' };
+                    if (s === 'radiobrowser' || s === 'radio') return { label: 'Live Radio Stations', icon: Radio, color: 'text-cyan-400' };
+                    return { label: 'Local Vault & Curated', icon: HardDrive, color: 'text-emerald-400' };
                   };
 
                   const currentGroup = getSourceGroup(song.source);
                   const prevGroup = idx > 0 ? getSourceGroup(songsToShow[idx - 1].source) : null;
-                  const isFirstInGroup = activeTab === 'all' && currentGroup.label !== prevGroup?.label;
+                  const isFirstInGroup = activeTab === 'all' && activeSourceFilter === 'all' && currentGroup.label !== prevGroup?.label;
 
                   return (
                     <React.Fragment key={song.id}>
@@ -690,12 +811,8 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
                                   <Radio className="w-2.5 h-2.5" />
                                   RADIO
                                 </span>
-                              ) : song.source === 'curated_stream' ? (
-                                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shrink-0">
-                                  OPEN STREAM
-                                </span>
                               ) : (
-                                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0 flex items-center gap-1">
+                                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0 flex items-center gap-1 font-semibold">
                                   <HardDrive className="w-2.5 h-2.5" />
                                   LOCAL
                                 </span>
@@ -711,26 +828,26 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
                           </div>
                         </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (onSelectTrack) {
-                              onSelectTrack(song);
-                              onClose();
-                            } else {
-                              addToQueue(song);
-                            }
-                          }}
-                          className="p-1.5 rounded-lg text-zinc-400 hover:text-indigo-300 hover:bg-white/5 transition-colors cursor-pointer"
-                          title={onSelectTrack ? 'Add to room queue' : 'Add to queue'}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (onSelectTrack) {
+                                onSelectTrack(song);
+                                onClose();
+                              } else {
+                                addToQueue(song);
+                              }
+                            }}
+                            className="p-1.5 rounded-lg text-zinc-400 hover:text-indigo-300 hover:bg-white/5 transition-colors cursor-pointer"
+                            title={onSelectTrack ? 'Add to room queue' : 'Add to queue'}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </React.Fragment>
-                );
+                    </React.Fragment>
+                  );
                 })}
               </div>
             </div>
@@ -749,7 +866,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
                     onClick={() => handleSelectArtist(artist.name)}
                     className="p-3 rounded-2xl bg-zinc-900/60 hover:bg-zinc-800/80 border border-white/5 flex items-center gap-2.5 cursor-pointer transition-all group"
                   >
-                    <div className="w-9 h-9 rounded-full bg-indigo-950 text-indigo-300 flex items-center justify-center shrink-0 border border-indigo-500/20 overflow-hidden">
+                    <div className="w-10 h-10 rounded-full bg-indigo-950 text-indigo-300 flex items-center justify-center shrink-0 border border-indigo-500/20 overflow-hidden">
                       {artist.sampleCover ? (
                         <img src={artist.sampleCover} alt={artist.name} className="w-full h-full object-cover" />
                       ) : (
@@ -760,7 +877,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
                       <p className="text-xs font-bold text-zinc-200 group-hover:text-indigo-300 truncate">
                         <HighlightMatch text={artist.name} query={query} />
                       </p>
-                      <p className="text-[10px] text-zinc-500">{artist.trackCount} local tracks</p>
+                      <p className="text-[10px] text-zinc-500">{artist.trackCount} tracks</p>
                     </div>
                   </div>
                 ))}
@@ -781,7 +898,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
                     onClick={() => handleSelectAlbum(album.name)}
                     className="p-3 rounded-2xl bg-zinc-900/60 hover:bg-zinc-800/80 border border-white/5 flex items-center gap-2.5 cursor-pointer transition-all group"
                   >
-                    <div className="w-9 h-9 rounded-xl bg-zinc-800 text-zinc-300 flex items-center justify-center shrink-0 border border-white/10 overflow-hidden">
+                    <div className="w-10 h-10 rounded-xl bg-zinc-800 text-zinc-300 flex items-center justify-center shrink-0 border border-white/10 overflow-hidden">
                       {album.coverUrl ? (
                         <img src={album.coverUrl} alt={album.name} className="w-full h-full object-cover" />
                       ) : (
@@ -813,7 +930,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
                     onClick={() => handleSelectPlaylist(pl.id)}
                     className="p-3 rounded-2xl bg-zinc-900/60 hover:bg-zinc-800 border border-white/5 flex items-center gap-3 cursor-pointer transition-all group"
                   >
-                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${pl.coverGradient} flex items-center justify-center text-white font-bold text-xs shrink-0`}>
+                    <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${pl.coverGradient} flex items-center justify-center text-white font-bold text-xs shrink-0`}>
                       {pl.title.charAt(0)}
                     </div>
                     <div className="min-w-0">

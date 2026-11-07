@@ -6,6 +6,7 @@ import {
   RealtimeBackendType,
   RoomActionPayload,
   RoomActivityItem,
+  RoomChatMessage,
   RoomConnectionStatus,
   RoomParticipant,
   SharedRoomState,
@@ -25,6 +26,7 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
   private participantsListeners = new Set<(participants: RoomParticipant[]) => void>();
   private activityListeners = new Set<(activity: RoomActivityItem) => void>();
   private statusListeners = new Set<(status: RoomConnectionStatus) => void>();
+  private chatListeners = new Set<(message: RoomChatMessage) => void>();
 
   constructor() {
     this.client = getSupabaseClient();
@@ -227,6 +229,13 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
         actionText: this.formatActionDescription(action),
         timestamp: action.timestamp,
       });
+    });
+
+    // Listen for broadcasted room chat messages
+    this.channel.on('broadcast', { event: 'CHAT_MESSAGE' }, ({ payload }) => {
+      const msg = payload as RoomChatMessage;
+      if (!msg || (msg.roomId && msg.roomId.toLowerCase() !== this.roomId)) return;
+      this.notifyChatMessage(msg);
     });
 
     // Listen for Presence sync
@@ -539,6 +548,26 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
     return () => this.statusListeners.delete(listener);
   }
 
+  public onChatMessage(listener: (message: RoomChatMessage) => void): () => void {
+    this.chatListeners.add(listener);
+    return () => this.chatListeners.delete(listener);
+  }
+
+  public async sendChatMessage(message: RoomChatMessage): Promise<boolean> {
+    if (!this.channel) return false;
+    try {
+      await this.channel.send({
+        type: 'broadcast',
+        event: 'CHAT_MESSAGE',
+        payload: message,
+      });
+      return true;
+    } catch (err) {
+      console.warn('Failed to broadcast chat message via Supabase:', err);
+      return false;
+    }
+  }
+
   private notifyState(state: SharedRoomState) {
     this.stateListeners.forEach((fn) => fn(state));
   }
@@ -553,6 +582,10 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
 
   private notifyStatus(status: RoomConnectionStatus) {
     this.statusListeners.forEach((fn) => fn(status));
+  }
+
+  private notifyChatMessage(message: RoomChatMessage) {
+    this.chatListeners.forEach((fn) => fn(message));
   }
 
   private formatActionDescription(action: RoomActionPayload): string {

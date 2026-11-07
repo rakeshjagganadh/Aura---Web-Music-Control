@@ -2,13 +2,11 @@ import React, { useRef, useEffect, useMemo } from 'react';
 import { useMusic } from '../../context/MusicContext';
 import { AuraBrandMark } from '../common/AuraBrandMark';
 import { PWAInstallButton } from '../pwa/PWAInstallButton';
+import { TelemetryBadge } from '../common/primitives/TelemetryBadge';
 import { 
   Search, 
-  UploadCloud, 
   Sparkles, 
   Keyboard, 
-  SlidersHorizontal, 
-  Disc, 
   HardDrive,
   X,
   ChevronDown,
@@ -113,7 +111,7 @@ export const Header: React.FC<{
   };
 
   return (
-    <header className="h-16 border-b border-white/[0.06] bg-[#0d0f15] px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 sticky top-0 z-30 select-none">
+    <header className="h-16 border-b border-white/[0.10] bg-[#0c0e14]/80 backdrop-blur-xl px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 sticky top-0 z-30 select-none">
       
       {/* Brand Logo or Back Button if inside Playlist Detail on mobile */}
       <div className="flex items-center gap-2">
@@ -124,7 +122,7 @@ export const Header: React.FC<{
               setSelectedPlaylistId(null);
               setCurrentView('playlists');
             }}
-            className="lg:hidden p-2 -ml-1 rounded-lg text-zinc-400 hover:text-white active:bg-white/5 transition-colors"
+            className="lg:hidden p-2 -ml-1 rounded-xl text-zinc-400 hover:text-white active:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             title="Back to Playlists"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -143,9 +141,9 @@ export const Header: React.FC<{
           <div>
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-bold text-white tracking-tight font-display">AURA</span>
-              <span className="text-[9px] font-mono font-medium tracking-wider px-1.5 py-0.5 rounded bg-white/[0.06] text-zinc-400 border border-white/[0.08]">
+              <TelemetryBadge variant="glass" size="sm">
                 STUDIO
-              </span>
+              </TelemetryBadge>
             </div>
           </div>
         </div>
@@ -166,7 +164,7 @@ export const Header: React.FC<{
               setCurrentView('songs');
             }
           }}
-          className="w-full pl-9 pr-28 py-2 rounded-lg bg-[#131620] hover:bg-[#161a26] focus:bg-[#161a26] border border-white/[0.08] focus:border-white/20 text-xs text-zinc-100 placeholder:text-zinc-500 focus:outline-none transition-all"
+          className="w-full pl-9 pr-28 py-2 rounded-xl bg-[#11131b] hover:bg-[#171a24] focus:bg-[#171a24] border border-white/[0.08] focus:border-white/20 text-xs text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 transition-all"
         />
         
         {searchQuery ? (
@@ -183,7 +181,7 @@ export const Header: React.FC<{
               type="button"
               onClick={prevSearchResult}
               disabled={matchingTracks.length === 0}
-              className="p-1 rounded text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 transition-colors"
+              className="p-1 rounded text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/40"
               title="Previous Match"
             >
               <ChevronUp className="w-3.5 h-3.5" />
@@ -193,7 +191,7 @@ export const Header: React.FC<{
               type="button"
               onClick={nextSearchResult}
               disabled={matchingTracks.length === 0}
-              className="p-1 rounded text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 transition-colors"
+              className="p-1 rounded text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/40"
               title="Next Match"
             >
               <ChevronDown className="w-3.5 h-3.5" />
@@ -205,39 +203,54 @@ export const Header: React.FC<{
                 setSearchQuery('');
                 searchInputRef.current?.focus();
               }}
-              className="p-1 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors"
+              className="p-1 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/40"
               title="Clear Search"
             >
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
         ) : (
-          <kbd className="hidden sm:inline-block absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-mono text-zinc-500 bg-white/[0.04] rounded border border-white/[0.06]">
-            /
-          </kbd>
+          <div className="hidden sm:flex items-center gap-1 absolute right-3 top-1/2 -translate-y-1/2">
+            {onOpenUniversalSearch && (
+              <button
+                type="button"
+                onClick={onOpenUniversalSearch}
+                className="hover:opacity-80 transition-opacity cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/40"
+                title="Universal Search (⌘K)"
+              >
+                <TelemetryBadge variant="glass" size="sm">
+                  ⌘K
+                </TelemetryBadge>
+              </button>
+            )}
+            <kbd className="px-1.5 py-0.5 text-[10px] font-mono text-zinc-500 bg-white/[0.04] rounded border border-white/[0.06]">
+              /
+            </kbd>
+          </div>
         )}
       </div>
 
-      {/* Actions */}
+      {/* Header Utility Actions */}
       <div className="flex items-center gap-1.5 sm:gap-2.5">
         
-        {/* Mobile Search Button (Visible only on small mobile) */}
+        {/* Mobile Search Button */}
         {onOpenMobileSearch && (
           <button
             type="button"
             onClick={onOpenMobileSearch}
-            className="sm:hidden p-2 rounded-lg text-zinc-400 hover:text-white active:bg-white/5 transition-colors"
+            className="sm:hidden p-2 rounded-xl text-zinc-400 hover:text-white active:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             title="Search"
           >
             <Search className="w-4 h-4" />
           </button>
         )}
 
-        {/* Local Storage badge */}
+        {/* Local Storage Database usage badge */}
         <div 
           onClick={() => setCurrentView('settings')}
-          className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-[11px] text-zinc-400 font-mono cursor-pointer hover:border-white/10 transition-colors"
+          className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.04] border border-white/[0.06] text-[11px] text-zinc-400 font-mono cursor-pointer hover:border-white/10 hover:text-zinc-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           title="Local storage database usage"
+          tabIndex={0}
         >
           <HardDrive className="w-3.5 h-3.5 text-zinc-400" />
           <span>{formatStorageMB(storageUsage.approxBytes)}</span>
@@ -246,14 +259,14 @@ export const Header: React.FC<{
         {/* Demo Pack Loader */}
         <button
           onClick={loadDemoPack}
-          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.09] border border-white/[0.08] text-zinc-300 text-xs font-medium transition-colors cursor-pointer"
+          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] border border-white/[0.08] text-zinc-300 text-xs font-medium transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           title="Synthesize royalty-free sample music"
         >
           <Sparkles className="w-3.5 h-3.5 text-zinc-400" />
-          Demo Pack
+          <span>Demo Pack</span>
         </button>
 
-        {/* PWA Install Button (When installable and not yet installed) */}
+        {/* PWA Install Button */}
         {onInstall && (
           <PWAInstallButton
             canInstall={canInstall}
@@ -265,7 +278,7 @@ export const Header: React.FC<{
         {/* Add Music Button */}
         <button
           onClick={() => setIsUploadModalOpen(true)}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-semibold transition-all active:scale-95 cursor-pointer shadow-sm"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-zinc-200 active:bg-zinc-300 text-zinc-950 text-xs font-semibold transition-all active:scale-95 cursor-pointer shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
         >
           <Plus className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Add Music</span>
@@ -274,12 +287,18 @@ export const Header: React.FC<{
         {/* Queue Drawer Trigger */}
         <button
           onClick={() => setIsQueueDrawerOpen(true)}
-          className="relative p-2 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.05] transition-colors cursor-pointer"
+          className="relative p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.05] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           title="Play Queue"
         >
           <ListMusic className="w-4 h-4" />
           {queue.length > 0 && (
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <TelemetryBadge
+              variant="emerald"
+              size="sm"
+              className="absolute -top-1 -right-1 px-1 py-0 text-[8px] rounded-full"
+            >
+              {queue.length}
+            </TelemetryBadge>
           )}
         </button>
 
@@ -287,7 +306,7 @@ export const Header: React.FC<{
         {onOpenAccount && (
           <button
             onClick={onOpenAccount}
-            className="p-2 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.05] transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.05] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             title="AURA Profile & Studio Sync"
           >
             <User className="w-4 h-4" />
@@ -297,7 +316,7 @@ export const Header: React.FC<{
         {/* Shortcuts ? (Desktop) */}
         <button
           onClick={() => setIsShortcutsModalOpen(true)}
-          className="hidden sm:flex p-2 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.05] transition-colors cursor-pointer"
+          className="hidden sm:flex p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.05] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           title="Keyboard Shortcuts (?)"
         >
           <Keyboard className="w-4 h-4" />

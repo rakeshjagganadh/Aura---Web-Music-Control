@@ -1,14 +1,13 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { useMusic } from '../../context/MusicContext';
 import { useListenTogether } from '../../context/ListenTogetherContext';
+import { TelemetryBadge } from '../common/primitives/TelemetryBadge';
 import { 
   Play, 
   Pause, 
   SkipForward, 
   Heart, 
   Music,
-  SlidersHorizontal,
-  Users,
 } from 'lucide-react';
 
 export const MobileMiniPlayer: React.FC = () => {
@@ -20,85 +19,43 @@ export const MobileMiniPlayer: React.FC = () => {
     togglePlay,
     nextTrack,
     toggleFavorite,
-    seek,
     setIsExpandedPlayerOpen,
-    setIsAudioControlsOpen,
-    eqPreset,
-    effects,
     currentView,
-    showToast,
   } = useMusic();
 
   const listenTogether = useListenTogether();
   const isInRoom = Boolean(listenTogether?.activeRoom);
-  const isOwner = listenTogether?.isOwner ?? false;
   const isLocallySilenced = listenTogether?.isLocallySilenced ?? false;
-
-  const progressRef = useRef<HTMLDivElement>(null);
 
   // Crucial: When on the Listen Together view, hide the mini player to prevent duplicate stacked players
   if (!currentTrack || currentView === 'listen-together') return null;
 
-  const isAudioEffectActive = 
-    eqPreset !== 'flat' || 
-    Boolean(effects?.reverb?.enabled) || 
-    Boolean(effects?.echo?.enabled) || 
-    Boolean(effects?.saturation?.enabled) || 
-    (effects?.bassBoost ?? 0) > 0 || 
-    (effects?.trebleBoost ?? 0) > 0;
-
-  const progressPercent = duration > 0 ? Math.min(100, Math.max(0, (currentTime / duration) * 100)) : 0;
-
-  const handleProgressBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    if (!progressRef.current || duration <= 0) return;
-    if (isInRoom && !isOwner) {
-      showToast?.('Only the host can seek the track.', 'info');
-      return;
-    }
-    const rect = progressRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const ratio = Math.max(0, Math.min(1, clickX / rect.width));
-    if (isInRoom && listenTogether) {
-      listenTogether.roomSeek(ratio * duration);
-    } else {
-      seek(ratio * duration);
-    }
-  };
+  const isRadio = currentTrack.source === 'radio';
+  const isUnknownDuration = !isRadio && (isNaN(duration) || duration <= 0);
+  const showProgress = !isRadio && !isUnknownDuration && duration > 0;
+  const progressPercent = showProgress ? Math.min(100, Math.max(0, (currentTime / duration) * 100)) : 0;
 
   return (
     <div
       id="mobile-mini-player"
       aria-label="Current Track Mini Player"
-      className="lg:hidden fixed bottom-14 left-0 right-0 z-30 pb-safe px-2 py-1 select-none"
+      className="lg:hidden fixed bottom-[68px] left-3 right-3 z-30 pb-safe select-none"
     >
       <div 
         onClick={() => setIsExpandedPlayerOpen(true)}
-        className="relative overflow-hidden rounded-2xl bg-[#12141a]/95 border border-white/10 shadow-2xl backdrop-blur-2xl flex flex-col cursor-pointer active:bg-zinc-900 transition-colors"
+        className="relative overflow-hidden rounded-2xl bg-[#0a0d16]/55 backdrop-blur-xl border-0 shadow-[0_12px_40px_rgba(0,0,0,0.85)] p-2.5 flex flex-col justify-between cursor-pointer active:bg-zinc-900/80 transition-colors"
+        style={{
+          backgroundImage: currentTrack.coverColor
+            ? `radial-gradient(circle at 10% 20%, ${currentTrack.coverColor.split(' ')[0].replace('from-', '')}25 0%, transparent 80%)`
+            : undefined,
+        }}
       >
-        {/* Interactive Scrub Line on top of mini player */}
-        <div 
-          ref={progressRef}
-          onClick={handleProgressBarClick}
-          className="relative w-full h-1.5 bg-zinc-800/80 cursor-pointer group"
-        >
-          <div 
-            className="h-full bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-r-full transition-all duration-100"
-            style={{ width: `${progressPercent}%` }}
-          />
-          {/* Subtle scrubber thumb on hover/touch */}
-          <div 
-            className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-            style={{ left: `calc(${progressPercent}% - 5px)` }}
-          />
-        </div>
-
-        {/* Mini Player Content Row */}
-        <div className="flex items-center justify-between gap-2.5 p-2 sm:px-3">
+        {/* COMPACT ROW — TRACK & CONTROLS */}
+        <div className="flex items-center justify-between gap-2.5">
           
-          {/* Artwork & Track Info */}
+          {/* Track Artwork & Info */}
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            <div className="relative shrink-0 w-11 h-11 rounded-xl overflow-hidden bg-zinc-900 border border-white/10 shadow-sm flex items-center justify-center">
+            <div className="relative shrink-0 w-9 h-9 rounded-xl overflow-hidden bg-zinc-900/90 border border-white/12 shadow-sm flex items-center justify-center">
               {currentTrack.coverUrl ? (
                 <img
                   src={currentTrack.coverUrl}
@@ -107,93 +64,64 @@ export const MobileMiniPlayer: React.FC = () => {
                   referrerPolicy="no-referrer"
                 />
               ) : (
-                <div className={`w-full h-full bg-gradient-to-br ${currentTrack.coverColor || 'from-indigo-600 to-zinc-900'} flex items-center justify-center text-white`}>
-                  <Music className="w-5 h-5 opacity-80" />
-                </div>
-              )}
-
-              {/* Animated playing indicator */}
-              {isPlaying && (
-                <div className="absolute inset-0 bg-indigo-950/30 flex items-center justify-center">
-                  <div className="flex items-end gap-0.5 h-3">
-                    <span className="w-0.5 h-full bg-white animate-pulse" />
-                    <span className="w-0.5 h-2/3 bg-white animate-pulse" style={{ animationDelay: '0.2s' }} />
-                    <span className="w-0.5 h-4/5 bg-white animate-pulse" style={{ animationDelay: '0.4s' }} />
-                  </div>
+                <div className={`w-full h-full bg-gradient-to-br ${currentTrack.coverColor || 'from-zinc-800 to-zinc-950'} flex items-center justify-center text-white`}>
+                  <Music className="w-4 h-4 opacity-80" />
                 </div>
               )}
             </div>
 
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 min-w-0">
-                <h4 className="text-xs font-bold text-white truncate leading-tight">
+                <h4 className="text-xs font-bold text-white truncate leading-tight font-ui-title">
                   {currentTrack.title}
                 </h4>
-                {currentTrack.source === 'youtube' && (
-                  <span className="text-[8px] font-mono px-1 py-0.2 rounded bg-red-500/20 text-red-300 border border-red-500/30 shrink-0">
-                    YT
-                  </span>
+                {currentTrack.source && (
+                  <TelemetryBadge variant="glass" size="sm" className="shrink-0 text-[8px] px-1 py-0">
+                    {currentTrack.source.toUpperCase()}
+                  </TelemetryBadge>
                 )}
               </div>
-              <p className="text-[11px] text-zinc-400 truncate mt-0.5">
+              <p className="text-[11px] text-zinc-300/80 truncate mt-0.5 font-ui-meta">
                 {currentTrack.artist}
               </p>
             </div>
           </div>
 
-          {/* Quick Action Touch Targets (All >= 44x44px) */}
-          <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+          {/* Touch Target Actions */}
+          <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
             
-            {/* DSP Badge / Audio Controls Trigger */}
-            <button
-              type="button"
-              onClick={() => setIsAudioControlsOpen(true)}
-              className={`p-2.5 rounded-xl transition-colors cursor-pointer ${
-                isAudioEffectActive && currentTrack.source !== 'youtube'
-                  ? 'text-indigo-400 bg-indigo-500/15'
-                  : 'text-zinc-400 hover:text-zinc-200'
-              }`}
-              title="Open Audio Studio"
-            >
-              <SlidersHorizontal className="w-4 h-4" />
-            </button>
-
-            {/* Favorite Heart */}
+            {/* Favorite Heart Button */}
             <button
               type="button"
               onClick={() => toggleFavorite(currentTrack.id)}
-              className="p-2.5 rounded-xl text-zinc-400 hover:text-rose-400 transition-colors cursor-pointer"
-              title="Favorite"
+              aria-label={currentTrack.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              className="p-2 rounded-xl text-zinc-300 hover:text-rose-400 active:scale-110 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             >
-              <Heart className={`w-4 h-4 transition-transform active:scale-125 ${
+              <Heart className={`w-4 h-4 ${
                 currentTrack.isFavorite ? 'fill-rose-500 text-rose-500' : ''
               }`} />
             </button>
 
-            {/* Main Play/Pause Button */}
+            {/* Play/Pause Button */}
             <button
               type="button"
               onClick={isInRoom && listenTogether ? listenTogether.roomTogglePlay : togglePlay}
-              className={`w-10 h-10 rounded-full text-zinc-950 flex items-center justify-center shadow-lg active:scale-95 transition-all cursor-pointer ${
-                isPlaying && !isLocallySilenced
-                  ? 'bg-white shadow-[0_0_15px_rgba(255,255,255,0.4)]'
-                  : 'bg-white hover:bg-zinc-100'
-              }`}
-              title={isPlaying && !isLocallySilenced ? 'Pause' : 'Play'}
+              aria-label={isPlaying && !isLocallySilenced ? 'Pause' : 'Play'}
+              className="w-9 h-9 rounded-full text-zinc-950 bg-white hover:bg-zinc-200 flex items-center justify-center shadow-lg active:scale-95 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 shrink-0"
             >
               {isPlaying && !isLocallySilenced ? (
-                <Pause className="w-4 h-4 fill-current" />
+                <Pause className="w-4 h-4 fill-current text-black" />
               ) : (
-                <Play className="w-4 h-4 fill-current translate-x-0.5" />
+                <Play className="w-4 h-4 fill-current text-black translate-x-0.5" />
               )}
             </button>
 
-            {/* Next Track */}
+            {/* Next Track Button */}
             <button
               type="button"
               onClick={isInRoom && listenTogether ? listenTogether.roomNext : nextTrack}
-              className="p-2.5 rounded-xl text-zinc-300 hover:text-white transition-colors cursor-pointer"
-              title="Next Track"
+              aria-label="Next Track"
+              className="p-2 rounded-xl text-zinc-200 hover:text-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             >
               <SkipForward className="w-4 h-4 fill-current" />
             </button>
@@ -201,6 +129,17 @@ export const MobileMiniPlayer: React.FC = () => {
           </div>
 
         </div>
+
+        {/* PASSIVE BOTTOM PROGRESS INDICATOR (NON-INTERACTIVE, EMBEDDED AT BOTTOM OF GLASS SURFACE) */}
+        {showProgress && (
+          <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-white/10 pointer-events-none overflow-hidden">
+            <div 
+              className="h-full bg-white/90 rounded-r-full transition-all duration-200 ease-linear"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        )}
+
       </div>
     </div>
   );

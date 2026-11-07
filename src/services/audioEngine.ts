@@ -788,8 +788,12 @@ export class AudioEngine {
                 this.directAudioEl.currentTime = startTime;
               } catch {}
             }
-          } catch (e) {
-            console.warn('Direct stream autoplay waiting for gesture:', e);
+          } catch (e: any) {
+            if (e?.name === 'AbortError' || e?.message?.includes('interrupted')) {
+              console.debug('[AudioEngine] Direct stream play interrupted:', e);
+            } else {
+              console.warn('Direct stream autoplay waiting for gesture:', e);
+            }
           }
         }
       }
@@ -829,20 +833,28 @@ export class AudioEngine {
                 this.audioEl.currentTime = startTime;
               } catch {}
             }
-          } catch (e) {
-            console.warn('WebAudio play attempt:', e);
-            // Fallback to directAudioEl if WebAudio CORS or decode fails
-            if (typeof audioSource === 'string' && audioSource.startsWith('http')) {
-              try {
-                this.isDirectStreaming = true;
-                if (this.audioEl) this.audioEl.pause();
-                if (this.directAudioEl) {
-                  this.directAudioEl.src = url;
-                  this.directAudioEl.load();
-                  await this.directAudioEl.play();
+          } catch (e: any) {
+            if (e?.name === 'AbortError' || e?.message?.includes('interrupted')) {
+              console.debug('[AudioEngine] WebAudio play interrupted:', e);
+            } else {
+              console.warn('WebAudio play attempt:', e);
+              // Fallback to directAudioEl if WebAudio CORS or decode fails
+              if (typeof audioSource === 'string' && audioSource.startsWith('http')) {
+                try {
+                  this.isDirectStreaming = true;
+                  if (this.audioEl) this.audioEl.pause();
+                  if (this.directAudioEl) {
+                    this.directAudioEl.src = url;
+                    this.directAudioEl.load();
+                    await this.directAudioEl.play();
+                  }
+                } catch (fallbackErr: any) {
+                  if (fallbackErr?.name === 'AbortError' || fallbackErr?.message?.includes('interrupted')) {
+                    console.debug('[AudioEngine] Direct fallback play interrupted:', fallbackErr);
+                  } else {
+                    console.warn('Direct audio fallback also waiting for gesture:', fallbackErr);
+                  }
                 }
-              } catch (fallbackErr) {
-                console.warn('Direct audio fallback also waiting for gesture:', fallbackErr);
               }
             }
           }
@@ -860,7 +872,15 @@ export class AudioEngine {
     }
     const el = this.getActiveAudioEl();
     if (el) {
-      await el.play();
+      try {
+        await el.play();
+      } catch (err: any) {
+        if (err?.name === 'AbortError' || err?.message?.includes('interrupted')) {
+          console.debug('[AudioEngine] Play request interrupted by pause or track change');
+        } else {
+          console.warn('[AudioEngine] Play request failed:', err);
+        }
+      }
     }
   }
 

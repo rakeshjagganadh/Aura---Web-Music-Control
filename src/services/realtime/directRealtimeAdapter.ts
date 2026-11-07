@@ -4,13 +4,14 @@ import {
   RealtimeBackendType,
   RoomActionPayload,
   RoomActivityItem,
+  RoomChatMessage,
   RoomConnectionStatus,
   RoomParticipant,
   SharedRoomState,
 } from './types';
 
 interface SocketMessage {
-  type: 'JOIN' | 'STATE_UPDATE' | 'ACTION' | 'SYNC_REQUEST' | 'PING' | 'PARTICIPANTS';
+  type: 'JOIN' | 'STATE_UPDATE' | 'ACTION' | 'SYNC_REQUEST' | 'PING' | 'PARTICIPANTS' | 'CHAT_MESSAGE';
   roomId: string;
   senderId: string;
   payload?: any;
@@ -31,6 +32,7 @@ export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
   private participantsListeners = new Set<(participants: RoomParticipant[]) => void>();
   private activityListeners = new Set<(activity: RoomActivityItem) => void>();
   private statusListeners = new Set<(status: RoomConnectionStatus) => void>();
+  private chatListeners = new Set<(message: RoomChatMessage) => void>();
 
   public setLivePositionProvider(provider: LivePlaybackPositionProvider | null): void {
     this.livePositionProvider = provider;
@@ -270,6 +272,8 @@ export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
         actionText: this.formatActionDescription(action),
         timestamp: action.timestamp,
       });
+    } else if (msg.type === 'CHAT_MESSAGE' && msg.payload) {
+      this.notifyChatMessage(msg.payload as RoomChatMessage);
     } else if (msg.type === 'PARTICIPANTS' && Array.isArray(msg.payload)) {
       this.notifyParticipants(msg.payload);
     } else if (msg.type === 'JOIN' && msg.payload?.participant) {
@@ -439,6 +443,26 @@ export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
     return () => this.statusListeners.delete(listener);
   }
 
+  public onChatMessage(listener: (message: RoomChatMessage) => void): () => void {
+    this.chatListeners.add(listener);
+    return () => this.chatListeners.delete(listener);
+  }
+
+  public async sendChatMessage(message: RoomChatMessage): Promise<boolean> {
+    const socketMsg: SocketMessage = {
+      type: 'CHAT_MESSAGE',
+      roomId: this.roomId!,
+      senderId: this.currentParticipant!.id,
+      payload: message,
+    };
+    this.broadcastLocally(socketMsg);
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify(socketMsg));
+      return true;
+    }
+    return this.broadcastChannel !== null;
+  }
+
   private notifyState(state: SharedRoomState) {
     this.stateListeners.forEach((fn) => fn(state));
   }
@@ -453,6 +477,10 @@ export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
 
   private notifyStatus(status: RoomConnectionStatus) {
     this.statusListeners.forEach((fn) => fn(status));
+  }
+
+  private notifyChatMessage(message: RoomChatMessage) {
+    this.chatListeners.forEach((fn) => fn(message));
   }
 
   private formatActionDescription(action: RoomActionPayload): string {

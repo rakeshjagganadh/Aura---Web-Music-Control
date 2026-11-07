@@ -78,6 +78,16 @@ export interface RoomActivityItem {
   timestamp: number;
 }
 
+export interface RoomChatMessage {
+  id: string;
+  roomId: string;
+  senderId: string;
+  senderName: string;
+  text: string;
+  timestamp: number;
+  isHost?: boolean;
+}
+
 export type RoomConnectionStatus =
   | 'CREATING'
   | 'JOINING'
@@ -109,10 +119,12 @@ export interface IRoomRealtimeAdapter {
   disconnect(): void;
   sendAction(action: RoomActionPayload): Promise<boolean>;
   updateRoomState(state: SharedRoomState): Promise<boolean>;
+  sendChatMessage?(message: RoomChatMessage): Promise<boolean>;
   onStateUpdate(listener: (state: SharedRoomState) => void): () => void;
   onParticipantsUpdate(listener: (participants: RoomParticipant[]) => void): () => void;
   onActivity(listener: (activity: RoomActivityItem) => void): () => void;
   onStatusChange(listener: (status: RoomConnectionStatus) => void): () => void;
+  onChatMessage?(listener: (message: RoomChatMessage) => void): () => void;
   setLivePositionProvider?(provider: LivePlaybackPositionProvider | null): void;
 }
 

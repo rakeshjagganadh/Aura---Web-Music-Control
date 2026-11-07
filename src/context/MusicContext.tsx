@@ -642,6 +642,20 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const queueIndexRef = useRef<number>(-1);
   queueIndexRef.current = queueIndex;
 
+  // Persist queue updates to localStorage for cross-session recovery
+  useEffect(() => {
+    if (queue.length > 0) {
+      try {
+        localStorage.setItem(
+          'aura_v2_queue',
+          JSON.stringify({ queue, queueIndex })
+        );
+      } catch (e) {
+        console.warn('Failed to save queue to localStorage:', e);
+      }
+    }
+  }, [queue, queueIndex]);
+
   const isShuffleRef = useRef<boolean>(false);
   isShuffleRef.current = isShuffle;
 
@@ -2358,12 +2372,34 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const removeFromQueue = (index: number) => {
-    setQueue((prev) => prev.filter((_, i) => i !== index));
-    if (index < queueIndex) {
-      setQueueIndex((prev) => prev - 1);
-    } else if (index === queueIndex && queue.length > 1) {
-      const nextIdx = Math.min(index, queue.length - 2);
-      setQueueIndex(nextIdx);
+    const currentQ = queueRef.current;
+    if (index < 0 || index >= currentQ.length) return;
+
+    const isRemovingCurrent = index === queueIndexRef.current;
+    const newQueue = currentQ.filter((_, i) => i !== index);
+
+    if (isRemovingCurrent) {
+      if (newQueue.length === 0) {
+        // Scenario 6: Removed the only track in queue
+        switchToTrack(null);
+        setQueue([]);
+        setQueueIndex(-1);
+      } else {
+        // Scenario 1 & 2: Removing currently playing track when another track exists
+        const nextIdx = index < newQueue.length ? index : newQueue.length - 1;
+        const nextTrackToPlay = newQueue[nextIdx];
+        setQueue(newQueue);
+        setQueueIndex(nextIdx);
+        if (nextTrackToPlay) {
+          switchToTrack(nextTrackToPlay, { autoplay: isPlaying, index: nextIdx, newQueue });
+        }
+      }
+    } else {
+      // Scenario 3 & 4: Removing a track before or after currently playing track
+      setQueue(newQueue);
+      if (index < queueIndexRef.current) {
+        setQueueIndex((prev) => Math.max(0, prev - 1));
+      }
     }
   };
 
@@ -2372,6 +2408,14 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const result = [...prev];
       const [removed] = result.splice(fromIndex, 1);
       result.splice(toIndex, 0, removed);
+      
+      // Preserve current track index after reordering
+      if (currentTrack) {
+        const newCurrentIdx = result.findIndex((t) => t.id === currentTrack.id);
+        if (newCurrentIdx !== -1) {
+          setQueueIndex(newCurrentIdx);
+        }
+      }
       return result;
     });
   };

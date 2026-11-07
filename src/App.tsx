@@ -32,11 +32,13 @@ import { MobileSearchModal } from './components/mobile/MobileSearchModal';
 import { HomeView } from './components/views/HomeView';
 import { SourcesView } from './components/views/SourcesView';
 import { SongsView } from './components/views/SongsView';
+import { LibraryOverviewView } from './components/views/LibraryOverviewView';
 import { AlbumsView } from './components/views/AlbumsView';
 import { ArtistsView } from './components/views/ArtistsView';
 import { PlaylistsView } from './components/views/PlaylistsView';
 import { PlaylistDetailView } from './components/views/PlaylistDetailView';
 import { FavoritesView } from './components/views/FavoritesView';
+import { AuraMomentsPanel } from './components/sound-lab/AuraMomentsPanel';
 import { StudioView } from './components/views/StudioView';
 import { SettingsView } from './components/views/SettingsView';
 import { ListenTogetherView } from './components/views/ListenTogetherView';
@@ -208,7 +210,7 @@ const MainLayout: React.FC = () => {
   ]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#060709] text-zinc-100 font-sans antialiased overflow-hidden selection:bg-indigo-500/30 selection:text-indigo-200 relative">
+    <div className="flex flex-col h-screen h-[100dvh] bg-[#060709] text-zinc-100 font-sans antialiased overflow-hidden selection:bg-indigo-500/30 selection:text-indigo-200 relative">
       {/* Sound-reactive Atmospheric Background */}
       <AuraAtmosphere intensity="moderate" />
       
@@ -229,7 +231,7 @@ const MainLayout: React.FC = () => {
         <Sidebar />
 
         {/* Dynamic Main Viewport (with mobile bottom padding for mini player & nav) */}
-        <main className="flex-1 overflow-y-auto h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-4rem-5rem)] pb-36 lg:pb-6 scroll-smooth">
+        <main className="flex-1 overflow-y-auto h-[calc(100dvh-4rem)] lg:h-[calc(100dvh-4rem-5.5rem)] pb-36 lg:pb-6 scroll-smooth">
           {selectedPlaylistId && currentView === 'playlist-detail' ? (
             <PlaylistDetailView />
           ) : currentView === 'home' ? (
@@ -238,6 +240,8 @@ const MainLayout: React.FC = () => {
             <SourcesView />
           ) : currentView === 'listen-together' ? (
             <ListenTogetherView />
+          ) : currentView === 'library' ? (
+            <LibraryOverviewView />
           ) : currentView === 'songs' ? (
             <SongsView />
           ) : currentView === 'albums' ? (
@@ -248,6 +252,10 @@ const MainLayout: React.FC = () => {
             <PlaylistsView />
           ) : currentView === 'favorites' ? (
             <FavoritesView />
+          ) : currentView === 'moments' ? (
+            <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+              <AuraMomentsPanel />
+            </div>
           ) : currentView === 'studio' ? (
             <StudioView />
           ) : currentView === 'settings' ? (

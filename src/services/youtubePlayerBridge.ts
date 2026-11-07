@@ -70,12 +70,8 @@ class YouTubePlayerBridge {
   public setPendingSyncSeek(seconds: number): void {
     const safeSecs = Math.max(0, isNaN(seconds) ? 0 : seconds);
     this.pendingSyncSeek = safeSecs;
-    if (this.isPlayerReady() && this.currentState.isPlaying) {
-      const current = this.getCurrentTime();
-      if (Math.abs(current - safeSecs) > 1.0) {
-        this.seekTo(safeSecs);
-      }
-      this.pendingSyncSeek = null;
+    if (this.isPlayerReady()) {
+      this.applyPendingSyncSeekIfNeeded();
     }
   }
 
@@ -90,6 +86,7 @@ class YouTubePlayerBridge {
   public applyPendingSyncSeekIfNeeded(): void {
     if (this.pendingSyncSeek !== null && this.isPlayerReady()) {
       const target = this.pendingSyncSeek;
+      // Clear pending seek prior to calling seekTo to avoid recursive loop
       this.pendingSyncSeek = null;
       const current = this.getCurrentTime();
       if (Math.abs(current - target) > 1.0) {
@@ -117,6 +114,7 @@ class YouTubePlayerBridge {
     this.playerInstance = null;
     this.isReady = false;
     this.pendingRequest = null;
+    this.pendingSyncSeek = null;
     if (this.seekResumeTimeout) {
       clearTimeout(this.seekResumeTimeout);
       this.seekResumeTimeout = null;

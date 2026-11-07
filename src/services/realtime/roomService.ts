@@ -5,6 +5,7 @@ import {
   RoomActionPayload,
   RoomActionType,
   RoomActivityItem,
+  RoomChatMessage,
   RoomConnectionStatus,
   RoomParticipant,
   SharedRoomState,
@@ -29,6 +30,7 @@ class RoomService {
   private participantsListeners = new Set<(participants: RoomParticipant[]) => void>();
   private activityListeners = new Set<(activity: RoomActivityItem) => void>();
   private statusListeners = new Set<(status: RoomConnectionStatus) => void>();
+  private chatListeners = new Set<(message: RoomChatMessage) => void>();
   private adapterUnsubscribers: (() => void)[] = [];
 
   // Local clock-skew anchor: tracks local arrival time to prevent cross-device NTP clock differences (e.g. 33s fast jump)
@@ -238,6 +240,9 @@ class RoomService {
       this.adapter.onStateUpdate((state) => {
         // Record local arrival time with accurate elapsed compensation to prevent cross-device NTP clock skew
         this.updateSyncAnchor(state);
+        if (this.currentParticipant && state.ownerId === this.currentParticipant.id) {
+          this.currentParticipant.isOwner = true;
+        }
         this.stateListeners.forEach((fn) => fn(state));
       }),
       this.adapter.onParticipantsUpdate((participants) => {
@@ -251,8 +256,19 @@ class RoomService {
       })
     );
 
+    if (this.adapter.onChatMessage) {
+      this.adapterUnsubscribers.push(
+        this.adapter.onChatMessage((chatMsg) => {
+          this.chatListeners.forEach((fn) => fn(chatMsg));
+        })
+      );
+    }
+
     const state = await this.adapter.connect(cleanRoomId, participant, initialState);
     if (state) {
+      if (this.currentParticipant && state.ownerId === this.currentParticipant.id) {
+        this.currentParticipant.isOwner = true;
+      }
       this.updateSyncAnchor(state);
     }
     return state;
@@ -633,6 +649,42 @@ class RoomService {
   public onStatusChange(listener: (status: RoomConnectionStatus) => void): () => void {
     this.statusListeners.add(listener);
     return () => this.statusListeners.delete(listener);
+  }
+
+  public onChatMessage(listener: (message: RoomChatMessage) => void): () => void {
+    this.chatListeners.add(listener);
+    return () => this.chatListeners.delete(listener);
+  }
+
+  public async sendChatMessage(text: string): Promise<boolean> {
+    if (!this.adapter || !this.currentRoomId || !this.currentParticipant) {
+      return false;
+    }
+
+    const trimmed = text.trim();
+    if (!trimmed || trimmed.length > 500) {
+      return false;
+    }
+
+    const isOwner = Boolean(this.currentParticipant.isOwner);
+
+    const msg: RoomChatMessage = {
+      id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      roomId: this.currentRoomId,
+      senderId: this.currentParticipant.id,
+      senderName: this.currentParticipant.name,
+      text: trimmed,
+      timestamp: Date.now(),
+      isHost: isOwner,
+    };
+
+    // Optimistically notify local listeners so sender sees message immediately
+    this.chatListeners.forEach((fn) => fn(msg));
+
+    if (this.adapter.sendChatMessage) {
+      await this.adapter.sendChatMessage(msg);
+    }
+    return true;
   }
 }
 

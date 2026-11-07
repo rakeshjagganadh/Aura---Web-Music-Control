@@ -94,6 +94,8 @@ export function attachRoomWebSocketServer(httpServer: any) {
           }
         } else if (msg.type === 'ACTION' && msg.payload) {
           broadcastToRoom(room, msg, userId);
+        } else if (msg.type === 'CHAT_MESSAGE' && msg.payload) {
+          broadcastToRoom(room, msg, userId);
         } else if (msg.type === 'JOIN' && msg.payload) {
           if (msg.payload.initialState && !room.state) {
             room.state = msg.payload.initialState;

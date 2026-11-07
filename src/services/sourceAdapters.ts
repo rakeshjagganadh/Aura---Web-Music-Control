@@ -354,6 +354,8 @@ export class UniversalSearchCoordinator {
   private radioBrowserAdapter = new RadioBrowserSourceAdapter();
   private openCatalogAdapter = new OpenCatalogSourceAdapter();
 
+  private activeSearchSequence = 0;
+
   async search(
     query: string,
     context: { tracks: Track[]; playlists: Playlist[] },
@@ -369,6 +371,7 @@ export class UniversalSearchCoordinator {
       includeRadio: true,
     }
   ): Promise<UniversalSearchResults> {
+    const sequenceId = ++this.activeSearchSequence;
     const cleanQuery = query.trim();
 
     // Check direct YouTube URL or raw video ID first

@@ -86,6 +86,15 @@ export interface Track {
   externalStreamUrl?: string;
   playbackCapability?: TrackCapabilities;
   isAvailable?: boolean;
+  availabilityStatus?: 'available' | 'missing_local_file' | 'network_error' | 'provider_error' | 'unavailable';
+
+  // Phase 3.3D.1 Audio Provenance & Licensing Metadata
+  licenseType?: string;
+  creatorName?: string;
+  creatorUrl?: string;
+  sourcePageUrl?: string;
+  attributionRequired?: boolean;
+  attributionText?: string;
 }
 
 export interface Playlist {

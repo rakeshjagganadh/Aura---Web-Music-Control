@@ -104,15 +104,15 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
               src={track.coverUrl}
               alt={track.title}
               className={`w-full h-full object-cover transition-transform duration-500 ease-out ${
-                isActivelyPlaying ? 'scale-[1.02]' : 'group-hover:scale-[1.03]'
+                isActivelyPlaying ? 'scale-[1.03]' : 'group-hover:scale-[1.05]'
               }`}
               referrerPolicy="no-referrer"
               loading="lazy"
             />
           ) : (
             <div className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-zinc-800 via-zinc-900 to-black'} flex flex-col items-center justify-center p-4 text-white/90`}>
-              <Disc className="w-10 h-10 opacity-40 mb-2 stroke-1 group-hover:rotate-12 transition-transform duration-500" />
-              <span className="text-[10px] font-mono tracking-widest uppercase opacity-40 font-semibold">
+              <Disc className="w-9 h-9 opacity-40 mb-1.5 stroke-1 group-hover:rotate-12 transition-transform duration-500" />
+              <span className="text-[9px] font-mono tracking-widest uppercase opacity-40 font-semibold">
                 {track.fileFormat || 'AURA'}
               </span>
             </div>
@@ -122,28 +122,28 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
           <div
             className={`absolute inset-0 flex items-center justify-center transition-all duration-200 ${
               isCurrent || isHovered
-                ? 'opacity-100 bg-black/35'
+                ? 'opacity-100 bg-black/40 backdrop-blur-[2px]'
                 : 'opacity-0 pointer-events-none'
             }`}
           >
             <div
-              className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 ${
+              className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 shadow-xl ${
                 isActivelyPlaying
-                  ? 'bg-white text-zinc-950 shadow-md scale-100'
-                  : 'bg-white/95 hover:bg-white text-zinc-950 hover:scale-105 shadow-md'
+                  ? 'bg-white text-zinc-950 scale-100'
+                  : 'bg-white text-zinc-950 group-hover:scale-110 active:scale-95'
               }`}
             >
               {isActivelyPlaying ? (
-                <Pause className="w-4 h-4 fill-current" />
+                <Pause className="w-4 h-4 fill-current text-black" />
               ) : (
-                <Play className="w-4 h-4 fill-current translate-x-0.5" />
+                <Play className="w-4 h-4 fill-current text-black translate-x-0.5" />
               )}
             </div>
           </div>
 
           {/* Live Frequency Equalizer Animation for Active Track */}
           {isActivelyPlaying && (
-            <div className="absolute bottom-2.5 left-2.5 flex items-end gap-0.5 px-2 py-1 rounded-md bg-black/80 backdrop-blur-md border border-white/10 shadow-sm pointer-events-none">
+            <div className="absolute bottom-2 left-2 flex items-end gap-0.5 px-2 py-1 rounded-lg bg-black/75 backdrop-blur-md border border-white/10 shadow-sm pointer-events-none">
               <span className="w-0.5 h-3 bg-white rounded-full animate-[pulse_0.6s_ease-in-out_infinite]" />
               <span className="w-0.5 h-4 bg-zinc-300 rounded-full animate-[pulse_0.9s_ease-in-out_infinite_0.2s]" />
               <span className="w-0.5 h-2 bg-zinc-400 rounded-full animate-[pulse_0.7s_ease-in-out_infinite_0.4s]" />
@@ -151,21 +151,23 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
             </div>
           )}
 
-          {/* Top Left Source Badge if Audius or YouTube */}
-          {(track.source === 'youtube' || track.source === 'audius') && (
-            <div className="absolute top-2.5 left-2.5 pointer-events-none">
-              <span className="text-[9px] font-mono font-medium px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-zinc-300 border border-white/10 shadow-sm">
-                {track.source === 'youtube' ? 'YouTube' : 'Audius'}
+          {/* Source Attribution Tag (Top Left) */}
+          {track.source && (
+            <div className="absolute top-2 left-2 pointer-events-none">
+              <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-zinc-300 border border-white/10 shadow-sm uppercase tracking-wider">
+                {track.source === 'youtube' ? 'YouTube' : track.source === 'radio' ? 'Radio' : track.source.toUpperCase()}
               </span>
             </div>
           )}
 
-          {/* Duration / Format Tag in top right */}
-          <div className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-zinc-300 border border-white/10">
-              {formatTime(track.duration)}
-            </span>
-          </div>
+          {/* Duration Tag (Top Right) */}
+          {track.duration > 0 && (
+            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-zinc-300 border border-white/10">
+                {formatTime(track.duration)}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Object Metadata & Subtle Controls */}

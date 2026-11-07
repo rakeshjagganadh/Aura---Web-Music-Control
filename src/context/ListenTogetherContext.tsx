@@ -3,6 +3,7 @@ import { useMusic } from './MusicContext';
 import {
   RoomActionType,
   RoomActivityItem,
+  RoomChatMessage,
   RoomConnectionStatus,
   RoomParticipant,
   SharedRoomState,
@@ -20,6 +21,7 @@ export interface ListenTogetherContextType {
   isInRoom: boolean;
   participants: RoomParticipant[];
   activities: RoomActivityItem[];
+  chatMessages: RoomChatMessage[];
   connectionStatus: RoomConnectionStatus;
   backendType: 'supabase' | 'websocket' | 'broadcast';
   userDisplayName: string;
@@ -38,6 +40,7 @@ export interface ListenTogetherContextType {
   leaveRoom: () => void;
   copyInviteLink: () => Promise<boolean>;
   shareInviteLink: () => Promise<boolean>;
+  sendChatMessage: (text: string) => Promise<boolean>;
 
   // Room playback actions
   roomPlay: () => Promise<void>;
@@ -74,6 +77,7 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
   const [activeRoom, setActiveRoom] = useState<SharedRoomState | null>(null);
   const [participants, setParticipants] = useState<RoomParticipant[]>([]);
   const [activities, setActivities] = useState<RoomActivityItem[]>([]);
+  const [chatMessages, setChatMessages] = useState<RoomChatMessage[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<RoomConnectionStatus>('DISCONNECTED');
   const [userDisplayName, setUserDisplayNameState] = useState<string>(() => {
     return roomService.getOrCreateUserIdentity().name;
@@ -264,7 +268,7 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
     [switchToTrack, togglePlay, seek, setQueue]
   );
 
-  // Periodic drift check for subtle background sync
+  // Periodic drift check for subtle background sync and tab visibility re-sync
   useEffect(() => {
     if (!isInRoom || !activeRoom || !activeRoom.isPlaying) return;
 
@@ -279,7 +283,54 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
       }
     }, 4000);
 
-    return () => clearInterval(interval);
+    // Tab visibility re-sync: when user returns to backgrounded tab, re-check drift against host position
+    const handleVisibilityChange = () => {
+      if (typeof document === 'undefined') return;
+      if (document.visibilityState === 'visible') {
+        const currentRoom = activeRoomRef.current;
+        if (!currentRoom || !currentRoom.isPlaying || isApplyingRemoteRef.current) return;
+
+        // Skip live radio / non-seekable streams
+        const track = currentRoom.currentTrack;
+        if (track?.source === 'curated_stream' && (!track.duration || track.duration <= 0)) {
+          return;
+        }
+
+        const expected = roomService.calculateCurrentPosition(currentRoom);
+
+        let actualPos = currentTimeRef.current;
+        if (track?.source === 'youtube') {
+          actualPos = youtubePlayerBridge.getCurrentTime();
+        } else {
+          const engPos = audioEngine.getCurrentTime();
+          if (engPos > 0) actualPos = engPos;
+        }
+
+        const diff = Math.abs(actualPos - expected);
+        if (diff >= roomService.DRIFT_TOLERANCE_HIGH) {
+          if (track?.source === 'youtube') {
+            if (youtubePlayerBridge.isPlayerReady()) {
+              seek(expected);
+            } else {
+              youtubePlayerBridge.setPendingSyncSeek(expected);
+            }
+          } else {
+            seek(expected);
+          }
+        }
+      }
+    };
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+
+    return () => {
+      clearInterval(interval);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
+    };
   }, [isInRoom, activeRoom, seek]);
 
   // Subscriptions to room service events
@@ -296,6 +347,13 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
       setActivities((prev) => [activity, ...prev].slice(0, 15));
     });
 
+    const unsubChat = roomService.onChatMessage((msg) => {
+      setChatMessages((prev) => {
+        if (prev.some((m) => m.id === msg.id)) return prev;
+        return [...prev, msg].slice(-100);
+      });
+    });
+
     const unsubStatus = roomService.onStatusChange((status) => {
       setConnectionStatus(status);
     });
@@ -304,6 +362,7 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
       unsubState();
       unsubParticipants();
       unsubActivity();
+      unsubChat();
       unsubStatus();
     };
   }, [handleRemoteStateUpdate]);
@@ -436,6 +495,7 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
     setActiveRoom(null);
     setParticipants([]);
     setActivities([]);
+    setChatMessages([]);
     setConnectionStatus('DISCONNECTED');
     setPendingJoinRoomId(null);
 
@@ -489,6 +549,10 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
 
     return copyInviteLink();
   }, [activeRoom, copyInviteLink]);
+
+  const sendChatMessage = useCallback(async (text: string): Promise<boolean> => {
+    return roomService.sendChatMessage(text);
+  }, []);
 
   // Playback actions
   const roomPlay = useCallback(async () => {
@@ -655,6 +719,7 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
     isInRoom,
     participants,
     activities,
+    chatMessages,
     connectionStatus,
     backendType: roomService.getBackendType(),
     userDisplayName,
@@ -671,6 +736,7 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
     leaveRoom,
     copyInviteLink,
     shareInviteLink,
+    sendChatMessage,
 
     roomPlay,
     roomPause,

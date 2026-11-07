@@ -82,6 +82,7 @@ export const YouTubeEmbedPlayer: React.FC = () => {
                 youtubePlayerBridge.notifyEnded();
               } else if (event.data === 3 || event.data === 5) {
                 // Buffering or Cued
+                youtubePlayerBridge.applyPendingSyncSeekIfNeeded();
                 const dur = event.target?.getDuration?.();
                 if (typeof dur === 'number' && !isNaN(dur) && dur > 0) {
                   youtubePlayerBridge.updateState({ duration: dur });
