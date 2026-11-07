@@ -175,6 +175,10 @@ const MainLayout: React.FC = () => {
             // '?' key
             e.preventDefault();
             setIsShortcutsModalOpen(!isShortcutsModalOpen);
+          } else {
+            // '/' key: Universal Search
+            e.preventDefault();
+            setIsUniversalSearchOpen(true);
           }
           break;
         default:

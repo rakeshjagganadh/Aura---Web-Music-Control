@@ -28,6 +28,7 @@ interface UniversalSearchModalProps {
   onClose: () => void;
   onSelectTrack?: (track: Track) => void;
   title?: string;
+  initialQuery?: string;
 }
 
 type CategoryTab = 'all' | 'songs' | 'artists' | 'albums' | 'playlists' | 'radio';
@@ -53,7 +54,13 @@ const HighlightMatch: React.FC<{ text: string; query: string; className?: string
   );
 };
 
-export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOpen, onClose, onSelectTrack, title }) => {
+export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  onSelectTrack, 
+  title,
+  initialQuery = ''
+}) => {
   const {
     tracks,
     playlists,
@@ -62,9 +69,10 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
     setSelectedPlaylistId,
     setCurrentView,
     setIsUploadModalOpen,
+    showToast,
   } = useMusic();
 
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialQuery);
   const [activeTab, setActiveTab] = useState<CategoryTab>('all');
   const [activeSourceFilter, setActiveSourceFilter] = useState<SourceFilter>('all');
   const [searchResults, setSearchResults] = useState<UniversalSearchResults>({
@@ -121,12 +129,15 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceTimerRef = useRef<any>(null);
 
-  // Focus on open
+  // Focus and sync on open
   useEffect(() => {
     if (isOpen) {
+      if (initialQuery !== undefined) {
+        setQuery(initialQuery);
+      }
       setTimeout(() => inputRef.current?.focus(), 40);
     }
-  }, [isOpen]);
+  }, [isOpen, initialQuery]);
 
   // Execute search when query changes
   const executeSearch = useCallback(async (searchQuery: string) => {
@@ -837,6 +848,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({ isOp
                                 onClose();
                               } else {
                                 addToQueue(song);
+                                showToast?.(`"${song.title}" added to queue`, 'success');
                               }
                             }}
                             className="p-1.5 rounded-lg text-zinc-400 hover:text-indigo-300 hover:bg-white/5 transition-colors cursor-pointer"

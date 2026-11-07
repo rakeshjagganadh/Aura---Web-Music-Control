@@ -8,7 +8,6 @@ import {
   ChevronRight, 
   ChevronLeft,
   Activity,
-  Search,
   HardDrive,
   Compass,
   Music,
@@ -17,11 +16,10 @@ import {
   Globe,
   Flame,
   Layers,
-  Sparkles
+  Sparkles,
+  ListMusic
 } from 'lucide-react';
-import { AudioVisualizer } from '../visualizer/AudioVisualizer';
 import { AddToPlaylistModal } from '../playlists/AddToPlaylistModal';
-import { UniversalSearchModal } from '../search/UniversalSearchModal';
 import { 
   CURATED_DISCOVERY_TRACKS, 
   CURATED_COLLECTIONS, 
@@ -37,6 +35,7 @@ export const HomeView: React.FC = () => {
   const {
     tracks,
     isPlaying,
+    currentTrack,
     setIsUploadModalOpen,
     loadDemoPack,
     setCurrentView,
@@ -45,9 +44,11 @@ export const HomeView: React.FC = () => {
     recentlyPlayed,
     favoriteItems,
     playTrack,
+    playlists,
+    setSelectedPlaylistId,
+    setIsExpandedPlayerOpen,
   } = useMusic();
 
-  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [playlistModalTrack, setPlaylistModalTrack] = useState<Track | null>(null);
 
   // Dynamic Discovery States
@@ -61,6 +62,7 @@ export const HomeView: React.FC = () => {
   const continueRailRef = useRef<HTMLDivElement>(null);
   const trendingRailRef = useRef<HTMLDivElement>(null);
   const favoritesRailRef = useRef<HTMLDivElement>(null);
+  const playlistsRailRef = useRef<HTMLDivElement>(null);
   const radioRailRef = useRef<HTMLDivElement>(null);
   const soundscapesRailRef = useRef<HTMLDivElement>(null);
   const vaultRailRef = useRef<HTMLDivElement>(null);
@@ -124,96 +126,128 @@ export const HomeView: React.FC = () => {
     setCurrentView('songs');
   };
 
+  // Time-of-day greeting
+  const currentHour = new Date().getHours();
+  const greeting = currentHour < 12 ? 'Good morning' : currentHour < 18 ? 'Good afternoon' : 'Good evening';
+
   return (
     <div className="flex flex-col gap-8 sm:gap-10 p-4 sm:p-8 max-w-7xl mx-auto select-none">
       
       {/* -------------------------------------------------------------
-          1. COMPACT EDITORIAL HERO & UNIVERSAL SEARCH GATEWAY
+          1. MUSIC-FIRST GREETING & CONTEXT HEADER
           ------------------------------------------------------------- */}
       <section 
-        id="home-hero-section"
-        className="relative overflow-hidden rounded-2xl bg-[#0e1017] border border-white/[0.06] p-5 sm:p-8 flex flex-col gap-5 shadow-xl"
+        id="home-greeting-section"
+        className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-[#111420] to-[#0c0e15] border border-white/[0.08] p-5 sm:p-7 flex flex-col gap-5 shadow-xl"
       >
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 z-10">
-          <div className="flex flex-col gap-2 max-w-xl">
-            <div className="flex items-center gap-2">
-              <AuraBrandMark size={20} isPlaying={isPlaying} />
-              <span className="text-xs font-semibold text-white tracking-wide font-display">
-                AURA
-              </span>
-              <span className="text-zinc-500 text-xs font-mono">•</span>
-              <span className="text-[11px] font-mono text-zinc-400">
-                Universal Music Discovery
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 z-10">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <AuraBrandMark size={18} isPlaying={isPlaying} />
+              <span className="text-[11px] font-mono uppercase tracking-widest text-zinc-400 font-semibold">
+                Listening Lounge
               </span>
             </div>
-
             <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight font-display">
-              Acoustic Precision. Pure Music Discovery.
+              {greeting}
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-              Discover and listen seamlessly across open music catalogues, decentralized audio, live global radio stations, and your local music vault.
+            <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-xl">
+              {isPlaying && currentTrack ? (
+                <span className="text-zinc-300">
+                  Currently playing <strong className="text-white font-medium">{currentTrack.title}</strong> by {currentTrack.artist}
+                </span>
+              ) : tracks.length > 0 ? (
+                `${tracks.length} tracks in your local vault · Ready to stream across Audius, Jamendo and Live Radio.`
+              ) : (
+                'Welcome to your personal listening space. Play local files or discover open streaming audio.'
+              )}
             </p>
           </div>
 
-          {/* Desktop-Only Mini Spectrum */}
-          <div className="hidden lg:flex w-72 p-3.5 rounded-xl bg-[#12141c] border border-white/[0.06] flex-col gap-2 shrink-0">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-zinc-400 font-mono text-[10px] uppercase tracking-wider flex items-center gap-1.5">
-                <Activity className="w-3 h-3 text-zinc-400" />
-                Live DSP Spectrum
-              </span>
-              <span className={`w-2 h-2 rounded-full ${isPlaying ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-600'}`} />
-            </div>
-            <div className="rounded-lg overflow-hidden bg-black/40 p-1">
-              <AudioVisualizer height={48} mode="spectrum" showControls={false} />
-            </div>
-          </div>
-        </div>
-
-        {/* Universal Search Bar Trigger */}
-        <div 
-          onClick={() => setIsSearchModalOpen(true)}
-          className="group cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-xl bg-[#131620] hover:bg-[#161a26] border border-white/[0.08] hover:border-white/20 transition-all z-10"
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <Search className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors shrink-0" />
-            <span className="text-xs sm:text-sm text-zinc-400 group-hover:text-zinc-200 truncate">
-              Search songs, artists, radio stations, and spaces...
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <kbd className="hidden sm:inline-block px-2 py-0.5 rounded bg-white/[0.06] text-[10px] font-mono text-zinc-400 border border-white/[0.08]">
-              ⌘K
-            </kbd>
-            <span className="px-3 py-1 rounded-lg bg-white text-zinc-950 text-xs font-semibold group-hover:bg-zinc-200 transition-all shadow-sm">
-              Search
-            </span>
-          </div>
-        </div>
-
-        {/* Quick Stream Shortcuts */}
-        <div className="flex flex-wrap items-center gap-2 z-10 text-xs">
-          <span className="text-[11px] font-mono text-zinc-500 mr-1">Quick Stream:</span>
-          {CURATED_DISCOVERY_TRACKS.slice(0, 3).map((stream) => (
-            <button
-              key={stream.id}
-              type="button"
-              onClick={() => playTrack(stream, CURATED_DISCOVERY_TRACKS)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white border border-white/[0.06] hover:border-white/15 transition-all cursor-pointer"
+          {/* Quick Context / Now Playing Mini Widget */}
+          {currentTrack && (
+            <div 
+              onClick={() => setIsExpandedPlayerOpen(true)}
+              className="group cursor-pointer flex items-center gap-3 p-2.5 sm:p-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/15 transition-all shrink-0 max-w-xs"
+              title="Open Expanded Now Playing Player"
             >
-              <Play className="w-3 h-3 fill-current" />
-              <span>{stream.title.split('(')[0]}</span>
-            </button>
-          ))}
+              <div className="w-11 h-11 rounded-lg overflow-hidden bg-zinc-900 border border-white/10 shrink-0 relative">
+                {currentTrack.coverUrl ? (
+                  <img src={currentTrack.coverUrl} alt={currentTrack.title} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-400">
+                    <Music className="w-5 h-5" />
+                  </div>
+                )}
+                {isPlaying && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 flex items-center gap-1">
+                  <span className={`w-1.5 h-1.5 rounded-full ${isPlaying ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'}`} />
+                  {isPlaying ? 'Now Playing' : 'Paused'}
+                </span>
+                <p className="text-xs font-bold text-white truncate mt-0.5 group-hover:text-zinc-200">
+                  {currentTrack.title}
+                </p>
+                <p className="text-[11px] text-zinc-400 truncate">
+                  {currentTrack.artist}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
 
+        {/* Action & Quick Filter Pills */}
+        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-white/[0.06] text-xs z-10">
           <button
             type="button"
             onClick={() => setIsUploadModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.08] hover:bg-white/[0.12] text-white border border-white/10 transition-colors ml-auto cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-semibold transition-all shadow-sm cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Music</span>
+          </button>
+
+          {tracks.length === 0 && (
+            <button
+              type="button"
+              onClick={loadDemoPack}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 font-medium border border-white/[0.08] transition-colors cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Load Demo Pack</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setCurrentView('sources')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white border border-white/[0.06] transition-colors cursor-pointer"
+          >
+            <Globe className="w-3.5 h-3.5 text-zinc-400" />
+            <span>Open Sources</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setCurrentView('playlists')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white border border-white/[0.06] transition-colors cursor-pointer"
+          >
+            <ListMusic className="w-3.5 h-3.5 text-zinc-400" />
+            <span>Your Spaces</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setCurrentView('listen-together')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white border border-white/[0.06] transition-colors cursor-pointer ml-auto"
+          >
+            <Activity className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Listen Together</span>
           </button>
         </div>
 
@@ -331,6 +365,82 @@ export const HomeView: React.FC = () => {
                   variant="grid"
                   onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
                 />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* -------------------------------------------------------------
+          PLAYLISTS & SPACES SHELF
+          ------------------------------------------------------------- */}
+      {playlists.length > 0 && (
+        <section className="flex flex-col gap-3.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ListMusic className="w-4 h-4 text-indigo-400" />
+              <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">
+                Your Spaces & Playlists
+              </h2>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => scrollRail(playlistsRailRef, 'left')}
+                  className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                  title="Scroll Left"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollRail(playlistsRailRef, 'right')}
+                  className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                  title="Scroll Right"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCurrentView('playlists')}
+                className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors flex items-center gap-1 cursor-pointer font-mono"
+              >
+                All Spaces <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          <div 
+            ref={playlistsRailRef}
+            className="flex gap-3 sm:gap-4 overflow-x-auto custom-scrollbar snap-x scroll-smooth pb-2"
+          >
+            {playlists.map((pl) => (
+              <div
+                key={pl.id}
+                onClick={() => {
+                  setSelectedPlaylistId(pl.id);
+                  setCurrentView('playlist-detail');
+                }}
+                className="w-40 sm:w-[185px] shrink-0 snap-start group cursor-pointer flex flex-col gap-2 p-3.5 rounded-2xl bg-[#0e1017] hover:bg-[#131622] border border-white/[0.06] hover:border-indigo-500/30 transition-all shadow-sm"
+              >
+                <div className={`w-full aspect-square rounded-xl bg-gradient-to-br ${pl.coverGradient || 'from-indigo-600 to-zinc-900'} flex items-center justify-center text-white shadow-inner relative overflow-hidden group-hover:scale-[1.02] transition-transform`}>
+                  <ListMusic className="w-7 h-7 text-white/90" />
+                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span className="text-[10px] font-mono uppercase font-bold tracking-wider px-2.5 py-1 rounded-lg bg-white/20 backdrop-blur-md border border-white/30 text-white">
+                      Open Space
+                    </span>
+                  </div>
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-xs font-bold text-white group-hover:text-indigo-300 truncate transition-colors">
+                    {pl.name}
+                  </h3>
+                  <p className="text-[10px] text-zinc-400 mt-0.5 font-mono">
+                    {pl.trackIds.length} tracks
+                  </p>
+                </div>
               </div>
             ))}
           </div>
@@ -675,12 +785,6 @@ export const HomeView: React.FC = () => {
           </div>
         )}
       </section>
-
-      {/* Universal Search Modal */}
-      <UniversalSearchModal
-        isOpen={isSearchModalOpen}
-        onClose={() => setIsSearchModalOpen(false)}
-      />
 
       {/* Playlist Modal */}
       {playlistModalTrack && (

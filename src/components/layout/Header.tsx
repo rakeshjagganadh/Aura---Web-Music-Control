@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo } from 'react';
+import React from 'react';
 import { useMusic } from '../../context/MusicContext';
 import { AuraBrandMark } from '../common/AuraBrandMark';
 import { PWAInstallButton } from '../pwa/PWAInstallButton';
@@ -8,13 +8,10 @@ import {
   Sparkles, 
   Keyboard, 
   HardDrive,
-  X,
-  ChevronDown,
-  ChevronUp,
-  ListMusic,
-  ChevronLeft,
-  User,
-  Plus
+  ListMusic, 
+  ChevronLeft, 
+  User, 
+  Plus 
 } from 'lucide-react';
 
 export const Header: React.FC<{ 
@@ -33,13 +30,6 @@ export const Header: React.FC<{
   onInstall
 }) => {
   const {
-    searchQuery,
-    setSearchQuery,
-    activeSearchIndex,
-    nextSearchResult,
-    prevSearchResult,
-    tracks,
-    playTrack,
     currentView,
     setCurrentView,
     selectedPlaylistId,
@@ -52,58 +42,6 @@ export const Header: React.FC<{
     storageUsage,
     isPlaying,
   } = useMusic();
-
-  const searchInputRef = useRef<HTMLInputElement>(null);
-
-  // Filtered count
-  const matchingTracks = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    const q = searchQuery.toLowerCase();
-    return tracks.filter(
-      (t) =>
-        t.title.toLowerCase().includes(q) ||
-        t.artist.toLowerCase().includes(q) ||
-        t.album.toLowerCase().includes(q) ||
-        t.fileFormat.toLowerCase().includes(q)
-    );
-  }, [searchQuery, tracks]);
-
-  // Global search shortcut '/'
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === '/' && document.activeElement !== searchInputRef.current) {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      if (e.ctrlKey || e.metaKey) {
-        if (matchingTracks.length > 0) {
-          const target = matchingTracks[activeSearchIndex] || matchingTracks[0];
-          playTrack(target);
-        }
-      } else if (e.shiftKey) {
-        prevSearchResult();
-      } else {
-        nextSearchResult();
-      }
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      nextSearchResult();
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      prevSearchResult();
-    } else if (e.key === 'Escape') {
-      setSearchQuery('');
-      searchInputRef.current?.blur();
-    }
-  };
 
   const formatStorageMB = (bytes: number) => {
     if (!bytes) return '0 MB';
@@ -149,85 +87,34 @@ export const Header: React.FC<{
         </div>
       </div>
 
-      {/* Global Search Bar (Desktop / Tablet) */}
-      <div className="hidden sm:block flex-1 max-w-md relative">
-        <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-        <input
-          ref={searchInputRef}
-          type="text"
-          placeholder="Search songs, artists, spaces... (/ to focus)"
-          value={searchQuery}
-          onKeyDown={handleSearchKeyDown}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            if (e.target.value && currentView !== 'songs') {
-              setCurrentView('songs');
-            }
-          }}
-          className="w-full pl-9 pr-28 py-2 rounded-xl bg-[#11131b] hover:bg-[#171a24] focus:bg-[#171a24] border border-white/[0.08] focus:border-white/20 text-xs text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 transition-all"
-        />
-        
-        {searchQuery ? (
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            <span className="text-[10px] font-mono text-zinc-400 bg-zinc-800/90 px-1.5 py-0.5 rounded border border-white/5">
-              {matchingTracks.length > 0 ? (
-                `${Math.min(activeSearchIndex + 1, matchingTracks.length)}/${matchingTracks.length}`
-              ) : (
-                '0'
-              )}
-            </span>
-
-            <button
-              type="button"
-              onClick={prevSearchResult}
-              disabled={matchingTracks.length === 0}
-              className="p-1 rounded text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/40"
-              title="Previous Match"
-            >
-              <ChevronUp className="w-3.5 h-3.5" />
-            </button>
-
-            <button
-              type="button"
-              onClick={nextSearchResult}
-              disabled={matchingTracks.length === 0}
-              className="p-1 rounded text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/40"
-              title="Next Match"
-            >
-              <ChevronDown className="w-3.5 h-3.5" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setSearchQuery('');
-                searchInputRef.current?.focus();
-              }}
-              className="p-1 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/40"
-              title="Clear Search"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        ) : (
-          <div className="hidden sm:flex items-center gap-1 absolute right-3 top-1/2 -translate-y-1/2">
-            {onOpenUniversalSearch && (
-              <button
-                type="button"
-                onClick={onOpenUniversalSearch}
-                className="hover:opacity-80 transition-opacity cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/40"
-                title="Universal Search (⌘K)"
-              >
-                <TelemetryBadge variant="glass" size="sm">
-                  ⌘K
-                </TelemetryBadge>
-              </button>
-            )}
-            <kbd className="px-1.5 py-0.5 text-[10px] font-mono text-zinc-500 bg-white/[0.04] rounded border border-white/[0.06]">
-              /
-            </kbd>
-          </div>
-        )}
+      {/* Unified Universal Search Gateway (Desktop / Tablet) */}
+      <div 
+        onClick={() => onOpenUniversalSearch?.()}
+        className="hidden sm:flex flex-1 max-w-md items-center justify-between px-3.5 py-2 rounded-xl bg-[#11131b] hover:bg-[#161a25] border border-white/[0.08] hover:border-white/20 text-xs text-zinc-400 cursor-pointer transition-all group select-none shadow-sm"
+        title="Open Universal Search (⌘K or /)"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onOpenUniversalSearch?.();
+          }
+        }}
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Search className="w-4 h-4 text-zinc-500 group-hover:text-zinc-300 transition-colors shrink-0" />
+          <span className="truncate group-hover:text-zinc-200">
+            Search songs, artists, albums, spaces, radio...
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <kbd className="px-1.5 py-0.5 text-[10px] font-mono text-zinc-400 bg-white/[0.06] rounded border border-white/[0.08] group-hover:text-zinc-200 group-hover:border-white/15">
+            ⌘K
+          </kbd>
+          <kbd className="px-1.5 py-0.5 text-[10px] font-mono text-zinc-500 bg-white/[0.04] rounded border border-white/[0.06]">
+            /
+          </kbd>
+        </div>
       </div>
 
       {/* Header Utility Actions */}
