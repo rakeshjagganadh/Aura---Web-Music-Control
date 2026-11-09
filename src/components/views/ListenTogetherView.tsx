@@ -724,7 +724,7 @@ export const ListenTogetherView: React.FC = () => {
   const progressPercent = currentDuration > 0 ? (displayCurrentTime / currentDuration) * 100 : 0;
 
   return (
-    <div className="max-w-6xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6 pb-28 sm:pb-24 flex flex-col gap-5 sm:gap-6 select-none overflow-x-hidden">
+    <div className="max-w-6xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6 flex flex-col gap-5 sm:gap-6 select-none overflow-x-hidden">
       
       {/* 1. ROOM HEADER (Identity, Status, Sharing & Exit) */}
       <GlassPanel intensity="prominent" elevation="lg" className="p-4 sm:p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">

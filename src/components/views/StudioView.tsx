@@ -187,7 +187,7 @@ export const StudioView: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto select-none pb-28">
+    <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto select-none">
       
       {/* ======================================================== */}
       {/* ZONE 1: MASTER SIGNAL & TIMELINE HEADER                  */}
