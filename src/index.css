@@ -39,10 +39,11 @@
     --aura-signal-amber: #f59e0b;
     --aura-signal-purple: #a855f7;
 
-    /* AURA SPATIAL 4-Tier Liquid Glass System (Translucent for True Refraction & Environmental Transmission) */
-    --aura-glass-immersive-bg: rgba(8, 10, 16, 0.70);
-    --aura-glass-island-bg: rgba(11, 14, 22, 0.46);
-    --aura-glass-ambient-bg: rgba(255, 255, 255, 0.022);
+    /* AURA SPATIAL 4-Tier Liquid Glass System (High Density for Pure Legibility & Liquid Refraction) */
+    --aura-glass-immersive-bg: rgba(8, 10, 16, 0.94);
+    --aura-glass-island-bg: rgba(10, 13, 22, 0.88);
+    --aura-glass-dock-bg: rgba(10, 13, 22, 0.90);
+    --aura-glass-ambient-bg: rgba(15, 19, 30, 0.68);
   }
 
   body {
@@ -116,37 +117,48 @@
 
 /* Tier A: Immersive Glass — Studio canvases, full overlays, search command center */
 .aura-glass-immersive, .aura-glass-tier1, .aura-glass-os {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.01) 100%), var(--aura-glass-immersive-bg);
-  backdrop-filter: blur(40px) saturate(160%);
-  -webkit-backdrop-filter: blur(40px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: rgba(8, 10, 16, 0.94);
+  background-image: 
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 40%, rgba(0, 0, 0, 0.3) 100%),
+    var(--aura-glass-immersive-bg);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.16),
-    0 32px 80px -16px rgba(0, 0, 0, 0.88),
-    0 12px 28px -6px rgba(0, 0, 0, 0.60);
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.5),
+    0 32px 80px -16px rgba(0, 0, 0, 0.95),
+    0 12px 28px -6px rgba(0, 0, 0, 0.70);
 }
 
 /* Tier B: Floating Glass Island — Suspended playback islands, floating navigation docks */
 .aura-glass-island, .aura-glass-dock, .aura-glass-tier2 {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.008) 100%), var(--aura-glass-island-bg);
-  backdrop-filter: blur(28px) saturate(150%);
-  -webkit-backdrop-filter: blur(28px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: rgba(10, 13, 22, 0.88);
+  background-image: 
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.015) 45%, rgba(0, 0, 0, 0.25) 100%),
+    var(--aura-glass-island-bg);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
-    0 20px 48px -10px rgba(0, 0, 0, 0.80),
-    0 8px 18px -4px rgba(0, 0, 0, 0.50);
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.20),
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.40),
+    0 24px 50px -10px rgba(0, 0, 0, 0.92),
+    0 8px 18px -4px rgba(0, 0, 0, 0.60);
 }
 
 /* Tier C: Ambient Glass — Section tiles, interactive rows, shelf objects */
 .aura-glass-ambient, .aura-glass-tier3 {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.024) 0%, rgba(255, 255, 255, 0.006) 100%), var(--aura-glass-ambient-bg);
-  backdrop-filter: blur(16px) saturate(130%);
-  -webkit-backdrop-filter: blur(16px) saturate(130%);
-  border: 1px solid rgba(255, 255, 255, 0.048);
+  background-color: rgba(15, 19, 30, 0.68);
+  background-image: 
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.008) 100%),
+    var(--aura-glass-ambient-bg);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
-    0 4px 14px -3px rgba(0, 0, 0, 0.35);
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.10),
+    0 4px 14px -3px rgba(0, 0, 0, 0.45);
   transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
               border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
               transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
