@@ -205,7 +205,7 @@ export const ExpandedPlayer: React.FC = () => {
       {/* Desktop Expanded Now Playing Experience */}
       <div
         id="expanded-player-modal"
-        className="hidden lg:flex fixed inset-0 z-50 bg-[#07090e]/98 backdrop-blur-3xl overflow-y-auto flex-col justify-between p-6 sm:p-8 select-none"
+        className="hidden lg:flex fixed inset-0 z-50 aura-glass-tier1 overflow-y-auto flex-col justify-between p-6 sm:p-8 select-none"
       >
         {/* -------------------------------------------------------------
             TOP BAR NAVIGATION
@@ -307,40 +307,58 @@ export const ExpandedPlayer: React.FC = () => {
           
           {/* AREA 1: LEFT TRACK IDENTITY ANCHOR */}
           <div className={`${isQueueCollapsed ? 'col-span-4' : 'col-span-4 xl:col-span-4'} flex flex-col items-center xl:items-start text-center xl:text-left`}>
-            {/* Large Album Artwork */}
-            <div className="relative group w-72 h-72 sm:w-80 sm:h-80 xl:w-84 xl:h-84 rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-[#10121a] flex items-center justify-center transition-all">
-              {currentTrack.coverUrl ? (
-                <img
-                  src={currentTrack.coverUrl}
-                  alt={currentTrack.title}
-                  className={`w-full h-full object-cover transition-transform duration-700 ${
-                    isPlaying ? 'scale-[1.02]' : 'scale-100'
-                  }`}
-                  referrerPolicy="no-referrer"
+            {/* Large Album Artwork with Ambient Refraction Halo */}
+            <div className="relative group w-72 h-72 sm:w-80 sm:h-80 xl:w-84 xl:h-84 flex items-center justify-center">
+              {/* Sound-reactive soft ambient halo */}
+              {currentTrack.coverUrl && isPlaying && (
+                <div 
+                  className="absolute inset-0 rounded-3xl scale-105 pointer-events-none transition-opacity duration-700 -z-10"
+                  style={{
+                    backgroundImage: `url(${currentTrack.coverUrl})`,
+                    backgroundSize: 'cover',
+                    filter: 'blur(40px)',
+                    opacity: 0.28,
+                  }}
                 />
-              ) : (
-                <div className={`w-full h-full bg-gradient-to-br ${currentTrack.coverColor || 'from-zinc-800 to-zinc-950'} flex flex-col items-center justify-center p-6 text-white`}>
-                  <Music className="w-16 h-16 opacity-30 mb-3" />
-                  <span className="text-xs font-mono tracking-widest opacity-40 uppercase font-semibold">
-                    AURA AUDIO
-                  </span>
-                </div>
               )}
 
-              {/* Source Watermark Badge */}
-              <div className="absolute top-3 left-3">
-                <span className={`text-[10px] font-mono px-2 py-0.5 rounded-lg backdrop-blur-md border ${sourceBadge.color}`}>
-                  {sourceBadge.label}
-                </span>
+              <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-[#0d1017] flex items-center justify-center transition-all">
+                {currentTrack.coverUrl ? (
+                  <img
+                    src={currentTrack.coverUrl}
+                    alt={currentTrack.title}
+                    className={`w-full h-full object-cover transition-transform duration-700 ${
+                      isPlaying ? 'scale-[1.02]' : 'scale-100'
+                    }`}
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div className={`w-full h-full bg-gradient-to-br ${currentTrack.coverColor || 'from-[#141a29] to-[#080b12]'} flex flex-col items-center justify-center p-6 text-white`}>
+                    <Music className="w-16 h-16 opacity-30 mb-3" />
+                    <span className="text-xs font-mono tracking-widest opacity-40 uppercase font-semibold">
+                      AURA AUDIO
+                    </span>
+                  </div>
+                )}
+
+                {/* Source Attribution Tag */}
+                <div className="absolute top-3 left-3">
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded-lg backdrop-blur-md border ${sourceBadge.color}`}>
+                    {sourceBadge.label}
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* Track Metadata */}
             <div className="mt-5 w-full max-w-sm">
-              <h2 className="text-2xl font-bold text-white tracking-tight leading-tight font-display line-clamp-2">
+              <h2 className="text-2xl font-page-title text-white tracking-tight leading-tight line-clamp-2">
                 {currentTrack.title}
               </h2>
-              <p className="text-sm font-semibold text-zinc-300 mt-1 truncate">
+              <p className="text-sm font-artist-name text-zinc-300 mt-1 truncate">
                 {currentTrack.artist}
               </p>
               {currentTrack.album && currentTrack.album !== 'YouTube Stream' && currentTrack.album !== 'Audius Stream' && (
@@ -380,14 +398,14 @@ export const ExpandedPlayer: React.FC = () => {
             </div>
           </div>
 
-          {/* AREA 2: CENTRE PLAYBACK EXPERIENCE */}
-          <div className={`${isQueueCollapsed ? 'col-span-8' : 'col-span-8 xl:col-span-5'} flex flex-col justify-between h-full py-2 gap-5`}>
+          {/* AREA 2: CENTRE PLAYBACK & ANALYZER EXPERIENCE (Precise, refined & technically legible) */}
+          <div className={`${isQueueCollapsed ? 'col-span-8' : 'col-span-8 xl:col-span-5'} flex flex-col justify-between h-full py-2 gap-4`}>
             
             {/* Real-time Spectrum / Waveform Visualizer Canvas */}
-            <div className="flex flex-col gap-2 p-4 rounded-2xl bg-[#0c0e15]/90 border border-white/[0.06] shadow-xl">
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className="text-zinc-400 uppercase tracking-wider text-[11px] font-semibold flex items-center gap-1.5">
-                  <Activity className="w-3.5 h-3.5 text-indigo-400" />
+            <div className="flex flex-col gap-2 p-3.5 rounded-2xl bg-[rgba(10,13,20,0.55)] border border-white/[0.06] backdrop-blur-xl shadow-lg">
+              <div className="flex items-center justify-between text-xs font-mono px-0.5">
+                <span className="text-zinc-300 uppercase tracking-wider text-[10px] font-semibold flex items-center gap-1.5">
+                  <Activity className="w-3.5 h-3.5 text-sky-400" />
                   Acoustic Analyzer
                 </span>
                 
@@ -395,7 +413,7 @@ export const ExpandedPlayer: React.FC = () => {
                 <div className="flex items-center gap-1 p-0.5 rounded-lg bg-white/[0.04] border border-white/[0.06]">
                   <button
                     onClick={() => setVisualizerMode('spectrum')}
-                    className={`px-2 py-0.5 rounded text-[10px] uppercase transition-colors ${
+                    className={`px-2 py-0.5 rounded text-[10px] uppercase font-mono transition-colors ${
                       visualizerMode === 'spectrum' ? 'bg-white text-zinc-950 font-bold' : 'text-zinc-400 hover:text-white'
                     }`}
                   >
@@ -403,7 +421,7 @@ export const ExpandedPlayer: React.FC = () => {
                   </button>
                   <button
                     onClick={() => setVisualizerMode('waveform')}
-                    className={`px-2 py-0.5 rounded text-[10px] uppercase transition-colors ${
+                    className={`px-2 py-0.5 rounded text-[10px] uppercase font-mono transition-colors ${
                       visualizerMode === 'waveform' ? 'bg-white text-zinc-950 font-bold' : 'text-zinc-400 hover:text-white'
                     }`}
                   >
@@ -411,7 +429,7 @@ export const ExpandedPlayer: React.FC = () => {
                   </button>
                   <button
                     onClick={() => setVisualizerMode('circular')}
-                    className={`px-2 py-0.5 rounded text-[10px] uppercase transition-colors ${
+                    className={`px-2 py-0.5 rounded text-[10px] uppercase font-mono transition-colors ${
                       visualizerMode === 'circular' ? 'bg-white text-zinc-950 font-bold' : 'text-zinc-400 hover:text-white'
                     }`}
                   >
@@ -420,11 +438,11 @@ export const ExpandedPlayer: React.FC = () => {
                 </div>
               </div>
 
-              <div className="rounded-xl overflow-hidden bg-black/40 p-2">
+              <div className="rounded-xl overflow-hidden bg-black/30 p-1.5">
                 <AudioVisualizer
                   mode={visualizerMode}
                   onModeChange={setVisualizerMode}
-                  height={180}
+                  height={175}
                   showControls={false}
                 />
               </div>
@@ -582,15 +600,15 @@ export const ExpandedPlayer: React.FC = () => {
 
           {/* AREA 3: RIGHT LISTENING CONTEXT (UP NEXT QUEUE) */}
           {!isQueueCollapsed && (
-            <div className="hidden xl:flex xl:col-span-3 flex-col h-[520px] rounded-2xl bg-[#0c0e15]/90 border border-white/[0.08] p-4 shadow-2xl overflow-hidden">
+            <div className="hidden xl:flex xl:col-span-3 flex-col h-[520px] rounded-2xl bg-[rgba(10,13,20,0.50)] border border-white/[0.06] p-4 backdrop-blur-xl shadow-xl overflow-hidden">
               {/* Queue Header */}
               <div className="flex items-center justify-between pb-3 border-b border-white/[0.06] shrink-0">
                 <div className="flex items-center gap-2">
-                  <ListMusic className="w-4 h-4 text-indigo-400" />
-                  <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-200">
+                  <ListMusic className="w-4 h-4 text-sky-400" />
+                  <h3 className="text-xs font-mono font-medium uppercase tracking-wider text-zinc-300">
                     Up Next
                   </h3>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.06] text-zinc-400 border border-white/[0.06]">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.05] text-zinc-400 border border-white/[0.06]">
                     {upNextTracks.length}
                   </span>
                 </div>
@@ -619,7 +637,7 @@ export const ExpandedPlayer: React.FC = () => {
               </div>
 
               {/* Pinned Current Playing Track */}
-              <div className="my-3 p-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center gap-3 shrink-0">
+              <div className="my-3 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05] flex items-center gap-3 shrink-0">
                 <div className="w-9 h-9 rounded-lg overflow-hidden bg-zinc-900 border border-white/10 shrink-0 relative">
                   {currentTrack.coverUrl ? (
                     <img src={currentTrack.coverUrl} alt={currentTrack.title} className="w-full h-full object-cover" />

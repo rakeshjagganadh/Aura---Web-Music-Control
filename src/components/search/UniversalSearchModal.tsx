@@ -5,6 +5,7 @@ import {
   Search, 
   X, 
   Play, 
+  Pause,
   Music, 
   Disc, 
   User, 
@@ -14,11 +15,12 @@ import {
   Plus, 
   Key,
   Sparkles,
-  FolderOpen,
   History,
-  Tag,
   ListMusic,
-  ExternalLink
+  Heart,
+  Globe,
+  SlidersHorizontal,
+  Compass
 } from 'lucide-react';
 import { universalSearchCoordinator, UniversalSearchResults, SearchMatchArtist, SearchMatchAlbum, SearchMatchPlaylist } from '../../services/sourceAdapters';
 import { youtubeService } from '../../services/youtubeService';
@@ -43,7 +45,7 @@ const HighlightMatch: React.FC<{ text: string; query: string; className?: string
     <span className={className}>
       {parts.map((part, i) =>
         regex.test(part) ? (
-          <span key={i} className="bg-indigo-500/30 text-indigo-200 font-semibold px-0.5 rounded">
+          <span key={i} className="text-sky-300 font-semibold underline decoration-sky-400/50 underline-offset-2">
             {part}
           </span>
         ) : (
@@ -68,8 +70,10 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
     addToQueue,
     setSelectedPlaylistId,
     setCurrentView,
-    setIsUploadModalOpen,
-    showToast,
+    currentTrack,
+    isPlaying,
+    togglePlay,
+    toggleFavorite,
   } = useMusic();
 
   const [query, setQuery] = useState(initialQuery);
@@ -203,7 +207,6 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
     };
   }, [query, executeSearch]);
 
-  // Save custom YouTube API Key handler
   const handleSaveApiKey = (e: React.FormEvent) => {
     e.preventDefault();
     youtubeService.setCustomApiKey(customApiKey.trim());
@@ -211,7 +214,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
     executeSearch(query);
   };
 
-  // Filter songs by source if source filter is active
+  // Filter songs by source
   const songsFilteredBySource = useMemo(() => {
     if (activeSourceFilter === 'all') return searchResults.songs;
     if (activeSourceFilter === 'local') return searchResults.songs.filter((s) => !s.source || s.source === 'local');
@@ -306,6 +309,13 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
     onClose();
   };
 
+  const formatTime = (secs: number) => {
+    if (isNaN(secs) || secs < 0) return '0:00';
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
   if (!isOpen) return null;
 
   const hasAnyResults =
@@ -315,16 +325,18 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
     searchResults.playlists.length > 0 ||
     !!searchResults.detectedDirectTrack;
 
+  const topMatch = songsToShow.length > 0 ? songsToShow[0] : null;
+
   return (
     <div
       id="aura-universal-search-modal"
-      className="fixed inset-0 z-50 bg-black/85 backdrop-blur-2xl flex items-start justify-center p-3 sm:p-6 sm:pt-14 animate-in fade-in duration-150 select-none"
+      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-2xl flex items-start justify-center p-3 sm:p-6 sm:pt-14 animate-in fade-in duration-200 select-none"
     >
-      <div className="relative w-full max-w-3xl max-h-[88vh] rounded-3xl bg-[#0a0d16]/90 border border-white/10 shadow-2xl flex flex-col overflow-hidden">
+      <div className="relative w-full max-w-3xl max-h-[88vh] rounded-2xl sm:rounded-3xl aura-glass-tier1 flex flex-col overflow-hidden">
         
         {/* Search Header Bar */}
-        <div className="p-4 sm:p-5 border-b border-white/10 flex items-center gap-3 bg-zinc-950/80">
-          <Search className="w-5 h-5 text-indigo-400 shrink-0" />
+        <div className="p-4 sm:p-5 border-b border-white/[0.08] flex items-center gap-3 bg-white/[0.02]">
+          <Search className={`w-5 h-5 shrink-0 transition-colors ${query ? 'text-sky-400' : 'text-zinc-500'}`} />
           <input
             ref={inputRef}
             type="text"
@@ -333,22 +345,22 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
             onKeyDown={handleKeyDown}
             placeholder={
               youtubeService.isConfigured()
-                ? 'Search tracks, artists, albums, playlists, radio stations or paste a YouTube link...'
-                : 'Search your library, Jamendo, Audius, Radio or paste a YouTube link...'
+                ? 'Search songs, artists, albums, spaces, radio or paste a YouTube URL...'
+                : 'Search your vault, Jamendo, Audius, Live Radio or paste a YouTube URL...'
             }
-            className="flex-1 bg-transparent text-sm sm:text-base text-white placeholder-zinc-500 focus:outline-none"
+            className="flex-1 bg-transparent text-sm sm:text-base text-white placeholder-zinc-500 focus:outline-none font-ui-body"
           />
           
           {isSearchingExternal && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-indigo-500/10 text-indigo-400 text-[11px] font-mono border border-indigo-500/20 animate-pulse shrink-0">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-sky-500/10 text-sky-300 text-[11px] font-mono border border-sky-500/20 animate-pulse shrink-0">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Searching online...</span>
+              <span className="hidden sm:inline">Federating sources...</span>
             </div>
           )}
 
           {onSelectTrack && (
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-indigo-500/20 text-indigo-300 text-xs font-semibold border border-indigo-500/30 shrink-0">
-              {title || 'Adding to Shared Room'}
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-indigo-500/15 text-indigo-300 text-xs font-semibold border border-indigo-500/30 shrink-0">
+              {title || 'Room Selection'}
             </span>
           )}
 
@@ -358,7 +370,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 setQuery('');
                 inputRef.current?.focus();
               }}
-              className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
               title="Clear search query"
             >
               <X className="w-4 h-4" />
@@ -367,23 +379,24 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
 
           <button
             onClick={onClose}
-            className="px-2.5 py-1 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white hover:bg-white/10 border border-white/10 transition-colors cursor-pointer"
+            className="px-2.5 py-1 rounded-xl text-xs font-mono font-medium text-zinc-400 hover:text-white hover:bg-white/10 border border-white/10 transition-colors cursor-pointer"
           >
             ESC
           </button>
         </div>
 
-        {/* Categories & Source Filter Tabs */}
+        {/* Categories & Source Filter Tabs (When results exist) */}
         {query && hasAnyResults && (
-          <div className="px-4 py-2 bg-zinc-950/90 border-b border-white/5 flex flex-col gap-2">
+          <div className="px-4 py-2.5 bg-[#0a0d16]/95 border-b border-white/[0.06] flex flex-col gap-2">
+            
             {/* Primary Category Tabs */}
-            <div className="flex items-center gap-2 overflow-x-auto text-xs scrollbar-none">
+            <div className="flex items-center gap-1.5 overflow-x-auto text-xs scrollbar-none">
               <button
                 onClick={() => setActiveTab('all')}
                 className={`px-3 py-1 rounded-xl font-medium transition-colors cursor-pointer ${
                   activeTab === 'all'
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+                    ? 'bg-white text-zinc-950 font-semibold shadow-sm'
+                    : 'text-zinc-400 hover:text-white hover:bg-white/5'
                 }`}
               >
                 All Results
@@ -394,11 +407,11 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   onClick={() => setActiveTab('songs')}
                   className={`px-3 py-1 rounded-xl font-medium transition-colors cursor-pointer ${
                     activeTab === 'songs'
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+                      ? 'bg-white text-zinc-950 font-semibold shadow-sm'
+                      : 'text-zinc-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  Songs ({searchResults.songs.length})
+                  Tracks ({searchResults.songs.length})
                 </button>
               )}
 
@@ -407,8 +420,8 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   onClick={() => setActiveTab('artists')}
                   className={`px-3 py-1 rounded-xl font-medium transition-colors cursor-pointer ${
                     activeTab === 'artists'
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+                      ? 'bg-white text-zinc-950 font-semibold shadow-sm'
+                      : 'text-zinc-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
                   Artists ({searchResults.artists.length})
@@ -420,8 +433,8 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   onClick={() => setActiveTab('albums')}
                   className={`px-3 py-1 rounded-xl font-medium transition-colors cursor-pointer ${
                     activeTab === 'albums'
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+                      ? 'bg-white text-zinc-950 font-semibold shadow-sm'
+                      : 'text-zinc-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
                   Albums ({searchResults.albums.length})
@@ -433,8 +446,8 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   onClick={() => setActiveTab('playlists')}
                   className={`px-3 py-1 rounded-xl font-medium transition-colors cursor-pointer ${
                     activeTab === 'playlists'
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+                      ? 'bg-white text-zinc-950 font-semibold shadow-sm'
+                      : 'text-zinc-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
                   Spaces ({searchResults.playlists.length})
@@ -446,8 +459,8 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   onClick={() => setActiveTab('radio')}
                   className={`flex items-center gap-1 px-3 py-1 rounded-xl font-medium transition-colors cursor-pointer ${
                     activeTab === 'radio'
-                      ? 'bg-cyan-600 text-white shadow-sm'
-                      : 'text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/30'
+                      ? 'bg-cyan-400 text-zinc-950 font-semibold shadow-sm'
+                      : 'text-cyan-400 hover:bg-cyan-950/30'
                   }`}
                 >
                   <Radio className="w-3.5 h-3.5" />
@@ -456,17 +469,17 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
               )}
             </div>
 
-            {/* Secondary Source Filter Pills (When 'songs' or 'all' is active) */}
+            {/* Source Origin Filters */}
             {(activeTab === 'all' || activeTab === 'songs') && searchResults.songs.length > 0 && (
-              <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] scrollbar-none pt-1 border-t border-white/5">
-                <span className="text-zinc-500 font-mono uppercase text-[9px] mr-1">Source:</span>
+              <div className="flex items-center gap-2 overflow-x-auto text-[11px] scrollbar-none pt-1 border-t border-white/[0.06]">
+                <span className="text-zinc-500 font-mono uppercase text-[9px] mr-0.5">Source:</span>
                 
                 <button
                   onClick={() => setActiveSourceFilter('all')}
-                  className={`px-2.5 py-0.5 rounded-lg transition-colors cursor-pointer ${
+                  className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer ${
                     activeSourceFilter === 'all'
                       ? 'bg-white/15 text-white font-semibold'
-                      : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                      : 'text-zinc-400 hover:text-white'
                   }`}
                 >
                   All Sources
@@ -475,13 +488,13 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 {sourceCounts.local > 0 && (
                   <button
                     onClick={() => setActiveSourceFilter('local')}
-                    className={`px-2.5 py-0.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
+                    className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
                       activeSourceFilter === 'local'
-                        ? 'bg-emerald-500/30 text-emerald-300 font-semibold border border-emerald-500/40'
+                        ? 'bg-emerald-500/20 text-emerald-300 font-semibold'
                         : 'text-zinc-400 hover:text-emerald-300'
                     }`}
                   >
-                    <HardDrive className="w-3 h-3" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                     <span>Local ({sourceCounts.local})</span>
                   </button>
                 )}
@@ -489,13 +502,13 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 {sourceCounts.jamendo > 0 && (
                   <button
                     onClick={() => setActiveSourceFilter('jamendo')}
-                    className={`px-2.5 py-0.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
+                    className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
                       activeSourceFilter === 'jamendo'
-                        ? 'bg-amber-500/30 text-amber-300 font-semibold border border-amber-500/40'
-                        : 'text-zinc-400 hover:text-amber-300'
+                        ? 'bg-pink-500/20 text-pink-300 font-semibold'
+                        : 'text-zinc-400 hover:text-pink-300'
                     }`}
                   >
-                    <Music className="w-3 h-3" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-pink-400" />
                     <span>Jamendo ({sourceCounts.jamendo})</span>
                   </button>
                 )}
@@ -503,13 +516,13 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 {sourceCounts.audius > 0 && (
                   <button
                     onClick={() => setActiveSourceFilter('audius')}
-                    className={`px-2.5 py-0.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
+                    className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
                       activeSourceFilter === 'audius'
-                        ? 'bg-purple-500/30 text-purple-300 font-semibold border border-purple-500/40'
+                        ? 'bg-purple-500/20 text-purple-300 font-semibold'
                         : 'text-zinc-400 hover:text-purple-300'
                     }`}
                   >
-                    <Radio className="w-3 h-3" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
                     <span>Audius ({sourceCounts.audius})</span>
                   </button>
                 )}
@@ -517,13 +530,13 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 {sourceCounts.radiobrowser > 0 && (
                   <button
                     onClick={() => setActiveSourceFilter('radiobrowser')}
-                    className={`px-2.5 py-0.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
+                    className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
                       activeSourceFilter === 'radiobrowser'
-                        ? 'bg-cyan-500/30 text-cyan-300 font-semibold border border-cyan-500/40'
+                        ? 'bg-cyan-500/20 text-cyan-300 font-semibold'
                         : 'text-zinc-400 hover:text-cyan-300'
                     }`}
                   >
-                    <Radio className="w-3 h-3" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
                     <span>Radio ({sourceCounts.radiobrowser})</span>
                   </button>
                 )}
@@ -531,13 +544,13 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 {sourceCounts.youtube > 0 && (
                   <button
                     onClick={() => setActiveSourceFilter('youtube')}
-                    className={`px-2.5 py-0.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
+                    className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
                       activeSourceFilter === 'youtube'
-                        ? 'bg-red-500/30 text-red-300 font-semibold border border-red-500/40'
+                        ? 'bg-red-500/20 text-red-300 font-semibold'
                         : 'text-zinc-400 hover:text-red-300'
                     }`}
                   >
-                    <Youtube className="w-3 h-3" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
                     <span>YouTube ({sourceCounts.youtube})</span>
                   </button>
                 )}
@@ -547,11 +560,11 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
         )}
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 flex flex-col gap-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-6 custom-scrollbar">
           
           {/* Direct YouTube Video Link Card */}
           {searchResults.detectedDirectTrack && (
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-red-950/70 via-zinc-900 to-black border border-red-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-red-950/60 via-zinc-900 to-black border border-red-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
               <div className="flex items-center gap-3.5 min-w-0">
                 <div className="w-12 h-12 rounded-xl bg-red-600/20 border border-red-500/30 flex items-center justify-center text-red-400 shrink-0 overflow-hidden">
                   {searchResults.detectedDirectTrack.coverUrl ? (
@@ -561,48 +574,40 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   )}
                 </div>
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/30">
-                      YOUTUBE LINK DETECTED
-                    </span>
-                  </div>
-                  <h4 className="text-sm font-bold text-white truncate mt-1">
+                  <span className="text-[9px] font-mono uppercase tracking-widest text-red-400 font-semibold">
+                    YOUTUBE URL RECOGNIZED
+                  </span>
+                  <h4 className="text-sm font-bold text-white truncate mt-0.5 font-ui-title">
                     {searchResults.detectedDirectTrack.title}
                   </h4>
-                  <p className="text-xs text-zinc-400 truncate">
-                    {searchResults.detectedDirectTrack.artist} • Ready to stream & play
+                  <p className="text-xs text-zinc-400 truncate mt-0.5 font-ui-meta">
+                    {searchResults.detectedDirectTrack.artist} · Direct IFrame Streaming
                   </p>
                 </div>
               </div>
 
               <button
                 onClick={() => handlePlayTrack(searchResults.detectedDirectTrack!)}
-                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold shadow-lg shadow-red-600/30 transition-all shrink-0 cursor-pointer"
+                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold shadow-md transition-all shrink-0 cursor-pointer"
               >
                 <Play className="w-3.5 h-3.5 fill-current" />
-                <span>{onSelectTrack ? 'Add to Room Queue' : 'Play Now'}</span>
+                <span>{onSelectTrack ? 'Add to Room' : 'Play Now'}</span>
               </button>
             </div>
           )}
 
-          {/* Empty Search Prompt */}
+          {/* -------------------------------------------------------------
+              LANDING EXPERIENCE (EMPTY QUERY)
+              ------------------------------------------------------------- */}
           {!query && (
-            <div className="flex flex-col gap-6 py-2">
-              <div>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">
-                  Universal Music Search
-                </span>
-                <p className="text-xs text-zinc-400 mt-1">
-                  Type any song title, artist, album, playlist, radio station, or paste a direct YouTube video link.
-                </p>
-              </div>
-
+            <div className="flex flex-col gap-7 py-2">
+              
               {/* Recent Searches */}
               {recentSearches.length > 0 && (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold flex items-center gap-1.5">
-                      <History className="w-3 h-3 text-indigo-400" />
+                      <History className="w-3 h-3 text-sky-400" />
                       Recent Searches
                     </span>
                     <button
@@ -616,10 +621,10 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                     {recentSearches.map((term) => (
                       <div
                         key={term}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 text-xs text-zinc-300 transition-colors group cursor-pointer"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.07] text-xs text-zinc-300 transition-colors group cursor-pointer"
                         onClick={() => setQuery(term)}
                       >
-                        <Search className="w-3 h-3 text-indigo-400" />
+                        <Search className="w-3 h-3 text-zinc-500 group-hover:text-zinc-300" />
                         <span>{term}</span>
                         <button
                           type="button"
@@ -638,60 +643,114 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 </div>
               )}
 
-              {/* Suggested Library Artists */}
-              {tracks.length > 0 && (
-                <div className="flex flex-col gap-2">
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">
-                    Artists in Your Library
-                  </span>
-                  <div className="flex flex-wrap gap-2">
-                    {Array.from(new Set(tracks.map((t) => t.artist).filter(Boolean))).slice(0, 10).map((art) => (
-                      <button
-                        key={art}
-                        onClick={() => setQuery(art)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 border border-white/5 text-xs text-zinc-300 transition-colors cursor-pointer"
-                      >
-                        <User className="w-3 h-3 text-indigo-400" />
-                        <span>{art}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Audius Status Info Banner */}
-              <div className="p-3.5 rounded-2xl bg-zinc-950/80 border border-white/5 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <Radio className="w-4 h-4 text-purple-400 shrink-0" />
-                  <p className="text-xs text-zinc-400">
-                    <span className="text-purple-300 font-semibold">Audius Decentralized Network</span> is live for universal discovery & audio streaming.
-                  </p>
-                </div>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 shrink-0">
-                  Ready
+              {/* Curated Mood & Frequency Discovery Chips */}
+              <div className="flex flex-col gap-2.5">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold flex items-center gap-1.5">
+                  <Compass className="w-3 h-3 text-sky-400" />
+                  Explore By Sonic Mood
                 </span>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    'Ambient Space',
+                    'Retro Synthwave',
+                    'Lo-Fi Chill',
+                    'Neo-Classical',
+                    'Binaural 3D',
+                    'Electronic Bass',
+                    'Global Radio',
+                    'Jazz Lounge',
+                    'Night Drive',
+                    'Deep Focus',
+                  ].map((mood) => (
+                    <button
+                      key={mood}
+                      onClick={() => setQuery(mood)}
+                      className="px-3 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-white/20 text-xs text-zinc-300 hover:text-white transition-all cursor-pointer font-ui-body"
+                    >
+                      {mood}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {/* YouTube Status Info Banner */}
-              <div className="p-3.5 rounded-2xl bg-zinc-950/80 border border-white/5 flex items-center justify-between gap-3">
+              {/* Direct Source Jump */}
+              <div className="flex flex-col gap-2.5">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold flex items-center gap-1.5">
+                  <Globe className="w-3 h-3 text-emerald-400" />
+                  Catalog Sources
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <button
+                    onClick={() => {
+                      setQuery('local');
+                      setActiveSourceFilter('local');
+                    }}
+                    className="p-3 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-emerald-500/30 text-left transition-colors cursor-pointer group"
+                  >
+                    <span className="text-[9px] font-mono text-emerald-400 uppercase font-semibold">IndexedDB</span>
+                    <h5 className="text-xs font-bold text-white mt-0.5 font-ui-title group-hover:text-emerald-300">Local Vault</h5>
+                    <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta">{tracks.length} tracks stored</p>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setQuery('audius');
+                      setActiveSourceFilter('audius');
+                    }}
+                    className="p-3 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-purple-500/30 text-left transition-colors cursor-pointer group"
+                  >
+                    <span className="text-[9px] font-mono text-purple-400 uppercase font-semibold">Decentralized</span>
+                    <h5 className="text-xs font-bold text-white mt-0.5 font-ui-title group-hover:text-purple-300">Audius Music</h5>
+                    <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta">1M+ open tracks</p>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setQuery('jamendo');
+                      setActiveSourceFilter('jamendo');
+                    }}
+                    className="p-3 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-pink-500/30 text-left transition-colors cursor-pointer group"
+                  >
+                    <span className="text-[9px] font-mono text-pink-400 uppercase font-semibold">Creative Commons</span>
+                    <h5 className="text-xs font-bold text-white mt-0.5 font-ui-title group-hover:text-pink-300">Jamendo Catalog</h5>
+                    <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta">Free independent music</p>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setQuery('radio');
+                      setActiveTab('radio');
+                    }}
+                    className="p-3 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-cyan-500/30 text-left transition-colors cursor-pointer group"
+                  >
+                    <span className="text-[9px] font-mono text-cyan-400 uppercase font-semibold">Worldwide</span>
+                    <h5 className="text-xs font-bold text-white mt-0.5 font-ui-title group-hover:text-cyan-300">Radio Stations</h5>
+                    <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta">30,000+ live streams</p>
+                  </button>
+                </div>
+              </div>
+
+              {/* YouTube Integration Status */}
+              <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
                   <Youtube className="w-4 h-4 text-red-400 shrink-0" />
                   <p className="text-xs text-zinc-400">
                     {youtubeService.isConfigured() ? (
-                      <span className="text-emerald-400">
-                        YouTube Data API Connected. Live YouTube search is active.
+                      <span className="text-zinc-200">
+                        Official YouTube IFrame Player API connected. Live YouTube searches active.
                       </span>
                     ) : (
                       <span>
-                        YouTube URL embeds active. Set <code className="text-indigo-300 font-mono">YOUTUBE_DATA_API_KEY</code> for live YouTube search.
+                        Paste any YouTube video or music URL to play instantly via official IFrame API.
                       </span>
                     )}
                   </p>
                 </div>
 
                 <button
+                  type="button"
                   onClick={() => setShowApiKeyInput(!showApiKeyInput)}
-                  className="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-[11px] font-medium border border-white/5 transition-colors cursor-pointer whitespace-nowrap"
+                  className="px-2.5 py-1 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 text-[11px] font-mono transition-colors cursor-pointer shrink-0"
                 >
                   <Key className="w-3 h-3 inline-block mr-1" />
                   {showApiKeyInput ? 'Hide' : 'API Key'}
@@ -699,7 +758,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
               </div>
 
               {showApiKeyInput && (
-                <form onSubmit={handleSaveApiKey} className="p-4 rounded-2xl bg-zinc-900/90 border border-white/10 flex flex-col gap-3">
+                <form onSubmit={handleSaveApiKey} className="p-4 rounded-2xl bg-[#0c0e17] border border-white/10 flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-white">Custom YouTube Data API Key</label>
                     <span className="text-[10px] font-mono text-zinc-400">Optional</span>
@@ -709,7 +768,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                     value={customApiKey}
                     onChange={(e) => setCustomApiKey(e.target.value)}
                     placeholder="AIzaSy..."
-                    className="p-2.5 rounded-xl bg-zinc-950 border border-white/10 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-indigo-500"
+                    className="p-2.5 rounded-xl bg-zinc-950 border border-white/10 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-sky-500 font-mono"
                   />
                   <div className="flex items-center justify-end gap-2">
                     <button
@@ -721,175 +780,206 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold"
+                      className="px-4 py-1.5 rounded-xl bg-white text-zinc-950 text-xs font-semibold hover:bg-zinc-200"
                     >
                       Save Key
                     </button>
                   </div>
                 </form>
               )}
+
             </div>
           )}
 
-          {/* Songs & Radio Section */}
+          {/* -------------------------------------------------------------
+              ACTIVE SEARCH: BEST MATCH SPOTLIGHT CARD
+              ------------------------------------------------------------- */}
+          {query && topMatch && (activeTab === 'all' || activeTab === 'songs') && (
+            <div className="flex flex-col gap-2">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">
+                Best Match
+              </span>
+
+              <div 
+                onClick={() => handlePlayTrack(topMatch)}
+                className="group p-4 rounded-2xl bg-[#0e111a] hover:bg-[#141824] border border-white/[0.08] hover:border-white/20 transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg"
+              >
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-zinc-900 border border-white/12 shrink-0 relative shadow-sm">
+                    {topMatch.coverUrl ? (
+                      <img src={topMatch.coverUrl} alt={topMatch.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" referrerPolicy="no-referrer" />
+                    ) : (
+                      <div className={`w-full h-full bg-gradient-to-br ${topMatch.coverColor || 'from-indigo-900 to-black'} flex items-center justify-center text-white/80`}>
+                        <Music className="w-7 h-7" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <Play className="w-5 h-5 fill-white" />
+                    </div>
+                  </div>
+
+                  <div className="min-w-0">
+                    <span className="text-[9px] font-mono uppercase tracking-widest text-sky-400 font-semibold">
+                      {(topMatch.source || 'LOCAL').toUpperCase()} STREAM
+                    </span>
+                    <h3 className="text-base font-bold text-white truncate mt-0.5 font-ui-title group-hover:text-sky-300 transition-colors">
+                      <HighlightMatch text={topMatch.title} query={query} />
+                    </h3>
+                    <p className="text-xs text-zinc-400 truncate mt-0.5 font-ui-meta">
+                      <HighlightMatch text={topMatch.artist} query={query} />
+                      {topMatch.album && <span> · {topMatch.album}</span>}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0 sm:self-center">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePlayTrack(topMatch);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs transition-colors shadow-sm"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <span>Play Now</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addToQueue(topMatch);
+                    }}
+                    className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+                    title="Add to queue"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* -------------------------------------------------------------
+              ACTIVE SEARCH: TRACKS LIST
+              ------------------------------------------------------------- */}
           {query && (activeTab === 'all' || activeTab === 'songs' || activeTab === 'radio') && songsToShow.length > 0 && (
             <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">
-                  Songs & Streams ({songsToShow.length})
+              <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500">
+                <span className="uppercase tracking-widest font-semibold">
+                  Tracks ({songsToShow.length})
                 </span>
-                <span className="text-[10px] font-mono text-zinc-500">
-                  ↑↓ navigate • Enter to play
-                </span>
+                <span>↑↓ navigate · Enter to play</span>
               </div>
 
               <div className="flex flex-col gap-1">
                 {songsToShow.map((song, idx) => {
                   const isSelected = idx === selectedIndex;
-                  const isYouTube = song.source === 'youtube';
-                  const isAudius = song.source === 'audius';
-                  const isJamendo = song.source === 'jamendo';
-                  const isRadio = song.source === 'radiobrowser' || song.source === 'radio';
-
-                  // Group separators for 'all' tab
-                  const getSourceGroup = (s: string) => {
-                    if (s === 'youtube') return { label: 'YouTube Music', icon: Youtube, color: 'text-red-400' };
-                    if (s === 'audius') return { label: 'Audius Catalog', icon: Radio, color: 'text-purple-400' };
-                    if (s === 'jamendo') return { label: 'Jamendo Music', icon: Music, color: 'text-amber-400' };
-                    if (s === 'radiobrowser' || s === 'radio') return { label: 'Live Radio Stations', icon: Radio, color: 'text-cyan-400' };
-                    return { label: 'Local Vault & Curated', icon: HardDrive, color: 'text-emerald-400' };
-                  };
-
-                  const currentGroup = getSourceGroup(song.source);
-                  const prevGroup = idx > 0 ? getSourceGroup(songsToShow[idx - 1].source) : null;
-                  const isFirstInGroup = activeTab === 'all' && activeSourceFilter === 'all' && currentGroup.label !== prevGroup?.label;
+                  const isCurrent = currentTrack?.id === song.id;
 
                   return (
-                    <React.Fragment key={song.id}>
-                      {isFirstInGroup && (
-                        <div className="pt-3 pb-1.5 flex items-center gap-2 border-b border-white/5 first:pt-1">
-                          <currentGroup.icon className={`w-3.5 h-3.5 ${currentGroup.color}`} />
-                          <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-zinc-300">
-                            {currentGroup.label}
+                    <div
+                      key={song.id}
+                      onClick={() => handlePlayTrack(song)}
+                      className={`group cursor-pointer flex items-center justify-between p-2.5 rounded-2xl border transition-all ${
+                        isSelected
+                          ? 'bg-[#121624] border-sky-500/40 shadow-sm ring-1 ring-sky-500/20'
+                          : 'hover:bg-white/[0.03] border-transparent hover:border-white/[0.06]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                        {/* 40x40 artwork */}
+                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-zinc-900 shrink-0 border border-white/10 relative shadow-sm">
+                          {song.coverUrl ? (
+                            <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          ) : (
+                            <div className={`w-full h-full bg-gradient-to-br ${song.coverColor || 'from-indigo-600 to-zinc-900'} flex items-center justify-center text-white`}>
+                              <Music className="w-4 h-4" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <Play className="w-4 h-4 fill-white translate-x-0.5" />
+                          </div>
+                        </div>
+
+                        {/* Title and metadata */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className={`text-xs font-semibold truncate font-ui-title ${isCurrent ? 'text-sky-300' : 'text-zinc-100 group-hover:text-white'}`}>
+                              <HighlightMatch text={song.title} query={query} />
+                            </h4>
+
+                            <span className="text-[9px] font-mono text-zinc-500 uppercase shrink-0">
+                              · {(song.source || 'LOCAL').toUpperCase()}
+                            </span>
+                          </div>
+
+                          <p className="text-[11px] text-zinc-400 truncate mt-0.5 font-ui-meta">
+                            <HighlightMatch text={song.artist} query={query} />
+                            {song.album && <span> · <HighlightMatch text={song.album} query={query} /></span>}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Right duration & actions */}
+                      <div className="flex items-center gap-3 shrink-0 pl-2">
+                        {song.duration > 0 && (
+                          <span className="text-xs font-mono text-zinc-500 tabular-nums">
+                            {formatTime(song.duration)}
                           </span>
-                        </div>
-                      )}
-                      <div
-                        onClick={() => handlePlayTrack(song)}
-                        className={`group cursor-pointer flex items-center justify-between p-2.5 rounded-2xl border transition-all ${
-                          isSelected
-                            ? 'bg-indigo-950/40 border-indigo-500/50 shadow-md ring-1 ring-indigo-500/30'
-                            : 'hover:bg-white/[0.04] border-transparent hover:border-white/5'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="w-10 h-10 rounded-xl overflow-hidden bg-zinc-900 shrink-0 border border-white/10 relative">
-                            {song.coverUrl ? (
-                              <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className={`w-full h-full bg-gradient-to-br ${song.coverColor || 'from-indigo-600 to-zinc-900'} flex items-center justify-center text-white`}>
-                                <Music className="w-4 h-4" />
-                              </div>
-                            )}
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                              <Play className="w-4 h-4 fill-white" />
-                            </div>
-                          </div>
+                        )}
 
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <h4 className="text-xs font-bold text-zinc-200 group-hover:text-indigo-300 truncate">
-                                <HighlightMatch text={song.title} query={query} />
-                              </h4>
-
-                              {isYouTube ? (
-                                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/30 shrink-0 flex items-center gap-1 font-semibold">
-                                  <Youtube className="w-2.5 h-2.5" />
-                                  YOUTUBE
-                                </span>
-                              ) : isAudius ? (
-                                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 shrink-0 flex items-center gap-1 font-semibold">
-                                  <Radio className="w-2.5 h-2.5" />
-                                  AUDIUS
-                                </span>
-                              ) : isJamendo ? (
-                                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0 flex items-center gap-1 font-semibold">
-                                  <Music className="w-2.5 h-2.5" />
-                                  JAMENDO
-                                </span>
-                              ) : isRadio ? (
-                                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shrink-0 flex items-center gap-1 font-semibold">
-                                  <Radio className="w-2.5 h-2.5" />
-                                  RADIO
-                                </span>
-                              ) : (
-                                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0 flex items-center gap-1 font-semibold">
-                                  <HardDrive className="w-2.5 h-2.5" />
-                                  LOCAL
-                                </span>
-                              )}
-                            </div>
-
-                            <p className="text-[11px] text-zinc-400 truncate mt-0.5">
-                              <HighlightMatch text={song.artist} query={query} />
-                              {song.album && song.album !== 'YouTube Stream' && song.album !== 'Audius Stream' && (
-                                <span> • <HighlightMatch text={song.album} query={query} /></span>
-                              )}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (onSelectTrack) {
-                                onSelectTrack(song);
-                                onClose();
-                              } else {
-                                addToQueue(song);
-                                showToast?.(`"${song.title}" added to queue`, 'success');
-                              }
-                            }}
-                            className="p-1.5 rounded-lg text-zinc-400 hover:text-indigo-300 hover:bg-white/5 transition-colors cursor-pointer"
-                            title={onSelectTrack ? 'Add to room queue' : 'Add to queue'}
+                            type="button"
+                            onClick={() => addToQueue(song)}
+                            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+                            title="Add to queue"
                           >
-                            <Plus className="w-4 h-4" />
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toggleFavorite(song.id)}
+                            className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-white/10 transition-colors"
+                            title={song.isFavorite ? 'Remove favorite' : 'Add favorite'}
+                          >
+                            <Heart className={`w-3.5 h-3.5 ${song.isFavorite ? 'fill-rose-500 text-rose-500' : ''}`} />
                           </button>
                         </div>
                       </div>
-                    </React.Fragment>
+                    </div>
                   );
                 })}
               </div>
             </div>
           )}
 
-          {/* Artists Section */}
+          {/* -------------------------------------------------------------
+              ACTIVE SEARCH: ARTISTS SHELF
+              ------------------------------------------------------------- */}
           {query && (activeTab === 'all' || activeTab === 'artists') && searchResults.artists.length > 0 && (
-            <div className="flex flex-col gap-2 pt-2 border-t border-white/5">
+            <div className="flex flex-col gap-2.5">
               <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">
                 Artists ({searchResults.artists.length})
               </span>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {searchResults.artists.map((artist) => (
                   <div
                     key={artist.name}
                     onClick={() => handleSelectArtist(artist.name)}
-                    className="p-3 rounded-2xl bg-zinc-900/60 hover:bg-zinc-800/80 border border-white/5 flex items-center gap-2.5 cursor-pointer transition-all group"
+                    className="p-3 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-white/20 transition-all cursor-pointer flex items-center gap-3 group"
                   >
-                    <div className="w-10 h-10 rounded-full bg-indigo-950 text-indigo-300 flex items-center justify-center shrink-0 border border-indigo-500/20 overflow-hidden">
-                      {artist.sampleCover ? (
-                        <img src={artist.sampleCover} alt={artist.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <User className="w-4 h-4" />
-                      )}
+                    <div className="w-10 h-10 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center text-zinc-400 shrink-0 group-hover:scale-105 transition-transform">
+                      <User className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-bold text-zinc-200 group-hover:text-indigo-300 truncate">
+                      <h4 className="text-xs font-bold text-white truncate font-ui-title group-hover:text-sky-300">
                         <HighlightMatch text={artist.name} query={query} />
+                      </h4>
+                      <p className="text-[10px] text-zinc-500 font-mono mt-0.5">
+                        {artist.trackCount} tracks
                       </p>
-                      <p className="text-[10px] text-zinc-500">{artist.trackCount} tracks</p>
                     </div>
                   </div>
                 ))}
@@ -897,31 +987,35 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
             </div>
           )}
 
-          {/* Albums Section */}
+          {/* -------------------------------------------------------------
+              ACTIVE SEARCH: ALBUMS SHELF
+              ------------------------------------------------------------- */}
           {query && (activeTab === 'all' || activeTab === 'albums') && searchResults.albums.length > 0 && (
-            <div className="flex flex-col gap-2 pt-2 border-t border-white/5">
+            <div className="flex flex-col gap-2.5">
               <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">
                 Albums ({searchResults.albums.length})
               </span>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {searchResults.albums.map((album) => (
                   <div
                     key={`${album.name}-${album.artist}`}
                     onClick={() => handleSelectAlbum(album.name)}
-                    className="p-3 rounded-2xl bg-zinc-900/60 hover:bg-zinc-800/80 border border-white/5 flex items-center gap-2.5 cursor-pointer transition-all group"
+                    className="p-3 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-white/20 transition-all cursor-pointer flex items-center gap-3 group"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-zinc-800 text-zinc-300 flex items-center justify-center shrink-0 border border-white/10 overflow-hidden">
+                    <div className="w-11 h-11 rounded-xl bg-zinc-800 border border-white/10 flex items-center justify-center text-zinc-400 shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
                       {album.coverUrl ? (
                         <img src={album.coverUrl} alt={album.name} className="w-full h-full object-cover" />
                       ) : (
-                        <Disc className="w-4 h-4 text-indigo-400" />
+                        <Disc className="w-5 h-5" />
                       )}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-bold text-zinc-200 group-hover:text-indigo-300 truncate">
+                      <h4 className="text-xs font-bold text-white truncate font-ui-title group-hover:text-sky-300">
                         <HighlightMatch text={album.name} query={query} />
+                      </h4>
+                      <p className="text-[11px] text-zinc-400 truncate mt-0.5 font-ui-meta">
+                        {album.artist}
                       </p>
-                      <p className="text-[10px] text-zinc-500 truncate">{album.artist} • {album.trackCount} tracks</p>
                     </div>
                   </div>
                 ))}
@@ -929,27 +1023,31 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
             </div>
           )}
 
-          {/* Playlists / Spaces Section */}
+          {/* -------------------------------------------------------------
+              ACTIVE SEARCH: SPACES / PLAYLISTS
+              ------------------------------------------------------------- */}
           {query && (activeTab === 'all' || activeTab === 'playlists') && searchResults.playlists.length > 0 && (
-            <div className="flex flex-col gap-2 pt-2 border-t border-white/5">
+            <div className="flex flex-col gap-2.5">
               <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">
-                Spaces & Playlists ({searchResults.playlists.length})
+                Spaces ({searchResults.playlists.length})
               </span>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {searchResults.playlists.map((pl) => (
                   <div
                     key={pl.id}
                     onClick={() => handleSelectPlaylist(pl.id)}
-                    className="p-3 rounded-2xl bg-zinc-900/60 hover:bg-zinc-800 border border-white/5 flex items-center gap-3 cursor-pointer transition-all group"
+                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-white/20 transition-all cursor-pointer flex items-center gap-3.5 group"
                   >
-                    <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${pl.coverGradient} flex items-center justify-center text-white font-bold text-xs shrink-0`}>
-                      {pl.title.charAt(0)}
+                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${pl.coverGradient || 'from-sky-500 to-indigo-600'} flex items-center justify-center text-white shrink-0 shadow-sm`}>
+                      <ListMusic className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-bold text-zinc-200 group-hover:text-indigo-300 truncate">
+                      <h4 className="text-xs font-bold text-white truncate font-ui-title group-hover:text-sky-300">
                         <HighlightMatch text={pl.title} query={query} />
+                      </h4>
+                      <p className="text-[10px] text-zinc-400 font-mono mt-0.5">
+                        {pl.trackCount} tracks in space
                       </p>
-                      <p className="text-[10px] text-zinc-500">{pl.trackCount} tracks</p>
                     </div>
                   </div>
                 ))}
@@ -957,29 +1055,21 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
             </div>
           )}
 
-          {/* Zero Results Handling */}
-          {query && !hasAnyResults && (
-            <div className="py-12 text-center flex flex-col items-center justify-center gap-3">
-              <Search className="w-10 h-10 text-zinc-600 mb-1 opacity-50" />
-              <div>
-                <p className="text-sm font-bold text-zinc-200">No matches found for &quot;{query}&quot;</p>
-                <p className="text-xs text-zinc-400 mt-1 max-w-md">
-                  No local songs, artists, or playlists matched your search. You can import audio files or paste a direct YouTube video URL.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-3 mt-3">
-                <button
-                  onClick={() => {
-                    onClose();
-                    setIsUploadModalOpen(true);
-                  }}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition-colors cursor-pointer"
-                >
-                  <FolderOpen className="w-3.5 h-3.5" />
-                  <span>Import Music Files</span>
-                </button>
-              </div>
+          {/* Empty Search Result Feedback */}
+          {query && !hasAnyResults && !isSearchingExternal && (
+            <div className="p-10 rounded-2xl bg-[#0c0e17] border border-white/[0.06] text-center flex flex-col items-center justify-center gap-3">
+              <Search className="w-8 h-8 text-zinc-600" />
+              <h4 className="text-sm font-semibold text-white">No results found for "{query}"</h4>
+              <p className="text-xs text-zinc-400 max-w-sm">
+                Try searching for an artist, album, genre, or paste a YouTube video link to stream directly.
+              </p>
+              <button
+                type="button"
+                onClick={() => setQuery('')}
+                className="mt-2 px-4 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-medium text-zinc-200 transition-colors cursor-pointer"
+              >
+                Clear Query
+              </button>
             </div>
           )}
 

@@ -2,7 +2,7 @@ import React from 'react';
 
 export interface TelemetryBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   children?: React.ReactNode;
-  variant?: 'default' | 'active' | 'amber' | 'cyan' | 'emerald' | 'rose' | 'glass';
+  variant?: 'default' | 'active' | 'amber' | 'cyan' | 'emerald' | 'rose' | 'purple' | 'youtube' | 'glass';
   size?: 'sm' | 'md';
   dot?: boolean;
   dotPulse?: boolean;
@@ -22,19 +22,23 @@ export const TelemetryBadge: React.FC<TelemetryBadgeProps> = ({
     default: 'bg-white/[0.05] text-zinc-400 border-white/[0.08]',
     active: 'bg-white/10 text-white border-white/20 font-semibold',
     amber: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-    cyan: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
+    cyan: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30',
     emerald: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
     rose: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
-    glass: 'bg-[#0c0e14]/70 text-zinc-300 backdrop-blur-md border-white/12',
+    purple: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
+    youtube: 'bg-red-500/15 text-red-300 border-red-500/30',
+    glass: 'aura-glass-tier3 text-zinc-300',
   }[variant];
 
   const dotColorClasses = {
     default: 'bg-zinc-400',
     active: 'bg-white',
     amber: 'bg-amber-400',
-    cyan: 'bg-sky-400',
+    cyan: 'bg-cyan-400',
     emerald: 'bg-emerald-400',
     rose: 'bg-rose-400',
+    purple: 'bg-purple-400',
+    youtube: 'bg-red-400',
     glass: 'bg-zinc-300',
   }[variant];
 

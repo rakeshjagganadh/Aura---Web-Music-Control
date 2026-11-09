@@ -214,65 +214,68 @@ const MainLayout: React.FC = () => {
   ]);
 
   return (
-    <div className="flex flex-col h-screen h-[100dvh] bg-[#060709] text-zinc-100 font-sans antialiased overflow-hidden selection:bg-indigo-500/30 selection:text-indigo-200 relative">
+    <div className="flex flex-col h-screen h-[100dvh] bg-[#030407] text-zinc-100 font-sans antialiased overflow-hidden selection:bg-indigo-500/30 selection:text-indigo-200 relative">
       {/* Sound-reactive Atmospheric Background */}
       <AuraAtmosphere intensity="moderate" />
       
-      {/* Top Header */}
-      <Header 
-        onOpenMobileSearch={() => setIsMobileSearchOpen(true)}
-        onOpenUniversalSearch={() => setIsUniversalSearchOpen(true)}
-        onOpenAccount={() => setIsAccountModalOpen(true)}
-        canInstall={pwa.canInstall}
-        isInstalled={pwa.isInstalled}
-        onInstall={pwa.promptInstall}
-      />
-
-      {/* Main Workspace: Sidebar + View Content */}
+      {/* Main Workspace: Left Sidebar + Content Pane (Header & Viewport) */}
       <div className="flex flex-1 relative overflow-hidden">
         
-        {/* Desktop Sidebar */}
+        {/* Desktop Sidebar Rail */}
         <Sidebar />
 
-        {/* Dynamic Main Viewport (with mobile bottom padding for mini player & nav) */}
-        <main className="flex-1 overflow-y-auto h-[calc(100dvh-4rem)] lg:h-[calc(100dvh-4rem-5.5rem)] pb-36 lg:pb-6 scroll-smooth">
-          {selectedPlaylistId && currentView === 'playlist-detail' ? (
-            <PlaylistDetailView />
-          ) : currentView === 'home' ? (
-            <HomeView />
-          ) : currentView === 'sources' ? (
-            <SourcesView />
-          ) : currentView === 'listen-together' ? (
-            <ListenTogetherView />
-          ) : currentView === 'library' ? (
-            <LibraryOverviewView />
-          ) : currentView === 'songs' ? (
-            <SongsView />
-          ) : currentView === 'albums' ? (
-            <AlbumsView />
-          ) : currentView === 'artists' ? (
-            <ArtistsView />
-          ) : currentView === 'playlists' ? (
-            <PlaylistsView />
-          ) : currentView === 'favorites' ? (
-            <FavoritesView />
-          ) : currentView === 'moments' ? (
-            <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
-              <AuraMomentsPanel />
-            </div>
-          ) : currentView === 'studio' ? (
-            <StudioView />
-          ) : currentView === 'settings' ? (
-            <SettingsView />
-          ) : (
-            <HomeView />
-          )}
-        </main>
+        {/* Content Pane: Houses Floating Header, Main Viewport, and Floating Playback Island */}
+        <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative">
+          {/* Header (Detached Floating Command Surface on Desktop, Compact Bar on Mobile) */}
+          <Header 
+            onOpenMobileSearch={() => setIsMobileSearchOpen(true)}
+            onOpenUniversalSearch={() => setIsUniversalSearchOpen(true)}
+            onOpenAccount={() => setIsAccountModalOpen(true)}
+            canInstall={pwa.canInstall}
+            isInstalled={pwa.isInstalled}
+            onInstall={pwa.promptInstall}
+          />
+
+          {/* Dynamic Main Viewport (with generous clearance for floating player on desktop & mobile) */}
+          <main className="flex-1 overflow-y-auto pb-44 lg:pb-32 scroll-smooth focus:outline-none">
+            {selectedPlaylistId && currentView === 'playlist-detail' ? (
+              <PlaylistDetailView />
+            ) : currentView === 'home' ? (
+              <HomeView />
+            ) : currentView === 'sources' ? (
+              <SourcesView />
+            ) : currentView === 'listen-together' ? (
+              <ListenTogetherView />
+            ) : currentView === 'library' ? (
+              <LibraryOverviewView />
+            ) : currentView === 'songs' ? (
+              <SongsView />
+            ) : currentView === 'albums' ? (
+              <AlbumsView />
+            ) : currentView === 'artists' ? (
+              <ArtistsView />
+            ) : currentView === 'playlists' ? (
+              <PlaylistsView />
+            ) : currentView === 'favorites' ? (
+              <FavoritesView />
+            ) : currentView === 'moments' ? (
+              <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+                <AuraMomentsPanel />
+              </div>
+            ) : currentView === 'studio' ? (
+              <StudioView />
+            ) : currentView === 'settings' ? (
+              <SettingsView />
+            ) : (
+              <HomeView />
+            )}
+          </main>
+
+          {/* Desktop Floating Playback Island (Centered horizontally in available content area) */}
+          <BottomPlayer />
+        </div>
 
       </div>
-
-      {/* Desktop Persistent Bottom Player */}
-      <BottomPlayer />
 
       {/* Mobile Floating Mini Player */}
       <MobileMiniPlayer />

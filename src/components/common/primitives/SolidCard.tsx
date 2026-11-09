@@ -19,22 +19,22 @@ export const SolidCard: React.FC<SolidCardProps> = ({
   ...props
 }) => {
   const variantClasses = {
-    flat: 'bg-[#0b0d13] border-white/[0.05]',
-    elevated: 'bg-[#11131b] border-white/[0.08]',
-    milled: 'bg-[#171a24] border-white/[0.12]',
+    flat: 'bg-[#0b0d13] border-white/[0.06]',
+    elevated: 'bg-[#11131b] border-white/[0.08] shadow-md',
+    milled: 'bg-[#171a24] border-white/[0.12] shadow-lg',
   }[variant];
 
   const interactiveClasses = interactive
-    ? 'cursor-pointer transition-all duration-200 hover:bg-[#181b26] hover:border-white/20 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40'
+    ? 'cursor-pointer transition-all duration-200 hover:bg-[#161a26] hover:border-white/20 active:scale-[0.99] aura-focus-ring'
     : '';
 
   const selectedClasses = selected
-    ? 'ring-1 ring-white/50 border-white/30 shadow-lg'
+    ? 'ring-1 ring-white/50 border-white/30 shadow-xl'
     : '';
 
   return (
     <Component
-      className={`relative border rounded-xl ${variantClasses} ${interactiveClasses} ${selectedClasses} ${className}`}
+      className={`relative border rounded-2xl ${variantClasses} ${interactiveClasses} ${selectedClasses} ${className}`}
       tabIndex={interactive && props.tabIndex === undefined ? 0 : props.tabIndex}
       {...props}
     >

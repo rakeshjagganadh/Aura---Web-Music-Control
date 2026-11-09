@@ -194,7 +194,7 @@ export const StudioView: React.FC = () => {
       {/* ======================================================== */}
       <section 
         aria-label="Master Signal and Timeline"
-        className="rounded-2xl bg-zinc-950/80 border border-white/10 backdrop-blur-xl p-4 sm:p-5 shadow-2xl flex flex-col gap-4"
+        className="rounded-2xl aura-glass-island p-4 sm:p-5 shadow-2xl flex flex-col gap-4"
       >
         {/* Top Bar: Track Info & Quick Master Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-3.5">
@@ -206,6 +206,12 @@ export const StudioView: React.FC = () => {
                   src={currentTrack.artwork} 
                   alt={currentTrack.title} 
                   referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLElement).style.display = 'none';
+                    if (e.currentTarget.parentElement) {
+                      e.currentTarget.parentElement.innerHTML = '<svg class="w-5 h-5 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>';
+                    }
+                  }}
                   className="w-full h-full object-cover" 
                 />
               ) : (
@@ -215,12 +221,12 @@ export const StudioView: React.FC = () => {
 
             <div className="min-w-0 flex flex-col">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-white truncate max-w-[220px] sm:max-w-md">
+                <span className="text-sm font-semibold text-white truncate max-w-[220px] sm:max-w-md">
                   {currentTrack ? currentTrack.title : 'No Audio Track Loaded'}
                 </span>
                 {hasSongProfile && (
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 shrink-0">
-                    Profile Active
+                  <span className="text-[11px] font-mono text-cyan-400 font-medium shrink-0">
+                    · Profile Active
                   </span>
                 )}
               </div>
@@ -356,7 +362,7 @@ export const StudioView: React.FC = () => {
       {/* ======================================================== */}
       <nav aria-label="Studio Categories" className="flex flex-col gap-3">
         {/* Primary 5-Category Tabs Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 p-1.5 rounded-2xl bg-zinc-950/60 border border-white/10 backdrop-blur-md">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 p-1.5 rounded-2xl aura-glass-ambient">
           {CATEGORIES.map((cat) => {
             const isActive = activeCategory === cat.id;
             return (

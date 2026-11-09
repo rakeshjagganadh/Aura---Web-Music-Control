@@ -3,7 +3,8 @@ import React from 'react';
 export interface GlassPanelProps extends React.HTMLAttributes<HTMLElement> {
   children?: React.ReactNode;
   as?: React.ElementType;
-  intensity?: 'subtle' | 'standard' | 'prominent';
+  tier?: 'tier1' | 'tier2' | 'tier3';
+  intensity?: 'subtle' | 'standard' | 'prominent'; // Backwards compatibility alias
   interactive?: boolean;
   elevation?: 'none' | 'sm' | 'md' | 'lg';
   className?: string;
@@ -12,17 +13,25 @@ export interface GlassPanelProps extends React.HTMLAttributes<HTMLElement> {
 export const GlassPanel: React.FC<GlassPanelProps> = ({
   children,
   as: Component = 'div',
+  tier,
   intensity = 'standard',
   interactive = false,
   elevation = 'md',
   className = '',
   ...props
 }) => {
-  const intensityClasses = {
-    subtle: 'bg-[#0c0e14]/60 backdrop-blur-md border-white/[0.06]',
-    standard: 'bg-[#0c0e14]/78 backdrop-blur-xl border-white/[0.10]',
-    prominent: 'bg-[#0e1017]/90 backdrop-blur-2xl border-white/[0.14]',
+  // Map tier or legacy intensity to AURA 3.0 Glass System Tiers
+  const resolvedTier = tier || {
+    subtle: 'tier3',
+    standard: 'tier2',
+    prominent: 'tier1',
   }[intensity];
+
+  const tierClasses = {
+    tier1: 'aura-glass-tier1',
+    tier2: 'aura-glass-tier2',
+    tier3: 'aura-glass-tier3',
+  }[resolvedTier];
 
   const elevationClasses = {
     none: '',
@@ -32,15 +41,12 @@ export const GlassPanel: React.FC<GlassPanelProps> = ({
   }[elevation];
 
   const interactiveClasses = interactive
-    ? 'cursor-pointer transition-all duration-200 hover:bg-[#141724]/85 hover:border-white/20 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40'
+    ? 'cursor-pointer active:scale-[0.99] aura-focus-ring'
     : '';
 
   return (
     <Component
-      className={`relative border rounded-xl ${intensityClasses} ${elevationClasses} ${interactiveClasses} ${className}`}
-      style={{
-        boxShadow: intensity !== 'subtle' ? 'inset 0 1px 0 0 rgba(255, 255, 255, 0.10)' : undefined,
-      }}
+      className={`relative rounded-2xl ${tierClasses} ${elevationClasses} ${interactiveClasses} ${className}`}
       tabIndex={interactive && props.tabIndex === undefined ? 0 : props.tabIndex}
       {...props}
     >

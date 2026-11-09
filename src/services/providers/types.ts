@@ -203,7 +203,7 @@ export function unifiedTrackToAuraTrack(u: UnifiedTrack): Track {
     fileFormat: u.fileFormat,
     fileSize: 0,
     dateAdded: Date.now(),
-    coverUrl: u.artworkUrl,
+    coverUrl: u.artworkUrl ? u.artworkUrl.replace(/^http:\/\//i, 'https://') : '',
     genre: u.genre,
     year: u.releaseYear,
     source: sourceType,

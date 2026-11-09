@@ -56,6 +56,7 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const isCurrent = currentTrack?.id === track.id;
   const isActivelyPlaying = isCurrent && isPlaying;
@@ -92,28 +93,29 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
         {/* Artwork Container as the Core Physical/Digital Music Object */}
         <div
           onClick={handleCardClick}
-          className={`relative w-full aspect-square rounded-xl overflow-hidden bg-[#10121a] border border-white/[0.06] transition-all duration-300 ease-out ${
+          className={`relative w-full aspect-square rounded-xl overflow-hidden bg-[#0c0f17] border border-white/[0.05] transition-all duration-300 ease-out ${
             isCurrent
-              ? 'ring-1 ring-white/40 shadow-xl scale-[1.01]'
-              : 'shadow-md group-hover:shadow-xl group-hover:scale-[1.02]'
+              ? 'ring-1 ring-white/30 shadow-xl scale-[1.01]'
+              : 'shadow-md group-hover:shadow-xl group-hover:scale-[1.015]'
           }`}
         >
           {/* Track Artwork */}
-          {track.coverUrl ? (
+          {track.coverUrl && !imageError ? (
             <img
               src={track.coverUrl}
               alt={track.title}
               className={`w-full h-full object-cover transition-transform duration-500 ease-out ${
-                isActivelyPlaying ? 'scale-[1.03]' : 'group-hover:scale-[1.05]'
+                isActivelyPlaying ? 'scale-[1.03]' : 'group-hover:scale-[1.04]'
               }`}
               referrerPolicy="no-referrer"
               loading="lazy"
+              onError={() => setImageError(true)}
             />
           ) : (
-            <div className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-zinc-800 via-zinc-900 to-black'} flex flex-col items-center justify-center p-4 text-white/90`}>
-              <Disc className="w-9 h-9 opacity-40 mb-1.5 stroke-1 group-hover:rotate-12 transition-transform duration-500" />
-              <span className="text-[9px] font-mono tracking-widest uppercase opacity-40 font-semibold">
-                {track.fileFormat || 'AURA'}
+            <div className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-[#141a29] via-[#0d121c] to-[#080b12]'} flex flex-col items-center justify-center p-4 text-white/80`}>
+              <Disc className="w-9 h-9 opacity-35 mb-2 stroke-1 group-hover:rotate-12 transition-transform duration-500 text-slate-300" />
+              <span className="text-[10px] font-mono tracking-widest uppercase opacity-40 font-medium truncate max-w-full px-2 text-center">
+                {track.artist || track.source || 'AURA'}
               </span>
             </div>
           )}
@@ -322,17 +324,18 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
 
         {/* Thumbnail Object */}
         <div className="relative w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-[#0e1017] border border-white/5 shadow-sm">
-          {track.coverUrl ? (
+          {track.coverUrl && !imageError ? (
             <img
               src={track.coverUrl}
               alt={track.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               referrerPolicy="no-referrer"
               loading="lazy"
+              onError={() => setImageError(true)}
             />
           ) : (
-            <div className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-zinc-800 to-zinc-950'} flex items-center justify-center`}>
-              <Music className="w-4 h-4 text-white/80" />
+            <div className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-[#141a29] to-[#080b12]'} flex items-center justify-center`}>
+              <Music className="w-4 h-4 text-white/60" />
             </div>
           )}
 

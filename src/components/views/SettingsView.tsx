@@ -494,7 +494,7 @@ export const SettingsView: React.FC = () => {
           </div>
 
           {isInstalled ? (
-            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-medium font-mono">
+            <span className="flex items-center gap-1.5 text-emerald-400 text-xs font-medium font-mono">
               <CheckCircle className="w-3.5 h-3.5" />
               Standalone Mode
             </span>

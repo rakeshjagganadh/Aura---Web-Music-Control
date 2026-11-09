@@ -186,54 +186,171 @@ export const CURATED_DISCOVERY_TRACKS: Track[] = [
   },
 ];
 
-export const GENRE_MOOD_CATEGORIES: GenreCategoryConfig[] = [
+export interface SonicEnvironment {
+  id: string;
+  name: string;
+  tagline: string;
+  mood: string;
+  vibe: string;
+  coverGradient: string;
+  accentColor: string;
+  query: string;
+  featuredTrack: Track;
+  tags: string[];
+}
+
+export const SONIC_ENVIRONMENTS: SonicEnvironment[] = [
   {
-    id: 'genre-ambient',
-    name: 'Ambient Space',
-    description: 'Deep spatial atmospheres & 432Hz drones',
-    coverGradient: 'from-indigo-600 via-purple-700 to-slate-900',
-    trackCountText: 'Open Streams',
+    id: 'env-ambient-space',
+    name: 'Deep Spatial Void',
+    tagline: '432Hz spatial drones, binaural resonance & celestial stillness',
+    mood: 'Ambient / Meditative',
+    vibe: 'Calm & Immersive',
+    coverGradient: 'from-indigo-600 via-purple-900 to-black',
+    accentColor: '#818cf8',
     query: 'Ambient Space',
+    featuredTrack: CURATED_DISCOVERY_TRACKS[0],
+    tags: ['432Hz', 'Binaural', 'Spatial', 'Drone'],
   },
   {
-    id: 'genre-synthwave',
-    name: 'Synthwave & Cyber',
-    description: 'Retro 80s analog arpeggios & neon synths',
-    coverGradient: 'from-fuchsia-600 via-pink-600 to-indigo-900',
-    trackCountText: 'Open Streams',
+    id: 'env-synthwave',
+    name: 'Neon Analog Odyssey',
+    tagline: 'Vintage 1984 analog synthesizers, tape drive & pulsing arpeggios',
+    mood: 'Retro Cyber / Night Drive',
+    vibe: 'Cinematic & Energetic',
+    coverGradient: 'from-fuchsia-600 via-pink-700 to-indigo-950',
+    accentColor: '#f43f5e',
     query: 'Synthwave',
+    featuredTrack: CURATED_DISCOVERY_TRACKS[1],
+    tags: ['Analog', 'Arpeggio', 'Retro 80s', 'Cyber'],
   },
   {
-    id: 'genre-lofi',
-    name: 'Lo-Fi & Study',
-    description: 'Relaxing beats & rainy night keys',
-    coverGradient: 'from-amber-700 via-stone-800 to-slate-900',
-    trackCountText: 'Open Streams',
+    id: 'env-lofi-night',
+    name: 'Midnight Rain & Keys',
+    tagline: 'Dusty vinyl warmth, gentle Rhodes piano & late-night study beats',
+    mood: 'Lo-Fi Chill / Deep Work',
+    vibe: 'Warm & Contemplative',
+    coverGradient: 'from-amber-700 via-stone-900 to-slate-950',
+    accentColor: '#f59e0b',
     query: 'Lo-Fi Chill',
+    featuredTrack: CURATED_DISCOVERY_TRACKS[2],
+    tags: ['Vinyl', 'Rhodes', 'Rain', 'Study'],
   },
   {
-    id: 'genre-classical',
-    name: 'Neo-Classical',
-    description: 'Acoustic piano & minimal orchestral arrangements',
+    id: 'env-neoclassical',
+    name: 'Acoustic Solitude',
+    tagline: 'Felt piano improvisations, room harmonics & minimal strings',
+    mood: 'Neo-Classical / Reflective',
+    vibe: 'Intimate & Organic',
     coverGradient: 'from-cyan-900 via-blue-950 to-slate-950',
-    trackCountText: 'Open Streams',
+    accentColor: '#06b6d4',
     query: 'Neo-Classical',
+    featuredTrack: CURATED_DISCOVERY_TRACKS[3],
+    tags: ['Acoustic', 'Felt Piano', 'Minimal', 'Strings'],
   },
   {
-    id: 'genre-electronic',
-    name: 'Electronic & Bass',
-    description: 'Club sessions & sub-bass dynamics',
-    coverGradient: 'from-violet-600 via-indigo-800 to-black',
-    trackCountText: 'Open Streams',
-    query: 'Electronic',
-  },
-  {
-    id: 'genre-spatial',
-    name: 'Binaural 3D',
-    description: 'Spatial audio environments & nature textures',
-    coverGradient: 'from-emerald-700 via-teal-900 to-zinc-950',
-    trackCountText: 'Open Streams',
+    id: 'env-binaural-3d',
+    name: '3D Spatial Woodlands',
+    tagline: 'High-fidelity binaural field recordings & organic sound stages',
+    mood: 'Binaural 3D / Nature Immersion',
+    vibe: 'Spacious & Restorative',
+    coverGradient: 'from-emerald-700 via-teal-950 to-zinc-950',
+    accentColor: '#10b981',
     query: 'Binaural 3D',
+    featuredTrack: CURATED_DISCOVERY_TRACKS[4],
+    tags: ['3D Audio', 'Binaural HRTF', 'Forest', 'Field Rec'],
+  },
+  {
+    id: 'env-club-resonance',
+    name: 'Sub-Bass Dynamics',
+    tagline: 'Deep sub-bass oscillations, club frequencies & transient punch',
+    mood: 'Electronic / Bass Test',
+    vibe: 'Heavy & Dynamic',
+    coverGradient: 'from-violet-600 via-indigo-950 to-black',
+    accentColor: '#a855f7',
+    query: 'Electronic',
+    featuredTrack: CURATED_DISCOVERY_TRACKS[5],
+    tags: ['Sub Bass', 'DSP Stress', 'Club', 'Dynamics'],
+  },
+];
+
+export const GENRE_MOOD_CATEGORIES = SONIC_ENVIRONMENTS.map((env) => ({
+  id: env.id,
+  name: env.name,
+  description: env.tagline,
+  coverGradient: env.coverGradient,
+  query: env.query,
+  mood: env.mood,
+  tags: env.tags,
+}));
+
+export interface MusicSourcePillar {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  capabilitiesText: string[];
+  gradient: string;
+  iconName: 'hard-drive' | 'globe' | 'youtube' | 'radio' | 'sparkles';
+  badge: string;
+  searchFilter: string;
+}
+
+export const MUSIC_SOURCES_PILLARS: MusicSourcePillar[] = [
+  {
+    id: 'source-local',
+    name: 'Local Vault',
+    category: 'Offline Storage',
+    description: 'Zero-latency audio playback stored directly in your browser with IndexedDB persistence.',
+    capabilitiesText: ['10-Band DSP EQ', '3D Spatializer', 'Lossless Formats', 'A/B Studio Looping'],
+    gradient: 'from-emerald-900/60 to-zinc-900',
+    iconName: 'hard-drive',
+    badge: 'OFFLINE VAULT',
+    searchFilter: 'local',
+  },
+  {
+    id: 'source-audius',
+    name: 'Audius Network',
+    category: 'Decentralized Catalog',
+    description: 'Decentralized open music streaming platform with over 1 million independent creator tracks.',
+    capabilitiesText: ['Direct Web Stream', 'Full DSP Processing', 'Open Catalog', 'Creator Monetization'],
+    gradient: 'from-purple-900/60 to-zinc-900',
+    iconName: 'sparkles',
+    badge: '1M+ TRACKS',
+    searchFilter: 'audius',
+  },
+  {
+    id: 'source-jamendo',
+    name: 'Jamendo Music',
+    category: 'Creative Commons',
+    description: 'Free, legal and independent music database curated under Creative Commons licenses.',
+    capabilitiesText: ['Direct Web Audio', 'Lossless MP3 Stream', 'CC Licensing', 'Full Web Audio Node'],
+    gradient: 'from-pink-900/60 to-zinc-900',
+    iconName: 'globe',
+    badge: 'CREATIVE COMMONS',
+    searchFilter: 'jamendo',
+  },
+  {
+    id: 'source-radio',
+    name: 'Radio Browser',
+    category: 'Worldwide Broadcasts',
+    description: 'Community-driven directory with 30,000+ real live radio broadcasts from over 190 countries.',
+    capabilitiesText: ['Live Audio Stream', 'Bitrate Telemetry', 'Station Metadata', 'Global Coverage'],
+    gradient: 'from-amber-900/60 to-zinc-900',
+    iconName: 'radio',
+    badge: '30,000+ STATIONS',
+    searchFilter: 'radiobrowser',
+  },
+  {
+    id: 'source-youtube',
+    name: 'YouTube Music',
+    category: 'Official Embed IFrame',
+    description: 'Universal catalog integration powered strictly by the Official YouTube IFrame Player API.',
+    capabilitiesText: ['Official IFrame API', 'Universal Catalog', 'Audio-First Overlay', 'Verified Licenses'],
+    gradient: 'from-red-900/60 to-zinc-900',
+    iconName: 'youtube',
+    badge: 'OFFICIAL IFRAME',
+    searchFilter: 'youtube',
   },
 ];
 

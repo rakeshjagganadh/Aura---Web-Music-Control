@@ -224,6 +224,19 @@ export const MobileExpandedPlayer: React.FC = () => {
       onTouchEnd={handleTouchEnd}
       className="lg:hidden fixed inset-0 z-50 bg-[#07090e] text-zinc-100 flex flex-col justify-between p-4 sm:p-6 overflow-hidden pb-safe pt-safe select-none animate-in slide-in-from-bottom duration-200"
     >
+      {/* Subtle Artwork-derived Ambient Light Wash (Atmospheric depth, not an opaque glass sheet) */}
+      {currentTrack.coverUrl && (
+        <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden">
+          <img 
+            src={currentTrack.coverUrl} 
+            alt="" 
+            className="w-full h-full object-cover blur-3xl opacity-18 scale-135 filter brightness-70"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#07090e] via-[#07090e]/75 to-[#07090e]/85" />
+        </div>
+      )}
+
       {/* -------------------------------------------------------------
           TOP BAR NAVIGATION
           ------------------------------------------------------------- */}
@@ -239,7 +252,7 @@ export const MobileExpandedPlayer: React.FC = () => {
           <ChevronDown className="w-6 h-6" />
         </button>
 
-        {/* Center Title & Source Badge */}
+        {/* Center Title & Source Indicator */}
         {isInRoom && activeRoom ? (
           <button
             type="button"
@@ -258,14 +271,17 @@ export const MobileExpandedPlayer: React.FC = () => {
             </span>
           </button>
         ) : (
-          <div className="flex items-center gap-2">
-            <span className={`text-[10px] font-mono px-2 py-0.5 rounded-lg border ${sourceBadge.color}`}>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
               {sourceBadge.label}
             </span>
             {currentTrack.genre && (
-              <span className="text-[10px] font-mono text-zinc-500 hidden sm:inline">
-                {currentTrack.genre}
-              </span>
+              <>
+                <span className="text-zinc-600 text-xs font-mono">·</span>
+                <span className="text-[10px] font-mono text-zinc-500">
+                  {currentTrack.genre}
+                </span>
+              </>
             )}
           </div>
         )}
@@ -276,8 +292,8 @@ export const MobileExpandedPlayer: React.FC = () => {
           onClick={() => setIsAudioControlsOpen(true)}
           className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-semibold font-mono transition-all cursor-pointer ${
             isAudioEffectActive
-              ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 shadow-sm'
-              : 'bg-white/[0.04] text-zinc-400 border-white/[0.08]'
+              ? 'bg-sky-500/15 text-sky-300 border-sky-500/30 shadow-sm'
+              : 'bg-white/[0.04] text-zinc-400 border-white/[0.06]'
           }`}
           title="Audio DSP Studio"
         >
@@ -292,7 +308,7 @@ export const MobileExpandedPlayer: React.FC = () => {
       <div className="flex-1 flex flex-col items-center justify-center gap-5 my-auto py-3 w-full max-w-sm mx-auto overflow-hidden">
         
         {/* Prominent Center Artwork */}
-        <div className="relative group shrink-0 w-64 h-64 sm:w-72 sm:h-72 max-w-[76vw] max-h-[36vh] rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-[#10121a] flex items-center justify-center transition-all">
+        <div className="relative group shrink-0 w-64 h-64 sm:w-72 sm:h-72 max-w-[76vw] max-h-[36vh] rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-[#0d1017] flex items-center justify-center transition-all">
           {currentTrack.coverUrl ? (
             <img
               src={currentTrack.coverUrl}
@@ -301,9 +317,12 @@ export const MobileExpandedPlayer: React.FC = () => {
                 isPlaying ? 'scale-[1.02]' : 'scale-100'
               }`}
               referrerPolicy="no-referrer"
+              onError={(e) => {
+                (e.currentTarget as HTMLElement).style.display = 'none';
+              }}
             />
           ) : (
-            <div className={`w-full h-full bg-gradient-to-br ${currentTrack.coverColor || 'from-zinc-800 to-zinc-950'} flex flex-col items-center justify-center p-6 text-white`}>
+            <div className={`w-full h-full bg-gradient-to-br ${currentTrack.coverColor || 'from-[#141a29] to-[#080b12]'} flex flex-col items-center justify-center p-6 text-white`}>
               <Music className="w-16 h-16 opacity-40 mb-2" />
               <span className="text-[10px] font-mono tracking-widest opacity-50 uppercase">
                 AURA MUSIC
@@ -316,10 +335,10 @@ export const MobileExpandedPlayer: React.FC = () => {
         <div className="w-full flex flex-col gap-3">
           <div className="flex items-center justify-between gap-4 w-full">
             <div className="min-w-0 flex-1">
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight truncate leading-tight font-display">
+              <h2 className="text-xl sm:text-2xl font-page-title text-white tracking-tight truncate leading-tight">
                 {currentTrack.title}
               </h2>
-              <p className="text-sm font-semibold text-zinc-300 truncate mt-0.5">
+              <p className="text-sm font-artist-name text-zinc-300 truncate mt-0.5">
                 {currentTrack.artist}
               </p>
               {currentTrack.album && currentTrack.album !== 'YouTube Stream' && currentTrack.album !== 'Audius Stream' && (

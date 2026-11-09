@@ -161,20 +161,17 @@ export const SourcesView: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-8 p-4 sm:p-8 max-w-6xl mx-auto select-none">
+    <div className="flex flex-col gap-6 sm:gap-8 p-4 sm:p-8 max-w-6xl mx-auto select-none">
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-3 rounded-2xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
-            <Radio className="w-6 h-6" />
+          <div className="p-3 rounded-2xl bg-white/[0.04] text-zinc-200 border border-white/[0.06]">
+            <Radio className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-white tracking-tight">Music Sources & Connections</h1>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                UNIVERSAL AUDIO
-              </span>
+              <h1 className="text-xl sm:text-2xl font-page-title text-white">Music Sources & Radio</h1>
             </div>
             <p className="text-xs text-zinc-400 mt-0.5">
               Connect where your music lives. AURA serves as your universal listening and sound customization layer.
@@ -185,34 +182,34 @@ export const SourcesView: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsUploadModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 active:scale-95 text-zinc-950 text-xs font-semibold shadow-md transition-all cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Add Music / Source</span>
           </button>
         </div>
       </div>
 
       {/* Primary Sources Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         
         {/* Source 1: Local Audio Files */}
-        <div className="p-6 rounded-3xl bg-[#0c0e15]/70 border border-white/10 backdrop-blur-xl flex flex-col justify-between gap-6 shadow-xl relative overflow-hidden">
+        <div className="p-5 rounded-2xl aura-glass-ambient flex flex-col justify-between gap-5 relative overflow-hidden">
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  <HardDrive className="w-5 h-5" />
+                <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <HardDrive className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">Local Device Library</h3>
+                  <h3 className="text-sm font-semibold text-white font-display">Local Device Vault</h3>
                   <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" /> Connected & Active
                   </span>
                 </div>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                FULL DSP
+              <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
+                Full DSP
               </span>
             </div>
 
@@ -238,22 +235,22 @@ export const SourcesView: React.FC = () => {
         </div>
 
         {/* Source 2: Curated Open Sound Catalog */}
-        <div className="p-6 rounded-3xl bg-[#0c0e15]/70 border border-white/10 backdrop-blur-xl flex flex-col justify-between gap-6 shadow-xl relative overflow-hidden">
+        <div className="p-5 rounded-2xl aura-glass-ambient flex flex-col justify-between gap-5 relative overflow-hidden">
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                  <Sparkles className="w-5 h-5" />
+                <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                  <Sparkles className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">AURA Open Sound Catalog</h3>
+                  <h3 className="text-sm font-semibold text-white font-display">AURA Open Sound Catalog</h3>
                   <span className="text-[10px] font-mono text-cyan-400 flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" /> Built-in Streams
                   </span>
                 </div>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
-                LOSSLESS DSP
+              <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
+                Lossless DSP
               </span>
             </div>
 
@@ -271,7 +268,7 @@ export const SourcesView: React.FC = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => playTrack(CURATED_DISCOVERY_TRACKS[0], CURATED_DISCOVERY_TRACKS)}
-              className="flex-1 py-2 px-3 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-200 border border-cyan-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+              className="flex-1 py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 border border-white/[0.08] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
               <Play className="w-3.5 h-3.5 fill-current" />
               Listen to Curated Stream
@@ -280,22 +277,22 @@ export const SourcesView: React.FC = () => {
         </div>
 
         {/* Source 3: Audius Music Network */}
-        <div className="p-6 rounded-3xl bg-[#0c0e15]/70 border border-white/10 backdrop-blur-xl flex flex-col justify-between gap-6 shadow-xl relative overflow-hidden">
+        <div className="p-5 rounded-2xl aura-glass-ambient flex flex-col justify-between gap-5 relative overflow-hidden">
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                  <Radio className="w-5 h-5" />
+                <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                  <Radio className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">Audius Decentralized Catalog</h3>
+                  <h3 className="text-sm font-semibold text-white font-display">Audius Decentralized Catalog</h3>
                   <span className="text-[10px] font-mono text-purple-400 flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" /> Public Web Streaming
                   </span>
                 </div>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20">
-                FULL DSP & EQ
+              <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
+                Full DSP & EQ
               </span>
             </div>
 
@@ -314,7 +311,7 @@ export const SourcesView: React.FC = () => {
             <button
               onClick={handlePlayAudiusTrending}
               disabled={isLoadingAudiusTrending}
-              className="flex-1 py-2 px-3 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-200 border border-purple-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+              className="flex-1 py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 border border-white/[0.08] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
             >
               {isLoadingAudiusTrending ? (
                 <>
@@ -332,22 +329,22 @@ export const SourcesView: React.FC = () => {
         </div>
 
         {/* Source: Jamendo Music Catalog */}
-        <div className="p-6 rounded-3xl bg-[#0c0e15]/70 border border-white/10 backdrop-blur-xl flex flex-col justify-between gap-6 shadow-xl relative overflow-hidden">
+        <div className="p-5 rounded-2xl aura-glass-ambient flex flex-col justify-between gap-5 relative overflow-hidden">
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                  <Music className="w-5 h-5" />
+                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  <Music className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">Jamendo Music Catalog</h3>
+                  <h3 className="text-sm font-semibold text-white font-display">Jamendo Music Catalog</h3>
                   <span className="text-[10px] font-mono text-amber-400 flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" /> Creative Commons API
                   </span>
                 </div>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                OPEN CORS DSP
+              <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
+                Open CORS DSP
               </span>
             </div>
 
@@ -366,7 +363,7 @@ export const SourcesView: React.FC = () => {
             <button
               onClick={handlePlayJamendoTrending}
               disabled={isLoadingJamendo}
-              className="flex-1 py-2 px-3 rounded-xl bg-amber-600/20 hover:bg-amber-600/30 text-amber-200 border border-amber-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+              className="flex-1 py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 border border-white/[0.08] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
             >
               {isLoadingJamendo ? (
                 <>
@@ -384,22 +381,22 @@ export const SourcesView: React.FC = () => {
         </div>
 
         {/* Source: Radio Browser Global Directory */}
-        <div className="p-6 rounded-3xl bg-[#0c0e15]/70 border border-white/10 backdrop-blur-xl flex flex-col justify-between gap-6 shadow-xl relative overflow-hidden">
+        <div className="p-5 rounded-2xl aura-glass-ambient flex flex-col justify-between gap-5 relative overflow-hidden">
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                  <Radio className="w-5 h-5" />
+                <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                  <Radio className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">Radio Browser Directory</h3>
+                  <h3 className="text-sm font-semibold text-white font-display">Radio Browser Directory</h3>
                   <span className="text-[10px] font-mono text-cyan-400 flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" /> Live Internet Radio
                   </span>
                 </div>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
-                LIVE DSP
+              <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
+                Live DSP
               </span>
             </div>
 

@@ -37,7 +37,6 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
     setCurrentView,
     setSelectedPlaylistId,
     favoriteIds,
-    tracks,
     storageUsage,
     setIsUploadModalOpen,
     setIsShortcutsModalOpen,
@@ -59,122 +58,176 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const navItems = [
-    { id: 'listen-together' as NavView, label: 'Listen Together', icon: Users, badge: isInRoom ? participants.length : undefined, desc: 'Shared rooms & synchronized music' },
-    { id: 'albums' as NavView, label: 'Albums Collection', icon: Disc, desc: 'Group by album releases' },
-    { id: 'artists' as NavView, label: 'Artists Directory', icon: User, desc: 'Browse by song performers' },
-    { id: 'favorites' as NavView, label: 'Favorites', icon: Heart, badge: favoriteIds.size, desc: 'Starred & liked tracks' },
-    { id: 'studio' as NavView, label: 'Full Audio Studio View', icon: SlidersHorizontal, desc: 'Advanced waveform & visualizer' },
-    { id: 'settings' as NavView, label: 'Settings & Storage', icon: Settings, desc: 'DSP engine & data management' },
-  ];
-
   return (
     <div
       id="mobile-more-sheet"
+      aria-label="More Destinations Sheet"
       className="lg:hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col justify-end select-none animate-in fade-in duration-200"
     >
-      {/* Backdrop tap */}
+      {/* Backdrop tap to dismiss */}
       <div className="flex-1" onClick={onClose} />
 
-      {/* Sheet Container */}
-      <div className="relative w-full max-h-[85vh] bg-[#0c0d12] border-t border-white/15 rounded-t-3xl shadow-2xl flex flex-col overflow-hidden pb-safe animate-in slide-in-from-bottom duration-300">
+      {/* Sheet Modal Container */}
+      <div className="relative w-full max-h-[85vh] bg-[#080a10] border-t border-white/[0.1] rounded-t-[28px] shadow-[0_-20px_50px_rgba(0,0,0,0.95)] flex flex-col overflow-hidden pb-safe animate-in slide-in-from-bottom duration-250">
         
-        {/* Handle */}
-        <div className="w-12 h-1.5 rounded-full bg-zinc-700 mx-auto mt-3 mb-1 shrink-0" />
+        {/* Tactile Sheet Handle */}
+        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mt-3 mb-1 shrink-0" />
 
-        {/* Header */}
-        <div className="px-5 py-3 border-b border-white/10 flex items-center justify-between shrink-0">
+        {/* Sheet Header */}
+        <div className="px-5 py-3 border-b border-white/[0.07] flex items-center justify-between shrink-0">
           <div>
-            <h3 className="text-base font-bold text-white tracking-tight">More Destinations</h3>
-            <p className="text-xs text-zinc-400">Library categories & studio utilities</p>
+            <h3 className="text-base font-bold text-white tracking-tight font-display">
+              AURA Destinations
+            </h3>
+            <p className="text-xs text-zinc-400 font-ui-meta mt-0.5">
+              Vault collections, shared rooms & studio tools
+            </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-2 text-zinc-400 hover:text-white active:bg-zinc-800 rounded-xl transition-colors cursor-pointer"
+            className="p-2 text-zinc-400 hover:text-white active:bg-white/[0.06] rounded-xl transition-colors cursor-pointer aura-focus-ring"
+            aria-label="Close sheet"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Navigation List */}
-        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
+        {/* Sheet Scrollable Body */}
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 custom-scrollbar">
           
-          {/* Main Destinations */}
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => navigateTo(item.id)}
-                className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/60 hover:bg-zinc-800/80 active:bg-zinc-800 border border-white/5 transition-all text-left cursor-pointer"
-              >
-                <div className="flex items-center gap-3.5">
-                  <div className="p-2.5 rounded-xl bg-indigo-600/15 text-indigo-400 border border-indigo-500/25">
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-white">{item.label}</span>
-                      {item.badge !== undefined && item.badge > 0 && (
-                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                          {item.badge}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-zinc-400 mt-0.5">{item.desc}</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-zinc-600" />
-              </button>
-            );
-          })}
+          {/* SECTION 1: EXPERIENCES & SOUND */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-medium px-1">
+              EXPERIENCES & DSP
+            </span>
 
-          {/* PWA Install Tile if installable and not installed */}
-          {canInstall && !isInstalled && onInstall && (
+            {/* Listen Together */}
             <button
               type="button"
-              onClick={() => {
-                onClose();
-                onInstall();
-              }}
-              className="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-indigo-950/40 to-zinc-900 border border-indigo-500/30 text-left transition-colors cursor-pointer mt-1"
+              onClick={() => navigateTo('listen-together')}
+              className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.06] transition-all text-left cursor-pointer group aura-focus-ring"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shrink-0">
-                  <Download className="w-4 h-4 text-indigo-300" />
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 text-zinc-300 group-hover:text-white transition-colors">
+                  <Users className="w-5 h-5" />
                 </div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold text-white">Install AURA Studio</span>
-                    <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                      APP
-                    </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-white font-ui-title">Listen Together</span>
+                    {isInRoom && (
+                      <span className="text-[10px] font-mono text-emerald-400 font-medium flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        <span>{participants.length} online</span>
+                      </span>
+                    )}
                   </div>
-                  <span className="text-[10px] text-zinc-400 block mt-0.5">Standalone mobile app & home screen launcher</span>
+                  <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta truncate">
+                    Synchronized rooms & collective music listening
+                  </p>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-zinc-400 shrink-0" />
+              <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 shrink-0" />
             </button>
-          )}
 
-          {/* Quick Action Tiles */}
-          <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-white/5">
-            
-            {/* Upload Music */}
+            {/* Audio Studio & DSP */}
+            <button
+              type="button"
+              onClick={() => navigateTo('studio')}
+              className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.06] transition-all text-left cursor-pointer group aura-focus-ring"
+            >
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 text-zinc-300 group-hover:text-white transition-colors">
+                  <SlidersHorizontal className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-xs font-semibold text-white font-ui-title">Audio Studio & DSP</span>
+                  <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta truncate">
+                    10-band equalizer, 3D Spatializer & audio canvas
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 shrink-0" />
+            </button>
+          </div>
+
+          {/* SECTION 2: VAULT COLLECTIONS */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-medium px-1">
+              MUSIC VAULT
+            </span>
+
+            {/* Albums */}
+            <button
+              type="button"
+              onClick={() => navigateTo('albums')}
+              className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] active:bg-white/[0.07] border border-white/[0.05] transition-all text-left cursor-pointer group aura-focus-ring"
+            >
+              <div className="flex items-center gap-3.5 min-w-0">
+                <Disc className="w-4.5 h-4.5 text-zinc-400 group-hover:text-zinc-200 shrink-0 ml-1" />
+                <div className="min-w-0">
+                  <span className="text-xs font-medium text-zinc-200 font-ui-body">Albums Collection</span>
+                  <p className="text-[11px] text-zinc-500 font-ui-meta truncate">Browse LP & EP release packages</p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 shrink-0" />
+            </button>
+
+            {/* Artists */}
+            <button
+              type="button"
+              onClick={() => navigateTo('artists')}
+              className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] active:bg-white/[0.07] border border-white/[0.05] transition-all text-left cursor-pointer group aura-focus-ring"
+            >
+              <div className="flex items-center gap-3.5 min-w-0">
+                <User className="w-4.5 h-4.5 text-zinc-400 group-hover:text-zinc-200 shrink-0 ml-1" />
+                <div className="min-w-0">
+                  <span className="text-xs font-medium text-zinc-200 font-ui-body">Artists Directory</span>
+                  <p className="text-[11px] text-zinc-500 font-ui-meta truncate">Explore track performers & creators</p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 shrink-0" />
+            </button>
+
+            {/* Liked Songs */}
+            <button
+              type="button"
+              onClick={() => navigateTo('favorites')}
+              className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] active:bg-white/[0.07] border border-white/[0.05] transition-all text-left cursor-pointer group aura-focus-ring"
+            >
+              <div className="flex items-center gap-3.5 min-w-0">
+                <Heart className="w-4.5 h-4.5 text-rose-400 shrink-0 ml-1" />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-zinc-200 font-ui-body">Liked Songs</span>
+                    {favoriteIds.size > 0 && (
+                      <span className="text-[10px] font-mono text-zinc-400 tabular-nums">
+                        · {favoriteIds.size} {favoriteIds.size === 1 ? 'track' : 'tracks'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-zinc-500 font-ui-meta truncate">Your starred listening favorites</p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 shrink-0" />
+            </button>
+          </div>
+
+          {/* SECTION 3: QUICK ACTIONS */}
+          <div className="grid grid-cols-2 gap-2.5 pt-1">
+            {/* Import Audio */}
             <button
               type="button"
               onClick={() => {
                 onClose();
                 setIsUploadModalOpen(true);
               }}
-              className="flex flex-col gap-2 p-3.5 rounded-2xl bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-left transition-colors cursor-pointer"
+              className="flex flex-col gap-2 p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.07] text-left transition-colors cursor-pointer group aura-focus-ring"
             >
-              <UploadCloud className="w-5 h-5 text-indigo-400" />
+              <UploadCloud className="w-5 h-5 text-zinc-300 group-hover:text-white" />
               <div>
-                <span className="text-xs font-bold text-white block">Add Music</span>
-                <span className="text-[10px] text-indigo-300">Import audio files</span>
+                <span className="text-xs font-semibold text-white block font-ui-title">Import Music</span>
+                <span className="text-[11px] text-zinc-400 font-ui-meta">Add audio files</span>
               </div>
             </button>
 
@@ -185,35 +238,80 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
                 onClose();
                 loadDemoPack();
               }}
-              className="flex flex-col gap-2 p-3.5 rounded-2xl bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-left transition-colors cursor-pointer"
+              className="flex flex-col gap-2 p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.07] text-left transition-colors cursor-pointer group aura-focus-ring"
             >
-              <Sparkles className="w-5 h-5 text-indigo-400" />
+              <Sparkles className="w-5 h-5 text-zinc-300 group-hover:text-white" />
               <div>
-                <span className="text-xs font-bold text-white block">Demo Pack</span>
-                <span className="text-[10px] text-zinc-400">Load sample tracks</span>
+                <span className="text-xs font-semibold text-white block font-ui-title">Sample Pack</span>
+                <span className="text-[11px] text-zinc-400 font-ui-meta">Load demo music</span>
               </div>
             </button>
-
           </div>
 
-          {/* Storage & Shortcuts row */}
-          <div className="flex items-center justify-between pt-3 px-1 text-xs text-zinc-500">
-            <div className="flex items-center gap-1.5 font-mono">
-              <HardDrive className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Storage: {formatStorageMB(storageUsage.approxBytes)}</span>
-            </div>
-            
+          {/* PWA Install Tile if available */}
+          {canInstall && !isInstalled && onInstall && (
             <button
               type="button"
               onClick={() => {
                 onClose();
-                setIsShortcutsModalOpen(true);
+                onInstall();
               }}
-              className="flex items-center gap-1 text-zinc-400 hover:text-zinc-200 cursor-pointer"
+              className="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-sky-950/30 to-zinc-900 border border-sky-500/25 text-left transition-colors cursor-pointer aura-focus-ring"
             >
-              <Keyboard className="w-3.5 h-3.5" />
-              <span>Shortcuts</span>
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-sky-500/15 border border-sky-500/25 flex items-center justify-center shrink-0">
+                  <Download className="w-4 h-4 text-sky-300" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-white font-ui-title">Install AURA App</span>
+                    <span className="text-[9px] font-mono text-sky-400 font-bold uppercase">PWA</span>
+                  </div>
+                  <span className="text-[11px] text-zinc-400 block mt-0.5 font-ui-meta">
+                    Add to home screen for full offline capability
+                  </span>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-zinc-500 shrink-0" />
             </button>
+          )}
+
+          {/* SECTION 4: SYSTEM & PREFERENCES */}
+          <div className="pt-2 border-t border-white/[0.07] flex flex-col gap-2">
+            
+            {/* Settings Navigation */}
+            <button
+              type="button"
+              onClick={() => navigateTo('settings')}
+              className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.05] transition-all text-left cursor-pointer group aura-focus-ring"
+            >
+              <div className="flex items-center gap-3">
+                <Settings className="w-4 h-4 text-zinc-400 group-hover:text-white shrink-0 ml-1" />
+                <span className="text-xs font-medium text-zinc-300 font-ui-body">Preferences & System Settings</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 shrink-0" />
+            </button>
+
+            {/* Telemetry and Shortcuts Row */}
+            <div className="flex items-center justify-between px-2 pt-1 text-xs text-zinc-500">
+              <div className="flex items-center gap-1.5 font-mono text-[11px]">
+                <HardDrive className="w-3.5 h-3.5 text-zinc-400" />
+                <span>Vault: {formatStorageMB(storageUsage.approxBytes)}</span>
+              </div>
+              
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  setIsShortcutsModalOpen(true);
+                }}
+                className="flex items-center gap-1.5 text-zinc-400 hover:text-white transition-colors cursor-pointer text-xs"
+              >
+                <Keyboard className="w-3.5 h-3.5" />
+                <span className="font-ui-body">Shortcuts</span>
+              </button>
+            </div>
+
           </div>
 
         </div>

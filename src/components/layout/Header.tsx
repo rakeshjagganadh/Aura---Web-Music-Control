@@ -2,12 +2,10 @@ import React from 'react';
 import { useMusic } from '../../context/MusicContext';
 import { AuraBrandMark } from '../common/AuraBrandMark';
 import { PWAInstallButton } from '../pwa/PWAInstallButton';
-import { TelemetryBadge } from '../common/primitives/TelemetryBadge';
 import { 
   Search, 
   Sparkles, 
   Keyboard, 
-  HardDrive,
   ListMusic, 
   ChevronLeft, 
   User, 
@@ -34,182 +32,255 @@ export const Header: React.FC<{
     setCurrentView,
     selectedPlaylistId,
     setSelectedPlaylistId,
+    playlists,
     queue,
     setIsQueueDrawerOpen,
     setIsUploadModalOpen,
     setIsShortcutsModalOpen,
     loadDemoPack,
-    storageUsage,
     isPlaying,
   } = useMusic();
 
-  const formatStorageMB = (bytes: number) => {
-    if (!bytes) return '0 MB';
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  const selectedPlaylist = playlists.find(p => p.id === selectedPlaylistId);
+
+  const getBreadcrumbContext = () => {
+    if (selectedPlaylistId && currentView === 'playlist-detail') {
+      return { section: 'Spaces', title: selectedPlaylist?.name || 'Space' };
+    }
+    switch (currentView) {
+      case 'home': return { section: 'Discover', title: 'Home' };
+      case 'sources': return { section: 'Discover', title: 'Open Sources & Radio' };
+      case 'listen-together': return { section: 'Experiences', title: 'Listen Together' };
+      case 'library': return { section: 'Music Vault', title: 'Vault Overview' };
+      case 'songs': return { section: 'Music Vault', title: 'Tracks' };
+      case 'albums': return { section: 'Music Vault', title: 'Albums' };
+      case 'artists': return { section: 'Music Vault', title: 'Artists' };
+      case 'playlists': return { section: 'Collections', title: 'Spaces' };
+      case 'favorites': return { section: 'Music Vault', title: 'Liked Songs' };
+      case 'moments': return { section: 'Sound Lab', title: 'Aura Moments' };
+      case 'studio': return { section: 'Experiences', title: 'Audio Studio & DSP' };
+      case 'settings': return { section: 'System', title: 'Preferences' };
+      default: return { section: 'AURA', title: 'Discover' };
+    }
   };
 
-  return (
-    <header className="h-16 border-b border-white/[0.10] bg-[#0c0e14]/80 backdrop-blur-xl px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 sticky top-0 z-30 select-none">
-      
-      {/* Brand Logo or Back Button if inside Playlist Detail on mobile */}
-      <div className="flex items-center gap-2">
-        {selectedPlaylistId && currentView === 'playlist-detail' ? (
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedPlaylistId(null);
-              setCurrentView('playlists');
-            }}
-            className="lg:hidden p-2 -ml-1 rounded-xl text-zinc-400 hover:text-white active:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
-            title="Back to Playlists"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-        ) : null}
+  const breadcrumb = getBreadcrumbContext();
 
+  return (
+    <>
+      {/* -------------------------------------------------------------
+          MOBILE HEADER: Compact fixed control surface (lg:hidden)
+          ------------------------------------------------------------- */}
+      <header className="lg:hidden h-13 border-b border-white/[0.05] bg-[rgba(8,10,16,0.72)] backdrop-blur-2xl px-4 flex items-center justify-between gap-3 sticky top-0 z-20 select-none">
+        {/* Mobile Brand */}
         <div 
           onClick={() => {
             setSelectedPlaylistId(null);
             setCurrentView('home');
-          }} 
-          className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group"
-          id="header-brand-logo"
+          }}
+          className="flex items-center gap-2 cursor-pointer group"
+          id="mobile-header-brand"
         >
-          <AuraBrandMark isPlaying={isPlaying} size={30} />
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm font-bold text-white tracking-tight font-display">AURA</span>
-              <TelemetryBadge variant="glass" size="sm">
-                STUDIO
-              </TelemetryBadge>
-            </div>
+          <AuraBrandMark isPlaying={isPlaying} size={26} />
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm font-bold text-white tracking-[0.14em] font-display">AURA</span>
+            <span className="text-[9px] font-mono tracking-widest text-sky-400 font-semibold uppercase">SPATIAL</span>
           </div>
         </div>
-      </div>
 
-      {/* Unified Universal Search Gateway (Desktop / Tablet) */}
-      <div 
-        onClick={() => onOpenUniversalSearch?.()}
-        className="hidden sm:flex flex-1 max-w-md items-center justify-between px-3.5 py-2 rounded-xl bg-[#11131b] hover:bg-[#161a25] border border-white/[0.08] hover:border-white/20 text-xs text-zinc-400 cursor-pointer transition-all group select-none shadow-sm"
-        title="Open Universal Search (⌘K or /)"
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            onOpenUniversalSearch?.();
-          }
-        }}
-      >
-        <div className="flex items-center gap-2.5 min-w-0">
-          <Search className="w-4 h-4 text-zinc-500 group-hover:text-zinc-300 transition-colors shrink-0" />
-          <span className="truncate group-hover:text-zinc-200">
-            Search songs, artists, albums, spaces, radio...
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          <kbd className="px-1.5 py-0.5 text-[10px] font-mono text-zinc-400 bg-white/[0.06] rounded border border-white/[0.08] group-hover:text-zinc-200 group-hover:border-white/15">
-            ⌘K
-          </kbd>
-          <kbd className="px-1.5 py-0.5 text-[10px] font-mono text-zinc-500 bg-white/[0.04] rounded border border-white/[0.06]">
-            /
-          </kbd>
-        </div>
-      </div>
+        {/* Mobile Right Utilities */}
+        <div className="flex items-center gap-1.5">
+          {onOpenUniversalSearch && (
+            <button
+              type="button"
+              onClick={onOpenUniversalSearch}
+              className="p-2 rounded-xl text-zinc-400 hover:text-white active:bg-white/5 transition-colors aura-focus-ring cursor-pointer"
+              title="Search"
+              aria-label="Search"
+            >
+              <Search className="w-4 h-4" />
+            </button>
+          )}
 
-      {/* Header Utility Actions */}
-      <div className="flex items-center gap-1.5 sm:gap-2.5">
-        
-        {/* Mobile Search Button */}
-        {onOpenMobileSearch && (
           <button
             type="button"
-            onClick={onOpenMobileSearch}
-            className="sm:hidden p-2 rounded-xl text-zinc-400 hover:text-white active:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
-            title="Search"
+            onClick={() => setIsUploadModalOpen(true)}
+            className="p-2 rounded-xl text-zinc-400 hover:text-white active:bg-white/5 transition-colors aura-focus-ring cursor-pointer"
+            title="Add Music"
+            aria-label="Add Music"
           >
-            <Search className="w-4 h-4" />
+            <Plus className="w-4 h-4" />
           </button>
-        )}
 
-        {/* Local Storage Database usage badge */}
-        <div 
-          onClick={() => setCurrentView('settings')}
-          className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.04] border border-white/[0.06] text-[11px] text-zinc-400 font-mono cursor-pointer hover:border-white/10 hover:text-zinc-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
-          title="Local storage database usage"
-          tabIndex={0}
-        >
-          <HardDrive className="w-3.5 h-3.5 text-zinc-400" />
-          <span>{formatStorageMB(storageUsage.approxBytes)}</span>
-        </div>
-
-        {/* Demo Pack Loader */}
-        <button
-          onClick={loadDemoPack}
-          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] border border-white/[0.08] text-zinc-300 text-xs font-medium transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
-          title="Synthesize royalty-free sample music"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-zinc-400" />
-          <span>Demo Pack</span>
-        </button>
-
-        {/* PWA Install Button */}
-        {onInstall && (
-          <PWAInstallButton
-            canInstall={canInstall}
-            isInstalled={isInstalled}
-            onInstall={onInstall}
-          />
-        )}
-
-        {/* Add Music Button */}
-        <button
-          onClick={() => setIsUploadModalOpen(true)}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-zinc-200 active:bg-zinc-300 text-zinc-950 text-xs font-semibold transition-all active:scale-95 cursor-pointer shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Add Music</span>
-        </button>
-
-        {/* Queue Drawer Trigger */}
-        <button
-          onClick={() => setIsQueueDrawerOpen(true)}
-          className="relative p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.05] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
-          title="Play Queue"
-        >
-          <ListMusic className="w-4 h-4" />
-          {queue.length > 0 && (
-            <TelemetryBadge
-              variant="emerald"
-              size="sm"
-              className="absolute -top-1 -right-1 px-1 py-0 text-[8px] rounded-full"
-            >
-              {queue.length}
-            </TelemetryBadge>
-          )}
-        </button>
-
-        {/* Account / Sync Profile */}
-        {onOpenAccount && (
           <button
-            onClick={onOpenAccount}
-            className="p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.05] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
-            title="AURA Profile & Studio Sync"
+            type="button"
+            onClick={() => setIsQueueDrawerOpen(true)}
+            className="relative p-2 rounded-xl text-zinc-400 hover:text-white active:bg-white/5 transition-colors cursor-pointer aura-focus-ring"
+            title="Play Queue"
+            aria-label="Open Play Queue"
           >
-            <User className="w-4 h-4" />
+            <ListMusic className="w-4 h-4" />
+            {queue.length > 0 && (
+              <span className="absolute 1 top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-sky-400 shadow-[0_0_6px_rgba(56,189,248,0.8)]" />
+            )}
           </button>
-        )}
 
-        {/* Shortcuts ? (Desktop) */}
-        <button
-          onClick={() => setIsShortcutsModalOpen(true)}
-          className="hidden sm:flex p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.05] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
-          title="Keyboard Shortcuts (?)"
-        >
-          <Keyboard className="w-4 h-4" />
-        </button>
+          {onOpenAccount && (
+            <button
+              type="button"
+              onClick={onOpenAccount}
+              className="p-2 rounded-xl text-zinc-400 hover:text-white active:bg-white/5 transition-colors cursor-pointer aura-focus-ring"
+              title="AURA Profile & Studio Sync"
+              aria-label="Profile and Cloud Sync"
+            >
+              <User className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* -------------------------------------------------------------
+          DESKTOP FLOATING COMMAND SURFACE (hidden lg:block)
+          Detached glass island aligned with the main content grid
+          ------------------------------------------------------------- */}
+      <div className="hidden lg:block w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 mt-3.5 lg:mt-4 mb-1.5 shrink-0 z-20">
+        <header className="h-[54px] rounded-2xl aura-glass-island px-4 lg:px-5 flex items-center justify-between gap-4 select-none shadow-[0_16px_40px_rgba(0,0,0,0.65)]">
+          
+          {/* ZONE 1: BREADCRUMB / CURRENT LOCATION */}
+          <div className="flex items-center gap-3 shrink-0 min-w-0">
+            {selectedPlaylistId && currentView === 'playlist-detail' ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedPlaylistId(null);
+                  setCurrentView('playlists');
+                }}
+                className="p-1.5 -ml-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors aura-focus-ring flex items-center gap-1.5 cursor-pointer"
+                title="Back to Spaces"
+                aria-label="Back to Spaces"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span className="text-xs text-zinc-400 font-medium">Spaces</span>
+                <span className="text-zinc-600 text-xs font-mono">/</span>
+                <span className="text-xs text-white font-semibold truncate max-w-[200px] font-display">
+                  {breadcrumb.title}
+                </span>
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-zinc-500 font-mono uppercase tracking-wider text-[10px] font-semibold">
+                  {breadcrumb.section}
+                </span>
+                <span className="text-zinc-700 font-mono text-[10px]" aria-hidden="true">/</span>
+                <h1 className="text-white font-semibold font-display tracking-tight text-sm">
+                  {breadcrumb.title}
+                </h1>
+              </div>
+            )}
+          </div>
+
+          {/* ZONE 2: UNIVERSAL SEARCH COMMAND BAR (Central Visual Anchor) */}
+          <div 
+            onClick={() => onOpenUniversalSearch?.()}
+            className="flex-1 max-w-sm md:max-w-md xl:max-w-lg items-center justify-between px-3.5 py-1.5 rounded-xl bg-white/[0.035] hover:bg-white/[0.06] border border-white/[0.07] hover:border-white/20 text-xs text-zinc-400 cursor-pointer transition-all flex group select-none shadow-sm aura-focus-ring"
+            title="Universal Search (⌘K or /)"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onOpenUniversalSearch?.();
+              }
+            }}
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Search className="w-3.5 h-3.5 text-zinc-400 group-hover:text-sky-300 transition-colors shrink-0" />
+              <span className="truncate group-hover:text-zinc-200 font-ui-body text-xs">
+                Search tracks, artists, spaces, radio...
+              </span>
+            </div>
+            <div className="flex items-center gap-1 shrink-0 pl-2">
+              <kbd className="px-1.5 py-0.5 text-[9px] font-mono text-zinc-400 bg-white/[0.05] rounded border border-white/[0.08] group-hover:text-zinc-200 group-hover:border-white/15">
+                ⌘K
+              </kbd>
+            </div>
+          </div>
+
+          {/* ZONE 3: UTILITY ACTIONS & PRIMARY CTA */}
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+            {/* Demo Pack Loader */}
+            <button
+              type="button"
+              onClick={loadDemoPack}
+              className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] text-zinc-300 hover:text-white text-xs font-medium transition-colors cursor-pointer aura-focus-ring"
+              title="Load sample music"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-zinc-400" />
+              <span className="font-ui-body">Demo Pack</span>
+            </button>
+
+            {/* PWA Install Button */}
+            {onInstall && (
+              <PWAInstallButton
+                canInstall={canInstall}
+                isInstalled={isInstalled}
+                onInstall={onInstall}
+              />
+            )}
+
+            {/* Primary Add Music CTA */}
+            <button
+              type="button"
+              onClick={() => setIsUploadModalOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-zinc-100 active:bg-zinc-200 text-zinc-950 text-xs font-semibold transition-all active:scale-95 cursor-pointer shadow-sm aura-focus-ring"
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span className="font-ui-title">Add Music</span>
+            </button>
+
+            {/* Play Queue Drawer Trigger */}
+            <button
+              type="button"
+              onClick={() => setIsQueueDrawerOpen(true)}
+              className="relative p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.05] transition-colors cursor-pointer aura-focus-ring"
+              title="Play Queue"
+              aria-label="Open Play Queue"
+            >
+              <ListMusic className="w-4 h-4" />
+              {queue.length > 0 && (
+                <span className="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-white text-zinc-950 ring-2 ring-[#07090e]">
+                  {queue.length}
+                </span>
+              )}
+            </button>
+
+            {/* Account / Cloud Sync */}
+            {onOpenAccount && (
+              <button
+                type="button"
+                onClick={onOpenAccount}
+                className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.05] transition-colors cursor-pointer aura-focus-ring"
+                title="AURA Profile & Studio Sync"
+                aria-label="Profile and Cloud Sync"
+              >
+                <User className="w-4 h-4" />
+              </button>
+            )}
+
+            {/* Shortcuts (?) Desktop */}
+            <button
+              type="button"
+              onClick={() => setIsShortcutsModalOpen(true)}
+              className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.05] transition-colors cursor-pointer aura-focus-ring"
+              title="Keyboard Shortcuts (?)"
+              aria-label="Keyboard Shortcuts"
+            >
+              <Keyboard className="w-4 h-4" />
+            </button>
+          </div>
+
+        </header>
       </div>
-
-    </header>
+    </>
   );
 };

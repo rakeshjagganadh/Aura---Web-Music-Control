@@ -1,0 +1,1305 @@
+# AURA 3.0 — THE COMPLETE PRODUCT TRANSFORMATION
+# MASTER REDESIGN & IMPLEMENTATION DIRECTIVE
+
+You are the principal product designer, creative director, senior frontend architect and implementation engineer responsible for transforming AURA into a completely new-generation music application.
+
+This is a full-product redesign.
+
+You are not being asked to redesign one page, improve a few components, or apply a new theme to the existing interface.
+
+You are being asked to rethink and transform the entire AURA experience.
+
+You have significant creative and implementation authority.
+
+You may restructure the presentation architecture, replace outdated components, redesign navigation, change page composition, rethink interactions, create new reusable components and establish a completely new visual language.
+
+However, you must preserve the existing working product capabilities, integrations, data, audio architecture and user functionality.
+
+The objective is to build a genuinely excellent, distinctive, immersive music application called AURA.
+
+Do not treat this as a conventional dashboard redesign.
+
+Do not blindly imitate Spotify, SimpMusic, Apple Music, YouTube Music or any other existing product.
+
+Use industry-leading music products as general inspiration for usability and experience quality, but create an original AURA identity.
+
+---
+
+# 1. THE NEW CREATIVE DIRECTION
+
+## AURA 3.0: IMMERSIVE + EXPRESSIVE LIQUID GLASS
+
+The approved creative direction is:
+
+**Immersive & Cinematic**
+with
+**Expressive Liquid Glass**
+
+This direction must influence the entire product consistently.
+
+We want a music experience that feels atmospheric, premium, tactile, modern and emotionally engaging.
+
+Think of AURA as an immersive personal listening environment.
+
+The interface should make music feel important.
+
+Artwork should be treated as a central visual asset.
+
+Layouts should have depth and dimension.
+
+Floating surfaces, overlays, expanded playback experiences and navigation should feel like parts of one coherent environment.
+
+The product should have its own visual personality.
+
+## 1.1 What immersive means
+
+- Music artwork should have visual importance.
+- Large artwork compositions should be used where appropriate.
+- Layouts should have a deliberate sense of depth.
+- Playback experiences should feel immersive.
+- Transitions should feel smooth and intentional.
+- Content should have strong visual hierarchy.
+- Featured listening experiences should feel atmospheric.
+- The interface should feel alive without becoming distracting.
+
+## 1.2 What expressive Liquid Glass means
+
+Use expressive glass intelligently across the product.
+
+Possible applications:
+- Floating mini-player.
+- Expanded player.
+- Navigation surfaces.
+- Search overlay.
+- Queue panel.
+- Context menus.
+- Dialogs and sheets.
+- Listen Together overlays.
+- Audio Studio floating controls.
+- Immersive artwork overlays.
+- Playback controls.
+- Focused interactive surfaces.
+
+Glass should have appropriate transparency, backdrop blur, edge lighting, specular highlights, subtle depth and layered surfaces.
+
+However:
+
+DO NOT make every card transparent.
+
+DO NOT apply the same blur to every component.
+
+DO NOT use excessive glow, neon borders, gradients or shadows.
+
+DO NOT sacrifice readability for visual effects.
+
+Use a thoughtful combination of solid surfaces, translucent surfaces and immersive glass.
+
+The design must feel expensive and carefully crafted, not overloaded with effects.
+
+---
+
+# 2. AURA'S APPROVED VISUAL FOUNDATION
+
+Continue using the approved AURA 3.0 palette as the foundation.
+
+## Backgrounds
+
+- Void: #06070a
+- Carbon: #0b0d13
+- Graphite: #11131b
+- Milled: #171a24
+
+## Typography colours
+
+- Primary: #f4f5f8
+- Secondary: #9ca3af
+- Muted: #6b7280
+
+## Accent colours
+
+- Indigo: #6366f1
+- Light Indigo: #818cf8
+- Emerald: #10b981
+- Rose: #f43f5e
+- Amber: #f59e0b
+- Cyan: #06b6d4
+- Purple: #a855f7
+- YouTube Red: #ef4444
+
+## Typography
+
+- Syne: display typography.
+- Plus Jakarta Sans: primary interface typography.
+- JetBrains Mono: technical labels, telemetry and selected editorial details.
+
+You may refine the use of these fonts, typography scales, weights, tracking and hierarchy.
+
+Do not introduce unnecessary font families.
+
+## Design tokens
+
+Establish a complete, consistent design-token architecture covering:
+
+- Colour.
+- Typography.
+- Spacing.
+- Layout.
+- Border radii.
+- Elevation.
+- Shadows.
+- Glass surfaces.
+- Blur levels.
+- Motion.
+- Focus states.
+- Interactive states.
+- Icon sizes.
+- Touch targets.
+- Responsive breakpoints.
+
+The same design language must work across the entire application.
+
+---
+
+# 3. FIRST: UNDERSTAND THE ENTIRE EXISTING PRODUCT
+
+Before making implementation changes, inspect the existing project thoroughly.
+
+This is an existing functional application. Its architecture and capabilities are important.
+
+Understand the actual code rather than relying on old reports or assumptions.
+
+Inspect:
+
+## Application architecture
+- Main application entry point.
+- Routing and view management.
+- Global application shell.
+- Desktop navigation.
+- Mobile navigation.
+- Shared layout components.
+- Existing design primitives.
+- Existing state management.
+- Existing contexts.
+- Responsive implementation.
+
+## Music and playback architecture
+- Audio engine.
+- Playback state.
+- Audio source adapters.
+- Queue management.
+- Track metadata.
+- Playback history.
+- Media Session.
+- Background playback behaviour.
+- Audio effects.
+- Equalizer.
+- Spatial audio.
+- Reverb.
+- Compressor and limiter.
+- Visualizer and waveform.
+
+## Music sources
+- Local music.
+- Audius.
+- Official YouTube IFrame Player API.
+- Jamendo.
+- Radio Browser.
+- Any other providers actually implemented.
+
+## Storage and persistence
+- IndexedDB.
+- Local library.
+- Playlists.
+- Favourites.
+- Listening history.
+- Settings persistence.
+- Supabase, if configured.
+
+## Listen Together
+- Room creation.
+- Room joining.
+- Shared queue.
+- Playback synchronisation.
+- Chat.
+- Presence.
+- WebSocket transport.
+- Supabase transport.
+- Reconnection behaviour.
+
+## Existing application surfaces
+
+Inspect every existing major screen and its supporting components.
+
+Do not assume the old project documentation accurately describes the current code.
+
+Identify:
+- What works.
+- What partially works.
+- What is unfinished.
+- What is duplicated.
+- What is visually outdated.
+- What can be reused.
+- What should be replaced.
+
+Produce an internal implementation map before changing the architecture.
+
+Do not stop after writing the map. Continue into implementation.
+
+---
+
+# 4. THE MOST IMPORTANT RULE: PRESERVE THE PRODUCT, REPLACE THE EXPERIENCE
+
+The existing UI is not sacred.
+
+You have authority to redesign:
+
+- Global application shell.
+- Desktop navigation.
+- Mobile navigation.
+- Header.
+- Home.
+- Discovery.
+- Search.
+- Library.
+- Tracks.
+- Albums.
+- Artists.
+- Favourites.
+- Playlists.
+- Spaces.
+- Player.
+- Queue.
+- Audio Studio.
+- Listen Together.
+- Sources.
+- Settings.
+- Dialogs.
+- Menus.
+- Notifications.
+- Empty states.
+- Loading states.
+- Error states.
+- All responsive layouts.
+
+You may replace existing visual components and reorganise the presentation architecture.
+
+However, preserve the underlying functionality and data relationships.
+
+Do not unnecessarily rewrite working services, integrations or audio infrastructure.
+
+Think of this as replacing the entire experience while keeping the functional foundation reliable.
+
+---
+
+# 5. COMPLETE APPLICATION SHELL AND NAVIGATION
+
+Rethink the global application shell as part of the complete product.
+
+Do not assume the existing sidebar and header are the final answer.
+
+You may improve or replace them if a better overall experience requires it.
+
+## Desktop
+
+Consider:
+- A distinctive AURA navigation architecture.
+- Better use of available screen space.
+- Clear navigation hierarchy.
+- Contextual page titles.
+- Search integration.
+- Queue access.
+- User and system utilities.
+- Persistent player integration.
+- Collapsible navigation where appropriate.
+
+The navigation should feel designed for a music application, not an admin dashboard.
+
+## Mobile
+
+Design mobile independently.
+
+Consider:
+- Purpose-built bottom navigation.
+- Floating mini-player.
+- Contextual More destinations.
+- Proper safe-area handling.
+- One-handed interactions.
+- Gesture-friendly surfaces.
+- Compact but readable controls.
+
+Do not simply scale desktop navigation down.
+
+## Tablet and intermediate widths
+
+Provide intentional layouts between mobile and desktop.
+
+Avoid awkward transitions, overflowing navigation or squeezed content.
+
+---
+
+# 6. COMPLETE HOME EXPERIENCE
+
+Completely rethink Home.
+
+Do not preserve the old dashboard composition.
+
+Home must primarily support three user intentions:
+
+1. Start listening.
+2. Return to music.
+3. Discover new music.
+
+Music and artwork should dominate the experience.
+
+Avoid giant welcome banners, oversized greetings, unnecessary promotional content and excessive section descriptions.
+
+Explore a distinctive immersive composition.
+
+Possible experiences include:
+
+- Recently played.
+- Personal listening picks.
+- Continue listening.
+- Featured music.
+- Genre discovery.
+- Mood discovery.
+- Artist discovery.
+- Album discovery.
+- Live radio.
+- Curated collections.
+
+These are possibilities, not a mandatory checklist.
+
+Choose a coherent content hierarchy.
+
+Avoid repeating the same tracks across multiple sections without a meaningful reason.
+
+Use real available data.
+
+Never fabricate listening history, recommendations, playback progress, stream counts or album metadata.
+
+The first viewport should provide meaningful listening opportunities.
+
+The Home experience should feel like entering AURA, not opening a dashboard.
+
+---
+
+# 7. COMPLETE MUSIC DISCOVERY EXPERIENCE
+
+Build a coherent discovery experience.
+
+Consider:
+- Genre exploration.
+- Mood exploration.
+- Activity-based listening.
+- Artist discovery.
+- Album discovery.
+- Curated collections.
+- Radio discovery.
+- Open music discovery.
+- Provider-based exploration.
+
+Use varied visual compositions.
+
+Do not make every card a square gradient with a music-note icon.
+
+Do not make every section a horizontal carousel.
+
+Use image-led editorial layouts, large featured artwork, compact browsing elements and immersive listening destinations where appropriate.
+
+Every playable item must connect to actual supported playback.
+
+Clearly distinguish:
+- Real provider-backed music.
+- Editorial category suggestions.
+- Actual playlists.
+- Radio stations.
+- Local content.
+
+Do not present static visual concepts as functional streaming content.
+
+---
+
+# 8. COMPLETE UNIVERSAL SEARCH EXPERIENCE
+
+Search must be a first-class AURA experience.
+
+Rethink its landing state, search interactions, results, filters and responsive layouts.
+
+## Search landing
+
+Consider:
+- Recent searches.
+- Suggested categories.
+- Genres and moods.
+- Recently explored content.
+- Available sources.
+
+Use real data where available.
+
+## Search results
+
+Support existing searchable content types:
+
+- Tracks.
+- Artists.
+- Albums.
+- Playlists.
+- Radio stations.
+- Relevant spaces or collections.
+
+Clearly identify result types and sources.
+
+## Federated search
+
+Use existing supported providers.
+
+Where supported, search:
+- Local music.
+- Audius.
+- YouTube.
+- Jamendo.
+- Radio Browser.
+
+Handle:
+- Debouncing.
+- Cancellation.
+- Loading.
+- Partial provider failures.
+- Empty results.
+- Network errors.
+- Result ranking.
+- Search filters.
+
+Do not invent provider capabilities.
+
+Preserve existing keyboard shortcuts and provide thoughtful keyboard navigation.
+
+Ensure search results can trigger actual application actions.
+
+---
+
+# 9. COMPLETE MUSIC LIBRARY EXPERIENCE
+
+Redesign the entire music library.
+
+## Library overview
+
+Create a useful, visually rich overview of the user's music collection.
+
+Consider:
+- Total tracks.
+- Recently added.
+- Favourite tracks.
+- Albums.
+- Artists.
+- Playlists.
+- Local storage information where appropriate.
+
+Do not turn the library into an analytics dashboard.
+
+## Tracks
+
+Create a premium track-list experience.
+
+Consider:
+- Artwork.
+- Track name.
+- Artist.
+- Album.
+- Duration.
+- Source.
+- Favourite status.
+- Context menu.
+- Queue actions.
+- Multi-select where supported.
+
+Create excellent desktop and mobile layouts.
+
+## Albums
+
+Design an artwork-led album browsing experience.
+
+Provide:
+- Album cover.
+- Album title.
+- Artist.
+- Track count where available.
+- Track listing.
+- Playback actions.
+- Queue actions.
+
+## Artists
+
+Create an artist browsing and detail experience.
+
+Use existing metadata and available artwork.
+
+## Favourites
+
+Create a cohesive liked-music experience.
+
+## Playlists and Spaces
+
+Preserve the existing playlist and space architecture.
+
+Rethink:
+- Collection browsing.
+- Creation.
+- Editing.
+- Track management.
+- Playback.
+- Queue integration.
+- Empty states.
+
+Do not break existing persisted data.
+
+---
+
+# 10. COMPLETE PLAYER EXPERIENCE
+
+The player is one of the most important parts of AURA.
+
+Rethink the player as a complete experience.
+
+## Mini-player
+
+Create a distinctive floating or integrated player depending on screen size.
+
+It should provide:
+- Artwork.
+- Track and artist.
+- Playback state.
+- Play/pause.
+- Skip.
+- Favourite.
+- Source identity.
+- Progress indication.
+- Access to expanded player.
+
+Avoid overcrowding.
+
+## Expanded player
+
+Design an immersive, cinematic Now Playing experience.
+
+Give artwork a central role.
+
+Consider:
+- Large artwork.
+- Track and artist information.
+- Transport controls.
+- Timeline.
+- Queue access.
+- Lyrics only if actually supported.
+- Source information.
+- Playback modes.
+- Audio effects access.
+
+Use expressive Liquid Glass for the appropriate surfaces.
+
+The player should feel like a signature AURA experience.
+
+## Queue
+
+Rethink queue presentation and interactions.
+
+Preserve:
+- Current track.
+- Up Next.
+- Queue ordering.
+- Remove.
+- Reorder.
+- Clear where supported.
+- Source-specific playback behaviour.
+
+Do not break mixed-source queue handling.
+
+## Global playback
+
+All screens must share the same playback state.
+
+Playing a track from Home, Search, Library, Album, Artist, Radio or Listen Together must remain consistent with the existing architecture.
+
+Do not create multiple independent players.
+
+---
+
+# 11. COMPLETE AUDIO STUDIO AND DSP EXPERIENCE
+
+AURA has meaningful audio capabilities.
+
+The design should communicate that this is more than a basic music player.
+
+Rethink the Audio Studio experience.
+
+Preserve existing functionality:
+- 10-band equalizer.
+- Preamp.
+- Biquad filters.
+- Compressor and limiter.
+- Reverb.
+- Spatial HRTF.
+- Waveform.
+- Visualizer.
+- Existing audio controls.
+
+Create an elegant audio-focused environment.
+
+Consider:
+- Immersive waveform.
+- Real-time visual feedback where supported.
+- EQ controls.
+- Presets if implemented.
+- Spatial audio controls.
+- Reverb controls.
+- Playback information.
+- Responsive touch interactions.
+
+Do not add fake DSP controls.
+
+Every displayed control must connect to an actual supported setting.
+
+Do not alter the audio signal chain unnecessarily.
+
+---
+
+# 12. COMPLETE LISTEN TOGETHER EXPERIENCE
+
+Redesign the entire Listen Together interface.
+
+Preserve existing:
+- Room creation.
+- Joining rooms.
+- Room codes.
+- Participants.
+- Shared queue.
+- Playback synchronisation.
+- Chat.
+- Presence.
+- Activity.
+- Reconnection.
+
+Create a distinctive shared listening environment.
+
+Consider:
+- Room landing experience.
+- Create and join flows.
+- Active listening lounge.
+- Host and participant context.
+- Shared playback.
+- Shared queue.
+- Chat.
+- Participant list.
+- Mobile experience.
+
+Make the experience feel social and music-focused, not like a generic meeting application.
+
+Preserve actual security and transport limitations.
+
+Do not claim public-room security is complete unless it has been implemented and verified.
+
+Do not silently change the room protocol or authentication architecture.
+
+---
+
+# 13. COMPLETE SOURCES AND RADIO EXPERIENCE
+
+Create a coherent source discovery experience.
+
+Support the existing source architecture.
+
+Clearly explain and distinguish:
+- Local Vault.
+- Audius.
+- YouTube.
+- Jamendo.
+- Radio Browser.
+- Other implemented providers.
+
+Design provider-specific experiences where appropriate.
+
+Do not claim every provider supports the same operations.
+
+For radio:
+- Station artwork or logo where available.
+- Station name.
+- Country or region.
+- Genre.
+- Bitrate where available.
+- Playback status.
+- Favourites where supported.
+
+Do not invent metadata.
+
+---
+
+# 14. SETTINGS AND SYSTEM EXPERIENCE
+
+Rethink the settings architecture.
+
+Create clear categories for existing settings and controls.
+
+Consider:
+- Audio settings.
+- Playback settings.
+- Appearance.
+- Storage.
+- Keyboard shortcuts.
+- Privacy.
+- Account or sync.
+- Application information.
+
+Only expose settings that actually exist or are implemented.
+
+Do not create decorative toggles with no functionality.
+
+Make settings easy to discover without cluttering the music experience.
+
+---
+
+# 15. ALL MICRO-INTERACTIONS MUST BE REDESIGNED
+
+This is a complete product transformation.
+
+Do not stop after redesigning large page layouts.
+
+Review every detail:
+
+- Buttons.
+- Icons.
+- Menus.
+- Dropdowns.
+- Tooltips.
+- Dialogs.
+- Sheets.
+- Search fields.
+- Sliders.
+- Toggle controls.
+- Tabs.
+- Navigation indicators.
+- Scrollbars.
+- Artwork containers.
+- Hover states.
+- Focus states.
+- Pressed states.
+- Active states.
+- Disabled states.
+- Loading indicators.
+- Empty states.
+- Error states.
+- Notifications.
+- Context menus.
+- Keyboard interactions.
+- Touch interactions.
+- Transitions.
+
+Every component should feel like it belongs to AURA 3.0.
+
+Avoid unnecessary animation.
+
+Use motion to communicate state, hierarchy and transitions.
+
+Respect reduced-motion preferences.
+
+Maintain accessibility and readable contrast.
+
+---
+
+# 16. ARTWORK AND MEDIA QUALITY
+
+Artwork is central to a music product.
+
+Establish a consistent media presentation system.
+
+Requirements:
+- Correct image aspect ratios.
+- Proper cropping.
+- No stretching.
+- No broken image placeholders.
+- Consistent image loading.
+- Appropriate fallbacks.
+- Correct track/album associations.
+- Responsive image sizing.
+- Subtle loading transitions.
+
+Do not use unrelated imagery to fill missing content.
+
+Do not create fake album covers for real tracks.
+
+If artwork is missing, use an intentional neutral fallback.
+
+Use actual available artwork from existing providers.
+
+---
+
+# 17. RESPONSIVE DESIGN: DESKTOP, TABLET AND MOBILE
+
+Design every major screen at multiple widths.
+
+Desktop:
+- 1920 × 1080.
+- 1440 × 900.
+- 1280 × 800.
+
+Tablet:
+- 768 px.
+- 1024 px.
+
+Mobile:
+- 320 px.
+- 360 px.
+- 390 px.
+- 430 px.
+
+Do not simply scale desktop layouts.
+
+Desktop should take advantage of space and offer efficient browsing.
+
+Mobile should be compact, immersive, tactile and easy to use.
+
+Tablet should have its own intentional intermediate layout.
+
+Check:
+- Overflow.
+- Clipping.
+- Safe areas.
+- Floating player clearance.
+- Navigation overlap.
+- Artwork cropping.
+- Touch targets.
+- Typography.
+- Scroll behaviour.
+- Keyboard behaviour.
+- Dialog dimensions.
+
+---
+
+# 18. CRITICAL ARCHITECTURE AND FUNCTIONALITY PROTECTION
+
+This section is mandatory.
+
+AURA is an existing working music player.
+
+Preserve its current functional systems.
+
+## Local music
+- Preserve file import.
+- Preserve IndexedDB storage.
+- Preserve local playback.
+- Preserve existing metadata handling.
+
+## Audius
+- Preserve the existing integration and playback behaviour.
+
+## YouTube
+- Continue using the official YouTube IFrame Player API.
+- Do not introduce unofficial audio extraction.
+- Do not use hidden 1px players.
+- Do not introduce unsupported resolvers.
+- Respect user-gesture and autoplay restrictions.
+- Keep AURA audio-first.
+
+## Jamendo and Radio Browser
+Preserve their existing integrations and capabilities.
+
+## Audio engine
+Preserve the existing audio engine and DSP signal chain.
+
+Do not introduce a parallel audio engine.
+
+## Playback
+Preserve:
+- Queue.
+- Mixed-source playback.
+- Playback state.
+- Media Session.
+- Background playback logic.
+- Track transitions.
+- Existing source-specific limitations.
+
+Do not change background audio behaviour without a specific demonstrated defect and a separate reasoned implementation.
+
+## Listen Together
+Preserve:
+- WebSocket transport.
+- Supabase transport where configured.
+- Room state.
+- Playback synchronisation.
+- Chat.
+- Presence.
+- Reconnection.
+
+Do not casually change the protocol or backend contract.
+
+## Persistence
+Preserve existing user data.
+
+Do not clear IndexedDB, local storage, settings, playlists or saved collections.
+
+Do not run destructive migrations.
+
+## PWA
+Preserve installation and offline capabilities.
+
+Do not break existing service worker behaviour.
+
+## Deployment architecture
+The frontend is connected to the existing GitHub repository and Vercel deployment.
+
+The backend is separate and may use Cloud Run.
+
+Do not:
+- Create a new repository.
+- Push to GitHub.
+- Deploy to Vercel.
+- Deploy Cloud Run.
+- Change production environment variables.
+- Expose credentials.
+- Replace production integrations with mock implementations.
+
+All work must remain in the existing Google AI Studio project.
+
+---
+
+# 19. IMPLEMENTATION STRATEGY — ONE UNIFIED MISSION
+
+This is one comprehensive redesign project.
+
+Do not turn it into a sequence of independent design workstreams requiring separate user approvals.
+
+However, implement it using controlled internal stages so the entire application is not destabilised in one uncontrolled operation.
+
+Use the following internal execution strategy.
+
+## Internal Stage A: Product and architecture understanding
+
+- Inspect the whole application.
+- Identify all screens and components.
+- Map functional dependencies.
+- Identify reusable systems.
+- Identify existing defects and limitations.
+- Establish the complete AURA 3.0 design architecture.
+
+## Internal Stage B: Global design system and application shell
+
+- Finalise design tokens.
+- Establish typography.
+- Establish Liquid Glass tiers.
+- Redesign global navigation.
+- Redesign header and global layout.
+- Establish responsive foundations.
+- Build reusable primitives.
+
+## Internal Stage C: Core music experience
+
+Implement the unified:
+- Home.
+- Discovery.
+- Search.
+- Library.
+- Albums.
+- Artists.
+- Favourites.
+- Playlists.
+- Spaces.
+
+## Internal Stage D: Listening experience
+
+Implement:
+- Mini-player.
+- Expanded player.
+- Queue.
+- Playback controls.
+- Media-related overlays.
+- Player transitions.
+
+## Internal Stage E: Advanced experiences
+
+Implement:
+- Audio Studio.
+- DSP.
+- Listen Together.
+- Sources.
+- Radio.
+- Settings.
+- Supporting dialogs and utilities.
+
+## Internal Stage F: Product-wide refinement
+
+- Refine visual consistency.
+- Refine typography.
+- Refine artwork.
+- Refine responsive behaviour.
+- Refine micro-interactions.
+- Fix obvious UX problems.
+- Remove duplicated and obsolete visual components.
+
+## Internal Stage G: Final quality assurance
+
+Perform one comprehensive product-wide regression and visual audit.
+
+These are internal implementation stages of ONE mission.
+
+Do not stop after each stage to ask the user whether to proceed.
+
+Do not submit incomplete stages as finished redesigns.
+
+Do not repeatedly ask for permission to continue with the next internal stage.
+
+If a genuine architecture blocker or destructive decision arises, stop and explain it before proceeding.
+
+Otherwise, continue autonomously until the complete redesigned product is ready for review.
+
+Save and validate work progressively.
+
+---
+
+# 20. IMPLEMENTATION QUALITY
+
+Do not generate one enormous component containing the entire application.
+
+Build a maintainable architecture.
+
+Requirements:
+- Reusable components.
+- Clear component responsibilities.
+- Consistent design tokens.
+- Shared playback state.
+- Existing provider adapters.
+- Appropriate error boundaries.
+- Sensible loading states.
+- Accessible interactions.
+- Responsive components.
+- No unnecessary duplicated logic.
+- No mock data replacing actual services.
+
+Remove obsolete UI code only after confirming that nothing still depends on it.
+
+Avoid unnecessary dependencies.
+
+Avoid large unstructured refactors.
+
+Keep the application maintainable.
+
+---
+
+# 21. TESTING AND VALIDATION
+
+Test the complete application.
+
+## Build and code validation
+- TypeScript.
+- Build.
+- Lint where configured.
+- Runtime errors.
+- Console errors.
+- Broken imports.
+- Unused or obsolete components where practical.
+
+## Playback testing
+- Import local music.
+- Play and pause.
+- Seek.
+- Skip.
+- Change tracks.
+- Mixed-source queue.
+- Volume.
+- Favourite.
+- Media Session.
+- Playback persistence where supported.
+
+## Discovery and search
+- Open discovery.
+- Search real tracks.
+- Search different content types.
+- Apply filters.
+- Play results.
+- Add results to queue.
+- Handle provider failures.
+
+## Library
+- Browse tracks.
+- Open albums.
+- Open artists.
+- Open favourites.
+- Browse playlists.
+- Edit collections where supported.
+
+## Advanced features
+- Open Audio Studio.
+- Interact with EQ and DSP.
+- Open Listen Together.
+- Create and join rooms where test configuration allows.
+- Check queue and playback interactions.
+- Browse sources and radio.
+
+## Responsive testing
+Test the key screens at all required widths.
+
+## Evidence discipline
+
+Clearly distinguish:
+- Code inspection.
+- Build verification.
+- Browser interaction testing.
+- Multi-client testing.
+- Physical hardware testing.
+- Production deployment testing.
+
+Do not claim something was tested if it was only inspected in code.
+
+Do not claim production readiness based only on a local build.
+
+---
+
+# 22. FINAL VISUAL EVIDENCE
+
+The final delivery must demonstrate the complete redesigned product.
+
+Capture actual rendered screenshots of:
+
+1. Desktop Home.
+2. Mobile Home.
+3. Desktop Discovery.
+4. Mobile Discovery.
+5. Desktop Search landing.
+6. Desktop Search results.
+7. Mobile Search.
+8. Desktop Library.
+9. Mobile Library.
+10. Album detail.
+11. Artist detail.
+12. Favourites.
+13. Playlist or Space.
+14. Desktop expanded player.
+15. Mobile expanded player.
+16. Queue.
+17. Audio Studio.
+18. Listen Together landing.
+19. Active Listen Together room.
+20. Sources and Radio.
+21. Settings.
+22. Important dialogs and overlays.
+
+Also provide:
+- Desktop and mobile navigation screenshots.
+- Representative hover and interaction states.
+- Loading, empty and error states.
+- Before-and-after comparisons where useful.
+
+Do not provide only written descriptions.
+
+The actual interface must be visible.
+
+---
+
+# 23. FINAL DELIVERY REPORT
+
+When the entire transformation is finished, provide a structured report.
+
+Include:
+
+## Product transformation
+- What changed across the entire product.
+- New design language.
+- New application architecture.
+- Major UX decisions.
+
+## Screen-by-screen summary
+- Home.
+- Discovery.
+- Search.
+- Library.
+- Albums.
+- Artists.
+- Favourites.
+- Playlists.
+- Spaces.
+- Player.
+- Queue.
+- Audio Studio.
+- Listen Together.
+- Sources.
+- Settings.
+
+## Engineering
+- Exact major files and systems modified.
+- New reusable components.
+- Removed obsolete UI components.
+- Systems intentionally left unchanged.
+- Build and TypeScript results.
+
+## Verification
+- What was actually tested.
+- What was inspected only.
+- What could not be tested.
+- Remaining defects.
+- Known architecture limitations.
+
+## Visual evidence
+Provide actual screenshots for the required screens and breakpoints.
+
+Do not claim that the redesign is complete if important screens remain unchanged.
+
+---
+
+# 24. FINAL CREATIVE AUTHORITY
+
+You have the authority to make meaningful product and design decisions.
+
+Do not blindly preserve the old Home layout.
+
+Do not preserve generic dashboard patterns.
+
+Do not assume the existing component hierarchy is the best one.
+
+Do not limit yourself to changing colours, typography and border radii.
+
+Rethink how the user experiences AURA from the moment the application opens until they finish listening.
+
+Create:
+- A distinctive visual identity.
+- An immersive listening experience.
+- Excellent music discovery.
+- A beautiful library.
+- An outstanding player.
+- A coherent social listening experience.
+- An intuitive audio studio.
+- Consistent desktop and mobile experiences.
+
+Every screen must feel like it belongs to the same product.
+
+The result should feel like AURA has been designed from the ground up by a world-class music product team.
+
+**Do not create a Spotify clone. Do not create a SimpMusic clone. Create AURA.**
+
+---
+
+# FINAL EXECUTION INSTRUCTION
+
+This is the complete AURA 3.0 redesign mission.
+
+Inspect the project, establish the complete architecture and design vision, implement the full product transformation through controlled internal stages, validate progressively, and perform one final comprehensive audit.
+
+Do not stop after a design proposal.
+
+Do not stop after Home.
+
+Do not stop after the shell.
+
+Do not stop after a successful build.
+
+Do not request separate user approvals for every internal stage.
+
+Continue until the complete product is ready for review.
+
+Do not push to GitHub.
+
+Do not deploy.
+
+Do not alter production services or credentials.
+
+Keep all changes inside the existing Google AI Studio project.
+
+The final result must be a cohesive, functional, thoroughly reviewed AURA 3.0 application.

@@ -42,100 +42,120 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenMore }) 
     treble !== 0 || 
     Boolean(spatial?.enabled);
 
-  const navItems: { id: NavView; label: string; icon: React.ElementType }[] = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'songs', label: 'Library', icon: Music },
-    { id: 'playlists', label: 'Playlists', icon: ListMusic },
-  ];
-
   const handleNav = (id: NavView) => {
     setSelectedPlaylistId(null);
     setCurrentView(id);
   };
 
+  const isHomeActive = currentView === 'home' && !selectedPlaylistId;
+  const isLibraryActive = ['library', 'songs'].includes(currentView) && !selectedPlaylistId;
+  const isSpacesActive = (currentView === 'playlists' || currentView === 'playlist-detail');
+  const isStudioActive = currentView === 'studio' || isAudioControlsOpen;
+  const isMoreActive = ['albums', 'artists', 'favorites', 'moments', 'sources', 'listen-together', 'settings'].includes(currentView) && !selectedPlaylistId;
+
   return (
     <nav
       id="mobile-bottom-navigation"
       aria-label="Mobile Bottom Navigation"
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0b0c10]/95 backdrop-blur-2xl border-t border-white/10 pb-safe shadow-[0_-8px_24px_rgba(0,0,0,0.6)] select-none"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[rgba(9,12,18,0.72)] backdrop-blur-2xl border-t border-white/[0.06] pb-safe shadow-[0_-1px_0_0_rgba(255,255,255,0.08),0_-12px_28px_rgba(0,0,0,0.65)] select-none"
     >
-      <div className="grid grid-cols-5 items-center h-14 max-w-lg mx-auto px-1">
+      <div className="grid grid-cols-5 items-center h-14 max-w-md mx-auto px-2">
         
-        {/* Home */}
+        {/* 1. Home */}
         <button
           type="button"
           onClick={() => handleNav('home')}
-          className={`flex flex-col items-center justify-center gap-1 h-full rounded-xl transition-all cursor-pointer ${
-            currentView === 'home' && !selectedPlaylistId
-              ? 'text-indigo-400 font-semibold'
-              : 'text-zinc-400 hover:text-zinc-200'
+          className={`relative flex flex-col items-center justify-center gap-1 h-full rounded-xl transition-all duration-150 cursor-pointer aura-focus-ring ${
+            isHomeActive
+              ? 'text-white font-semibold'
+              : 'text-zinc-400 hover:text-zinc-200 active:text-white'
           }`}
+          aria-label="Home"
         >
-          <Home className="w-5 h-5" />
-          <span className="text-[10px] tracking-tight leading-none">Home</span>
+          <Home className={`w-5 h-5 transition-transform duration-150 ${isHomeActive ? 'scale-105 stroke-[2.2]' : 'stroke-[1.8]'}`} />
+          <span className="text-[10px] tracking-tight leading-none font-medium">Home</span>
+          {isHomeActive && (
+            <span className="absolute bottom-1 w-1 h-1 rounded-full bg-sky-400 shadow-[0_0_6px_rgba(56,189,248,0.8)]" />
+          )}
         </button>
 
-        {/* Library / Songs */}
+        {/* 2. Library / Songs */}
         <button
           type="button"
           onClick={() => handleNav('songs')}
-          className={`flex flex-col items-center justify-center gap-1 h-full rounded-xl transition-all cursor-pointer ${
-            currentView === 'songs' && !selectedPlaylistId
-              ? 'text-indigo-400 font-semibold'
-              : 'text-zinc-400 hover:text-zinc-200'
+          className={`relative flex flex-col items-center justify-center gap-1 h-full rounded-xl transition-all duration-150 cursor-pointer aura-focus-ring ${
+            isLibraryActive
+              ? 'text-white font-semibold'
+              : 'text-zinc-400 hover:text-zinc-200 active:text-white'
           }`}
+          aria-label="Library"
         >
-          <Music className="w-5 h-5" />
-          <span className="text-[10px] tracking-tight leading-none">Library</span>
+          <Music className={`w-5 h-5 transition-transform duration-150 ${isLibraryActive ? 'scale-105 stroke-[2.2]' : 'stroke-[1.8]'}`} />
+          <span className="text-[10px] tracking-tight leading-none font-medium">Vault</span>
+          {isLibraryActive && (
+            <span className="absolute bottom-1 w-1 h-1 rounded-full bg-sky-400 shadow-[0_0_6px_rgba(56,189,248,0.8)]" />
+          )}
         </button>
 
-        {/* Playlists */}
+        {/* 3. Spaces / Playlists */}
         <button
           type="button"
           onClick={() => handleNav('playlists')}
-          className={`flex flex-col items-center justify-center gap-1 h-full rounded-xl transition-all cursor-pointer ${
-            (currentView === 'playlists' || currentView === 'playlist-detail')
-              ? 'text-indigo-400 font-semibold'
-              : 'text-zinc-400 hover:text-zinc-200'
+          className={`relative flex flex-col items-center justify-center gap-1 h-full rounded-xl transition-all duration-150 cursor-pointer aura-focus-ring ${
+            isSpacesActive
+              ? 'text-white font-semibold'
+              : 'text-zinc-400 hover:text-zinc-200 active:text-white'
           }`}
+          aria-label="Spaces"
         >
-          <ListMusic className="w-5 h-5" />
-          <span className="text-[10px] tracking-tight leading-none">Playlists</span>
+          <ListMusic className={`w-5 h-5 transition-transform duration-150 ${isSpacesActive ? 'scale-105 stroke-[2.2]' : 'stroke-[1.8]'}`} />
+          <span className="text-[10px] tracking-tight leading-none font-medium">Spaces</span>
+          {isSpacesActive && (
+            <span className="absolute bottom-1 w-1 h-1 rounded-full bg-sky-400 shadow-[0_0_6px_rgba(56,189,248,0.8)]" />
+          )}
         </button>
 
-        {/* Audio Studio Sheet Trigger */}
+        {/* 4. Audio Studio DSP Control Sheet Trigger */}
         <button
           type="button"
           onClick={() => setIsAudioControlsOpen(true)}
-          className={`relative flex flex-col items-center justify-center gap-1 h-full rounded-xl transition-all cursor-pointer ${
-            isAudioControlsOpen
-              ? 'text-indigo-400 font-semibold'
+          className={`relative flex flex-col items-center justify-center gap-1 h-full rounded-xl transition-all duration-150 cursor-pointer aura-focus-ring ${
+            isStudioActive
+              ? 'text-sky-400 font-semibold'
               : isAudioEffectActive
-              ? 'text-indigo-300'
-              : 'text-zinc-400 hover:text-zinc-200'
+              ? 'text-sky-300'
+              : 'text-zinc-400 hover:text-zinc-200 active:text-white'
           }`}
+          aria-label="Audio DSP Studio"
         >
           <div className="relative">
-            <SlidersHorizontal className="w-5 h-5" />
+            <SlidersHorizontal className={`w-5 h-5 transition-transform duration-150 ${isStudioActive ? 'scale-105 stroke-[2.2]' : 'stroke-[1.8]'}`} />
             {isAudioEffectActive && (
-              <span className="absolute -top-0.5 -right-1 w-2 h-2 rounded-full bg-indigo-400 shadow-[0_0_8px_#818cf8]" />
+              <span className="absolute -top-0.5 -right-1 w-1.5 h-1.5 rounded-full bg-sky-400 shadow-[0_0_6px_rgba(56,189,248,0.8)]" />
             )}
           </div>
-          <span className="text-[10px] tracking-tight leading-none">Audio</span>
+          <span className="text-[10px] tracking-tight leading-none font-medium">Studio</span>
+          {isStudioActive && (
+            <span className="absolute bottom-1 w-1 h-1 rounded-full bg-sky-400 shadow-[0_0_6px_rgba(56,189,248,0.8)]" />
+          )}
         </button>
 
-        {/* More Menu */}
+        {/* 5. More Menu Sheet */}
         <button
           type="button"
           onClick={onOpenMore}
-          className={`flex flex-col items-center justify-center gap-1 h-full rounded-xl transition-all cursor-pointer ${
-            ['albums', 'artists', 'favorites', 'studio', 'settings'].includes(currentView) && !selectedPlaylistId
-              ? 'text-indigo-400 font-semibold'
-              : 'text-zinc-400 hover:text-zinc-200'
+          className={`relative flex flex-col items-center justify-center gap-1 h-full rounded-xl transition-all duration-150 cursor-pointer aura-focus-ring ${
+            isMoreActive
+              ? 'text-white font-semibold'
+              : 'text-zinc-400 hover:text-zinc-200 active:text-white'
           }`}
+          aria-label="More Navigation Options"
         >
-          <MoreHorizontal className="w-5 h-5" />
-          <span className="text-[10px] tracking-tight leading-none">More</span>
+          <MoreHorizontal className={`w-5 h-5 transition-transform duration-150 ${isMoreActive ? 'scale-105 stroke-[2.3]' : 'stroke-[1.8]'}`} />
+          <span className="text-[10px] tracking-tight leading-none font-medium">More</span>
+          {isMoreActive && (
+            <span className="absolute bottom-1 w-1 h-1 rounded-full bg-white shadow-[0_0_6px_#ffffff]" />
+          )}
         </button>
 
       </div>

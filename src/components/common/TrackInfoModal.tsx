@@ -94,26 +94,40 @@ export const TrackInfoModal: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 p-4.5 rounded-2xl bg-zinc-900/60 border border-white/5">
             <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 bg-zinc-900 border border-white/10 shadow-md">
               {track.coverUrl ? (
-                <img src={track.coverUrl} alt={track.title} className="w-full h-full object-cover" />
-              ) : (
-                <div className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-indigo-600 to-zinc-900'} flex items-center justify-center`}>
-                  <Music className="w-8 h-8 text-white/80" />
-                </div>
-              )}
+                <img 
+                  src={track.coverUrl} 
+                  alt={track.title} 
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLElement).style.display = 'none';
+                    if (e.currentTarget.nextElementSibling) {
+                      (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
+                    }
+                  }}
+                  className="w-full h-full object-cover" 
+                />
+              ) : null}
+              <div 
+                style={{ display: track.coverUrl ? 'none' : 'flex' }}
+                className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-indigo-600 to-zinc-900'} items-center justify-center`}
+              >
+                <Music className="w-8 h-8 text-white/80" />
+              </div>
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                  {track.fileFormat} AUDIO
+              <div className="flex items-center gap-2 text-xs font-mono">
+                <span className="text-[11px] text-sky-400 font-medium uppercase tracking-wider">
+                  {track.fileFormat} Audio
                 </span>
                 {track.isFavorite && (
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                    FAVORITE
-                  </span>
+                  <>
+                    <span className="text-zinc-600" aria-hidden="true">·</span>
+                    <span className="text-[11px] text-rose-400 font-medium">Favorite</span>
+                  </>
                 )}
               </div>
-              <h4 className="text-base font-bold text-white truncate mt-1">{track.title}</h4>
+              <h4 className="text-base font-semibold text-white truncate mt-1">{track.title}</h4>
               <p className="text-xs text-zinc-400 truncate mt-0.5">
                 {track.artist} {track.album ? `• ${track.album}` : ''}
               </p>

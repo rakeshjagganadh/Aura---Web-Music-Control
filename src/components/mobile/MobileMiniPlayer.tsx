@@ -39,56 +39,54 @@ export const MobileMiniPlayer: React.FC = () => {
     <div
       id="mobile-mini-player"
       aria-label="Current Track Mini Player"
-      className="lg:hidden fixed bottom-[68px] left-3 right-3 z-30 pb-safe select-none"
+      className="lg:hidden fixed bottom-[calc(58px+env(safe-area-inset-bottom,0px)+10px)] left-3 right-3 z-30 select-none animate-in fade-in slide-in-from-bottom-2 duration-200"
     >
       <div 
         onClick={() => setIsExpandedPlayerOpen(true)}
-        className="relative overflow-hidden rounded-2xl bg-[#0a0d16]/55 backdrop-blur-xl border-0 shadow-[0_12px_40px_rgba(0,0,0,0.85)] p-2.5 flex flex-col justify-between cursor-pointer active:bg-zinc-900/80 transition-colors"
-        style={{
-          backgroundImage: currentTrack.coverColor
-            ? `radial-gradient(circle at 10% 20%, ${currentTrack.coverColor.split(' ')[0].replace('from-', '')}25 0%, transparent 80%)`
-            : undefined,
-        }}
+        className="relative overflow-hidden rounded-2xl aura-glass-island p-2.5 flex flex-col justify-between cursor-pointer active:scale-[0.99] transition-all"
       >
         {/* COMPACT ROW — TRACK & CONTROLS */}
         <div className="flex items-center justify-between gap-2.5">
           
           {/* Track Artwork & Info */}
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            <div className="relative shrink-0 w-9 h-9 rounded-xl overflow-hidden bg-zinc-900/90 border border-white/12 shadow-sm flex items-center justify-center">
+            <div className="relative shrink-0 w-10 h-10 rounded-xl overflow-hidden bg-[#0d1017] border border-white/10 shadow-sm flex items-center justify-center">
               {currentTrack.coverUrl ? (
                 <img
                   src={currentTrack.coverUrl}
                   alt={currentTrack.title}
                   className={`w-full h-full object-cover transition-transform duration-500 ${isPlaying ? 'scale-105' : ''}`}
                   referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLElement).style.display = 'none';
+                  }}
                 />
               ) : (
-                <div className={`w-full h-full bg-gradient-to-br ${currentTrack.coverColor || 'from-zinc-800 to-zinc-950'} flex items-center justify-center text-white`}>
-                  <Music className="w-4 h-4 opacity-80" />
+                <div className={`w-full h-full bg-gradient-to-br ${currentTrack.coverColor || 'from-[#141a29] to-[#080b12]'} flex items-center justify-center text-white`}>
+                  <Music className="w-4 h-4 opacity-70" />
                 </div>
               )}
             </div>
 
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 min-w-0">
-                <h4 className="text-xs font-bold text-white truncate leading-tight font-ui-title">
+                <h4 className="text-xs font-track-title text-white truncate leading-tight">
                   {currentTrack.title}
                 </h4>
                 {currentTrack.source && (
-                  <TelemetryBadge variant="glass" size="sm" className="shrink-0 text-[8px] px-1 py-0">
-                    {currentTrack.source.toUpperCase()}
-                  </TelemetryBadge>
+                  <span className="text-[9px] font-mono text-zinc-500 uppercase shrink-0">
+                    · {currentTrack.source}
+                  </span>
                 )}
               </div>
-              <p className="text-[11px] text-zinc-300/80 truncate mt-0.5 font-ui-meta">
+              <p className="text-[11px] font-artist-name text-zinc-400 truncate mt-0.5">
                 {currentTrack.artist}
               </p>
             </div>
           </div>
 
           {/* Touch Target Actions */}
-          <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
             
             {/* Favorite Heart Button */}
             <button
@@ -121,7 +119,7 @@ export const MobileMiniPlayer: React.FC = () => {
               type="button"
               onClick={isInRoom && listenTogether ? listenTogether.roomNext : nextTrack}
               aria-label="Next Track"
-              className="p-2 rounded-xl text-zinc-200 hover:text-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+              className="p-2 rounded-xl text-zinc-300 hover:text-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             >
               <SkipForward className="w-4 h-4 fill-current" />
             </button>
@@ -130,11 +128,11 @@ export const MobileMiniPlayer: React.FC = () => {
 
         </div>
 
-        {/* PASSIVE BOTTOM PROGRESS INDICATOR (NON-INTERACTIVE, EMBEDDED AT BOTTOM OF GLASS SURFACE) */}
+        {/* PASSIVE BOTTOM PROGRESS INDICATOR (EMBEDDED AT BOTTOM OF GLASS SURFACE) */}
         {showProgress && (
-          <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-white/10 pointer-events-none overflow-hidden">
+          <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-white/[0.08] pointer-events-none overflow-hidden">
             <div 
-              className="h-full bg-white/90 rounded-r-full transition-all duration-200 ease-linear"
+              className="h-full bg-gradient-to-r from-sky-400 via-indigo-300 to-white rounded-r-full transition-all duration-200 ease-linear shadow-[0_0_8px_rgba(255,255,255,0.4)]"
               style={{ width: `${progressPercent}%` }}
             />
           </div>

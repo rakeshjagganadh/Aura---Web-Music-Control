@@ -2,78 +2,208 @@
 
 @layer base {
   :root {
+    /* -----------------------------------------------------------------
+       AURA SPATIAL DESIGN SYSTEM TOKENS
+       Next-Gen Spatial Audio Operating Environment
+       ----------------------------------------------------------------- */
+    --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --font-display: 'Syne', 'Plus Jakarta Sans', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    --font-mono: 'Geist Mono', monospace;
 
-    /* AURA Studio Architectural Color Tokens - Inspired by luxury audio hardware */
-    --aura-void: #06070a;
-    --aura-carbon: #0b0d13;
-    --aura-graphite: #11131b;
-    --aura-elevated: #171a24;
-    --aura-mist: #f4f5f8;
-    --aura-haze: #9ca3af;
-    --aura-ash: #6b7280;
-    --aura-border: rgba(255, 255, 255, 0.06);
-    --aura-border-strong: rgba(255, 255, 255, 0.12);
+    /* Dimensional Spatial Canvas & Surface Scale */
+    --aura-void: #07090e;
+    --aura-carbon: #0b0e17;
+    --aura-graphite: #101422;
+    --aura-milled: #171d2e;
+    --aura-surface-solid: #1c2336;
 
-    /* Obsidian Liquid Glass Material System Tokens */
-    --aura-obsidian-void: #06070a;
-    --aura-obsidian-carbon: #0b0d13;
-    --aura-obsidian-graphite: #11131b;
-    --aura-obsidian-milled: #171a24;
-    --aura-obsidian-border: rgba(255, 255, 255, 0.08);
+    /* High-Contrast Text Hierarchy (WCAG AAA >= 7:1) */
+    --aura-text-primary: #f8fafc;
+    --aura-text-secondary: #94a3b8;
+    --aura-text-muted: #64748b;
+    --aura-text-disabled: #475569;
 
-    --aura-glass-bg: rgba(12, 14, 20, 0.78);
-    --aura-glass-blur: 20px;
-    --aura-glass-border: rgba(255, 255, 255, 0.10);
-    --aura-glass-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+    /* Precision Specular Edges */
+    --aura-border-subtle: rgba(255, 255, 255, 0.06);
+    --aura-border-medium: rgba(255, 255, 255, 0.12);
+    --aura-border-strong: rgba(255, 255, 255, 0.22);
 
-    --aura-atmosphere-opacity: 0.35;
+    /* Semantic Signal Accents */
+    --aura-accent-indigo: #6366f1;
+    --aura-accent-indigo-glow: rgba(99, 102, 241, 0.35);
+    --aura-signal-cyan: #06b6d4;
+    --aura-signal-cyan-glow: rgba(6, 182, 212, 0.35);
+    --aura-signal-emerald: #10b981;
+    --aura-signal-emerald-glow: rgba(16, 185, 129, 0.35);
+    --aura-signal-rose: #f43f5e;
+    --aura-signal-amber: #f59e0b;
+    --aura-signal-purple: #a855f7;
 
-    /* Telemetry & Signal Accents */
-    --aura-signal-active: #ffffff;
-    --aura-signal-amber: #d97706;
-    --aura-signal-cyan: #0284c7;
-    --aura-signal-emerald: #059669;
-    --aura-signal-rose: #e11d48;
+    /* AURA SPATIAL 4-Tier Liquid Glass System (Translucent for True Refraction & Environmental Transmission) */
+    --aura-glass-immersive-bg: rgba(8, 10, 16, 0.70);
+    --aura-glass-island-bg: rgba(11, 14, 22, 0.46);
+    --aura-glass-ambient-bg: rgba(255, 255, 255, 0.022);
   }
 
   body {
     font-family: var(--font-sans);
     color-scheme: dark;
-    background-color: var(--aura-obsidian-void);
-    color: var(--aura-mist);
+    background-color: var(--aura-void);
+    color: var(--aura-text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
   }
 }
 
-.font-display {
+/* -----------------------------------------------------------------
+   TYPOGRAPHY SYSTEM UTILITIES — AURA SPATIAL
+   Controlled, balanced weights rather than uniform heavy bolding
+   ----------------------------------------------------------------- */
+.font-display, .aura-font-display, .font-ui-title {
   font-family: var(--font-display);
+  letter-spacing: -0.022em;
+  font-feature-settings: "cv02" 1, "cv03" 1, "cv04" 1;
 }
 
-/* Three-Layer Typography Utilities */
-.aura-brand-text {
+.font-page-title {
   font-family: var(--font-display);
-  letter-spacing: -0.02em;
-  font-weight: 700;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
 }
 
-.aura-interface-text {
+.font-section-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.018em;
+  font-size: 1.05rem;
+}
+
+.font-track-title {
   font-family: var(--font-sans);
+  font-weight: 600;
   letter-spacing: -0.01em;
+  line-height: 1.25;
 }
 
-.aura-tech-mono {
+.font-artist-name {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  color: var(--aura-text-secondary);
+}
+
+.aura-font-body, .font-ui-body {
+  font-family: var(--font-sans);
+  letter-spacing: -0.011em;
+}
+
+.font-ui-meta {
+  font-family: var(--font-sans);
+  letter-spacing: -0.006em;
+}
+
+.font-mono, .aura-font-mono {
   font-family: var(--font-mono);
   font-feature-settings: "tnum" 1, "zero" 1;
 }
 
-/* Custom Scrollbars */
+/* -----------------------------------------------------------------
+   EXPRESSIVE LIQUID GLASS MATERIAL SYSTEM (4 TIERS)
+   True optical refraction, layered specular reflections & depth
+   ----------------------------------------------------------------- */
+
+/* Tier A: Immersive Glass — Studio canvases, full overlays, search command center */
+.aura-glass-immersive, .aura-glass-tier1, .aura-glass-os {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.01) 100%), var(--aura-glass-immersive-bg);
+  backdrop-filter: blur(40px) saturate(160%);
+  -webkit-backdrop-filter: blur(40px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.16),
+    0 32px 80px -16px rgba(0, 0, 0, 0.88),
+    0 12px 28px -6px rgba(0, 0, 0, 0.60);
+}
+
+/* Tier B: Floating Glass Island — Suspended playback islands, floating navigation docks */
+.aura-glass-island, .aura-glass-dock, .aura-glass-tier2 {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.008) 100%), var(--aura-glass-island-bg);
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
+    0 20px 48px -10px rgba(0, 0, 0, 0.80),
+    0 8px 18px -4px rgba(0, 0, 0, 0.50);
+}
+
+/* Tier C: Ambient Glass — Section tiles, interactive rows, shelf objects */
+.aura-glass-ambient, .aura-glass-tier3 {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.024) 0%, rgba(255, 255, 255, 0.006) 100%), var(--aura-glass-ambient-bg);
+  backdrop-filter: blur(16px) saturate(130%);
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
+  border: 1px solid rgba(255, 255, 255, 0.048);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
+    0 4px 14px -3px rgba(0, 0, 0, 0.35);
+  transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.aura-glass-ambient:hover, .aura-glass-tier3:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.015) 100%), rgba(255, 255, 255, 0.035);
+  border-color: rgba(255, 255, 255, 0.10);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.10),
+    0 8px 22px -5px rgba(0, 0, 0, 0.45);
+}
+
+/* Tier D: Solid Surface — High information density or technical precision */
+.aura-surface-solid {
+  background-color: var(--aura-surface-solid);
+  border: 1px solid var(--aura-border-medium);
+}
+
+/* Glass Fallback for reduced transparency or non-blur environments */
+@media (prefers-reduced-transparency: reduce) {
+  .aura-glass-tier1 {
+    background-color: #07090e;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .aura-glass-tier2 {
+    background-color: #0c0e14;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .aura-glass-tier3 {
+    background-color: #11131b;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* -----------------------------------------------------------------
+   ACCESSIBILITY & FOCUS SYSTEM
+   ----------------------------------------------------------------- */
+.aura-focus-ring {
+  transition: box-shadow 0.15s ease;
+}
+
+.aura-focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--aura-void), 0 0 0 4px rgba(255, 255, 255, 0.6);
+}
+
+/* -----------------------------------------------------------------
+   CUSTOM TACTILE SCROLLBARS & CONTROLS
+   ----------------------------------------------------------------- */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -81,12 +211,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.24);
 }
 
 /* Range input styling - tactile high-precision audio hardware */
@@ -104,19 +234,19 @@ input[type="range"]:focus {
 input[type="range"]::-webkit-slider-runnable-track {
   height: 4px;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  height: 12px;
-  width: 12px;
+  height: 14px;
+  width: 14px;
   border-radius: 50%;
   background: #ffffff;
-  margin-top: -4px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
-  transition: transform 0.15s ease, background-color 0.15s ease;
+  margin-top: -5px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease;
 }
 
 input[type="range"]:hover::-webkit-slider-thumb {
@@ -141,7 +271,7 @@ input[type="range"].slider-vertical::-webkit-slider-runnable-track {
   width: 4px;
   height: 140px;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.10);
 }
 
 input[type="range"].slider-vertical::-webkit-slider-thumb {
@@ -176,10 +306,6 @@ input[type="range"].slider-vertical::-webkit-slider-thumb {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
-}
-
-.font-mono {
-  font-family: var(--font-mono);
 }
 
 /* Reduced motion accessibility constraint */
