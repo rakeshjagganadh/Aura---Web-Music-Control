@@ -1,4 +1,7 @@
 import React from 'react';
+import { AnimatePresence, LayoutGroup } from 'motion/react';
+import { MotionBackdrop, MotionModal, MotionFadeSlide } from '../common/motion/MotionSurface';
+import { MotionIconSwap, SharedIndicator } from '../common/motion/MotionInteractive';
 import { useMusic, AudioControlTab } from '../../context/MusicContext';
 import { Equalizer10Band } from './Equalizer10Band';
 import { DynamicsPanel } from './DynamicsPanel';
@@ -52,8 +55,6 @@ export const AudioControlCenter: React.FC = () => {
     applyPresetSnapshot
   } = useMusic();
 
-  if (!isAudioControlsOpen) return null;
-
   const TABS: { id: AudioControlTab; label: string; icon: React.ReactNode; proOnly?: boolean }[] = [
     { id: 'overview', label: 'Quick Tone', icon: <Layers className="w-3.5 h-3.5" /> },
     { id: 'eq', label: '10-Band EQ', icon: <SlidersHorizontal className="w-3.5 h-3.5" /> },
@@ -70,17 +71,20 @@ export const AudioControlCenter: React.FC = () => {
       {/* Mobile Touch-Optimized Sheet */}
       <MobileAudioControlSheet />
 
-      {/* Desktop Audio Control Center Drawer (100% preserved) */}
-      <div className="hidden lg:flex fixed inset-0 z-50 justify-end bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
-        
-        {/* Backdrop click to close */}
-        <div 
-          className="absolute inset-0" 
-          onClick={() => setIsAudioControlsOpen(false)} 
-        />
-
-      {/* Main Drawer Container */}
-      <div className="relative w-full max-w-4xl h-full glass-immersive border-l border-white/[0.14] shadow-[0_0_80px_rgba(0,0,0,0.95)] flex flex-col z-10 overflow-hidden">
+      {/* Desktop Audio Control Center Drawer */}
+      <AnimatePresence>
+        {isAudioControlsOpen && (
+          <MotionBackdrop
+            onClick={() => setIsAudioControlsOpen(false)}
+            style={{ pointerEvents: isAudioControlsOpen ? 'auto' : 'none' }}
+            className="hidden lg:flex fixed inset-0 z-50 justify-end bg-black/70 backdrop-blur-md"
+          >
+            {/* Main Drawer Container */}
+            <MotionModal
+              variant="drawer-right"
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-4xl h-full glass-immersive border-l border-white/[0.14] shadow-[0_0_80px_rgba(0,0,0,0.95)] flex flex-col z-10 overflow-hidden"
+            >
         
         {/* Top Studio Header */}
         <div className="p-4 sm:p-5 border-b border-white/10 flex flex-col gap-3 bg-zinc-950/80 backdrop-blur-xl shrink-0">
@@ -122,23 +126,27 @@ export const AudioControlCenter: React.FC = () => {
               
               {/* A/B Comparison Toggle Switch */}
               <button
+                type="button"
                 onClick={toggleABBypass}
                 title="A/B Comparison: Toggle between original unprocessed audio and studio DSP"
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all border shadow-sm ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-colors border shadow-sm cursor-pointer aura-pressable aura-focus-ring ${
                   isABBypassed
                     ? 'bg-zinc-800 text-zinc-300 border-white/20'
                     : 'bg-emerald-600/25 text-emerald-300 border-emerald-500/40 shadow-emerald-500/10'
                 }`}
               >
-                <Radio className={`w-3.5 h-3.5 ${!isABBypassed ? 'text-emerald-400 animate-pulse' : 'text-zinc-500'}`} />
+                <MotionIconSwap stateKey={isABBypassed ? 'raw' : 'dsp'}>
+                  <Radio className={`w-3.5 h-3.5 ${!isABBypassed ? 'text-emerald-400' : 'text-zinc-500'}`} />
+                </MotionIconSwap>
                 <span>{isABBypassed ? 'A: ORIGINAL' : 'B: STUDIO DSP'}</span>
               </button>
 
               {/* Mode Toggle (Simple vs Pro) */}
               <button
+                type="button"
                 onClick={toggleAdvancedMode}
                 title="Toggle between Simple Controls and Professional Audio Engineering Modules"
-                className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-white/10 transition-colors"
+                className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
               >
                 <Zap className="w-3.5 h-3.5 text-amber-400" />
                 {isAdvancedMode ? 'Simple Mode' : 'Pro Studio'}
@@ -146,17 +154,21 @@ export const AudioControlCenter: React.FC = () => {
 
               {/* Reset All */}
               <button
+                type="button"
                 onClick={resetAllAudioProcessing}
                 title="Reset all audio EQ, dynamics, spatial, and effects to flat defaults"
-                className="p-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 rounded-xl transition-colors"
+                aria-label="Reset all audio processing"
+                className="p-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 rounded-xl transition-colors cursor-pointer aura-pressable aura-focus-ring"
               >
                 <RotateCcw className="w-4 h-4" />
               </button>
 
               {/* Close Button */}
               <button
+                type="button"
                 onClick={() => setIsAudioControlsOpen(false)}
-                className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-xl transition-colors"
+                aria-label="Close Audio Control Studio"
+                className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-xl transition-colors cursor-pointer aura-pressable aura-focus-ring"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -164,25 +176,36 @@ export const AudioControlCenter: React.FC = () => {
           </div>
 
           {/* Tab Navigation Scrollable Bar */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-            {TABS.map((tab) => {
-              const isActive = activeAudioTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveAudioTab(tab.id)}
-                  className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-xl whitespace-nowrap transition-all ${
-                    isActive
-                      ? 'bg-indigo-600/30 text-indigo-200 border border-indigo-500/40 shadow-sm'
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
-                  }`}
-                >
-                  {tab.icon}
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
+          <LayoutGroup id="desktop-dsp-tabs">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              {TABS.map((tab) => {
+                const isActive = activeAudioTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveAudioTab(tab.id)}
+                    className={`relative flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-xl whitespace-nowrap transition-colors cursor-pointer aura-pressable aura-focus-ring ${
+                      isActive
+                        ? 'text-indigo-200'
+                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+                    }`}
+                  >
+                    {isActive && (
+                      <SharedIndicator
+                        layoutId="desktop-dsp-tab-pill"
+                        className="absolute inset-0 rounded-xl bg-indigo-600/30 border border-indigo-500/40 shadow-sm pointer-events-none"
+                      />
+                    )}
+                    <span className="relative z-10 flex items-center gap-2">
+                      {tab.icon}
+                      <span>{tab.label}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </LayoutGroup>
         </div>
 
         {/* Scrollable Main Content Body */}
@@ -200,9 +223,11 @@ export const AudioControlCenter: React.FC = () => {
             </div>
           )}
           
-          {/* Quick Tone & Simple Overview Pane */}
-          {activeAudioTab === 'overview' && (
-            <div className="flex flex-col gap-6 animate-in fade-in duration-150">
+          <AnimatePresence mode="wait" initial={false}>
+            <MotionFadeSlide key={activeAudioTab} direction="up" distance={6} duration="micro">
+              {/* Quick Tone & Simple Overview Pane */}
+              {activeAudioTab === 'overview' && (
+                <div className="flex flex-col gap-6">
               
               {/* Simple Tone Controls */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -304,6 +329,7 @@ export const AudioControlCenter: React.FC = () => {
                   ].map((preset) => (
                     <button
                       key={preset.label}
+                      type="button"
                       onClick={() => {
                         applyPresetSnapshot({
                           name: preset.label,
@@ -312,7 +338,7 @@ export const AudioControlCenter: React.FC = () => {
                           treble: preset.t,
                         }, preset.label);
                       }}
-                      className="p-3 rounded-xl bg-zinc-950/70 hover:bg-zinc-900 border border-white/5 hover:border-indigo-500/40 text-left transition-all group"
+                      className="p-3 rounded-xl bg-zinc-950/70 hover:bg-zinc-900 border border-white/5 hover:border-indigo-500/40 text-left transition-colors group cursor-pointer aura-pressable-subtle aura-focus-ring"
                     >
                       <span className="text-xs font-semibold text-zinc-300 group-hover:text-white block truncate">
                         {preset.label}
@@ -329,45 +355,34 @@ export const AudioControlCenter: React.FC = () => {
           )}
 
           {/* 10-Band Parametric Equalizer */}
-          {activeAudioTab === 'eq' && (
-            <Equalizer10Band className="animate-in fade-in duration-150" />
-          )}
+          {activeAudioTab === 'eq' && <Equalizer10Band />}
 
           {/* Dynamics & Limiter */}
-          {activeAudioTab === 'dynamics' && (
-            <DynamicsPanel className="animate-in fade-in duration-150" />
-          )}
+          {activeAudioTab === 'dynamics' && <DynamicsPanel />}
 
           {/* Spatial 3D Audio */}
-          {activeAudioTab === 'spatial' && (
-            <SpatialAudioPanel className="animate-in fade-in duration-150" />
-          )}
+          {activeAudioTab === 'spatial' && <SpatialAudioPanel />}
 
           {/* Effects Rack */}
-          {activeAudioTab === 'effects' && (
-            <EffectsRackPanel className="animate-in fade-in duration-150" />
-          )}
+          {activeAudioTab === 'effects' && <EffectsRackPanel />}
 
           {/* Channel Matrix & Pitch */}
-          {activeAudioTab === 'channels' && (
-            <ChannelMatrixPanel className="animate-in fade-in duration-150" />
-          )}
+          {activeAudioTab === 'channels' && <ChannelMatrixPanel />}
 
           {/* Analysis & Meters */}
-          {activeAudioTab === 'analysis' && (
-            <AudioAnalysisPanel className="animate-in fade-in duration-150" />
-          )}
+          {activeAudioTab === 'analysis' && <AudioAnalysisPanel />}
 
           {/* Presets & Hardware Calibration */}
-          {activeAudioTab === 'presets' && (
-            <PresetsProfilesPanel className="animate-in fade-in duration-150" />
-          )}
+          {activeAudioTab === 'presets' && <PresetsProfilesPanel />}
+            </MotionFadeSlide>
+          </AnimatePresence>
 
         </div>
 
-      </div>
-
-    </div>
+            </MotionModal>
+          </MotionBackdrop>
+        )}
+      </AnimatePresence>
     </>
   );
 };

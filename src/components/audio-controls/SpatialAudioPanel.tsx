@@ -1,4 +1,5 @@
 import React, { useRef, useState, useCallback } from 'react';
+import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
 import { useMusic } from '../../context/MusicContext';
 import { SpatialMode } from '../../types';
 import { 
@@ -70,6 +71,7 @@ export const SpatialAudioPanel: React.FC<{ className?: string }> = ({ className 
     isAdvancedMode 
   } = useMusic();
 
+  const { prefersReducedMotion } = useMotionCapabilities();
   const radarRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -161,7 +163,7 @@ export const SpatialAudioPanel: React.FC<{ className?: string }> = ({ className 
           <button
             type="button"
             onClick={resetSpatial}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-white/5 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             title="Reset spatial engine to default settings"
           >
             <RotateCcw className="w-3 h-3" />
@@ -185,7 +187,7 @@ export const SpatialAudioPanel: React.FC<{ className?: string }> = ({ className 
                   updateSpatial({ enabled: true, mode: m.id });
                 }
               }}
-              className={`p-3.5 rounded-xl border text-left flex flex-col justify-between gap-2 transition-all ${
+              className={`p-3.5 rounded-xl border text-left flex flex-col justify-between gap-2 transition-colors cursor-pointer aura-pressable-subtle aura-focus-ring ${
                 isSelected
                   ? 'bg-cyan-500/15 border-cyan-500/40 text-white shadow-sm'
                   : 'bg-zinc-950/60 border-white/5 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
@@ -196,7 +198,7 @@ export const SpatialAudioPanel: React.FC<{ className?: string }> = ({ className 
                   {m.icon}
                   <span className="text-xs font-bold">{m.label}</span>
                 </div>
-                {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />}
+                {isSelected && <span className={`w-1.5 h-1.5 rounded-full bg-cyan-400 ${!prefersReducedMotion ? 'animate-pulse' : ''}`} />}
               </div>
               <div>
                 <span className="text-[11px] font-medium text-zinc-300 block">{m.shortDesc}</span>
@@ -254,13 +256,15 @@ export const SpatialAudioPanel: React.FC<{ className?: string }> = ({ className 
 
               {/* Draggable Sound Source Beacon */}
               <div
-                className="absolute w-7 h-7 rounded-full bg-cyan-400 border-2 border-white shadow-[0_0_16px_rgba(34,211,238,0.8)] flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 transition-transform duration-75 pointer-events-none z-20"
+                className={`absolute w-7 h-7 rounded-full bg-cyan-400 border-2 border-white shadow-[0_0_16px_rgba(34,211,238,0.8)] flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20 ${
+                  isDragging || prefersReducedMotion ? 'transition-none' : 'transition-[left,top] duration-150 ease-out'
+                }`}
                 style={{
                   left: `${50 + posX * 42}%`,
                   top: `${50 + posY * 42}%`,
                 }}
               >
-                <div className="w-2 h-2 rounded-full bg-zinc-950 animate-ping" />
+                <div className="w-2 h-2 rounded-full bg-zinc-950" />
               </div>
 
               {/* Polar Field Direction Labels */}
@@ -279,7 +283,7 @@ export const SpatialAudioPanel: React.FC<{ className?: string }> = ({ className 
             <button
               type="button"
               onClick={handleCenterPosition}
-              className="text-xs text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
+              className="text-xs text-cyan-400 hover:text-cyan-300 font-medium transition-colors cursor-pointer aura-pressable aura-focus-ring rounded px-1.5 py-0.5"
             >
               Reset to Center
             </button>

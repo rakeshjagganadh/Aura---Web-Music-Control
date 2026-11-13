@@ -84,12 +84,13 @@ export const StereoPhaseController: React.FC = () => {
         </div>
 
         <button
+          type="button"
           onClick={() => {
             setStereoWidth(1.0);
             setStereoBalance(0);
             setChannelMonitor('stereo');
           }}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium text-zinc-400 hover:text-white bg-zinc-800/80 hover:bg-zinc-700 border border-white/5 transition-colors self-start sm:self-auto"
+          className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium text-zinc-400 hover:text-white bg-zinc-800/80 hover:bg-zinc-700 border border-white/5 transition-colors self-start sm:self-auto cursor-pointer aura-pressable aura-focus-ring"
         >
           <RotateCcw className="w-3 h-3" />
           Reset Stereo
@@ -118,7 +119,7 @@ export const StereoPhaseController: React.FC = () => {
           <div className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-white/30 transform -translate-x-1/2 z-0" />
           {/* Active pointer indicator */}
           <div
-            className="absolute top-0 bottom-0 w-2.5 rounded-full bg-white shadow-lg shadow-cyan-400/50 transform -translate-x-1/2 transition-all duration-100 ease-out z-10"
+            className="absolute top-0 bottom-0 w-2.5 rounded-full bg-white shadow-lg shadow-cyan-400/50 transform -translate-x-1/2 transition-[left] duration-100 ease-out z-10"
             style={{ left: `${correlationPct}%` }}
           />
         </div>
@@ -135,7 +136,7 @@ export const StereoPhaseController: React.FC = () => {
             <span className="text-zinc-400 font-bold w-4">L</span>
             <div className="flex-1 h-1.5 rounded-full bg-zinc-800 overflow-hidden">
               <div
-                className="h-full bg-cyan-400 transition-all duration-75"
+                className="h-full bg-cyan-400 transition-[width] duration-75"
                 style={{ width: `${Math.min(100, (phaseData.leftEnergy || 0) * 100)}%` }}
               />
             </div>
@@ -144,7 +145,7 @@ export const StereoPhaseController: React.FC = () => {
             <span className="text-zinc-400 font-bold w-4">R</span>
             <div className="flex-1 h-1.5 rounded-full bg-zinc-800 overflow-hidden">
               <div
-                className="h-full bg-blue-400 transition-all duration-75"
+                className="h-full bg-blue-400 transition-[width] duration-75"
                 style={{ width: `${Math.min(100, (phaseData.rightEnergy || 0) * 100)}%` }}
               />
             </div>
@@ -226,8 +227,9 @@ export const StereoPhaseController: React.FC = () => {
             return (
               <button
                 key={m.id}
+                type="button"
                 onClick={() => setChannelMonitor(m.id)}
-                className={`flex flex-col items-start gap-1 p-3 rounded-2xl text-left transition-all border ${
+                className={`flex flex-col items-start gap-1 p-3 rounded-2xl text-left transition-colors border cursor-pointer aura-pressable-subtle aura-focus-ring ${
                   isSelected
                     ? 'bg-blue-600/20 border-blue-500/40 text-blue-200 shadow-md shadow-blue-500/10'
                     : 'bg-zinc-950/60 border-white/5 text-zinc-400 hover:bg-zinc-800/80 hover:text-zinc-200'

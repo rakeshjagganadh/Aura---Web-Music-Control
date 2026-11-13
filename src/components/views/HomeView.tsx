@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { AnimatePresence } from 'motion/react';
 import { useMusic } from '../../context/MusicContext';
 import { SongObjectCard } from '../common/SongObjectCard';
 import { AddToPlaylistModal } from '../playlists/AddToPlaylistModal';
 import { YouTubePlaylistImportModal } from '../playlists/YouTubePlaylistImportModal';
+import { MotionFadeSlide } from '../common/motion/MotionSurface';
+import { MotionIconSwap } from '../common/motion/MotionInteractive';
+import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
 import { 
   Play, 
   Pause, 
@@ -86,6 +90,7 @@ export const HomeView: React.FC = () => {
   } = useMusic();
 
   const [playlistModalTrack, setPlaylistModalTrack] = useState<Track | null>(null);
+  const { canHover, prefersReducedMotion } = useMotionCapabilities();
 
   // Dynamic Discovery States
   const [trendingTracks, setTrendingTracks] = useState<Track[]>([]);
@@ -227,7 +232,7 @@ export const HomeView: React.FC = () => {
           <button
             type="button"
             onClick={handlePlayDailyMix}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer aura-focus-ring"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md aura-pressable transition-colors cursor-pointer aura-focus-ring"
             title="Play Sanctuary Daily Flow Mix"
           >
             <Play className="w-3.5 h-3.5 fill-current text-black" />
@@ -237,7 +242,7 @@ export const HomeView: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsYouTubeImportModalOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-medium border border-red-500/25 transition-colors cursor-pointer aura-focus-ring"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-medium border border-red-500/25 aura-pressable transition-colors cursor-pointer aura-focus-ring"
             title="Import YouTube or YouTube Music Playlist"
           >
             <ListMusic className="w-3.5 h-3.5 text-red-400" />
@@ -247,7 +252,7 @@ export const HomeView: React.FC = () => {
           <button
             type="button"
             onClick={() => setCurrentView('library')}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-focus-ring"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium border border-white/10 aura-pressable transition-colors cursor-pointer aura-focus-ring"
             title="Open Personal Vault Overview"
           >
             <HardDrive className="w-3.5 h-3.5 text-indigo-400" />
@@ -257,7 +262,7 @@ export const HomeView: React.FC = () => {
           <button
             type="button"
             onClick={() => setCurrentView('sources')}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-focus-ring"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium border border-white/10 aura-pressable transition-colors cursor-pointer aura-focus-ring"
             title="Open Live World Radio"
           >
             <RadioIcon className="w-3.5 h-3.5 text-amber-400" />
@@ -286,10 +291,10 @@ export const HomeView: React.FC = () => {
                 <div
                   key={`quick-pick-${track.id}`}
                   onClick={() => playTrack(track, quickPicks)}
-                  className={`group relative flex items-center gap-3.5 p-2.5 rounded-2xl transition-all duration-200 cursor-pointer aura-focus-ring ${
+                  className={`group relative flex items-center gap-3.5 p-2.5 rounded-2xl aura-hover-scale aura-pressable-subtle transition-colors duration-200 cursor-pointer aura-focus-ring ${
                     currentTrack?.id === track.id
-                      ? 'bg-white/[0.10] border border-sky-400/50 shadow-md scale-[1.01]'
-                      : 'bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-white/[0.12] shadow-sm hover:shadow-md transition-all hover:scale-[1.01]'
+                      ? 'bg-white/[0.10] border border-sky-400/50 shadow-md'
+                      : 'bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-white/[0.12] shadow-sm hover:shadow-md'
                   }`}
                 >
                   {/* ~54px Tactile Artwork Tile */}
@@ -298,7 +303,7 @@ export const HomeView: React.FC = () => {
                       <img 
                         src={track.coverUrl} 
                         alt={track.title} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className={`w-full h-full object-cover transition-transform duration-300 ${canHover ? 'group-hover:scale-105' : ''}`}
                         referrerPolicy="no-referrer"
                       />
                     ) : (
@@ -308,13 +313,15 @@ export const HomeView: React.FC = () => {
                     )}
 
                     {/* Micro Play Hover Button */}
-                    <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <div className="w-7 h-7 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg group-hover:scale-110 active:scale-95 transition-transform">
-                        {isThisPlaying ? (
-                          <Pause className="w-3.5 h-3.5 fill-current text-black" />
-                        ) : (
-                          <Play className="w-3.5 h-3.5 fill-current text-black translate-x-0.5" />
-                        )}
+                    <div className={`absolute inset-0 bg-black/45 flex items-center justify-center transition-opacity ${isThisPlaying ? 'opacity-100' : canHover ? 'opacity-0 group-hover:opacity-100' : 'opacity-0'}`}>
+                      <div className={`w-7 h-7 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg active:scale-95 transition-transform ${canHover ? 'group-hover:scale-110' : ''}`}>
+                        <MotionIconSwap stateKey={isThisPlaying ? 'pause' : 'play'}>
+                          {isThisPlaying ? (
+                            <Pause className="w-3.5 h-3.5 fill-current text-black" />
+                          ) : (
+                            <Play className="w-3.5 h-3.5 fill-current text-black translate-x-0.5" />
+                          )}
+                        </MotionIconSwap>
                       </div>
                     </div>
                   </div>
@@ -332,9 +339,9 @@ export const HomeView: React.FC = () => {
                   {/* Active Equalizer Signal */}
                   {isThisPlaying && (
                     <div className="flex items-end gap-0.5 pr-2 shrink-0">
-                      <span className="w-0.5 h-3 bg-sky-400 rounded-full animate-pulse" />
-                      <span className="w-0.5 h-4 bg-indigo-300 rounded-full animate-[pulse_0.7s_ease-in-out_infinite]" />
-                      <span className="w-0.5 h-2.5 bg-white rounded-full animate-[pulse_1s_ease-in-out_infinite]" />
+                      <span className={`w-0.5 h-3 bg-sky-400 rounded-full ${!prefersReducedMotion ? 'animate-pulse' : ''}`} />
+                      <span className={`w-0.5 h-4 bg-indigo-300 rounded-full ${!prefersReducedMotion ? 'animate-[pulse_0.7s_ease-in-out_infinite]' : ''}`} />
+                      <span className={`w-0.5 h-2.5 bg-white rounded-full ${!prefersReducedMotion ? 'animate-[pulse_1s_ease-in-out_infinite]' : ''}`} />
                     </div>
                   )}
                 </div>
@@ -361,7 +368,7 @@ export const HomeView: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsYouTubeImportModalOpen(true)}
-            className="self-start sm:self-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-medium border border-red-500/25 transition-all cursor-pointer aura-focus-ring"
+            className="self-start sm:self-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-medium border border-red-500/25 aura-pressable transition-colors cursor-pointer aura-focus-ring"
           >
             <ListMusic className="w-3.5 h-3.5 text-red-400" />
             <span>Import YouTube Playlist</span>
@@ -375,7 +382,7 @@ export const HomeView: React.FC = () => {
             return (
               <div
                 key={mix.id}
-                className="group relative overflow-hidden rounded-3xl border border-white/[0.22] glass-ambient hover:glass-reflective flex flex-col justify-between transition-all duration-300 hover:border-white/40 shadow-xl hover:shadow-2xl hover:scale-[1.015]"
+                className="group relative overflow-hidden rounded-3xl border border-white/[0.22] glass-ambient hover:glass-reflective aura-hover-scale flex flex-col justify-between transition-colors duration-300 hover:border-white/40 shadow-xl hover:shadow-2xl"
               >
                 {/* Background Gradient */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${mix.coverColor} opacity-70 group-hover:opacity-85 transition-opacity`} />
@@ -441,7 +448,7 @@ export const HomeView: React.FC = () => {
                       <span>{mix.trackCount} tracks ready</span>
                       {isPlayingThisMix && (
                         <span className="flex items-center gap-1 text-sky-400 font-bold">
-                          <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-ping" />
+                          <span className={`w-1.5 h-1.5 rounded-full bg-sky-400 ${!prefersReducedMotion ? 'animate-pulse' : ''}`} />
                           Playing
                         </span>
                       )}
@@ -459,7 +466,7 @@ export const HomeView: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handlePlayDiscoveryMix(mix, true)}
-                      className="p-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 hover:text-white transition-colors cursor-pointer aura-focus-ring"
+                      className="p-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 hover:text-white aura-pressable transition-colors cursor-pointer aura-focus-ring"
                       title="Shuffle Mix"
                     >
                       <Shuffle className="w-3.5 h-3.5" />
@@ -467,7 +474,7 @@ export const HomeView: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handlePlayDiscoveryMix(mix, false)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-zinc-100 text-zinc-950 font-semibold text-xs transition-transform active:scale-95 cursor-pointer aura-focus-ring shadow"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-zinc-100 text-zinc-950 font-semibold text-xs aura-pressable transition-colors cursor-pointer aura-focus-ring shadow"
                       title={`Play ${mix.title}`}
                     >
                       <Play className="w-3 h-3 fill-current text-black translate-x-0.2" />
@@ -482,7 +489,7 @@ export const HomeView: React.FC = () => {
           {/* Quick-Launcher Card for YouTube Playlist Import */}
           <div
             onClick={() => setIsYouTubeImportModalOpen(true)}
-            className="group relative overflow-hidden rounded-2xl border border-red-500/20 hover:border-red-500/40 aura-glass-ambient flex flex-col justify-between transition-all duration-300 shadow-lg cursor-pointer min-h-[160px]"
+            className="group relative overflow-hidden rounded-2xl border border-red-500/20 hover:border-red-500/40 aura-glass-ambient aura-hover-scale aura-pressable-subtle flex flex-col justify-between transition-colors duration-300 shadow-lg cursor-pointer min-h-[160px]"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-red-950/40 via-zinc-900/60 to-black/80 opacity-80 group-hover:opacity-100 transition-opacity" />
             
@@ -536,7 +543,7 @@ export const HomeView: React.FC = () => {
             <div
               key={mood.id}
               onClick={() => handleSelectMood(mood.query)}
-              className={`group relative overflow-hidden rounded-3xl aspect-[16/9] p-4 flex flex-col justify-between border ${mood.border} transition-all duration-300 cursor-pointer glass-ambient hover:glass-reflective shadow-lg hover:shadow-2xl hover:scale-[1.02]`}
+              className={`group relative overflow-hidden rounded-3xl aspect-[16/9] p-4 flex flex-col justify-between border ${mood.border} transition-colors duration-300 cursor-pointer glass-ambient hover:glass-reflective aura-hover-scale aura-pressable-subtle shadow-lg hover:shadow-2xl`}
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${mood.gradient} opacity-75 group-hover:opacity-95 transition-opacity`} />
               
@@ -577,7 +584,7 @@ export const HomeView: React.FC = () => {
             <div
               key={g.id}
               onClick={() => handleSelectGenre(g.query)}
-              className={`group relative overflow-hidden rounded-xl aspect-[4/3] p-3 flex flex-col justify-between border ${g.border} transition-all duration-200 cursor-pointer aura-glass-ambient shadow-sm hover:scale-[1.02]`}
+              className={`group relative overflow-hidden rounded-xl aspect-[4/3] p-3 flex flex-col justify-between border ${g.border} transition-colors duration-200 cursor-pointer aura-glass-ambient aura-hover-scale aura-pressable-subtle shadow-sm`}
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${g.color} opacity-70 group-hover:opacity-95 transition-opacity`} />
               
@@ -615,7 +622,7 @@ export const HomeView: React.FC = () => {
             <div
               key={env.id}
               onClick={() => playTrack(env.featuredTrack, [env.featuredTrack])}
-              className="group relative overflow-hidden rounded-xl aspect-[16/10] p-3 flex flex-col justify-between border border-white/[0.08] hover:border-white/20 transition-all cursor-pointer aura-glass-ambient shadow-sm"
+              className="group relative overflow-hidden rounded-xl aspect-[16/10] p-3 flex flex-col justify-between border border-white/[0.08] hover:border-white/20 transition-colors cursor-pointer aura-glass-ambient aura-hover-scale aura-pressable-subtle shadow-sm"
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${env.coverGradient} opacity-60 group-hover:opacity-85 transition-opacity`} />
               
@@ -659,23 +666,57 @@ export const HomeView: React.FC = () => {
           </button>
         </div>
 
-        {trendingTracks.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-5">
-            {trendingTracks.map((track) => (
-              <SongObjectCard
-                key={`trending-${track.id}`}
-                track={track}
-                playlistContext={trendingTracks}
-                variant="grid"
-                onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="p-6 rounded-2xl aura-glass-ambient text-center text-xs text-zinc-400 font-mono">
-            {isLoadingDiscovery ? 'Loading live open streaming discoveries...' : 'Discoveries loaded.'}
-          </div>
-        )}
+        <AnimatePresence mode="wait" initial={false}>
+          {trendingTracks.length > 0 ? (
+            <MotionFadeSlide
+              key="discovery-tracks"
+              direction="up"
+              distance={6}
+              duration="micro"
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-5"
+            >
+              {trendingTracks.map((track) => (
+                <SongObjectCard
+                  key={`trending-${track.id}`}
+                  track={track}
+                  playlistContext={trendingTracks}
+                  variant="grid"
+                  onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
+                />
+              ))}
+            </MotionFadeSlide>
+          ) : isLoadingDiscovery ? (
+            <MotionFadeSlide
+              key="discovery-loading"
+              direction="up"
+              distance={4}
+              duration="micro"
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-5"
+              aria-busy="true"
+              aria-label="Loading live open streaming discoveries"
+            >
+              {Array.from({ length: 8 }).map((_, idx) => (
+                <div key={idx} className="flex flex-col">
+                  <div className="w-full aspect-square rounded-2xl aura-skeleton border border-white/[0.08]" />
+                  <div className="mt-2.5 px-0.5 flex flex-col gap-1.5">
+                    <div className="h-3.5 w-3/4 rounded aura-skeleton" />
+                    <div className="h-3 w-1/2 rounded aura-skeleton" />
+                  </div>
+                </div>
+              ))}
+            </MotionFadeSlide>
+          ) : (
+            <MotionFadeSlide
+              key="discovery-empty"
+              direction="up"
+              distance={4}
+              duration="micro"
+              className="p-6 rounded-2xl aura-glass-ambient text-center text-xs text-zinc-400 font-mono"
+            >
+              No trending discoveries available right now.
+            </MotionFadeSlide>
+          )}
+        </AnimatePresence>
       </section>
 
       {/* -------------------------------------------------------------
@@ -702,7 +743,7 @@ export const HomeView: React.FC = () => {
               <div
                 key={`radio-${station.id}`}
                 onClick={() => playTrack(station, topRadioStations)}
-                className="group relative flex flex-col p-2.5 rounded-xl aura-glass-ambient transition-all cursor-pointer"
+                className="group relative flex flex-col p-2.5 rounded-xl aura-glass-ambient aura-hover-lift aura-pressable-subtle transition-colors cursor-pointer"
               >
                 <div className="relative aspect-square rounded-lg overflow-hidden bg-zinc-900 border border-white/10 mb-2 flex items-center justify-center">
                   {station.coverUrl ? (
@@ -751,7 +792,7 @@ export const HomeView: React.FC = () => {
           <button
             type="button"
             onClick={() => setCurrentView('playlists')}
-            className="text-xs text-zinc-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer font-medium"
+            className="text-xs text-zinc-400 hover:text-white aura-pressable transition-colors flex items-center gap-1 cursor-pointer font-medium"
           >
             All Spaces <ChevronRight className="w-4 h-4" />
           </button>
@@ -762,7 +803,7 @@ export const HomeView: React.FC = () => {
             <div
               key={col.id}
               onClick={() => playTrack(col.tracks[0], col.tracks)}
-              className="group relative flex flex-col justify-between p-4 rounded-2xl aura-glass-ambient transition-all duration-300 cursor-pointer min-h-[145px]"
+              className="group relative flex flex-col justify-between p-4 rounded-2xl aura-glass-ambient aura-hover-lift aura-pressable-subtle transition-colors duration-300 cursor-pointer min-h-[145px]"
             >
               <div className="flex items-start justify-between">
                 <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${col.coverGradient} flex items-center justify-center text-white shadow-lg group-hover:scale-105 transition-transform`}>
@@ -820,7 +861,7 @@ export const HomeView: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsUploadModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-semibold text-xs shadow-md transition-all active:scale-95 cursor-pointer aura-focus-ring"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-semibold text-xs shadow-md aura-pressable transition-colors cursor-pointer aura-focus-ring"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Import Audio</span>
@@ -829,7 +870,7 @@ export const HomeView: React.FC = () => {
             <button
               type="button"
               onClick={loadDemoPack}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 font-medium text-xs border border-white/10 transition-colors cursor-pointer aura-focus-ring"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 font-medium text-xs border border-white/10 aura-pressable transition-colors cursor-pointer aura-focus-ring"
             >
               <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
               <span>Load Demo Pack</span>
@@ -844,13 +885,11 @@ export const HomeView: React.FC = () => {
       </div>
 
       {/* Add To Playlist Modal */}
-      {playlistModalTrack && (
-        <AddToPlaylistModal
-          track={playlistModalTrack}
-          isOpen={Boolean(playlistModalTrack)}
-          onClose={() => setPlaylistModalTrack(null)}
-        />
-      )}
+      <AddToPlaylistModal
+        track={playlistModalTrack}
+        isOpen={Boolean(playlistModalTrack)}
+        onClose={() => setPlaylistModalTrack(null)}
+      />
 
       {/* YouTube Playlist Import Modal */}
       <YouTubePlaylistImportModal

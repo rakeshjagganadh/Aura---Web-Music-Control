@@ -26,8 +26,9 @@ export const EffectsPanel: React.FC<{ className?: string }> = ({ className = '' 
           <h3 className="text-sm font-semibold text-zinc-100">Studio Audio Controls & Effects</h3>
         </div>
         <button
+          type="button"
           onClick={resetEffects}
-          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-800/60 hover:bg-zinc-800 rounded-lg border border-white/5 transition-colors"
+          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-800/60 hover:bg-zinc-800 rounded-lg border border-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
         >
           <RefreshCw className="w-3 h-3" />
           Reset Defaults
@@ -144,7 +145,7 @@ export const EffectsPanel: React.FC<{ className?: string }> = ({ className = '' 
       {/* Section 2: Reverb & Echo DSP Rack */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Reverb Unit */}
-        <div className={`p-4 rounded-xl border transition-all duration-200 ${
+        <div className={`p-4 rounded-xl border transition-colors duration-200 ${
           effects.reverb.enabled 
             ? 'bg-zinc-900/70 border-indigo-500/30 shadow-sm' 
             : 'bg-zinc-900/30 border-white/5 opacity-75'
@@ -155,8 +156,9 @@ export const EffectsPanel: React.FC<{ className?: string }> = ({ className = '' 
               <span className="text-xs font-semibold text-zinc-200">Algorithmic Reverb</span>
             </div>
             <button
+              type="button"
               onClick={() => updateEffects({ reverb: { ...effects.reverb, enabled: !effects.reverb.enabled } })}
-              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                 effects.reverb.enabled
                   ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/40'
                   : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'
@@ -204,7 +206,7 @@ export const EffectsPanel: React.FC<{ className?: string }> = ({ className = '' 
         </div>
 
         {/* Echo / Delay Unit */}
-        <div className={`p-4 rounded-xl border transition-all duration-200 ${
+        <div className={`p-4 rounded-xl border transition-colors duration-200 ${
           effects.echo.enabled 
             ? 'bg-zinc-900/70 border-cyan-500/30 shadow-sm' 
             : 'bg-zinc-900/30 border-white/5 opacity-75'
@@ -215,8 +217,9 @@ export const EffectsPanel: React.FC<{ className?: string }> = ({ className = '' 
               <span className="text-xs font-semibold text-zinc-200">Analog Tape Echo / Delay</span>
             </div>
             <button
+              type="button"
               onClick={() => updateEffects({ echo: { ...effects.echo, enabled: !effects.echo.enabled } })}
-              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                 effects.echo.enabled
                   ? 'bg-cyan-600/30 text-cyan-300 border border-cyan-500/40'
                   : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'
@@ -280,8 +283,9 @@ export const EffectsPanel: React.FC<{ className?: string }> = ({ className = '' 
             return (
               <button
                 key={rate}
+                type="button"
                 onClick={() => setPlaybackRate(rate)}
-                className={`px-2.5 py-1 text-xs font-mono rounded-lg transition-colors ${
+                className={`px-2.5 py-1 text-xs font-mono rounded-lg transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                   isSelected
                     ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold'
                     : 'bg-zinc-800/80 text-zinc-400 hover:text-zinc-200 border border-white/5'

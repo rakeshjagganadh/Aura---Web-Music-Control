@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { AnimatePresence } from 'motion/react';
+import { MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
 import { useMusic } from '../../context/MusicContext';
 import { 
   User, 
@@ -52,8 +54,6 @@ export const AuraAccountModal: React.FC<AuraAccountModalProps> = ({ isOpen, onCl
   const [displayName, setDisplayName] = useState(account.displayName);
   const [email, setEmail] = useState(account.email || '');
 
-  if (!isOpen) return null;
-
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
     const updated: AuraUserAccount = {
@@ -91,8 +91,18 @@ export const AuraAccountModal: React.FC<AuraAccountModalProps> = ({ isOpen, onCl
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 animate-in fade-in duration-150 select-none">
-      <div className="relative w-full max-w-lg rounded-3xl bg-[#0c0e15] border border-white/10 shadow-2xl p-6 flex flex-col gap-6">
+    <AnimatePresence>
+      {isOpen && (
+        <MotionBackdrop
+          onClick={onClose}
+          style={{ pointerEvents: isOpen ? 'auto' : 'none' }}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 select-none"
+        >
+          <MotionModal
+            variant="center"
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-lg rounded-3xl bg-[#0c0e15] border border-white/10 shadow-2xl p-6 flex flex-col gap-6"
+          >
         
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -108,7 +118,7 @@ export const AuraAccountModal: React.FC<AuraAccountModalProps> = ({ isOpen, onCl
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
+            className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer aura-pressable"
           >
             <X className="w-5 h-5" />
           </button>
@@ -145,7 +155,7 @@ export const AuraAccountModal: React.FC<AuraAccountModalProps> = ({ isOpen, onCl
 
           <button
             type="submit"
-            className="py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20 transition-all cursor-pointer"
+            className="py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20 transition-colors cursor-pointer aura-pressable"
           >
             Save Profile & Enable Sync
           </button>
@@ -189,7 +199,7 @@ export const AuraAccountModal: React.FC<AuraAccountModalProps> = ({ isOpen, onCl
         <div className="flex items-center justify-between pt-2 border-t border-white/5">
           <button
             onClick={handleExportBackup}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs border border-white/5 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs border border-white/5 transition-colors cursor-pointer aura-pressable"
           >
             <Download className="w-3.5 h-3.5 text-indigo-400" />
             Export Studio Backup (JSON)
@@ -198,7 +208,9 @@ export const AuraAccountModal: React.FC<AuraAccountModalProps> = ({ isOpen, onCl
           <span className="text-[10px] font-mono text-zinc-500">v3.0 Universal</span>
         </div>
 
-      </div>
-    </div>
+          </MotionModal>
+        </MotionBackdrop>
+      )}
+    </AnimatePresence>
   );
 };

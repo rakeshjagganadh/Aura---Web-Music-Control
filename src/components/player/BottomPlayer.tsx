@@ -1,8 +1,23 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { AnimatePresence, motion } from 'motion/react';
 import { useMusic } from '../../context/MusicContext';
 import { useListenTogether } from '../../context/ListenTogetherContext';
 import { OpticalGlassSurface } from '../common/OpticalGlassSurface';
+import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
+import {
+  fadeVariants,
+  MOTION_DURATION,
+  MOTION_EASE,
+  MOTION_TRANSITION,
+  REDUCED_FADE_TRANSITION,
+} from '../../motion/tokens';
+import {
+  MotionArtwork,
+  MotionIconSwap,
+  MotionPopover,
+  MotionPress,
+} from '../common/motion';
 import {
   Play,
   Pause,
@@ -94,6 +109,8 @@ export const BottomPlayer: React.FC = () => {
     roomPrev,
     roomSeek,
   } = useListenTogether();
+
+  const { prefersReducedMotion, controlTransition } = useMotionCapabilities();
 
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const moreTriggerRef = useRef<HTMLButtonElement>(null);
@@ -427,16 +444,24 @@ export const BottomPlayer: React.FC = () => {
   return (
     <div className="hidden lg:flex absolute bottom-3.5 sm:bottom-4 lg:bottom-5 left-4 right-4 sm:left-6 sm:right-6 max-w-4xl xl:max-w-5xl mx-auto z-30 select-none">
       {/* Hover timestamp tooltip rendered outside OpticalGlassSurface overflow-hidden so it never clips */}
-      {(isHoveringProgress || isScrubbing) && canSeek && (
-        <div
-          className="pointer-events-none absolute -top-7 z-40 -translate-x-1/2 px-2 py-0.5 rounded-md text-[10px] font-mono tabular-nums text-white bg-zinc-950/90 border border-white/15 shadow-lg whitespace-nowrap"
-          style={{
-            left: `calc(24px + (100% - 48px) * ${Math.max(0.02, Math.min(0.98, activeRatio))})`,
-          }}
-        >
-          {formatTime(activeHoverTime)} <span className="text-zinc-500">/ {formatTime(duration)}</span>
-        </div>
-      )}
+      <AnimatePresence>
+        {(isHoveringProgress || isScrubbing) && canSeek && (
+          <motion.div
+            key="bottom-player-progress-tooltip"
+            variants={fadeVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={prefersReducedMotion ? REDUCED_FADE_TRANSITION : MOTION_TRANSITION.micro}
+            className="pointer-events-none absolute -top-7 z-40 -translate-x-1/2 px-2 py-0.5 rounded-md text-[10px] font-mono tabular-nums text-white bg-zinc-950/90 border border-white/15 shadow-lg whitespace-nowrap"
+            style={{
+              left: `calc(24px + (100% - 48px) * ${Math.max(0.02, Math.min(0.98, activeRatio))})`,
+            }}
+          >
+            {formatTime(activeHoverTime)} <span className="text-zinc-500">/ {formatTime(duration)}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <OpticalGlassSurface
         id="bottom-player-bar"
@@ -452,37 +477,46 @@ export const BottomPlayer: React.FC = () => {
               LEFT — ALBUM ARTWORK, TRACK TITLE, ARTIST & QUIET SOURCE
               ------------------------------------------------------------- */}
           <div className="flex items-center gap-3 min-w-0">
-            <button
-              type="button"
+            <MotionPress
               onClick={() => setIsExpandedPlayerOpen(true)}
+              intensity="subtle"
+              enableHoverScale
               className="relative group shrink-0 w-11 h-11 overflow-hidden cursor-pointer rounded-xl border border-white/[0.08] shadow-md bg-[#0d1017] aura-focus-ring"
               title="Open Expanded Player"
               aria-label="Open Expanded Player"
             >
-              {currentTrack.coverUrl ? (
-                <img
-                  src={currentTrack.coverUrl}
-                  alt={currentTrack.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLElement).style.display = 'none';
-                  }}
-                />
-              ) : (
-                <div
-                  className={`w-full h-full bg-gradient-to-br ${
-                    currentTrack.coverColor || 'from-[#141a29] to-[#080b12]'
-                  } flex items-center justify-center`}
+              <AnimatePresence initial={false}>
+                <MotionArtwork
+                  key={`${currentTrack.id}:${currentTrack.coverUrl || ''}`}
+                  artworkKey={`${currentTrack.id}:${currentTrack.coverUrl || ''}`}
+                  className="absolute inset-0 w-full h-full"
                 >
-                  <Music className="w-4.5 h-4.5 text-white/70" />
-                </div>
-              )}
+                  {currentTrack.coverUrl ? (
+                    <img
+                      src={currentTrack.coverUrl}
+                      alt={currentTrack.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div
+                      className={`w-full h-full bg-gradient-to-br ${
+                        currentTrack.coverColor || 'from-[#141a29] to-[#080b12]'
+                      } flex items-center justify-center`}
+                    >
+                      <Music className="w-4.5 h-4.5 text-white/70" />
+                    </div>
+                  )}
+                </MotionArtwork>
+              </AnimatePresence>
 
-              <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+              <div className="absolute inset-0 z-10 bg-black/45 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                 <Maximize2 className="w-3.5 h-3.5 text-white" />
               </div>
-            </button>
+            </MotionPress>
 
             <div className="min-w-0 flex-1">
               <button
@@ -513,9 +547,10 @@ export const BottomPlayer: React.FC = () => {
               MIDDLE — SHUFFLE · PREV · PLAY/PAUSE · NEXT · REPEAT
               ------------------------------------------------------------- */}
           <div className="flex items-center justify-center gap-1.5 xl:gap-2.5 shrink-0">
-            <button
-              type="button"
+            <MotionPress
               onClick={toggleShuffle}
+              intensity="control"
+              enableHoverScale
               aria-label={`Shuffle ${isShuffle ? 'On' : 'Off'}`}
               aria-pressed={isShuffle}
               title={`Shuffle: ${isShuffle ? 'On' : 'Off'}`}
@@ -525,47 +560,74 @@ export const BottomPlayer: React.FC = () => {
                   : 'text-zinc-400 hover:text-white hover:bg-white/[0.06]'
               }`}
             >
-              <Shuffle className="w-3.5 h-3.5" />
-              {isShuffle && <span className="absolute bottom-1 w-1 h-1 rounded-full bg-sky-300" />}
-            </button>
+              <motion.span
+                className="inline-flex items-center justify-center"
+                animate={
+                  prefersReducedMotion
+                    ? undefined
+                    : { scale: isShuffle ? [1, 1.16, 1] : 1 }
+                }
+                transition={{ duration: MOTION_DURATION.micro, ease: MOTION_EASE.standard }}
+              >
+                <Shuffle className="w-3.5 h-3.5" />
+              </motion.span>
+              <AnimatePresence>
+                {isShuffle && (
+                  <motion.span
+                    key="shuffle-dot"
+                    initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.4 }}
+                    animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
+                    exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.4 }}
+                    transition={controlTransition}
+                    className="absolute bottom-1 w-1 h-1 rounded-full bg-sky-300"
+                  />
+                )}
+              </AnimatePresence>
+            </MotionPress>
 
-            <button
-              type="button"
+            <MotionPress
               onClick={isInRoom ? roomPrev : prevTrack}
+              intensity="control"
+              enableHoverScale
               aria-label="Previous Track"
               title="Previous Track (P)"
-              className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-300 hover:text-white hover:bg-white/[0.06] active:scale-95 transition-all cursor-pointer aura-focus-ring"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-300 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer aura-focus-ring"
             >
               <SkipBack className="w-4 h-4 fill-current" />
-            </button>
+            </MotionPress>
 
-            <button
-              type="button"
+            <MotionPress
               onClick={isInRoom ? roomTogglePlay : togglePlay}
+              intensity="control"
+              enableHoverScale
               aria-label={isPlaying && !isLocallySilenced ? 'Pause' : 'Play'}
               title={isPlaying && !isLocallySilenced ? 'Pause (Space)' : 'Play (Space)'}
-              className="w-10 h-10 rounded-full bg-white hover:bg-zinc-100 active:scale-95 text-zinc-950 flex items-center justify-center shadow-[0_2px_14px_rgba(0,0,0,0.45)] transition-all cursor-pointer aura-focus-ring shrink-0"
+              className="w-10 h-10 rounded-full bg-white hover:bg-zinc-100 text-zinc-950 flex items-center justify-center shadow-[0_2px_14px_rgba(0,0,0,0.45)] transition-colors cursor-pointer aura-focus-ring shrink-0"
             >
-              {isPlaying && !isLocallySilenced ? (
-                <Pause className="w-4 h-4 fill-current text-zinc-950" />
-              ) : (
-                <Play className="w-4 h-4 fill-current text-zinc-950 translate-x-[1px]" />
-              )}
-            </button>
+              <MotionIconSwap stateKey={isPlaying && !isLocallySilenced ? 'pause' : 'play'}>
+                {isPlaying && !isLocallySilenced ? (
+                  <Pause className="w-4 h-4 fill-current text-zinc-950" />
+                ) : (
+                  <Play className="w-4 h-4 fill-current text-zinc-950 translate-x-[1px]" />
+                )}
+              </MotionIconSwap>
+            </MotionPress>
 
-            <button
-              type="button"
+            <MotionPress
               onClick={isInRoom ? roomNext : nextTrack}
+              intensity="control"
+              enableHoverScale
               aria-label="Next Track"
               title="Next Track (N)"
-              className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-300 hover:text-white hover:bg-white/[0.06] active:scale-95 transition-all cursor-pointer aura-focus-ring"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-300 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer aura-focus-ring"
             >
               <SkipForward className="w-4 h-4 fill-current" />
-            </button>
+            </MotionPress>
 
-            <button
-              type="button"
+            <MotionPress
               onClick={cycleRepeat}
+              intensity="control"
+              enableHoverScale
               aria-label={`Repeat ${repeatMode}`}
               aria-pressed={repeatMode !== 'off'}
               title={`Repeat: ${repeatMode === 'off' ? 'Off' : repeatMode === 'all' ? 'All' : 'One'}`}
@@ -575,15 +637,26 @@ export const BottomPlayer: React.FC = () => {
                   : 'text-zinc-400 hover:text-white hover:bg-white/[0.06]'
               }`}
             >
-              {repeatMode === 'one' ? (
-                <Repeat1 className="w-3.5 h-3.5" />
-              ) : (
-                <Repeat className="w-3.5 h-3.5" />
-              )}
-              {repeatMode !== 'off' && (
-                <span className="absolute bottom-1 w-1 h-1 rounded-full bg-sky-300" />
-              )}
-            </button>
+              <MotionIconSwap stateKey={repeatMode}>
+                {repeatMode === 'one' ? (
+                  <Repeat1 className="w-3.5 h-3.5" />
+                ) : (
+                  <Repeat className="w-3.5 h-3.5" />
+                )}
+              </MotionIconSwap>
+              <AnimatePresence>
+                {repeatMode !== 'off' && (
+                  <motion.span
+                    key="repeat-dot"
+                    initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.4 }}
+                    animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
+                    exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.4 }}
+                    transition={controlTransition}
+                    className="absolute bottom-1 w-1 h-1 rounded-full bg-sky-300"
+                  />
+                )}
+              </AnimatePresence>
+            </MotionPress>
           </div>
 
           {/* -------------------------------------------------------------
@@ -591,9 +664,10 @@ export const BottomPlayer: React.FC = () => {
               ------------------------------------------------------------- */}
           <div className="flex items-center justify-end gap-1 xl:gap-1.5 min-w-0">
             {/* Favourite */}
-            <button
-              type="button"
+            <MotionPress
               onClick={() => toggleFavorite(currentTrack.id)}
+              intensity="control"
+              enableHoverScale
               aria-label={currentTrack.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               aria-pressed={Boolean(currentTrack.isFavorite)}
               title={currentTrack.isFavorite ? 'Remove from Liked Songs' : 'Save to Liked Songs'}
@@ -603,30 +677,49 @@ export const BottomPlayer: React.FC = () => {
                   : 'text-zinc-400 hover:text-rose-400 hover:bg-white/[0.06]'
               }`}
             >
-              <Heart
-                className={`w-4 h-4 transition-transform active:scale-125 ${
-                  currentTrack.isFavorite ? 'fill-rose-500 text-rose-500' : ''
-                }`}
-              />
-            </button>
+              <motion.span
+                key={`${currentTrack.id}:${Boolean(currentTrack.isFavorite)}`}
+                className="inline-flex items-center justify-center"
+                initial={false}
+                animate={
+                  prefersReducedMotion
+                    ? undefined
+                    : { scale: currentTrack.isFavorite ? [1, 1.24, 1] : [1, 0.9, 1] }
+                }
+                transition={{ duration: MOTION_DURATION.standard, ease: MOTION_EASE.emphasized }}
+              >
+                <Heart
+                  className={`w-4 h-4 transition-colors ${
+                    currentTrack.isFavorite ? 'fill-rose-500 text-rose-500' : ''
+                  }`}
+                />
+              </motion.span>
+            </MotionPress>
 
             {/* Volume */}
             <div className="flex items-center gap-1 mr-0.5">
-              <button
-                type="button"
+              <MotionPress
                 onClick={toggleMute}
+                intensity="control"
+                enableHoverScale
                 aria-label={isMuted ? 'Unmute' : 'Mute'}
                 title={isMuted ? 'Unmute (M)' : `Mute (${volumePercent}%)`}
                 className="w-8 h-8 rounded-xl flex items-center justify-center text-zinc-300 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer aura-focus-ring shrink-0"
               >
-                {isMuted || volume === 0 ? (
-                  <VolumeX className="w-4 h-4 text-rose-400" />
-                ) : volume < 0.5 ? (
-                  <Volume1 className="w-4 h-4" />
-                ) : (
-                  <Volume2 className="w-4 h-4" />
-                )}
-              </button>
+                <MotionIconSwap
+                  stateKey={
+                    isMuted || volume === 0 ? 'muted' : volume < 0.5 ? 'low' : 'high'
+                  }
+                >
+                  {isMuted || volume === 0 ? (
+                    <VolumeX className="w-4 h-4 text-rose-400" />
+                  ) : volume < 0.5 ? (
+                    <Volume1 className="w-4 h-4" />
+                  ) : (
+                    <Volume2 className="w-4 h-4" />
+                  )}
+                </MotionIconSwap>
+              </MotionPress>
 
               <div className="w-16 xl:w-20 flex items-center">
                 <input
@@ -641,16 +734,17 @@ export const BottomPlayer: React.FC = () => {
                     height: '4px',
                     borderRadius: '9999px',
                   }}
-                  className="w-full"
+                  className="w-full transition-[filter] duration-150 hover:brightness-110"
                   aria-label="Volume slider"
                 />
               </div>
             </div>
 
             {/* Audio Studio DSP Shortcut */}
-            <button
-              type="button"
+            <MotionPress
               onClick={() => setIsAudioControlsOpen(!isAudioControlsOpen)}
+              intensity="control"
+              enableHoverScale
               aria-label="Audio Studio DSP"
               aria-pressed={isAudioControlsOpen}
               title="Audio Studio & DSP Controls (E)"
@@ -661,15 +755,25 @@ export const BottomPlayer: React.FC = () => {
               }`}
             >
               <SlidersHorizontal className="w-4 h-4" />
-              {isAudioEffectActive && (
-                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-sky-400" />
-              )}
-            </button>
+              <AnimatePresence>
+                {isAudioEffectActive && (
+                  <motion.span
+                    key="dsp-active-dot"
+                    initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.4 }}
+                    animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
+                    exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.4 }}
+                    transition={controlTransition}
+                    className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-sky-400"
+                  />
+                )}
+              </AnimatePresence>
+            </MotionPress>
 
             {/* Queue */}
-            <button
-              type="button"
+            <MotionPress
               onClick={() => setIsQueueDrawerOpen(!isQueueDrawerOpen)}
+              intensity="control"
+              enableHoverScale
               aria-label="Toggle Queue"
               aria-pressed={isQueueDrawerOpen}
               title="Play Queue (Q)"
@@ -680,23 +784,33 @@ export const BottomPlayer: React.FC = () => {
               }`}
             >
               <ListMusic className="w-4 h-4" />
-              {upcomingCount > 0 && (
-                <span className="text-[10px] font-mono text-zinc-300 font-medium tabular-nums">
-                  {upcomingCount}
-                </span>
-              )}
-            </button>
+              <AnimatePresence initial={false}>
+                {upcomingCount > 0 && (
+                  <motion.span
+                    key="queue-count"
+                    initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.8 }}
+                    animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
+                    exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.8 }}
+                    transition={MOTION_TRANSITION.micro}
+                    className="text-[10px] font-mono text-zinc-300 font-medium tabular-nums"
+                  >
+                    {upcomingCount}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </MotionPress>
 
             {/* More Options */}
             <div className="relative shrink-0">
-              <button
+              <MotionPress
                 ref={moreTriggerRef}
-                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   if (!showMoreMenu) updateMenuPosition();
                   setShowMoreMenu((v) => !v);
                 }}
+                intensity="control"
+                enableHoverScale
                 aria-label="More Options"
                 aria-haspopup="menu"
                 aria-expanded={showMoreMenu}
@@ -708,7 +822,7 @@ export const BottomPlayer: React.FC = () => {
                 }`}
               >
                 <MoreHorizontal className="w-4 h-4" />
-              </button>
+              </MotionPress>
             </div>
           </div>
         </div>
@@ -752,20 +866,32 @@ export const BottomPlayer: React.FC = () => {
               <>
                 {isHoveringProgress && !isScrubbing && canSeek && (
                   <div
-                    className="absolute inset-y-0 left-0 rounded-full bg-white/20"
-                    style={{ width: `${hoverRatio * 100}%` }}
+                    className="absolute inset-y-0 left-0 w-full origin-left rounded-full bg-white/20"
+                    style={{ transform: `scaleX(${hoverRatio})` }}
                   />
                 )}
                 <div
-                  className="relative h-full rounded-full bg-white/85 transition-[width] duration-100 ease-linear"
-                  style={{ width: `${progressPercent}%` }}
+                  key={currentTrack.id}
+                  className={`relative h-full w-full origin-left rounded-full bg-white/85 ${
+                    isScrubbing || prefersReducedMotion
+                      ? 'transition-none'
+                      : 'transition-transform duration-200 ease-linear'
+                  }`}
+                  style={{ transform: `scaleX(${progressPercent / 100})` }}
                 />
-                {(isHoveringProgress || isScrubbing) && canSeek && (
-                  <div
-                    className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-white shadow-sm"
-                    style={{ left: `${progressPercent}%` }}
-                  />
-                )}
+                <AnimatePresence>
+                  {(isHoveringProgress || isScrubbing) && canSeek && (
+                    <motion.div
+                      key="bottom-player-scrub-thumb"
+                      initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.6 }}
+                      animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, scale: isScrubbing ? 1.15 : 1 }}
+                      exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.6 }}
+                      transition={MOTION_TRANSITION.micro}
+                      className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-white shadow-sm"
+                      style={{ left: `${progressPercent}%` }}
+                    />
+                  )}
+                </AnimatePresence>
               </>
             ) : null}
           </div>
@@ -773,104 +899,112 @@ export const BottomPlayer: React.FC = () => {
       </OpticalGlassSurface>
 
       {/* Portal-rendered More Menu (Escapes OpticalGlassSurface overflow-hidden & stacking context) */}
-      {showMoreMenu &&
-        menuPosition &&
-        typeof document !== 'undefined' &&
+      {typeof document !== 'undefined' &&
         createPortal(
-          <div
-            ref={portalMenuRef}
-            role="menu"
-            aria-label="More playback options"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              position: 'fixed',
-              bottom: `${menuPosition.bottom}px`,
-              right: `${menuPosition.right}px`,
-            }}
-            className="z-[70] w-64 max-h-[calc(100vh-120px)] overflow-y-auto p-2 rounded-2xl bg-[#0e121e]/95 backdrop-blur-2xl border border-white/[0.10] shadow-[0_20px_50px_rgba(0,0,0,0.88)] flex flex-col gap-1 text-left select-none animate-in fade-in duration-150"
-          >
-            {/* Playback Speed Row */}
-            <div className="px-2.5 py-2 flex items-center justify-between border-b border-white/[0.08] mb-0.5">
-              <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider font-semibold">
-                Speed
-              </span>
-              <div className="flex items-center gap-1">
-                {[0.75, 1.0, 1.25, 1.5].map((rate) => (
+          <AnimatePresence>
+            {showMoreMenu && menuPosition && (
+              <MotionPopover
+                key="bottom-player-more-menu"
+                placement="top"
+                style={{
+                  position: 'fixed',
+                  bottom: `${menuPosition.bottom}px`,
+                  right: `${menuPosition.right}px`,
+                }}
+                className="z-[70]"
+              >
+                <div
+                  ref={portalMenuRef}
+                  role="menu"
+                  aria-label="More playback options"
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-64 max-h-[calc(100vh-120px)] overflow-y-auto p-2 rounded-2xl bg-[#0e121e]/95 backdrop-blur-2xl border border-white/[0.10] shadow-[0_20px_50px_rgba(0,0,0,0.88)] flex flex-col gap-1 text-left select-none"
+                >
+                  {/* Playback Speed Row */}
+                  <div className="px-2.5 py-2 flex items-center justify-between border-b border-white/[0.08] mb-0.5">
+                    <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider font-semibold">
+                      Speed
+                    </span>
+                    <div className="flex items-center gap-1">
+                      {[0.75, 1.0, 1.25, 1.5].map((rate) => (
+                        <button
+                          key={rate}
+                          type="button"
+                          onClick={() => setPlaybackRate(rate)}
+                          className={`px-1.5 py-0.5 text-[11px] font-mono rounded-md transition-colors cursor-pointer aura-pressable ${
+                            Math.abs(playbackRate - rate) < 0.01
+                              ? 'bg-white text-zinc-950 font-bold'
+                              : 'text-zinc-400 hover:text-white hover:bg-white/10'
+                          }`}
+                        >
+                          {rate}×
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <button
-                    key={rate}
                     type="button"
-                    onClick={() => setPlaybackRate(rate)}
-                    className={`px-1.5 py-0.5 text-[11px] font-mono rounded-md transition-colors cursor-pointer ${
-                      Math.abs(playbackRate - rate) < 0.01
-                        ? 'bg-white text-zinc-950 font-bold'
-                        : 'text-zinc-400 hover:text-white hover:bg-white/10'
-                    }`}
+                    role="menuitem"
+                    onClick={() => {
+                      setIsAudioControlsOpen(!isAudioControlsOpen);
+                      setShowMoreMenu(false);
+                    }}
+                    className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-zinc-200 hover:text-white hover:bg-white/[0.08] transition-colors text-left cursor-pointer aura-pressable"
                   >
-                    {rate}×
+                    <SlidersHorizontal className="w-4 h-4 text-sky-400 shrink-0" />
+                    <span className="flex-1 truncate">Audio Studio &amp; DSP</span>
                   </button>
-                ))}
-              </div>
-            </div>
 
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                setIsAudioControlsOpen(!isAudioControlsOpen);
-                setShowMoreMenu(false);
-              }}
-              className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-zinc-200 hover:text-white hover:bg-white/[0.08] transition-colors text-left cursor-pointer"
-            >
-              <SlidersHorizontal className="w-4 h-4 text-sky-400 shrink-0" />
-              <span className="flex-1 truncate">Audio Studio &amp; DSP</span>
-            </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setIsSleepTimerModalOpen(true);
+                      setShowMoreMenu(false);
+                    }}
+                    className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-zinc-200 hover:text-white hover:bg-white/[0.08] transition-colors text-left cursor-pointer aura-pressable"
+                  >
+                    <Moon className="w-4 h-4 text-purple-400 shrink-0" />
+                    <span className="flex-1 truncate font-ui-body">Sleep Timer</span>
+                    {isSleepTimerActive && sleepTimerRemainingSecs ? (
+                      <span className="text-[10px] font-mono text-purple-300 tabular-nums">
+                        {Math.ceil(sleepTimerRemainingSecs / 60)}m
+                      </span>
+                    ) : null}
+                  </button>
 
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                setIsSleepTimerModalOpen(true);
-                setShowMoreMenu(false);
-              }}
-              className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-zinc-200 hover:text-white hover:bg-white/[0.08] transition-colors text-left cursor-pointer"
-            >
-              <Moon className="w-4 h-4 text-purple-400 shrink-0" />
-              <span className="flex-1 truncate font-ui-body">Sleep Timer</span>
-              {isSleepTimerActive && sleepTimerRemainingSecs ? (
-                <span className="text-[10px] font-mono text-purple-300 tabular-nums">
-                  {Math.ceil(sleepTimerRemainingSecs / 60)}m
-                </span>
-              ) : null}
-            </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      openTrackInfo(currentTrack);
+                      setShowMoreMenu(false);
+                    }}
+                    className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-zinc-200 hover:text-white hover:bg-white/[0.08] transition-colors text-left cursor-pointer aura-pressable"
+                  >
+                    <Info className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span className="flex-1 truncate font-ui-body">Track Metadata Info</span>
+                  </button>
 
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                openTrackInfo(currentTrack);
-                setShowMoreMenu(false);
-              }}
-              className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-zinc-200 hover:text-white hover:bg-white/[0.08] transition-colors text-left cursor-pointer"
-            >
-              <Info className="w-4 h-4 text-amber-400 shrink-0" />
-              <span className="flex-1 truncate font-ui-body">Track Metadata Info</span>
-            </button>
+                  <div className="my-0.5 border-t border-white/[0.08]" />
 
-            <div className="my-0.5 border-t border-white/[0.08]" />
-
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                setIsExpandedPlayerOpen(true);
-                setShowMoreMenu(false);
-              }}
-              className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-zinc-200 hover:text-white hover:bg-white/[0.08] transition-colors text-left cursor-pointer"
-            >
-              <Maximize2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span className="flex-1 truncate font-ui-body">Expand Studio Canvas</span>
-            </button>
-          </div>,
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setIsExpandedPlayerOpen(true);
+                      setShowMoreMenu(false);
+                    }}
+                    className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-zinc-200 hover:text-white hover:bg-white/[0.08] transition-colors text-left cursor-pointer aura-pressable"
+                  >
+                    <Maximize2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span className="flex-1 truncate font-ui-body">Expand Studio Canvas</span>
+                  </button>
+                </div>
+              </MotionPopover>
+            )}
+          </AnimatePresence>,
           document.body
         )}
     </div>

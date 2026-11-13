@@ -1,4 +1,6 @@
 import React, { useEffect } from 'react';
+import { AnimatePresence } from 'motion/react';
+import { MotionBackdrop, MotionModal } from './motion/MotionSurface';
 import { useMusic } from '../../context/MusicContext';
 import { 
   X, 
@@ -38,8 +40,6 @@ export const TrackInfoModal: React.FC = () => {
     }
   }, [isTrackInfoOpen, track, currentTrackAnalysis]);
 
-  if (!isTrackInfoOpen || !track) return null;
-
   const formatTime = (secs: number) => {
     if (isNaN(secs) || secs < 0) return '0:00';
     const m = Math.floor(secs / 60);
@@ -62,11 +62,18 @@ export const TrackInfoModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
-      <div 
-        className="relative w-full max-w-2xl rounded-3xl bg-[#0d0f15] border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <AnimatePresence>
+      {isTrackInfoOpen && track && (
+        <MotionBackdrop
+          onClick={closeTrackInfo}
+          style={{ pointerEvents: isTrackInfoOpen ? 'auto' : 'none' }}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+        >
+          <MotionModal
+            variant="center"
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-2xl rounded-3xl bg-[#0d0f15] border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+          >
         {/* Header */}
         <div className="p-5 sm:p-6 border-b border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -136,14 +143,14 @@ export const TrackInfoModal: React.FC = () => {
             <div className="flex sm:flex-col items-center gap-2 shrink-0 w-full sm:w-auto">
               <button
                 onClick={() => playTrack(track)}
-                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/25 transition-all active:scale-95"
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/25 transition-colors cursor-pointer aura-pressable"
               >
                 <Play className="w-3.5 h-3.5 fill-current" />
                 Play Track
               </button>
               <button
                 onClick={() => toggleFavorite(track.id)}
-                className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors"
+                className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors cursor-pointer aura-pressable"
                 title="Favorite"
               >
                 <Heart className={`w-4 h-4 ${track.isFavorite ? 'fill-rose-500 text-rose-500' : ''}`} />
@@ -263,13 +270,15 @@ export const TrackInfoModal: React.FC = () => {
         <div className="p-4 sm:p-5 border-t border-white/5 flex items-center justify-end">
           <button
             onClick={closeTrackInfo}
-            className="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-xs font-semibold text-zinc-200 transition-colors"
+            className="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-xs font-semibold text-zinc-200 transition-colors cursor-pointer aura-pressable"
           >
             Close Inspector
           </button>
         </div>
 
-      </div>
-    </div>
+          </MotionModal>
+        </MotionBackdrop>
+      )}
+    </AnimatePresence>
   );
 };

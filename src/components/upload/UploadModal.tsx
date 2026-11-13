@@ -1,4 +1,7 @@
 import React, { useRef, useState } from 'react';
+import { AnimatePresence, LayoutGroup } from 'motion/react';
+import { MotionBackdrop, MotionModal, MotionFadeSlide } from '../common/motion/MotionSurface';
+import { SharedIndicator } from '../common/motion/MotionInteractive';
 import { useMusic } from '../../context/MusicContext';
 import { 
   X, 
@@ -39,8 +42,6 @@ export const UploadModal: React.FC = () => {
 
   // YouTube Form State
   const [youtubeQuery, setYoutubeQuery] = useState('');
-
-  if (!isUploadModalOpen) return null;
 
   const handleFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -103,8 +104,18 @@ export const UploadModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
-      <div className="relative w-full max-w-xl rounded-3xl bg-[#0c0e15] border border-white/10 shadow-2xl p-6 flex flex-col gap-6 select-none">
+    <AnimatePresence>
+      {isUploadModalOpen && (
+        <MotionBackdrop
+          onClick={() => setIsUploadModalOpen(false)}
+          style={{ pointerEvents: isUploadModalOpen ? 'auto' : 'none' }}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+        >
+          <MotionModal
+            variant="center"
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-xl rounded-3xl bg-[#0c0e15] border border-white/10 shadow-2xl p-6 flex flex-col gap-6 select-none"
+          >
         
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -120,42 +131,55 @@ export const UploadModal: React.FC = () => {
 
           <button
             onClick={() => setIsUploadModalOpen(false)}
-            className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
+            className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer aura-pressable"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-1.5 p-1 bg-zinc-950 rounded-2xl border border-white/5 text-xs overflow-x-auto scrollbar-none">
-          {[
-            { id: 'files', label: 'Import Files', icon: FileAudio },
-            { id: 'folder', label: 'Import Folder', icon: FolderPlus },
-            { id: 'stream', label: 'Web Stream', icon: Radio },
-            { id: 'youtube', label: 'YouTube', icon: Youtube },
-            { id: 'demo', label: 'Demo Pack', icon: Sparkles },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as AddMusicTab)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-medium whitespace-nowrap transition-colors ${
-                  activeTab === tab.id
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
+        <LayoutGroup id="upload-modal-tabs">
+          <div className="flex items-center gap-1.5 p-1 bg-zinc-950 rounded-2xl border border-white/5 text-xs overflow-x-auto scrollbar-none">
+            {[
+              { id: 'files', label: 'Import Files', icon: FileAudio },
+              { id: 'folder', label: 'Import Folder', icon: FolderPlus },
+              { id: 'stream', label: 'Web Stream', icon: Radio },
+              { id: 'youtube', label: 'YouTube', icon: Youtube },
+              { id: 'demo', label: 'Demo Pack', icon: Sparkles },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as AddMusicTab)}
+                  className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-medium whitespace-nowrap transition-colors cursor-pointer aura-pressable ${
+                    isActive
+                      ? 'text-white'
+                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+                  }`}
+                >
+                  {isActive && (
+                    <SharedIndicator
+                      layoutId="upload-modal-tab-pill"
+                      className="absolute inset-0 rounded-xl bg-indigo-600 shadow-md pointer-events-none"
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-1.5">
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{tab.label}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </LayoutGroup>
 
-        {/* Tab 1: Files */}
-        {activeTab === 'files' && (
-          <div className="flex flex-col gap-4">
+        <AnimatePresence mode="wait" initial={false}>
+          <MotionFadeSlide key={activeTab} direction="up" distance={6} duration="micro">
+            {/* Tab 1: Files */}
+            {activeTab === 'files' && (
+              <div className="flex flex-col gap-4">
             <div
               onClick={() => fileInputRef.current?.click()}
               className="group relative cursor-pointer flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed border-zinc-800 hover:border-indigo-500/60 bg-zinc-900/30 hover:bg-indigo-950/10 transition-all text-center"
@@ -256,7 +280,7 @@ export const UploadModal: React.FC = () => {
             </div>
             <button
               type="submit"
-              className="py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-500/20 transition-colors cursor-pointer"
+              className="py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-500/20 transition-colors cursor-pointer aura-pressable"
             >
               Add and Stream Now
             </button>
@@ -282,7 +306,7 @@ export const UploadModal: React.FC = () => {
             </p>
             <button
               type="submit"
-              className="py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-semibold shadow-lg shadow-red-500/20 transition-colors cursor-pointer"
+              className="py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-semibold shadow-lg shadow-red-500/20 transition-colors cursor-pointer aura-pressable"
             >
               Load YouTube Embed
             </button>
@@ -304,14 +328,18 @@ export const UploadModal: React.FC = () => {
             <button
               onClick={handleLoadDemo}
               disabled={isProcessing}
-              className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20 transition-all cursor-pointer"
+              className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20 transition-colors cursor-pointer aura-pressable"
             >
               {isProcessing ? 'Generating studio audio...' : 'Generate Demo Pack'}
             </button>
           </div>
         )}
+          </MotionFadeSlide>
+        </AnimatePresence>
 
-      </div>
-    </div>
+          </MotionModal>
+        </MotionBackdrop>
+      )}
+    </AnimatePresence>
   );
 };

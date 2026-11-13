@@ -1,4 +1,6 @@
 import React from 'react';
+import { AnimatePresence } from 'motion/react';
+import { MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
 import { X, Share, PlusSquare, Smartphone, CheckCircle, ExternalLink } from 'lucide-react';
 import { AuraBrandMark } from '../common/AuraBrandMark';
 
@@ -13,18 +15,20 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
   onClose,
   isIOS,
 }) => {
-  if (!isOpen) return null;
-
   return (
-    <div
-      id="pwa-install-modal"
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200 select-none"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md bg-[#0d0f15] border border-white/12 rounded-3xl shadow-2xl p-6 relative overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <AnimatePresence>
+      {isOpen && (
+        <MotionBackdrop
+          id="pwa-install-modal"
+          style={{ pointerEvents: isOpen ? 'auto' : 'none' }}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 select-none"
+          onClick={onClose}
+        >
+          <MotionModal
+            variant="center"
+            className="w-full max-w-md bg-[#0d0f15] border border-white/12 rounded-3xl shadow-2xl p-6 relative overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
         {/* Ambient Top Glow */}
         <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-48 h-24 bg-indigo-500/15 blur-2xl pointer-events-none rounded-full" />
 
@@ -32,7 +36,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+          className="absolute top-5 right-5 p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer aura-pressable"
           aria-label="Close"
         >
           <X className="w-5 h-5" />
@@ -120,12 +124,14 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-semibold transition-all active:scale-95 cursor-pointer"
+            className="px-5 py-2 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-semibold transition-colors cursor-pointer aura-pressable"
           >
             Got it
           </button>
         </div>
-      </div>
-    </div>
+          </MotionModal>
+        </MotionBackdrop>
+      )}
+    </AnimatePresence>
   );
 };

@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { AnimatePresence, MotionConfig } from 'motion/react';
 import { MusicProvider, useMusic } from './context/MusicContext';
+import { MotionPage } from './components/common/motion/MotionSurface';
 import { Header } from './components/layout/Header';
 import { Sidebar } from './components/layout/Sidebar';
 import { BottomPlayer } from './components/player/BottomPlayer';
@@ -239,39 +241,50 @@ const MainLayout: React.FC = () => {
 
           {/* Dynamic Main Viewport (with calculated safe-area clearance for floating player on desktop & mobile) */}
           <main className="flex-1 overflow-y-auto pb-[calc(210px+env(safe-area-inset-bottom,0px))] sm:pb-56 lg:pb-52 scroll-smooth focus:outline-none">
-            {selectedPlaylistId && currentView === 'playlist-detail' ? (
-              <PlaylistDetailView />
-            ) : currentView === 'home' ? (
-              <HomeView />
-            ) : currentView === 'sources' ? (
-              <SourcesView />
-            ) : currentView === 'listen-together' ? (
-              <ListenTogetherView />
-            ) : currentView === 'library' ? (
-              <LibraryOverviewView />
-            ) : currentView === 'songs' ? (
-              <SongsView />
-            ) : currentView === 'albums' ? (
-              <AlbumsView />
-            ) : currentView === 'artists' ? (
-              <ArtistsView />
-            ) : currentView === 'playlists' ? (
-              <PlaylistsView />
-            ) : currentView === 'favorites' ? (
-              <FavoritesView />
-            ) : currentView === 'moments' ? (
-              <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
-                <AuraMomentsPanel />
-              </div>
-            ) : currentView === 'studio' ? (
-              <StudioView />
-            ) : currentView === 'settings' ? (
-              <SettingsView />
-            ) : currentView === 'optical-lab' ? (
-              <OpticalGlassLab />
-            ) : (
-              <HomeView />
-            )}
+            <AnimatePresence mode="wait" initial={false}>
+              <MotionPage
+                viewKey={
+                  selectedPlaylistId && currentView === 'playlist-detail'
+                    ? `playlist-detail:${selectedPlaylistId}`
+                    : currentView
+                }
+                className="w-full"
+              >
+                {selectedPlaylistId && currentView === 'playlist-detail' ? (
+                  <PlaylistDetailView />
+                ) : currentView === 'home' ? (
+                  <HomeView />
+                ) : currentView === 'sources' ? (
+                  <SourcesView />
+                ) : currentView === 'listen-together' ? (
+                  <ListenTogetherView />
+                ) : currentView === 'library' ? (
+                  <LibraryOverviewView />
+                ) : currentView === 'songs' ? (
+                  <SongsView />
+                ) : currentView === 'albums' ? (
+                  <AlbumsView />
+                ) : currentView === 'artists' ? (
+                  <ArtistsView />
+                ) : currentView === 'playlists' ? (
+                  <PlaylistsView />
+                ) : currentView === 'favorites' ? (
+                  <FavoritesView />
+                ) : currentView === 'moments' ? (
+                  <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+                    <AuraMomentsPanel />
+                  </div>
+                ) : currentView === 'studio' ? (
+                  <StudioView />
+                ) : currentView === 'settings' ? (
+                  <SettingsView />
+                ) : currentView === 'optical-lab' ? (
+                  <OpticalGlassLab />
+                ) : (
+                  <HomeView />
+                )}
+              </MotionPage>
+            </AnimatePresence>
           </main>
 
           {/* Desktop Floating Playback Island (Centered horizontally in available content area) */}
@@ -353,11 +366,13 @@ const MainLayout: React.FC = () => {
 
 export default function App() {
   return (
-    <MusicProvider>
-      <ListenTogetherProvider>
-        <MainLayout />
-        <Analytics />
-      </ListenTogetherProvider>
-    </MusicProvider>
+    <MotionConfig reducedMotion="user">
+      <MusicProvider>
+        <ListenTogetherProvider>
+          <MainLayout />
+          <Analytics />
+        </ListenTogetherProvider>
+      </MusicProvider>
+    </MotionConfig>
   );
 }

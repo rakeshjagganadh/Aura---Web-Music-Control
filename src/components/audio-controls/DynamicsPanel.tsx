@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from 'react';
+import { MotionIconSwap } from '../common/motion/MotionInteractive';
 import { useMusic } from '../../context/MusicContext';
 import { audioEngine } from '../../services/audioEngine';
 import { 
@@ -99,7 +100,7 @@ export const DynamicsPanel: React.FC<{ className?: string }> = ({ className = ''
               resetCompressor();
               resetLimiter();
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-white/5 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             title="Reset Compressor and Limiter to studio defaults"
           >
             <RotateCcw className="w-3 h-3" />
@@ -114,7 +115,7 @@ export const DynamicsPanel: React.FC<{ className?: string }> = ({ className = ''
         {/* ======================================================== */}
         {/* MODULE 1: STUDIO COMPRESSOR                              */}
         {/* ======================================================== */}
-        <div className={`p-5 rounded-2xl border transition-all duration-200 lg:col-span-2 flex flex-col gap-4.5 ${
+        <div className={`p-5 rounded-2xl border transition-colors duration-200 lg:col-span-2 flex flex-col gap-4.5 ${
           compressor.enabled
             ? 'bg-zinc-950/80 border-amber-500/30 shadow-xl shadow-amber-500/5'
             : 'bg-zinc-950/40 border-white/5'
@@ -134,13 +135,15 @@ export const DynamicsPanel: React.FC<{ className?: string }> = ({ className = ''
             <button
               type="button"
               onClick={() => updateCompressor({ enabled: !compressor.enabled })}
-              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg transition-colors border ${
+              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg transition-colors border cursor-pointer aura-pressable aura-focus-ring ${
                 compressor.enabled
                   ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
                   : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border-white/5'
               }`}
             >
-              <Power className="w-3 h-3" />
+              <MotionIconSwap stateKey={compressor.enabled}>
+                <Power className="w-3 h-3" />
+              </MotionIconSwap>
               <span>{compressor.enabled ? 'ACTIVE' : 'BYPASS'}</span>
             </button>
           </div>
@@ -164,7 +167,7 @@ export const DynamicsPanel: React.FC<{ className?: string }> = ({ className = ''
             <div className="w-full h-2.5 bg-zinc-950 rounded-full overflow-hidden flex flex-row-reverse border border-white/5">
               <div
                 ref={grBarRef}
-                className="h-full bg-gradient-to-l from-amber-400 via-orange-500 to-rose-500 transition-all duration-75"
+                className="h-full bg-gradient-to-l from-amber-400 via-orange-500 to-rose-500 transition-[width] duration-75"
                 style={{ width: '0%' }}
               />
             </div>
@@ -375,7 +378,7 @@ export const DynamicsPanel: React.FC<{ className?: string }> = ({ className = ''
         {/* ======================================================== */}
         {/* MODULE 2: MASTER PEAK LIMITER                            */}
         {/* ======================================================== */}
-        <div className={`p-5 rounded-2xl border transition-all duration-200 flex flex-col justify-between gap-4.5 ${
+        <div className={`p-5 rounded-2xl border transition-colors duration-200 flex flex-col justify-between gap-4.5 ${
           limiter.enabled
             ? 'bg-zinc-950/80 border-emerald-500/30 shadow-xl shadow-emerald-500/5'
             : 'bg-zinc-950/40 border-white/5'
@@ -393,13 +396,15 @@ export const DynamicsPanel: React.FC<{ className?: string }> = ({ className = ''
             <button
               type="button"
               onClick={() => updateLimiter({ enabled: !limiter.enabled })}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors border ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors border cursor-pointer aura-pressable aura-focus-ring ${
                 limiter.enabled
                   ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm'
                   : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border-white/5'
               }`}
             >
-              <Power className="w-3 h-3" />
+              <MotionIconSwap stateKey={limiter.enabled}>
+                <Power className="w-3 h-3" />
+              </MotionIconSwap>
               <span>{limiter.enabled ? 'PROTECT' : 'OFF'}</span>
             </button>
           </div>
@@ -492,7 +497,7 @@ export const DynamicsPanel: React.FC<{ className?: string }> = ({ className = ''
       {/* ======================================================== */}
       {/* MODULE 3: LOUDNESS NORMALIZATION (ITU-R BS.1770 / EBU R128) */}
       {/* ======================================================== */}
-      <div className={`p-5 rounded-2xl border transition-all duration-200 flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+      <div className={`p-5 rounded-2xl border transition-colors duration-200 flex flex-col md:flex-row md:items-center justify-between gap-4 ${
         loudness.enabled 
           ? 'bg-zinc-950/80 border-indigo-500/30 shadow-lg shadow-indigo-500/5'
           : 'bg-zinc-950/40 border-white/5'
@@ -537,7 +542,7 @@ export const DynamicsPanel: React.FC<{ className?: string }> = ({ className = ''
               value={loudness.targetLufs}
               disabled={!loudness.enabled}
               onChange={(e) => updateLoudness({ targetLufs: parseFloat(e.target.value) })}
-              className="bg-zinc-900 border border-white/10 text-xs text-zinc-200 rounded-xl px-3 py-2 font-mono focus:outline-none focus:border-indigo-500 disabled:opacity-40"
+              className="bg-zinc-900 border border-white/10 text-xs text-zinc-200 rounded-xl px-3 py-2 font-mono focus:outline-none focus:border-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed aura-focus-ring"
               aria-label="Target Loudness Standard"
             >
               <option value="-14">-14 LUFS (Streaming Standard)</option>
@@ -551,13 +556,15 @@ export const DynamicsPanel: React.FC<{ className?: string }> = ({ className = ''
             <button
               type="button"
               onClick={() => updateLoudness({ enabled: !loudness.enabled })}
-              className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl transition-colors border ${
+              className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl transition-colors border cursor-pointer aura-pressable aura-focus-ring ${
                 loudness.enabled
                   ? 'bg-indigo-600/25 text-indigo-200 border-indigo-500/40 shadow-sm'
                   : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border-white/5'
               }`}
             >
-              <Power className="w-3.5 h-3.5" />
+              <MotionIconSwap stateKey={loudness.enabled}>
+                <Power className="w-3.5 h-3.5" />
+              </MotionIconSwap>
               <span>{loudness.enabled ? 'NORMALIZING' : 'BYPASS'}</span>
             </button>
           </div>

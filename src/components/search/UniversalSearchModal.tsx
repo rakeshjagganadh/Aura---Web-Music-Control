@@ -1,6 +1,11 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { AnimatePresence, LayoutGroup, motion } from 'motion/react';
 import { useMusic } from '../../context/MusicContext';
 import { Track } from '../../types';
+import { MotionBackdrop, MotionFadeSlide, MotionModal } from '../common/motion/MotionSurface';
+import { SharedIndicator } from '../common/motion/MotionInteractive';
+import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
+import { MOTION_TRANSITION } from '../../motion/tokens';
 import { 
   Search, 
   X, 
@@ -76,6 +81,8 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
     togglePlay,
     toggleFavorite,
   } = useMusic();
+
+  const { canHover, prefersReducedMotion } = useMotionCapabilities();
 
   const [query, setQuery] = useState(initialQuery);
   const [activeTab, setActiveTab] = useState<CategoryTab>('all');
@@ -317,8 +324,6 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  if (!isOpen) return null;
-
   const hasAnyResults =
     searchResults.songs.length > 0 ||
     searchResults.artists.length > 0 ||
@@ -327,6 +332,13 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
     !!searchResults.detectedDirectTrack;
 
   const topMatch = songsToShow.length > 0 ? songsToShow[0] : null;
+  const contentViewState = !query
+    ? 'landing'
+    : !hasAnyResults && isSearchingExternal
+      ? 'loading'
+      : !hasAnyResults && !isSearchingExternal
+        ? 'empty'
+        : 'results';
 
   const getSourceBadgeStyle = (source?: string) => {
     switch (source) {
@@ -345,11 +357,20 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
   };
 
   return (
-    <div
-      id="aura-universal-search-modal"
-      className="fixed inset-0 z-50 bg-black/75 backdrop-blur-2xl flex items-start justify-center p-3 sm:p-6 sm:pt-14 animate-in fade-in duration-200 select-none"
-    >
-      <div className="relative w-full max-w-3xl max-h-[88vh] rounded-2xl sm:rounded-3xl bg-[#0a0d18]/90 backdrop-blur-3xl flex flex-col overflow-hidden border border-white/[0.10] shadow-[0_32px_90px_rgba(0,0,0,0.95)]">
+    <AnimatePresence>
+      {isOpen && (
+        <MotionBackdrop
+          id="aura-universal-search-modal"
+          key="universal-search-backdrop"
+          onClick={onClose}
+          style={{ pointerEvents: isOpen ? 'auto' : 'none' }}
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-2xl flex items-start justify-center p-3 sm:p-6 sm:pt-14 select-none"
+        >
+          <MotionModal
+            variant="center"
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-3xl max-h-[88vh] rounded-2xl sm:rounded-3xl bg-[#0a0d18]/90 backdrop-blur-3xl flex flex-col overflow-hidden border border-white/[0.10] shadow-[0_32px_90px_rgba(0,0,0,0.95)]"
+          >
         
         {/* -------------------------------------------------------------
             SEARCH HEADER BAR
@@ -371,7 +392,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
           />
           
           {isSearchingExternal && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-sky-500/10 text-sky-300 text-[11px] font-mono border border-sky-500/20 animate-pulse shrink-0">
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-sky-500/10 text-sky-300 text-[11px] font-mono border border-sky-500/20 shrink-0 ${!prefersReducedMotion ? 'animate-pulse' : ''}`}>
               <Sparkles className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Federating sources...</span>
             </div>
@@ -385,11 +406,12 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
 
           {query && (
             <button
+              type="button"
               onClick={() => {
                 setQuery('');
                 inputRef.current?.focus();
               }}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 aura-pressable transition-colors cursor-pointer"
               title="Clear search query"
             >
               <X className="w-4 h-4" />
@@ -397,8 +419,9 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
           )}
 
           <button
+            type="button"
             onClick={onClose}
-            className="px-2.5 py-1 rounded-xl text-xs font-mono font-medium text-zinc-400 hover:text-white hover:bg-white/10 border border-white/10 transition-colors cursor-pointer"
+            className="px-2.5 py-1 rounded-xl text-xs font-mono font-medium text-zinc-400 hover:text-white hover:bg-white/10 border border-white/10 aura-pressable transition-colors cursor-pointer"
             title="Close search (Esc)"
           >
             ESC
@@ -412,84 +435,128 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
           <div className="px-4 py-2.5 glass-ambient border-b border-white/[0.08] flex flex-col gap-2 shrink-0">
             
             {/* Primary Category Tabs */}
-            <div className="flex items-center gap-1.5 overflow-x-auto text-xs no-scrollbar">
-              <button
-                onClick={() => setActiveTab('all')}
-                className={`px-3 py-1 rounded-xl font-medium transition-colors cursor-pointer ${
-                  activeTab === 'all'
-                    ? 'bg-white text-zinc-950 font-semibold shadow-sm'
-                    : 'text-zinc-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                All Results
-              </button>
-
-              {searchResults.songs.length > 0 && (
+            <LayoutGroup id="universal-search-tabs">
+              <div className="flex items-center gap-1.5 overflow-x-auto text-xs no-scrollbar">
                 <button
-                  onClick={() => setActiveTab('songs')}
-                  className={`px-3 py-1 rounded-xl font-medium transition-colors cursor-pointer ${
-                    activeTab === 'songs'
-                      ? 'bg-white text-zinc-950 font-semibold shadow-sm'
+                  type="button"
+                  onClick={() => setActiveTab('all')}
+                  className={`relative px-3 py-1 rounded-xl font-medium aura-pressable transition-colors cursor-pointer ${
+                    activeTab === 'all'
+                      ? 'text-zinc-950 font-semibold'
                       : 'text-zinc-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  Tracks ({searchResults.songs.length})
+                  {activeTab === 'all' && (
+                    <SharedIndicator
+                      layoutId="universal-search-tab-pill"
+                      className="absolute inset-0 rounded-xl bg-white shadow-sm pointer-events-none"
+                    />
+                  )}
+                  <span className="relative z-10">All Results</span>
                 </button>
-              )}
 
-              {searchResults.artists.length > 0 && (
-                <button
-                  onClick={() => setActiveTab('artists')}
-                  className={`px-3 py-1 rounded-xl font-medium transition-colors cursor-pointer ${
-                    activeTab === 'artists'
-                      ? 'bg-white text-zinc-950 font-semibold shadow-sm'
-                      : 'text-zinc-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  Artists ({searchResults.artists.length})
-                </button>
-              )}
+                {searchResults.songs.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('songs')}
+                    className={`relative px-3 py-1 rounded-xl font-medium aura-pressable transition-colors cursor-pointer ${
+                      activeTab === 'songs'
+                        ? 'text-zinc-950 font-semibold'
+                        : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {activeTab === 'songs' && (
+                      <SharedIndicator
+                        layoutId="universal-search-tab-pill"
+                        className="absolute inset-0 rounded-xl bg-white shadow-sm pointer-events-none"
+                      />
+                    )}
+                    <span className="relative z-10">Tracks ({searchResults.songs.length})</span>
+                  </button>
+                )}
 
-              {searchResults.albums.length > 0 && (
-                <button
-                  onClick={() => setActiveTab('albums')}
-                  className={`px-3 py-1 rounded-xl font-medium transition-colors cursor-pointer ${
-                    activeTab === 'albums'
-                      ? 'bg-white text-zinc-950 font-semibold shadow-sm'
-                      : 'text-zinc-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  Albums ({searchResults.albums.length})
-                </button>
-              )}
+                {searchResults.artists.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('artists')}
+                    className={`relative px-3 py-1 rounded-xl font-medium aura-pressable transition-colors cursor-pointer ${
+                      activeTab === 'artists'
+                        ? 'text-zinc-950 font-semibold'
+                        : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {activeTab === 'artists' && (
+                      <SharedIndicator
+                        layoutId="universal-search-tab-pill"
+                        className="absolute inset-0 rounded-xl bg-white shadow-sm pointer-events-none"
+                      />
+                    )}
+                    <span className="relative z-10">Artists ({searchResults.artists.length})</span>
+                  </button>
+                )}
 
-              {searchResults.playlists.length > 0 && (
-                <button
-                  onClick={() => setActiveTab('playlists')}
-                  className={`px-3 py-1 rounded-xl font-medium transition-colors cursor-pointer ${
-                    activeTab === 'playlists'
-                      ? 'bg-white text-zinc-950 font-semibold shadow-sm'
-                      : 'text-zinc-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  Spaces ({searchResults.playlists.length})
-                </button>
-              )}
+                {searchResults.albums.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('albums')}
+                    className={`relative px-3 py-1 rounded-xl font-medium aura-pressable transition-colors cursor-pointer ${
+                      activeTab === 'albums'
+                        ? 'text-zinc-950 font-semibold'
+                        : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {activeTab === 'albums' && (
+                      <SharedIndicator
+                        layoutId="universal-search-tab-pill"
+                        className="absolute inset-0 rounded-xl bg-white shadow-sm pointer-events-none"
+                      />
+                    )}
+                    <span className="relative z-10">Albums ({searchResults.albums.length})</span>
+                  </button>
+                )}
 
-              {sourceCounts.radiobrowser > 0 && (
-                <button
-                  onClick={() => setActiveTab('radio')}
-                  className={`flex items-center gap-1 px-3 py-1 rounded-xl font-medium transition-colors cursor-pointer ${
-                    activeTab === 'radio'
-                      ? 'bg-cyan-400 text-zinc-950 font-semibold shadow-sm'
-                      : 'text-cyan-400 hover:bg-cyan-950/30'
-                  }`}
-                >
-                  <RadioIcon className="w-3.5 h-3.5" />
-                  <span>Radio ({sourceCounts.radiobrowser})</span>
-                </button>
-              )}
-            </div>
+                {searchResults.playlists.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('playlists')}
+                    className={`relative px-3 py-1 rounded-xl font-medium aura-pressable transition-colors cursor-pointer ${
+                      activeTab === 'playlists'
+                        ? 'text-zinc-950 font-semibold'
+                        : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {activeTab === 'playlists' && (
+                      <SharedIndicator
+                        layoutId="universal-search-tab-pill"
+                        className="absolute inset-0 rounded-xl bg-white shadow-sm pointer-events-none"
+                      />
+                    )}
+                    <span className="relative z-10">Spaces ({searchResults.playlists.length})</span>
+                  </button>
+                )}
+
+                {sourceCounts.radiobrowser > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('radio')}
+                    className={`relative flex items-center gap-1 px-3 py-1 rounded-xl font-medium aura-pressable transition-colors cursor-pointer ${
+                      activeTab === 'radio'
+                        ? 'text-zinc-950 font-semibold'
+                        : 'text-cyan-400 hover:bg-cyan-950/30'
+                    }`}
+                  >
+                    {activeTab === 'radio' && (
+                      <SharedIndicator
+                        layoutId="universal-search-tab-pill"
+                        className="absolute inset-0 rounded-xl bg-cyan-400 shadow-sm pointer-events-none"
+                      />
+                    )}
+                    <RadioIcon className="w-3.5 h-3.5 relative z-10" />
+                    <span className="relative z-10">Radio ({sourceCounts.radiobrowser})</span>
+                  </button>
+                )}
+              </div>
+            </LayoutGroup>
 
             {/* Source Origin Filters */}
             {(activeTab === 'all' || activeTab === 'songs') && searchResults.songs.length > 0 && (
@@ -585,6 +652,14 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
             CONTENT AREA — SCROLLABLE RESULTS / LANDING STATE
             ------------------------------------------------------------- */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-6 custom-scrollbar">
+          <AnimatePresence mode="wait" initial={false}>
+            <MotionFadeSlide
+              key={contentViewState}
+              direction="up"
+              distance={6}
+              duration="micro"
+              className="flex flex-col gap-6"
+            >
           
           {/* Direct YouTube Video Link Banner */}
           {searchResults.detectedDirectTrack && (
@@ -599,7 +674,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 </div>
                 <div className="min-w-0">
                   <span className="text-[9px] font-mono uppercase tracking-widest text-red-400 font-semibold flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                    <span className={`w-1.5 h-1.5 rounded-full bg-red-400 ${!prefersReducedMotion ? 'animate-pulse' : ''}`} />
                     YOUTUBE URL RECOGNIZED
                   </span>
                   <h4 className="text-sm font-bold text-white truncate mt-0.5 font-ui-title">
@@ -613,18 +688,20 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
 
               <div className="flex items-center gap-2 shrink-0">
                 <button
+                  type="button"
                   onClick={() => handlePlayTrack(searchResults.detectedDirectTrack!)}
-                  className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold shadow-md transition-all cursor-pointer"
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold shadow-md aura-pressable aura-focus-ring transition-colors cursor-pointer"
                 >
                   <Play className="w-3.5 h-3.5 fill-current" />
                   <span>{onSelectTrack ? 'Add to Room' : 'Play Now'}</span>
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
                     addToQueue(searchResults.detectedDirectTrack!);
                     setQuery('');
                   }}
-                  className="p-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-white transition-colors cursor-pointer"
+                  className="p-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-white aura-pressable transition-colors cursor-pointer"
                   title="Add to queue"
                 >
                   <Plus className="w-4 h-4" />
@@ -700,9 +777,10 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                     'Night Drive',
                   ].map((mood) => (
                     <button
+                      type="button"
                       key={mood}
                       onClick={() => setQuery(mood)}
-                      className="px-3 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-white/20 text-xs text-zinc-300 hover:text-white transition-all cursor-pointer font-ui-body"
+                      className="px-3 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-white/20 text-xs text-zinc-300 hover:text-white transition-colors cursor-pointer font-ui-body aura-pressable aura-focus-ring"
                     >
                       {mood}
                     </button>
@@ -720,11 +798,12 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   
                   {/* Personal Vault */}
                   <button
+                    type="button"
                     onClick={() => {
                       setQuery('local');
                       setActiveSourceFilter('local');
                     }}
-                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-emerald-500/30 text-left transition-all cursor-pointer group"
+                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-emerald-500/30 text-left transition-colors cursor-pointer group aura-pressable-subtle aura-focus-ring"
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-[9px] font-mono text-emerald-400 uppercase font-semibold">INDEXEDDB</span>
@@ -736,11 +815,12 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
 
                   {/* Audius */}
                   <button
+                    type="button"
                     onClick={() => {
                       setQuery('audius');
                       setActiveSourceFilter('audius');
                     }}
-                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-purple-500/30 text-left transition-all cursor-pointer group"
+                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-purple-500/30 text-left transition-colors cursor-pointer group aura-pressable-subtle aura-focus-ring"
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-[9px] font-mono text-purple-400 uppercase font-semibold">DECENTRALIZED</span>
@@ -752,11 +832,12 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
 
                   {/* Jamendo */}
                   <button
+                    type="button"
                     onClick={() => {
                       setQuery('jamendo');
                       setActiveSourceFilter('jamendo');
                     }}
-                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-amber-500/30 text-left transition-all cursor-pointer group"
+                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-amber-500/30 text-left transition-colors cursor-pointer group aura-pressable-subtle aura-focus-ring"
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-[9px] font-mono text-amber-400 uppercase font-semibold">CREATIVE COMMONS</span>
@@ -768,11 +849,12 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
 
                   {/* Radio Browser */}
                   <button
+                    type="button"
                     onClick={() => {
                       setQuery('radio');
                       setActiveTab('radio');
                     }}
-                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-cyan-500/30 text-left transition-all cursor-pointer group"
+                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-cyan-500/30 text-left transition-colors cursor-pointer group aura-pressable-subtle aura-focus-ring"
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-[9px] font-mono text-cyan-400 uppercase font-semibold">LIVE RADIO</span>
@@ -784,10 +866,11 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
 
                   {/* YouTube */}
                   <button
+                    type="button"
                     onClick={() => {
                       setShowApiKeyInput(true);
                     }}
-                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-red-500/30 text-left transition-all cursor-pointer group col-span-2 sm:col-span-1"
+                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-red-500/30 text-left transition-colors cursor-pointer group col-span-2 sm:col-span-1 aura-pressable-subtle aura-focus-ring"
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-[9px] font-mono text-red-400 uppercase font-semibold">OFFICIAL IFRAME</span>
@@ -801,36 +884,40 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
               </div>
 
               {/* API Key Configuration Dropdown */}
-              {showApiKeyInput && (
-                <form onSubmit={handleSaveApiKey} className="p-4 rounded-2xl bg-[#0c0e17] border border-white/10 flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-white">Custom YouTube Data API Key</label>
-                    <span className="text-[10px] font-mono text-zinc-400">Optional</span>
-                  </div>
-                  <input
-                    type="password"
-                    value={customApiKey}
-                    onChange={(e) => setCustomApiKey(e.target.value)}
-                    placeholder="AIzaSy..."
-                    className="p-2.5 rounded-xl bg-zinc-950 border border-white/10 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-sky-500 font-mono"
-                  />
-                  <div className="flex items-center justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowApiKeyInput(false)}
-                      className="px-3 py-1.5 rounded-xl text-xs text-zinc-400 hover:text-white"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-1.5 rounded-xl bg-white text-zinc-950 text-xs font-semibold hover:bg-zinc-200"
-                    >
-                      Save Key
-                    </button>
-                  </div>
-                </form>
-              )}
+              <AnimatePresence>
+                {showApiKeyInput && (
+                  <MotionFadeSlide direction="down" distance={6} duration="micro">
+                    <form onSubmit={handleSaveApiKey} className="p-4 rounded-2xl bg-[#0c0e17] border border-white/10 flex flex-col gap-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-white">Custom YouTube Data API Key</label>
+                        <span className="text-[10px] font-mono text-zinc-400">Optional</span>
+                      </div>
+                      <input
+                        type="password"
+                        value={customApiKey}
+                        onChange={(e) => setCustomApiKey(e.target.value)}
+                        placeholder="AIzaSy..."
+                        className="p-2.5 rounded-xl bg-zinc-950 border border-white/10 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-sky-500 font-mono"
+                      />
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowApiKeyInput(false)}
+                          className="px-3 py-1.5 rounded-xl text-xs text-zinc-400 hover:text-white aura-pressable cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          className="px-4 py-1.5 rounded-xl bg-white text-zinc-950 text-xs font-semibold hover:bg-zinc-200 aura-pressable cursor-pointer"
+                        >
+                          Save Key
+                        </button>
+                      </div>
+                    </form>
+                  </MotionFadeSlide>
+                )}
+              </AnimatePresence>
 
             </div>
           )}
@@ -846,12 +933,12 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
 
               <div 
                 onClick={() => handlePlayTrack(topMatch)}
-                className="group p-4 rounded-2xl bg-[#0e111a] hover:bg-[#141824] border border-white/[0.08] hover:border-white/20 transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg"
+                className="group p-4 rounded-2xl bg-[#0e111a] hover:bg-[#141824] border border-white/[0.08] hover:border-white/20 transition-colors cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg aura-pressable-subtle"
               >
                 <div className="flex items-center gap-3.5 min-w-0">
                   <div className="w-16 h-16 rounded-xl overflow-hidden bg-zinc-900 border border-white/12 shrink-0 relative shadow-sm">
                     {topMatch.coverUrl ? (
-                      <img src={topMatch.coverUrl} alt={topMatch.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" referrerPolicy="no-referrer" />
+                      <img src={topMatch.coverUrl} alt={topMatch.title} className={`w-full h-full object-cover transition-transform duration-300 ${canHover ? 'group-hover:scale-105' : ''}`} referrerPolicy="no-referrer" />
                     ) : (
                       <div className={`w-full h-full bg-gradient-to-br ${topMatch.coverColor || 'from-indigo-900 to-black'} flex items-center justify-center text-white/80`}>
                         <Music className="w-7 h-7" />
@@ -925,7 +1012,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                     <div
                       key={song.id}
                       onClick={() => handlePlayTrack(song)}
-                      className={`group cursor-pointer flex items-center justify-between p-2.5 rounded-2xl border transition-all ${
+                      className={`group cursor-pointer flex items-center justify-between p-2.5 rounded-2xl border transition-colors ${
                         isSelected
                           ? 'bg-[#121624] border-sky-500/40 shadow-sm ring-1 ring-sky-500/20'
                           : 'hover:bg-white/[0.03] border-transparent hover:border-white/[0.06]'
@@ -973,11 +1060,16 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                           </span>
                         )}
 
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                        <div
+                          className={`flex items-center gap-1 transition-opacity ${
+                            !canHover ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'
+                          }`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <button
                             type="button"
                             onClick={() => addToQueue(song)}
-                            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+                            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
                             title="Add to queue"
                           >
                             <Plus className="w-3.5 h-3.5" />
@@ -985,10 +1077,16 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                           <button
                             type="button"
                             onClick={() => toggleFavorite(song.id)}
-                            className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-white/10 transition-colors"
+                            className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
                             title={song.isFavorite ? 'Remove favorite' : 'Add favorite'}
                           >
-                            <Heart className={`w-3.5 h-3.5 ${song.isFavorite ? 'fill-rose-500 text-rose-500' : ''}`} />
+                            <motion.span
+                              className="inline-flex items-center justify-center"
+                              animate={!prefersReducedMotion && song.isFavorite ? { scale: [1, 1.24, 1] } : { scale: 1 }}
+                              transition={MOTION_TRANSITION.micro}
+                            >
+                              <Heart className={`w-3.5 h-3.5 ${song.isFavorite ? 'fill-rose-500 text-rose-500' : ''}`} />
+                            </motion.span>
                           </button>
                         </div>
                       </div>
@@ -1012,13 +1110,13 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   <div
                     key={artist.name}
                     onClick={() => handleSelectArtist(artist.name)}
-                    className="p-3 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-white/20 transition-all cursor-pointer flex items-center gap-3 group"
+                    className="p-3 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-white/20 transition-colors cursor-pointer flex items-center gap-3 group aura-pressable-subtle"
                   >
-                    <div className="w-10 h-10 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center text-zinc-400 shrink-0 group-hover:scale-105 transition-transform">
+                    <div className={`w-10 h-10 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center text-zinc-400 shrink-0 transition-transform duration-200 ${canHover ? 'group-hover:scale-105' : ''}`}>
                       <User className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <h4 className="text-xs font-bold text-white truncate font-ui-title group-hover:text-sky-300">
+                      <h4 className="text-xs font-bold text-white truncate font-ui-title group-hover:text-sky-300 transition-colors">
                         <HighlightMatch text={artist.name} query={query} />
                       </h4>
                       <p className="text-[10px] text-zinc-500 font-mono mt-0.5">
@@ -1044,7 +1142,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   <div
                     key={`${album.name}-${album.artist}`}
                     onClick={() => handleSelectAlbum(album.name)}
-                    className="p-3 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-white/20 transition-all cursor-pointer flex items-center gap-3 group"
+                    className="p-3 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-white/20 transition-colors cursor-pointer flex items-center gap-3 group aura-pressable-subtle"
                   >
                     <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-white/10 flex items-center justify-center text-zinc-400 shrink-0 overflow-hidden">
                       {album.coverUrl ? (
@@ -1054,7 +1152,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                       )}
                     </div>
                     <div className="min-w-0">
-                      <h4 className="text-xs font-bold text-white truncate font-ui-title group-hover:text-sky-300">
+                      <h4 className="text-xs font-bold text-white truncate font-ui-title group-hover:text-sky-300 transition-colors">
                         <HighlightMatch text={album.name} query={query} />
                       </h4>
                       <p className="text-[11px] text-zinc-400 truncate mt-0.5 font-ui-meta">
@@ -1080,13 +1178,13 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   <div
                     key={pl.id}
                     onClick={() => handleSelectPlaylist(pl.id)}
-                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-white/20 transition-all cursor-pointer flex items-center gap-3.5 group"
+                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-white/20 transition-colors cursor-pointer flex items-center gap-3.5 group aura-pressable-subtle"
                   >
                     <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${pl.coverGradient || 'from-sky-500 to-indigo-600'} flex items-center justify-center text-white shrink-0 shadow-sm`}>
                       <ListMusic className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <h4 className="text-xs font-bold text-white truncate font-ui-title group-hover:text-sky-300">
+                      <h4 className="text-xs font-bold text-white truncate font-ui-title group-hover:text-sky-300 transition-colors">
                         <HighlightMatch text={pl.title} query={query} />
                       </h4>
                       <p className="text-[10px] text-zinc-400 font-mono mt-0.5">
@@ -1096,6 +1194,25 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Loading Skeleton Feedback while fetching external sources */}
+          {query && !hasAnyResults && isSearchingExternal && (
+            <div className="flex flex-col gap-2 py-2" aria-busy="true" aria-label="Searching streams">
+              {[0, 1, 2, 3, 4].map((idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.04]"
+                >
+                  <div className="w-10 h-10 rounded-lg aura-skeleton shrink-0" />
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="h-3.5 w-2/5 rounded aura-skeleton" />
+                    <div className="h-2.5 w-1/4 rounded aura-skeleton" />
+                  </div>
+                  <div className="h-3 w-12 rounded aura-skeleton shrink-0" />
+                </div>
+              ))}
             </div>
           )}
 
@@ -1110,16 +1227,20 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
               <button
                 type="button"
                 onClick={() => setQuery('')}
-                className="mt-2 px-4 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-medium text-zinc-200 transition-colors cursor-pointer"
+                className="mt-2 px-4 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-medium text-zinc-200 aura-pressable aura-focus-ring transition-colors cursor-pointer"
               >
                 Clear Query
               </button>
             </div>
           )}
 
+            </MotionFadeSlide>
+          </AnimatePresence>
         </div>
 
-      </div>
-    </div>
+          </MotionModal>
+        </MotionBackdrop>
+      )}
+    </AnimatePresence>
   );
 };

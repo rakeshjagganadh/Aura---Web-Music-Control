@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
+import { AnimatePresence, LayoutGroup } from 'motion/react';
 import { useMusic } from '../../context/MusicContext';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 import { PWAInstallModal } from '../pwa/PWAInstallModal';
 import { YouTubeStreamTesterModal } from '../dev/YouTubeStreamTesterModal';
+import { MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
+import { SharedIndicator } from '../common/motion/MotionInteractive';
 import { 
   Settings, 
   HardDrive, 
@@ -120,14 +123,18 @@ export const SettingsView: React.FC = () => {
               <p className="text-[11px] text-zinc-400">Automatically advance to next queue item</p>
             </div>
             <button
+              type="button"
+              role="switch"
+              aria-checked={settings.autoplay}
+              aria-label="Continuous Autoplay"
               onClick={() => updateSettings({ autoplay: !settings.autoplay })}
-              className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${
+              className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer aura-pressable-subtle aura-focus-ring ${
                 settings.autoplay ? 'bg-indigo-600' : 'bg-zinc-700'
               }`}
             >
               <div
-                className={`w-4 h-4 rounded-full bg-white transition-transform absolute top-1 ${
-                  settings.autoplay ? 'left-6' : 'left-1'
+                className={`w-4 h-4 rounded-full bg-white transition-transform duration-150 ease-out absolute top-1 left-1 ${
+                  settings.autoplay ? 'translate-x-5' : 'translate-x-0'
                 }`}
               />
             </button>
@@ -140,14 +147,18 @@ export const SettingsView: React.FC = () => {
               <p className="text-[11px] text-zinc-400">Eliminate dead silence between consecutive tracks</p>
             </div>
             <button
+              type="button"
+              role="switch"
+              aria-checked={settings.gapless}
+              aria-label="Gapless Audio Playback"
               onClick={() => updateSettings({ gapless: !settings.gapless })}
-              className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${
+              className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer aura-pressable-subtle aura-focus-ring ${
                 settings.gapless ? 'bg-indigo-600' : 'bg-zinc-700'
               }`}
             >
               <div
-                className={`w-4 h-4 rounded-full bg-white transition-transform absolute top-1 ${
-                  settings.gapless ? 'left-6' : 'left-1'
+                className={`w-4 h-4 rounded-full bg-white transition-transform duration-150 ease-out absolute top-1 left-1 ${
+                  settings.gapless ? 'translate-x-5' : 'translate-x-0'
                 }`}
               />
             </button>
@@ -207,14 +218,18 @@ export const SettingsView: React.FC = () => {
               <p className="text-[11px] text-zinc-400">Fast peak limiter ceiling at -0.2 dB</p>
             </div>
             <button
+              type="button"
+              role="switch"
+              aria-checked={limiter.enabled}
+              aria-label="Prevent Audio Clipping"
               onClick={() => updateLimiter({ enabled: !limiter.enabled })}
-              className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${
+              className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer aura-pressable-subtle aura-focus-ring ${
                 limiter.enabled ? 'bg-indigo-600' : 'bg-zinc-700'
               }`}
             >
               <div
-                className={`w-4 h-4 rounded-full bg-white transition-transform absolute top-1 ${
-                  limiter.enabled ? 'left-6' : 'left-1'
+                className={`w-4 h-4 rounded-full bg-white transition-transform duration-150 ease-out absolute top-1 left-1 ${
+                  limiter.enabled ? 'translate-x-5' : 'translate-x-0'
                 }`}
               />
             </button>
@@ -227,14 +242,18 @@ export const SettingsView: React.FC = () => {
               <p className="text-[11px] text-zinc-400">Equalize track volumes to standard -14 LUFS</p>
             </div>
             <button
+              type="button"
+              role="switch"
+              aria-checked={settings.autoNormalize}
+              aria-label="Auto Loudness Normalization"
               onClick={() => updateSettings({ autoNormalize: !settings.autoNormalize })}
-              className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${
+              className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer aura-pressable-subtle aura-focus-ring ${
                 settings.autoNormalize ? 'bg-indigo-600' : 'bg-zinc-700'
               }`}
             >
               <div
-                className={`w-4 h-4 rounded-full bg-white transition-transform absolute top-1 ${
-                  settings.autoNormalize ? 'left-6' : 'left-1'
+                className={`w-4 h-4 rounded-full bg-white transition-transform duration-150 ease-out absolute top-1 left-1 ${
+                  settings.autoNormalize ? 'translate-x-5' : 'translate-x-0'
                 }`}
               />
             </button>
@@ -248,21 +267,33 @@ export const SettingsView: React.FC = () => {
             <p className="text-[11px] text-zinc-400">Internal floating-point math and filter resolution</p>
           </div>
 
-          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-zinc-950 border border-white/5">
-            {(['standard', 'high', 'ultra'] as const).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => updateSettings({ qualityDsp: mode })}
-                className={`px-3 py-1 text-xs font-mono capitalize rounded-lg transition-colors cursor-pointer ${
-                  settings.qualityDsp === mode
-                    ? 'bg-indigo-600 text-white font-semibold shadow-sm'
-                    : 'text-zinc-400 hover:text-zinc-200'
-                }`}
-              >
-                {mode}
-              </button>
-            ))}
-          </div>
+          <LayoutGroup id="settings-dsp-quality">
+            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-zinc-950 border border-white/5">
+              {(['standard', 'high', 'ultra'] as const).map((mode) => {
+                const isActive = settings.qualityDsp === mode;
+                return (
+                  <button
+                    type="button"
+                    key={mode}
+                    onClick={() => updateSettings({ qualityDsp: mode })}
+                    className={`relative px-3 py-1 text-xs font-mono capitalize rounded-lg transition-colors cursor-pointer aura-pressable aura-focus-ring ${
+                      isActive
+                        ? 'text-white font-semibold'
+                        : 'text-zinc-400 hover:text-zinc-200'
+                    }`}
+                  >
+                    {isActive && (
+                      <SharedIndicator
+                        layoutId="settings-dsp-quality-pill"
+                        className="absolute inset-0 rounded-lg bg-indigo-600 shadow-sm"
+                      />
+                    )}
+                    <span className="relative z-10">{mode}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </LayoutGroup>
         </div>
       </div>
 
@@ -287,15 +318,17 @@ export const SettingsView: React.FC = () => {
         <div className="flex items-center gap-2">
           {isSleepTimerActive && (
             <button
+              type="button"
               onClick={cancelSleepTimer}
-              className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-xs font-medium text-rose-300 transition-colors"
+              className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-xs font-medium text-rose-300 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             >
               Cancel
             </button>
           )}
           <button
+            type="button"
             onClick={() => setIsSleepTimerModalOpen(true)}
-            className="px-3.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-200 transition-colors"
+            className="px-3.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-200 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
             {isSleepTimerActive ? 'Change Timer' : 'Set Sleep Timer'}
           </button>
@@ -331,16 +364,18 @@ export const SettingsView: React.FC = () => {
 
         <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-white/5">
           <button
+            type="button"
             onClick={loadDemoPack}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-xs font-medium text-indigo-300 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-xs font-medium text-indigo-300 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
             <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
             Reload Demo Tracks
           </button>
 
           <button
+            type="button"
             onClick={() => setIsConfirmOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-xs font-medium text-rose-300 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-xs font-medium text-rose-300 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
             <Trash2 className="w-3.5 h-3.5" />
             Clear All Stored Library Data
@@ -349,62 +384,72 @@ export const SettingsView: React.FC = () => {
       </div>
 
       {/* Confirmation Modal */}
-      {isConfirmOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md rounded-2xl bg-zinc-950 border border-rose-500/30 shadow-2xl p-6 flex flex-col gap-4">
-            <div className="flex items-start gap-3">
-              <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 shrink-0">
-                <AlertTriangle className="w-6 h-6" />
+      <AnimatePresence>
+        {isConfirmOpen && (
+          <MotionBackdrop
+            onClick={() => !isClearing && setIsConfirmOpen(false)}
+            style={{ pointerEvents: isConfirmOpen ? 'auto' : 'none' }}
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <MotionModal
+              variant="center"
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-md rounded-2xl bg-zinc-950 border border-rose-500/30 shadow-2xl p-6 flex flex-col gap-4"
+            >
+              <div className="flex items-start gap-3">
+                <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 shrink-0">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-base font-bold text-white">Clear All Stored Library Data?</h3>
+                  <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                    This will permanently delete all imported tracks, cached audio blobs, custom playlists, favorites, and per-song DSP presets from your browser storage.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsConfirmOpen(false)}
+                  className="p-1 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 cursor-pointer aura-pressable"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-              <div className="flex-1">
-                <h3 className="text-base font-bold text-white">Clear All Stored Library Data?</h3>
-                <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                  This will permanently delete all imported tracks, cached audio blobs, custom playlists, favorites, and per-song DSP presets from your browser storage.
-                </p>
-              </div>
-              <button
-                onClick={() => setIsConfirmOpen(false)}
-                className="p-1 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
 
-            <div className="p-3 rounded-xl bg-zinc-900/60 border border-white/5 text-xs text-zinc-400">
-              <div className="flex justify-between py-0.5">
-                <span>Tracks to delete:</span>
-                <span className="font-mono text-zinc-200">{tracks.length}</span>
+              <div className="p-3 rounded-xl bg-zinc-900/60 border border-white/5 text-xs text-zinc-400">
+                <div className="flex justify-between py-0.5">
+                  <span>Tracks to delete:</span>
+                  <span className="font-mono text-zinc-200">{tracks.length}</span>
+                </div>
+                <div className="flex justify-between py-0.5">
+                  <span>Playlists to delete:</span>
+                  <span className="font-mono text-zinc-200">{playlists.length}</span>
+                </div>
+                <div className="flex justify-between py-0.5">
+                  <span>Storage to reclaim:</span>
+                  <span className="font-mono text-emerald-400">{formatStorageMB(storageUsage.approxBytes)}</span>
+                </div>
               </div>
-              <div className="flex justify-between py-0.5">
-                <span>Playlists to delete:</span>
-                <span className="font-mono text-zinc-200">{playlists.length}</span>
-              </div>
-              <div className="flex justify-between py-0.5">
-                <span>Storage to reclaim:</span>
-                <span className="font-mono text-emerald-400">{formatStorageMB(storageUsage.approxBytes)}</span>
-              </div>
-            </div>
 
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                onClick={() => setIsConfirmOpen(false)}
-                disabled={isClearing}
-                className="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-xs font-medium text-zinc-300 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmClear}
-                disabled={isClearing}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-semibold text-white shadow-lg shadow-rose-600/20 transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                {isClearing ? 'Clearing Storage...' : 'Yes, Delete Everything'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  onClick={() => setIsConfirmOpen(false)}
+                  disabled={isClearing}
+                  className="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-xs font-medium text-zinc-300 transition-colors cursor-pointer aura-pressable"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmClear}
+                  disabled={isClearing}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-semibold text-white shadow-lg shadow-rose-600/20 transition-colors disabled:opacity-50 cursor-pointer aura-pressable"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  {isClearing ? 'Clearing Storage...' : 'Yes, Delete Everything'}
+                </button>
+              </div>
+            </MotionModal>
+          </MotionBackdrop>
+        )}
+      </AnimatePresence>
 
       {/* Audio Engine Specs */}
       <div className="flex flex-col gap-4 p-6 rounded-3xl bg-zinc-900/40 border border-white/5">
@@ -447,8 +492,9 @@ export const SettingsView: React.FC = () => {
         </div>
 
         <button
+          type="button"
           onClick={() => setIsShortcutsModalOpen(true)}
-          className="px-3.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-200 transition-colors cursor-pointer"
+          className="px-3.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-200 transition-colors cursor-pointer aura-pressable aura-focus-ring"
         >
           View Shortcuts (?)
         </button>
@@ -474,8 +520,9 @@ export const SettingsView: React.FC = () => {
         </div>
 
         <button
+          type="button"
           onClick={() => setIsStreamTesterOpen(true)}
-          className="px-3.5 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-medium border border-emerald-500/30 transition-colors cursor-pointer"
+          className="px-3.5 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-medium border border-emerald-500/30 transition-colors cursor-pointer aura-pressable aura-focus-ring"
         >
           Open Stream Lab
         </button>
@@ -501,8 +548,9 @@ export const SettingsView: React.FC = () => {
         </div>
 
         <button
+          type="button"
           onClick={() => setCurrentView('optical-lab')}
-          className="px-3.5 py-1.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-xs font-medium border border-indigo-500/30 transition-colors cursor-pointer shrink-0"
+          className="px-3.5 py-1.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-xs font-medium border border-indigo-500/30 transition-colors cursor-pointer shrink-0 aura-pressable aura-focus-ring"
         >
           Open Optical Lab
         </button>
@@ -530,7 +578,7 @@ export const SettingsView: React.FC = () => {
             <button
               type="button"
               onClick={promptInstall}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold transition-colors cursor-pointer shadow-sm aura-pressable"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Install AURA</span>

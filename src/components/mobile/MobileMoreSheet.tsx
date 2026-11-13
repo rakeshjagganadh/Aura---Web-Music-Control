@@ -1,4 +1,6 @@
 import React from 'react';
+import { AnimatePresence } from 'motion/react';
+import { MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
 import { useMusic } from '../../context/MusicContext';
 import { NavView } from '../../types';
 import { 
@@ -45,8 +47,6 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
 
   const { isInRoom, participants } = useListenTogether();
 
-  if (!isOpen) return null;
-
   const navigateTo = (view: NavView) => {
     setSelectedPlaylistId(null);
     setCurrentView(view);
@@ -59,16 +59,21 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
   };
 
   return (
-    <div
-      id="mobile-more-sheet"
-      aria-label="More Destinations Sheet"
-      className="lg:hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col justify-end select-none animate-in fade-in duration-200"
-    >
-      {/* Backdrop tap to dismiss */}
-      <div className="flex-1" onClick={onClose} />
-
-      {/* Sheet Modal Container */}
-      <div className="relative w-full max-h-[85vh] bg-[#080a10] border-t border-white/[0.1] rounded-t-[28px] shadow-[0_-20px_50px_rgba(0,0,0,0.95)] flex flex-col overflow-hidden pb-safe animate-in slide-in-from-bottom duration-250">
+    <AnimatePresence>
+      {isOpen && (
+        <MotionBackdrop
+          id="mobile-more-sheet"
+          aria-label="More Destinations Sheet"
+          onClick={onClose}
+          style={{ pointerEvents: isOpen ? 'auto' : 'none' }}
+          className="lg:hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col justify-end select-none"
+        >
+          {/* Sheet Modal Container */}
+          <MotionModal
+            variant="bottom-sheet"
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-h-[85vh] bg-[#080a10] border-t border-white/[0.1] rounded-t-[28px] shadow-[0_-20px_50px_rgba(0,0,0,0.95)] flex flex-col overflow-hidden pb-safe"
+          >
         
         {/* Tactile Sheet Handle */}
         <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mt-3 mb-1 shrink-0" />
@@ -86,7 +91,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 text-zinc-400 hover:text-white active:bg-white/[0.06] rounded-xl transition-colors cursor-pointer aura-focus-ring"
+            className="p-2 text-zinc-400 hover:text-white active:bg-white/[0.06] rounded-xl transition-colors cursor-pointer aura-focus-ring aura-pressable"
             aria-label="Close sheet"
           >
             <X className="w-5 h-5" />
@@ -106,7 +111,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
             <button
               type="button"
               onClick={() => navigateTo('listen-together')}
-              className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.06] transition-all text-left cursor-pointer group aura-focus-ring"
+              className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.06] transition-colors text-left cursor-pointer group aura-focus-ring aura-pressable-subtle"
             >
               <div className="flex items-center gap-3.5 min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 text-zinc-300 group-hover:text-white transition-colors">
@@ -134,7 +139,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
             <button
               type="button"
               onClick={() => navigateTo('studio')}
-              className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.06] transition-all text-left cursor-pointer group aura-focus-ring"
+              className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.06] transition-colors text-left cursor-pointer group aura-focus-ring aura-pressable-subtle"
             >
               <div className="flex items-center gap-3.5 min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 text-zinc-300 group-hover:text-white transition-colors">
@@ -161,7 +166,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
             <button
               type="button"
               onClick={() => navigateTo('albums')}
-              className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] active:bg-white/[0.07] border border-white/[0.05] transition-all text-left cursor-pointer group aura-focus-ring"
+              className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] active:bg-white/[0.07] border border-white/[0.05] transition-colors text-left cursor-pointer group aura-focus-ring aura-pressable-subtle"
             >
               <div className="flex items-center gap-3.5 min-w-0">
                 <Disc className="w-4.5 h-4.5 text-zinc-400 group-hover:text-zinc-200 shrink-0 ml-1" />
@@ -177,7 +182,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
             <button
               type="button"
               onClick={() => navigateTo('artists')}
-              className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] active:bg-white/[0.07] border border-white/[0.05] transition-all text-left cursor-pointer group aura-focus-ring"
+              className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] active:bg-white/[0.07] border border-white/[0.05] transition-colors text-left cursor-pointer group aura-focus-ring aura-pressable-subtle"
             >
               <div className="flex items-center gap-3.5 min-w-0">
                 <User className="w-4.5 h-4.5 text-zinc-400 group-hover:text-zinc-200 shrink-0 ml-1" />
@@ -193,7 +198,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
             <button
               type="button"
               onClick={() => navigateTo('favorites')}
-              className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] active:bg-white/[0.07] border border-white/[0.05] transition-all text-left cursor-pointer group aura-focus-ring"
+              className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] active:bg-white/[0.07] border border-white/[0.05] transition-colors text-left cursor-pointer group aura-focus-ring aura-pressable-subtle"
             >
               <div className="flex items-center gap-3.5 min-w-0">
                 <Heart className="w-4.5 h-4.5 text-rose-400 shrink-0 ml-1" />
@@ -222,7 +227,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
                 onClose();
                 setIsUploadModalOpen(true);
               }}
-              className="flex flex-col gap-2 p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.07] text-left transition-colors cursor-pointer group aura-focus-ring"
+              className="flex flex-col gap-2 p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.07] text-left transition-colors cursor-pointer group aura-focus-ring aura-pressable-subtle"
             >
               <UploadCloud className="w-5 h-5 text-zinc-300 group-hover:text-white" />
               <div>
@@ -238,7 +243,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
                 onClose();
                 loadDemoPack();
               }}
-              className="flex flex-col gap-2 p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.07] text-left transition-colors cursor-pointer group aura-focus-ring"
+              className="flex flex-col gap-2 p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.07] text-left transition-colors cursor-pointer group aura-focus-ring aura-pressable-subtle"
             >
               <Sparkles className="w-5 h-5 text-zinc-300 group-hover:text-white" />
               <div>
@@ -256,7 +261,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
                 onClose();
                 onInstall();
               }}
-              className="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-sky-950/30 to-zinc-900 border border-sky-500/25 text-left transition-colors cursor-pointer aura-focus-ring"
+              className="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-sky-950/30 to-zinc-900 border border-sky-500/25 text-left transition-colors cursor-pointer aura-focus-ring aura-pressable-subtle"
             >
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-sky-500/15 border border-sky-500/25 flex items-center justify-center shrink-0">
@@ -283,7 +288,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
             <button
               type="button"
               onClick={() => navigateTo('settings')}
-              className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.05] transition-all text-left cursor-pointer group aura-focus-ring"
+              className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.05] transition-colors text-left cursor-pointer group aura-focus-ring aura-pressable-subtle"
             >
               <div className="flex items-center gap-3">
                 <Settings className="w-4 h-4 text-zinc-400 group-hover:text-white shrink-0 ml-1" />
@@ -305,7 +310,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
                   onClose();
                   setIsShortcutsModalOpen(true);
                 }}
-                className="flex items-center gap-1.5 text-zinc-400 hover:text-white transition-colors cursor-pointer text-xs"
+                className="flex items-center gap-1.5 text-zinc-400 hover:text-white transition-colors cursor-pointer text-xs aura-pressable"
               >
                 <Keyboard className="w-3.5 h-3.5" />
                 <span className="font-ui-body">Shortcuts</span>
@@ -316,7 +321,9 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
 
         </div>
 
-      </div>
-    </div>
+          </MotionModal>
+        </MotionBackdrop>
+      )}
+    </AnimatePresence>
   );
 };

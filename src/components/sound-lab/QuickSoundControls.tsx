@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { AnimatePresence, LayoutGroup } from 'motion/react';
+import { MotionFadeSlide } from '../common/motion/MotionSurface';
+import { MotionIconSwap, SharedIndicator } from '../common/motion/MotionInteractive';
 import { useMusic } from '../../context/MusicContext';
 import { 
   Sparkles, 
@@ -209,53 +212,73 @@ export const QuickSoundControls: React.FC = () => {
         {/* Master Control Matrix */}
         <div className="flex items-center gap-2 flex-wrap">
           {/* A/B Switcher */}
-          <div className="flex items-center p-0.5 rounded-xl bg-zinc-900 border border-white/10">
-            <button
-              id="ab-mode-a-btn"
-              onClick={() => setABMode('A')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
-                abMode === 'A'
-                  ? 'bg-zinc-800 text-amber-300 shadow-sm'
-                  : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-              title="A: Raw Audio without DSP processing"
-            >
-              A: RAW
-            </button>
-            <button
-              id="ab-mode-b-btn"
-              onClick={() => setABMode('B')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
-                abMode === 'B'
-                  ? 'bg-cyan-500/20 text-cyan-300 shadow-sm border border-cyan-500/30'
-                  : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-              title="B: Processed Aura Sound Lab DSP"
-            >
-              B: DSP
-            </button>
-          </div>
+          <LayoutGroup id="soundlab-ab-switch">
+            <div className="flex items-center p-0.5 rounded-xl bg-zinc-900 border border-white/10">
+              <button
+                id="ab-mode-a-btn"
+                type="button"
+                onClick={() => setABMode('A')}
+                className={`relative px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer aura-pressable aura-focus-ring ${
+                  abMode === 'A'
+                    ? 'text-amber-300'
+                    : 'text-zinc-500 hover:text-zinc-300'
+                }`}
+                title="A: Raw Audio without DSP processing"
+              >
+                {abMode === 'A' && (
+                  <SharedIndicator
+                    layoutId="soundlab-ab-pill"
+                    className="absolute inset-0 rounded-lg bg-zinc-800 border border-amber-500/30 shadow-sm pointer-events-none"
+                  />
+                )}
+                <span className="relative z-10">A: RAW</span>
+              </button>
+              <button
+                id="ab-mode-b-btn"
+                type="button"
+                onClick={() => setABMode('B')}
+                className={`relative px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer aura-pressable aura-focus-ring ${
+                  abMode === 'B'
+                    ? 'text-cyan-300'
+                    : 'text-zinc-500 hover:text-zinc-300'
+                }`}
+                title="B: Processed Aura Sound Lab DSP"
+              >
+                {abMode === 'B' && (
+                  <SharedIndicator
+                    layoutId="soundlab-ab-pill"
+                    className="absolute inset-0 rounded-lg bg-cyan-500/20 border border-cyan-500/30 shadow-sm pointer-events-none"
+                  />
+                )}
+                <span className="relative z-10">B: DSP</span>
+              </button>
+            </div>
+          </LayoutGroup>
 
           {/* Master DSP Bypass */}
           <button
             id="master-bypass-btn"
+            type="button"
             onClick={toggleMasterBypass}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors cursor-pointer aura-pressable aura-focus-ring ${
               isMasterBypass
                 ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
                 : 'bg-zinc-900 text-zinc-300 border-white/10 hover:bg-zinc-800'
             }`}
             title="Toggle Master DSP Bypass"
           >
-            <Power className="w-3.5 h-3.5" />
+            <MotionIconSwap stateKey={isMasterBypass ? 'bypass' : 'active'}>
+              <Power className="w-3.5 h-3.5" />
+            </MotionIconSwap>
             <span>{isMasterBypass ? 'DSP Bypassed' : 'DSP Active'}</span>
           </button>
 
           {/* Reset All Macros to Neutral */}
           <button
             id="reset-quick-sound-btn"
+            type="button"
             onClick={resetQuickSound}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/5 transition-all"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             title="Reset macro sliders to neutral default"
           >
             <RotateCcw className="w-3 h-3" />
@@ -275,8 +298,9 @@ export const QuickSoundControls: React.FC = () => {
           </div>
 
           <button
+            type="button"
             onClick={() => setPresetPromptOpen(!presetPromptOpen)}
-            className="text-xs text-cyan-400 hover:text-cyan-300 font-medium transition-colors flex items-center gap-1"
+            className="text-xs text-cyan-400 hover:text-cyan-300 font-medium transition-colors flex items-center gap-1 cursor-pointer aura-pressable aura-focus-ring rounded px-1.5 py-0.5"
           >
             <Bookmark className="w-3.5 h-3.5" />
             <span>+ Save As Custom Preset</span>
@@ -284,31 +308,36 @@ export const QuickSoundControls: React.FC = () => {
         </div>
 
         {/* Custom Preset Save Inline Form */}
-        {presetPromptOpen && (
-          <form onSubmit={handleSavePreset} className="flex gap-2 p-3 rounded-xl bg-zinc-900 border border-cyan-500/30 animate-in fade-in duration-150">
-            <input
-              type="text"
-              placeholder="Preset Name (e.g. Midnight Chill, Vinyl Warmth)..."
-              value={customName}
-              onChange={(e) => setCustomName(e.target.value)}
-              className="flex-1 bg-zinc-950 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-500 font-sans"
-              autoFocus
-            />
-            <button
-              type="submit"
-              className="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition-colors"
-            >
-              Save Preset
-            </button>
-            <button
-              type="button"
-              onClick={() => setPresetPromptOpen(false)}
-              className="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 text-xs font-medium hover:bg-zinc-700 transition-colors"
-            >
-              Cancel
-            </button>
-          </form>
-        )}
+        <AnimatePresence initial={false}>
+          {presetPromptOpen && (
+            <MotionFadeSlide key="soundlab-save-preset" direction="down" distance={6} duration="micro">
+              <form onSubmit={handleSavePreset} className="flex gap-2 p-3 rounded-xl bg-zinc-900 border border-cyan-500/30">
+                <input
+                  type="text"
+                  placeholder="Preset Name (e.g. Midnight Chill, Vinyl Warmth)..."
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  className="flex-1 bg-zinc-950 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-500 font-sans"
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  disabled={!customName.trim()}
+                  className="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold transition-colors cursor-pointer aura-pressable aura-focus-ring"
+                >
+                  Save Preset
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPresetPromptOpen(false)}
+                  className="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 text-xs font-medium hover:bg-zinc-700 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+                >
+                  Cancel
+                </button>
+              </form>
+            </MotionFadeSlide>
+          )}
+        </AnimatePresence>
 
         {/* Curated 8 Profiles Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
@@ -317,9 +346,10 @@ export const QuickSoundControls: React.FC = () => {
             return (
               <button
                 key={profile.id}
+                type="button"
                 id={`preset-pill-${profile.id}`}
                 onClick={() => applySoundLabPreset(profile.id)}
-                className={`flex flex-col items-start gap-1 p-3 rounded-xl text-left transition-all border ${
+                className={`flex flex-col items-start gap-1 p-3 rounded-xl text-left transition-colors border cursor-pointer aura-pressable-subtle aura-focus-ring ${
                   isActive
                     ? 'bg-cyan-500/15 border-cyan-500/40 text-white shadow-sm'
                     : 'bg-zinc-900/60 border-white/5 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 hover:border-white/10'
@@ -345,8 +375,9 @@ export const QuickSoundControls: React.FC = () => {
               return (
                 <button
                   key={preset.id}
+                  type="button"
                   onClick={() => applySoundLabPreset(preset.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border whitespace-nowrap shrink-0 ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border whitespace-nowrap shrink-0 cursor-pointer aura-pressable-subtle aura-focus-ring ${
                     isActive
                       ? 'bg-indigo-600/20 border-indigo-500/40 text-indigo-200'
                       : 'bg-zinc-900/80 border-white/5 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
@@ -371,7 +402,7 @@ export const QuickSoundControls: React.FC = () => {
           return (
             <div
               key={macro.key}
-              className="flex flex-col gap-3 p-4 rounded-xl bg-zinc-900/50 border border-white/5 hover:border-white/10 transition-all"
+              className="flex flex-col gap-3 p-4 rounded-xl bg-zinc-900/50 border border-white/5 hover:border-white/10 transition-colors"
             >
               {/* Macro Header */}
               <div className="flex items-center justify-between">

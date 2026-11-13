@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { AnimatePresence, LayoutGroup } from 'motion/react';
 import { useMusic } from '../../context/MusicContext';
 import { Track } from '../../types';
 import { LibraryNav } from '../library/LibraryNav';
 import { TrackRow } from '../library/TrackRow';
 import { TrackGridCard } from '../library/TrackGridCard';
 import { AddToPlaylistModal } from '../playlists/AddToPlaylistModal';
+import { MotionFadeSlide, MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
+import { SharedIndicator } from '../common/motion/MotionInteractive';
 import { 
   Music, 
   Search, 
@@ -224,7 +227,7 @@ export const SongsView: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsUploadModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer aura-focus-ring"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Import Audio</span>
@@ -293,395 +296,470 @@ export const SongsView: React.FC = () => {
             </div>
 
             {/* View Mode Toggle */}
-            <div className="flex items-center gap-0.5 p-1 rounded-xl bg-white/[0.05] border border-white/10">
-              <button
-                type="button"
-                onClick={() => setViewMode('row')}
-                className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                  viewMode === 'row' ? 'bg-white/15 text-white shadow-sm' : 'text-zinc-400 hover:text-white'
-                }`}
-                title="List View"
-              >
-                <List className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                  viewMode === 'grid' ? 'bg-white/15 text-white shadow-sm' : 'text-zinc-400 hover:text-white'
-                }`}
-                title="Grid View"
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </button>
-            </div>
+            <LayoutGroup id="songs-viewmode">
+              <div className="flex items-center gap-0.5 p-1 rounded-xl bg-white/[0.05] border border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('row')}
+                  className={`relative p-1.5 rounded-lg transition-colors cursor-pointer aura-pressable ${
+                    viewMode === 'row' ? 'text-white' : 'text-zinc-400 hover:text-white'
+                  }`}
+                  title="List View"
+                >
+                  {viewMode === 'row' && (
+                    <SharedIndicator
+                      layoutId="songs-viewmode-pill"
+                      className="absolute inset-0 rounded-lg bg-white/15 shadow-sm"
+                    />
+                  )}
+                  <List className="relative z-10 w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  className={`relative p-1.5 rounded-lg transition-colors cursor-pointer aura-pressable ${
+                    viewMode === 'grid' ? 'text-white' : 'text-zinc-400 hover:text-white'
+                  }`}
+                  title="Grid View"
+                >
+                  {viewMode === 'grid' && (
+                    <SharedIndicator
+                      layoutId="songs-viewmode-pill"
+                      className="absolute inset-0 rounded-lg bg-white/15 shadow-sm"
+                    />
+                  )}
+                  <LayoutGrid className="relative z-10 w-4 h-4" />
+                </button>
+              </div>
+            </LayoutGroup>
           </div>
         </div>
 
         {/* Source Segmented Filter Buttons */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-          <span className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider mr-1 shrink-0">Source:</span>
-          
-          <button
-            type="button"
-            onClick={() => setActiveSourceFilter('all')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-              activeSourceFilter === 'all'
-                ? 'bg-white text-zinc-950 font-bold shadow-sm'
-                : 'bg-white/[0.04] text-zinc-400 hover:text-white hover:bg-white/[0.08]'
-            }`}
-          >
-            All Sources ({sourceCounts.all})
-          </button>
-
-          {sourceCounts.local > 0 && (
+        <LayoutGroup id="songs-source-filter">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+            <span className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider mr-1 shrink-0">Source:</span>
+            
             <button
               type="button"
-              onClick={() => setActiveSourceFilter('local')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-                activeSourceFilter === 'local'
-                  ? 'bg-sky-500 text-white font-bold shadow-sm'
+              onClick={() => setActiveSourceFilter('all')}
+              className={`relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer aura-pressable ${
+                activeSourceFilter === 'all'
+                  ? 'text-zinc-950 font-bold'
                   : 'bg-white/[0.04] text-zinc-400 hover:text-white hover:bg-white/[0.08]'
               }`}
             >
-              Local Vault ({sourceCounts.local})
+              {activeSourceFilter === 'all' && (
+                <SharedIndicator
+                  layoutId="songs-source-pill"
+                  className="absolute inset-0 rounded-lg bg-white shadow-sm"
+                />
+              )}
+              <span className="relative z-10">All Sources ({sourceCounts.all})</span>
             </button>
-          )}
 
-          {sourceCounts.jamendo > 0 && (
-            <button
-              type="button"
-              onClick={() => setActiveSourceFilter('jamendo')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-                activeSourceFilter === 'jamendo'
-                  ? 'bg-purple-600 text-white font-bold shadow-sm'
-                  : 'bg-white/[0.04] text-zinc-400 hover:text-white hover:bg-white/[0.08]'
-              }`}
-            >
-              Jamendo ({sourceCounts.jamendo})
-            </button>
-          )}
+            {sourceCounts.local > 0 && (
+              <button
+                type="button"
+                onClick={() => setActiveSourceFilter('local')}
+                className={`relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer aura-pressable ${
+                  activeSourceFilter === 'local'
+                    ? 'text-white font-bold'
+                    : 'bg-white/[0.04] text-zinc-400 hover:text-white hover:bg-white/[0.08]'
+                }`}
+              >
+                {activeSourceFilter === 'local' && (
+                  <SharedIndicator
+                    layoutId="songs-source-pill"
+                    className="absolute inset-0 rounded-lg bg-sky-500 shadow-sm"
+                  />
+                )}
+                <span className="relative z-10">Local Vault ({sourceCounts.local})</span>
+              </button>
+            )}
 
-          {sourceCounts.audius > 0 && (
-            <button
-              type="button"
-              onClick={() => setActiveSourceFilter('audius')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-                activeSourceFilter === 'audius'
-                  ? 'bg-indigo-600 text-white font-bold shadow-sm'
-                  : 'bg-white/[0.04] text-zinc-400 hover:text-white hover:bg-white/[0.08]'
-              }`}
-            >
-              Audius ({sourceCounts.audius})
-            </button>
-          )}
+            {sourceCounts.jamendo > 0 && (
+              <button
+                type="button"
+                onClick={() => setActiveSourceFilter('jamendo')}
+                className={`relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer aura-pressable ${
+                  activeSourceFilter === 'jamendo'
+                    ? 'text-white font-bold'
+                    : 'bg-white/[0.04] text-zinc-400 hover:text-white hover:bg-white/[0.08]'
+                }`}
+              >
+                {activeSourceFilter === 'jamendo' && (
+                  <SharedIndicator
+                    layoutId="songs-source-pill"
+                    className="absolute inset-0 rounded-lg bg-purple-600 shadow-sm"
+                  />
+                )}
+                <span className="relative z-10">Jamendo ({sourceCounts.jamendo})</span>
+              </button>
+            )}
 
-          {sourceCounts.youtube > 0 && (
-            <button
-              type="button"
-              onClick={() => setActiveSourceFilter('youtube')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-                activeSourceFilter === 'youtube'
-                  ? 'bg-red-600 text-white font-bold shadow-sm'
-                  : 'bg-white/[0.04] text-zinc-400 hover:text-white hover:bg-white/[0.08]'
-              }`}
-            >
-              YouTube ({sourceCounts.youtube})
-            </button>
-          )}
+            {sourceCounts.audius > 0 && (
+              <button
+                type="button"
+                onClick={() => setActiveSourceFilter('audius')}
+                className={`relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer aura-pressable ${
+                  activeSourceFilter === 'audius'
+                    ? 'text-white font-bold'
+                    : 'bg-white/[0.04] text-zinc-400 hover:text-white hover:bg-white/[0.08]'
+                }`}
+              >
+                {activeSourceFilter === 'audius' && (
+                  <SharedIndicator
+                    layoutId="songs-source-pill"
+                    className="absolute inset-0 rounded-lg bg-indigo-600 shadow-sm"
+                  />
+                )}
+                <span className="relative z-10">Audius ({sourceCounts.audius})</span>
+              </button>
+            )}
 
-          {sourceCounts.curated_stream > 0 && (
-            <button
-              type="button"
-              onClick={() => setActiveSourceFilter('curated_stream')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-                activeSourceFilter === 'curated_stream'
-                  ? 'bg-emerald-600 text-white font-bold shadow-sm'
-                  : 'bg-white/[0.04] text-zinc-400 hover:text-white hover:bg-white/[0.08]'
-              }`}
-            >
-              Curated Streams ({sourceCounts.curated_stream})
-            </button>
-          )}
-        </div>
+            {sourceCounts.youtube > 0 && (
+              <button
+                type="button"
+                onClick={() => setActiveSourceFilter('youtube')}
+                className={`relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer aura-pressable ${
+                  activeSourceFilter === 'youtube'
+                    ? 'text-white font-bold'
+                    : 'bg-white/[0.04] text-zinc-400 hover:text-white hover:bg-white/[0.08]'
+                }`}
+              >
+                {activeSourceFilter === 'youtube' && (
+                  <SharedIndicator
+                    layoutId="songs-source-pill"
+                    className="absolute inset-0 rounded-lg bg-red-600 shadow-sm"
+                  />
+                )}
+                <span className="relative z-10">YouTube ({sourceCounts.youtube})</span>
+              </button>
+            )}
+
+            {sourceCounts.curated_stream > 0 && (
+              <button
+                type="button"
+                onClick={() => setActiveSourceFilter('curated_stream')}
+                className={`relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer aura-pressable ${
+                  activeSourceFilter === 'curated_stream'
+                    ? 'text-white font-bold'
+                    : 'bg-white/[0.04] text-zinc-400 hover:text-white hover:bg-white/[0.08]'
+                }`}
+              >
+                {activeSourceFilter === 'curated_stream' && (
+                  <SharedIndicator
+                    layoutId="songs-source-pill"
+                    className="absolute inset-0 rounded-lg bg-emerald-600 shadow-sm"
+                  />
+                )}
+                <span className="relative z-10">Curated Streams ({sourceCounts.curated_stream})</span>
+              </button>
+            )}
+          </div>
+        </LayoutGroup>
       </section>
 
       {/* -------------------------------------------------------------
           4. BULK SELECTION ACTION BAR (WHEN TRACKS ARE SELECTED)
           ------------------------------------------------------------- */}
-      {selectedTrackIds.size > 0 && (
-        <section className="sticky top-2 z-30 flex items-center justify-between gap-3 p-3 rounded-2xl aura-glass-island border border-sky-500/30 shadow-2xl animate-fadeIn">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={toggleSelectAll}
-              className="flex items-center gap-2 text-xs font-semibold text-white hover:text-sky-300 transition-colors cursor-pointer"
-            >
-              <CheckSquare className="w-4 h-4 text-sky-400" />
-              <span>{selectedTrackIds.size} {selectedTrackIds.size === 1 ? 'track' : 'tracks'} selected</span>
-            </button>
-          </div>
+      <AnimatePresence>
+        {selectedTrackIds.size > 0 && (
+          <MotionFadeSlide
+            key="bulk-selection-bar"
+            direction="down"
+            distance={8}
+            duration="micro"
+            className="sticky top-2 z-30 flex items-center justify-between gap-3 p-3 rounded-2xl aura-glass-island border border-sky-500/30 shadow-2xl"
+          >
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={toggleSelectAll}
+                className="flex items-center gap-2 text-xs font-semibold text-white hover:text-sky-300 transition-colors cursor-pointer aura-pressable"
+              >
+                <CheckSquare className="w-4 h-4 text-sky-400" />
+                <span>{selectedTrackIds.size} {selectedTrackIds.size === 1 ? 'track' : 'tracks'} selected</span>
+              </button>
+            </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={handleBulkPlay}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow transition-transform active:scale-95 cursor-pointer"
-            >
-              <Play className="w-3.5 h-3.5 fill-current text-black translate-x-0.2" />
-              <span>Play Selected</span>
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={handleBulkPlay}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow transition-colors cursor-pointer aura-pressable"
+              >
+                <Play className="w-3.5 h-3.5 fill-current text-black translate-x-0.2" />
+                <span>Play Selected</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={handleBulkAddToQueue}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-medium border border-white/10 transition-colors cursor-pointer"
-            >
-              <ListPlus className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Add to Queue</span>
-            </button>
+              <button
+                type="button"
+                onClick={handleBulkAddToQueue}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-pressable"
+              >
+                <ListPlus className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Add to Queue</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={handleBulkAddToPlaylist}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-medium border border-white/10 transition-colors cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Add to Playlist...</span>
-            </button>
+              <button
+                type="button"
+                onClick={handleBulkAddToPlaylist}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-pressable"
+              >
+                <Plus className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Add to Playlist...</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setIsDeleteModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-medium border border-rose-500/20 transition-colors cursor-pointer"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Delete</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => setIsDeleteModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-medium border border-rose-500/20 transition-colors cursor-pointer aura-pressable"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setSelectedTrackIds(new Set())}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-white transition-colors cursor-pointer ml-1"
-              title="Clear selection"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </section>
-      )}
+              <button
+                type="button"
+                onClick={() => setSelectedTrackIds(new Set())}
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-white transition-colors cursor-pointer ml-1 aura-pressable"
+                title="Clear selection"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </MotionFadeSlide>
+        )}
+      </AnimatePresence>
 
       {/* -------------------------------------------------------------
           5. TRACK LISTING (LIST OR GRID VIEW)
           ------------------------------------------------------------- */}
-      {sortedTracks.length > 0 ? (
-        viewMode === 'row' ? (
-          <div className="flex flex-col rounded-2xl aura-glass-ambient border border-white/10 overflow-hidden">
-            {/* Table Header Row (Desktop) */}
-            <div className="hidden sm:flex items-center justify-between gap-3 px-4 py-2.5 border-b border-white/[0.06] text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <button
-                  type="button"
-                  onClick={toggleSelectAll}
-                  className="w-5 flex items-center justify-center text-zinc-500 hover:text-white cursor-pointer"
-                  title={isAllSelected ? 'Deselect all' : 'Select all'}
-                >
-                  {isAllSelected ? <CheckSquare className="w-3.5 h-3.5 text-sky-400" /> : <Square className="w-3.5 h-3.5" />}
-                </button>
-                <span className="w-6 text-center">#</span>
-                <span className="w-10">Art</span>
-                <button
-                  type="button"
-                  onClick={() => toggleSort('title')}
-                  className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
-                >
-                  Title {sortBy === 'title' && (sortOrder === 'asc' ? '↑' : '↓')}
-                </button>
-              </div>
+      <AnimatePresence mode="wait" initial={false}>
+        <MotionFadeSlide
+          key={sortedTracks.length === 0 ? 'empty' : viewMode}
+          direction="up"
+          distance={6}
+          duration="micro"
+        >
+          {sortedTracks.length > 0 ? (
+            viewMode === 'row' ? (
+              <div className="flex flex-col rounded-2xl aura-glass-ambient border border-white/10 overflow-hidden">
+                {/* Table Header Row (Desktop) */}
+                <div className="hidden sm:flex items-center justify-between gap-3 px-4 py-2.5 border-b border-white/[0.06] text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <button
+                      type="button"
+                      onClick={toggleSelectAll}
+                      className="w-5 flex items-center justify-center text-zinc-500 hover:text-white cursor-pointer"
+                      title={isAllSelected ? 'Deselect all' : 'Select all'}
+                    >
+                      {isAllSelected ? <CheckSquare className="w-3.5 h-3.5 text-sky-400" /> : <Square className="w-3.5 h-3.5" />}
+                    </button>
+                    <span className="w-6 text-center">#</span>
+                    <span className="w-10">Art</span>
+                    <button
+                      type="button"
+                      onClick={() => toggleSort('title')}
+                      className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
+                    >
+                      Title {sortBy === 'title' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    </button>
+                  </div>
 
-              <div className="hidden md:block w-44 lg:w-56 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => toggleSort('album')}
-                  className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
-                >
-                  Album {sortBy === 'album' && (sortOrder === 'asc' ? '↑' : '↓')}
-                </button>
-              </div>
+                  <div className="hidden md:block w-44 lg:w-56 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => toggleSort('album')}
+                      className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
+                    >
+                      Album {sortBy === 'album' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    </button>
+                  </div>
 
-              <div className="hidden lg:block w-28 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => toggleSort('dateAdded')}
-                  className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
-                >
-                  Added {sortBy === 'dateAdded' && (sortOrder === 'asc' ? '↑' : '↓')}
-                </button>
-              </div>
+                  <div className="hidden lg:block w-28 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => toggleSort('dateAdded')}
+                      className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
+                    >
+                      Added {sortBy === 'dateAdded' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    </button>
+                  </div>
 
-              <div className="hidden xl:block w-28 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => toggleSort('source')}
-                  className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
-                >
-                  Source {sortBy === 'source' && (sortOrder === 'asc' ? '↑' : '↓')}
-                </button>
-              </div>
+                  <div className="hidden xl:block w-28 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => toggleSort('source')}
+                      className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
+                    >
+                      Source {sortBy === 'source' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    </button>
+                  </div>
 
-              <div className="flex items-center gap-2 shrink-0 pr-1">
-                <span className="w-12 text-right">Time</span>
-                <span className="w-8"></span>
-              </div>
-            </div>
+                  <div className="flex items-center gap-2 shrink-0 pr-1">
+                    <span className="w-12 text-right">Time</span>
+                    <span className="w-8"></span>
+                  </div>
+                </div>
 
-            {/* Track Rows */}
-            <div className="divide-y divide-white/[0.03] p-1.5">
-              {sortedTracks.map((track, i) => (
-                <TrackRow
-                  key={`track-${track.id}`}
-                  track={track}
-                  index={i + 1}
-                  playlistContext={sortedTracks}
-                  isSelected={selectedTrackIds.has(track.id)}
-                  showSelection={selectedTrackIds.size > 0}
-                  onToggleSelect={toggleSelectTrack}
-                  searchQuery={localSearch}
-                  onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
-                  onSelectArtist={(artist) => {
-                    setLocalSearch(artist);
-                    setSearchQuery(artist);
-                  }}
-                  onSelectAlbum={(album) => {
-                    setLocalSearch(album);
-                    setSearchQuery(album);
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        ) : (
-          /* Grid View Mode */
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3.5 sm:gap-4">
-            {sortedTracks.map((track) => (
-              <TrackGridCard
-                key={`grid-${track.id}`}
-                track={track}
-                playlistContext={sortedTracks}
-                onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
-              />
-            ))}
-          </div>
-        )
-      ) : (
-        /* Thoughtful Empty State */
-        <div className="p-10 sm:p-16 rounded-2xl aura-glass-ambient border border-dashed border-white/10 flex flex-col items-center justify-center text-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-zinc-500">
-            <Music className="w-6 h-6 text-zinc-400" />
-          </div>
-          {localSearch || activeSourceFilter !== 'all' ? (
-            <>
-              <h3 className="text-sm font-semibold text-zinc-200">No matching tracks found</h3>
-              <p className="text-xs text-zinc-400 max-w-sm font-ui-meta">
-                No tracks match your current filter criteria &quot;{localSearch}&quot;.
-              </p>
-              <div className="flex items-center gap-2 mt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleSearchChange('');
-                    setActiveSourceFilter('all');
-                  }}
-                  className="px-4 py-2 rounded-xl bg-white text-zinc-950 text-xs font-semibold shadow cursor-pointer"
-                >
-                  Clear Filters
-                </button>
+                {/* Track Rows */}
+                <div className="divide-y divide-white/[0.03] p-1.5">
+                  {sortedTracks.map((track, i) => (
+                    <TrackRow
+                      key={`track-${track.id}`}
+                      track={track}
+                      index={i + 1}
+                      playlistContext={sortedTracks}
+                      isSelected={selectedTrackIds.has(track.id)}
+                      showSelection={selectedTrackIds.size > 0}
+                      onToggleSelect={toggleSelectTrack}
+                      searchQuery={localSearch}
+                      onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
+                      onSelectArtist={(artist) => {
+                        setLocalSearch(artist);
+                        setSearchQuery(artist);
+                      }}
+                      onSelectAlbum={(album) => {
+                        setLocalSearch(album);
+                        setSearchQuery(album);
+                      }}
+                    />
+                  ))}
+                </div>
               </div>
-            </>
+            ) : (
+              /* Grid View Mode */
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3.5 sm:gap-4">
+                {sortedTracks.map((track) => (
+                  <TrackGridCard
+                    key={`grid-${track.id}`}
+                    track={track}
+                    playlistContext={sortedTracks}
+                    onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
+                  />
+                ))}
+              </div>
+            )
           ) : (
-            <>
-              <h3 className="text-sm font-semibold text-zinc-200">Your audio library is empty</h3>
-              <p className="text-xs text-zinc-400 max-w-sm font-ui-meta">
-                Import local audio files into your offline vault or load the demo sound pack to start listening.
-              </p>
-              <div className="flex items-center gap-2.5 mt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsUploadModalOpen(true)}
-                  className="px-4 py-2 rounded-xl bg-white text-zinc-950 text-xs font-bold shadow cursor-pointer"
-                >
-                  Import Local Audio
-                </button>
-                <button
-                  type="button"
-                  onClick={loadDemoPack}
-                  className="px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium border border-white/10 cursor-pointer"
-                >
-                  Load Demo Pack
-                </button>
+            /* Thoughtful Empty State */
+            <div className="p-10 sm:p-16 rounded-2xl aura-glass-ambient border border-dashed border-white/10 flex flex-col items-center justify-center text-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-zinc-500">
+                <Music className="w-6 h-6 text-zinc-400" />
               </div>
-            </>
+              {localSearch || activeSourceFilter !== 'all' ? (
+                <>
+                  <h3 className="text-sm font-semibold text-zinc-200">No matching tracks found</h3>
+                  <p className="text-xs text-zinc-400 max-w-sm font-ui-meta">
+                    No tracks match your current filter criteria &quot;{localSearch}&quot;.
+                  </p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleSearchChange('');
+                        setActiveSourceFilter('all');
+                      }}
+                      className="px-4 py-2 rounded-xl bg-white text-zinc-950 text-xs font-semibold shadow cursor-pointer aura-pressable"
+                    >
+                      Clear Filters
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-sm font-semibold text-zinc-200">Your audio library is empty</h3>
+                  <p className="text-xs text-zinc-400 max-w-sm font-ui-meta">
+                    Import local audio files into your offline vault or load the demo sound pack to start listening.
+                  </p>
+                  <div className="flex items-center gap-2.5 mt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsUploadModalOpen(true)}
+                      className="px-4 py-2 rounded-xl bg-white text-zinc-950 text-xs font-bold shadow cursor-pointer aura-pressable"
+                    >
+                      Import Local Audio
+                    </button>
+                    <button
+                      type="button"
+                      onClick={loadDemoPack}
+                      className="px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium border border-white/10 cursor-pointer aura-pressable"
+                    >
+                      Load Demo Pack
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           )}
-        </div>
-      )}
+        </MotionFadeSlide>
+      </AnimatePresence>
 
       {/* -------------------------------------------------------------
           6. MODALS
           ------------------------------------------------------------- */}
       {/* Add To Playlist Modal */}
-      {playlistModalTrack && (
-        <AddToPlaylistModal
-          track={playlistModalTrack}
-          isOpen={Boolean(playlistModalTrack)}
-          onClose={() => setPlaylistModalTrack(null)}
-        />
-      )}
+      <AddToPlaylistModal
+        track={playlistModalTrack}
+        isOpen={Boolean(playlistModalTrack)}
+        onClose={() => setPlaylistModalTrack(null)}
+      />
 
-      {playlistModalBulkTracks && (
-        <AddToPlaylistModal
-          tracks={playlistModalBulkTracks}
-          isOpen={Boolean(playlistModalBulkTracks)}
-          onClose={() => setPlaylistModalBulkTracks(null)}
-        />
-      )}
+      <AddToPlaylistModal
+        tracks={playlistModalBulkTracks ?? undefined}
+        isOpen={Boolean(playlistModalBulkTracks)}
+        onClose={() => setPlaylistModalBulkTracks(null)}
+      />
 
       {/* Delete Confirmation Modal */}
-      {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
-          <div className="relative w-full max-w-md p-6 rounded-3xl aura-glass-island border border-white/15 shadow-2xl flex flex-col gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/25 flex items-center justify-center text-rose-400">
-                <AlertTriangle className="w-5 h-5" />
+      <AnimatePresence>
+        {isDeleteModalOpen && (
+          <MotionBackdrop
+            onClick={() => setIsDeleteModalOpen(false)}
+            style={{ pointerEvents: isDeleteModalOpen ? 'auto' : 'none' }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          >
+            <MotionModal
+              variant="center"
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-md p-6 rounded-3xl aura-glass-island border border-white/15 shadow-2xl flex flex-col gap-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/25 flex items-center justify-center text-rose-400">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white font-ui-title">Delete {selectedTracksInOrder.length} Tracks?</h3>
+                  <p className="text-xs text-zinc-400 font-ui-meta">This action cannot be undone.</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-base font-bold text-white font-ui-title">Delete {selectedTracksInOrder.length} Tracks?</h3>
-                <p className="text-xs text-zinc-400 font-ui-meta">This action cannot be undone.</p>
+
+              <p className="text-xs text-zinc-300 font-ui-meta leading-relaxed">
+                Selected local files will be permanently removed from your browser&apos;s offline IndexedDB storage.
+              </p>
+
+              <div className="flex items-center justify-end gap-2.5 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsDeleteModalOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium border border-white/10 cursor-pointer aura-pressable"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmBulkDelete}
+                  className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-md cursor-pointer aura-pressable"
+                >
+                  Confirm Delete
+                </button>
               </div>
-            </div>
-
-            <p className="text-xs text-zinc-300 font-ui-meta leading-relaxed">
-              Selected local files will be permanently removed from your browser&apos;s offline IndexedDB storage.
-            </p>
-
-            <div className="flex items-center justify-end gap-2.5 mt-2">
-              <button
-                type="button"
-                onClick={() => setIsDeleteModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium border border-white/10 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmBulkDelete}
-                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-md cursor-pointer"
-              >
-                Confirm Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            </MotionModal>
+          </MotionBackdrop>
+        )}
+      </AnimatePresence>
 
     </div>
   );

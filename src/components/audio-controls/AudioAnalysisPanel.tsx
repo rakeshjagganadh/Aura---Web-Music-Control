@@ -1,4 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { AnimatePresence } from 'motion/react';
+import { MotionFadeSlide } from '../common/motion/MotionSurface';
+import { MotionIconSwap } from '../common/motion/MotionInteractive';
+import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
 import { useMusic } from '../../context/MusicContext';
 import { audioEngine } from '../../services/audioEngine';
 import { RealtimeMeterData } from '../../types';
@@ -16,6 +20,7 @@ import {
 } from 'lucide-react';
 
 export const AudioAnalysisPanel: React.FC<{ className?: string }> = ({ className = '' }) => {
+  const { prefersReducedMotion } = useMotionCapabilities();
   const { 
     currentTrack, 
     currentTrackAnalysis, 
@@ -72,21 +77,19 @@ export const AudioAnalysisPanel: React.FC<{ className?: string }> = ({ className
         </div>
 
         <button
+          type="button"
           onClick={analyzeCurrentTrack}
           disabled={isAnalyzingTrack || !currentTrack}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-xl transition-all shadow-md shadow-indigo-500/20"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors shadow-md shadow-indigo-500/20 cursor-pointer aura-pressable aura-focus-ring"
         >
-          {isAnalyzingTrack ? (
-            <>
-              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-              Analyzing Audio...
-            </>
-          ) : (
-            <>
+          <MotionIconSwap stateKey={isAnalyzingTrack ? 'analyzing' : 'idle'}>
+            {isAnalyzingTrack ? (
+              <RefreshCw className={`w-3.5 h-3.5 ${!prefersReducedMotion ? 'animate-spin' : ''}`} />
+            ) : (
               <Zap className="w-3.5 h-3.5" />
-              Analyze Active Track
-            </>
-          )}
+            )}
+          </MotionIconSwap>
+          <span>{isAnalyzingTrack ? 'Analyzing Audio...' : 'Analyze Active Track'}</span>
         </button>
       </div>
 
@@ -100,7 +103,7 @@ export const AudioAnalysisPanel: React.FC<{ className?: string }> = ({ className
 
           <div className="flex items-center gap-2">
             {meterLevels.isClipping && (
-              <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 text-[10px] font-bold animate-pulse border border-rose-500/30">
+              <span className={`px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 text-[10px] font-bold border border-rose-500/30 ${!prefersReducedMotion ? 'animate-pulse' : ''}`}>
                 OVERLOAD PEAK
               </span>
             )}
@@ -117,7 +120,7 @@ export const AudioAnalysisPanel: React.FC<{ className?: string }> = ({ className
             <span className="text-[11px] font-mono font-bold text-zinc-400 w-4">L</span>
             <div className="flex-1 h-3.5 bg-zinc-950 rounded-md overflow-hidden p-0.5 border border-white/5 relative">
               <div
-                className="h-full bg-gradient-to-r from-emerald-500 via-amber-400 to-rose-500 rounded-sm transition-all duration-75"
+                className="h-full bg-gradient-to-r from-emerald-500 via-amber-400 to-rose-500 rounded-sm transition-[width] duration-75"
                 style={{ width: `${dbToPercent(meterLevels.peakL)}%` }}
               />
             </div>
@@ -131,7 +134,7 @@ export const AudioAnalysisPanel: React.FC<{ className?: string }> = ({ className
             <span className="text-[11px] font-mono font-bold text-zinc-400 w-4">R</span>
             <div className="flex-1 h-3.5 bg-zinc-950 rounded-md overflow-hidden p-0.5 border border-white/5 relative">
               <div
-                className="h-full bg-gradient-to-r from-emerald-500 via-amber-400 to-rose-500 rounded-sm transition-all duration-75"
+                className="h-full bg-gradient-to-r from-emerald-500 via-amber-400 to-rose-500 rounded-sm transition-[width] duration-75"
                 style={{ width: `${dbToPercent(meterLevels.peakR)}%` }}
               />
             </div>
@@ -153,8 +156,10 @@ export const AudioAnalysisPanel: React.FC<{ className?: string }> = ({ className
       </div>
 
       {/* Offline Deep Analysis Summary */}
-      {currentTrackAnalysis ? (
-        <div className="flex flex-col gap-4 animate-in fade-in duration-200">
+      <AnimatePresence mode="wait" initial={false}>
+        {currentTrackAnalysis ? (
+          <MotionFadeSlide key="analysis-results" direction="up" distance={6} duration="micro">
+            <div className="flex flex-col gap-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             
             {/* BPM */}
@@ -228,20 +233,24 @@ export const AudioAnalysisPanel: React.FC<{ className?: string }> = ({ className
               ))}
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="p-6 rounded-2xl bg-zinc-900/20 border border-white/5 flex flex-col items-center justify-center text-center gap-3">
-          <div className="p-3 rounded-full bg-zinc-900 border border-white/5 text-zinc-500">
-            <Zap className="w-6 h-6" />
-          </div>
-          <div>
-            <h4 className="text-xs font-semibold text-zinc-300">Run Deep Offline Audio Analysis</h4>
-            <p className="text-[11px] text-zinc-500 max-w-sm mt-0.5">
-              Click the button above to extract exact BPM tempo, integrated LUFS loudness, spectral energy, and dynamic headroom directly in your browser.
-            </p>
-          </div>
-        </div>
-      )}
+            </div>
+          </MotionFadeSlide>
+        ) : (
+          <MotionFadeSlide key="analysis-empty" direction="up" distance={6} duration="micro">
+            <div className="p-6 rounded-2xl bg-zinc-900/20 border border-white/5 flex flex-col items-center justify-center text-center gap-3">
+              <div className="p-3 rounded-full bg-zinc-900 border border-white/5 text-zinc-500">
+                <Zap className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="text-xs font-semibold text-zinc-300">Run Deep Offline Audio Analysis</h4>
+                <p className="text-[11px] text-zinc-500 max-w-sm mt-0.5">
+                  Click the button above to extract exact BPM tempo, integrated LUFS loudness, spectral energy, and dynamic headroom directly in your browser.
+                </p>
+              </div>
+            </div>
+          </MotionFadeSlide>
+        )}
+      </AnimatePresence>
 
     </div>
   );

@@ -1,5 +1,6 @@
 import React from 'react';
 import { LucideIcon, Music, Plus, UploadCloud } from 'lucide-react';
+import { MotionFadeSlide } from './motion/MotionSurface';
 
 interface AuraEmptyStateProps {
   icon?: LucideIcon;
@@ -23,7 +24,10 @@ export const AuraEmptyState: React.FC<AuraEmptyStateProps> = ({
   className = '',
 }) => {
   return (
-    <div
+    <MotionFadeSlide
+      direction="up"
+      distance={10}
+      duration="standard"
       className={`relative flex flex-col items-center justify-center text-center p-12 sm:p-16 rounded-3xl bg-[#0e1017]/60 border border-white/5 backdrop-blur-sm overflow-hidden select-none ${className}`}
     >
       {/* Subtle background acoustic echo lines */}
@@ -53,7 +57,7 @@ export const AuraEmptyState: React.FC<AuraEmptyStateProps> = ({
           {actionLabel && onAction && (
             <button
               onClick={onAction}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/25 transition-all active:scale-95 cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/25 transition-colors cursor-pointer aura-pressable"
             >
               <UploadCloud className="w-3.5 h-3.5" />
               <span>{actionLabel}</span>
@@ -63,7 +67,7 @@ export const AuraEmptyState: React.FC<AuraEmptyStateProps> = ({
           {secondaryActionLabel && onSecondaryAction && (
             <button
               onClick={onSecondaryAction}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 text-xs font-medium transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 text-xs font-medium transition-colors cursor-pointer aura-pressable"
             >
               <Plus className="w-3.5 h-3.5 text-zinc-400" />
               <span>{secondaryActionLabel}</span>
@@ -71,6 +75,6 @@ export const AuraEmptyState: React.FC<AuraEmptyStateProps> = ({
           )}
         </div>
       )}
-    </div>
+    </MotionFadeSlide>
   );
 };

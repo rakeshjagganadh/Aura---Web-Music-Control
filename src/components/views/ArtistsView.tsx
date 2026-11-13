@@ -1,9 +1,12 @@
 import React, { useState, useMemo } from 'react';
+import { AnimatePresence } from 'motion/react';
 import { useMusic } from '../../context/MusicContext';
 import { Track } from '../../types';
 import { LibraryNav } from '../library/LibraryNav';
 import { TrackRow } from '../library/TrackRow';
 import { AddToPlaylistModal } from '../playlists/AddToPlaylistModal';
+import { MotionFadeSlide } from '../common/motion/MotionSurface';
+import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
 import { 
   User, 
   Play, 
@@ -95,6 +98,7 @@ export const ArtistsView: React.FC = () => {
     setIsUploadModalOpen,
   } = useMusic();
 
+  const { canHover } = useMotionCapabilities();
   const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'tracks' | 'albums' | 'recent'>('name');
@@ -207,194 +211,190 @@ export const ArtistsView: React.FC = () => {
     artist.tracks.forEach((t) => addToQueue(t));
   };
 
-  // -------------------------------------------------------------
-  // ARTIST DETAIL VIEW
-  // -------------------------------------------------------------
-  if (activeArtist) {
-    const representativeCover = activeArtist.tracks.find((t) => t.coverUrl)?.coverUrl;
+  const representativeActiveCover = activeArtist?.tracks.find((t) => t.coverUrl)?.coverUrl;
 
-    return (
-      <div className="flex flex-col gap-6 sm:gap-8 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none pb-36 sm:pb-44 animate-fadeIn">
-        {/* Navigation Breadcrumb */}
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setSelectedArtistId(null)}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 hover:text-white text-xs font-medium border border-white/10 transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Artists</span>
-          </button>
-        </div>
-
-        {/* Large Artist Header */}
-        <section className="relative overflow-hidden rounded-3xl aura-glass-island p-6 sm:p-8 border border-white/10 shadow-2xl flex flex-col md:flex-row items-center md:items-end gap-6 sm:gap-8">
-          {/* Avatar / Cover */}
-          <div className="relative w-36 h-36 sm:w-48 sm:h-48 rounded-full overflow-hidden shrink-0 bg-zinc-900 border-2 border-white/15 shadow-2xl">
-            {representativeCover ? (
-              <img
-                src={representativeCover}
-                alt={activeArtist.name}
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <div className={`w-full h-full bg-gradient-to-br ${getArtistGradient(activeArtist.name)} flex items-center justify-center text-white font-bold text-4xl`}>
-                {activeArtist.name.charAt(0).toUpperCase()}
-              </div>
-            )}
-          </div>
-
-          {/* Details */}
-          <div className="flex-1 min-w-0 text-center md:text-left">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-300 px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/25 inline-block mb-2">
-              ARTIST COLLECTION
-            </span>
-
-            <h1 className="text-2xl sm:text-4xl font-page-title text-white tracking-tight line-clamp-2">
-              {activeArtist.name}
-            </h1>
-
-            <div className="flex items-center justify-center md:justify-start gap-2 mt-2 text-xs sm:text-sm text-zinc-300 font-ui-meta">
-              <span>{activeArtist.tracks.length} tracks in library</span>
-              <span className="text-zinc-600" aria-hidden="true">·</span>
-              <span>{activeArtist.albums.length} releases</span>
-              <span className="text-zinc-600" aria-hidden="true">·</span>
-              <span className="font-mono text-zinc-400">{formatDuration(activeArtist.totalDuration)}</span>
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center justify-center md:justify-start gap-2.5 mt-5 flex-wrap">
-              <button
-                type="button"
-                onClick={() => handlePlayArtist(activeArtist, false)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer aura-focus-ring"
-              >
-                <Play className="w-4 h-4 fill-current text-black translate-x-0.2" />
-                <span>Play All</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handlePlayArtist(activeArtist, true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring"
-              >
-                <Shuffle className="w-3.5 h-3.5 text-sky-400" />
-                <span>Shuffle</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleAddArtistToQueue(activeArtist)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring"
-              >
-                <ListPlus className="w-3.5 h-3.5 text-indigo-400" />
-                <span>Add to Queue</span>
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* Artist Albums in Collection */}
-        {activeArtist.albums.length > 0 && (
-          <section className="flex flex-col gap-3">
-            <h3 className="text-base font-bold text-white font-ui-title">Releases in Library</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {activeArtist.albums.map((album) => (
-                <div
-                  key={album.id}
-                  onClick={() => handlePlayArtist({ ...activeArtist, tracks: album.tracks }, false)}
-                  className="group relative flex flex-col p-3 rounded-2xl aura-glass-ambient hover:border-white/20 transition-all cursor-pointer shadow-md"
-                >
-                  <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-zinc-900 border border-white/10 mb-2">
-                    {album.coverUrl ? (
-                      <img src={album.coverUrl} alt={album.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                    ) : (
-                      <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
-                        <Disc className="w-8 h-8 text-white/40" />
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <div className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center shadow-lg">
-                        <Play className="w-3.5 h-3.5 fill-current translate-x-0.2" />
-                      </div>
-                    </div>
-                  </div>
-                  <h4 className="text-xs font-semibold text-white truncate">{album.title}</h4>
-                  <p className="text-[11px] text-zinc-400">{album.tracks.length} tracks</p>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Artist All Tracks */}
-        <section className="flex flex-col rounded-2xl aura-glass-ambient border border-white/10 overflow-hidden">
-          <div className="p-3 sm:p-4 border-b border-white/[0.06] flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white font-ui-title">All Tracks ({activeArtist.tracks.length})</h3>
-            <span className="text-xs font-mono text-zinc-400">{formatDuration(activeArtist.totalDuration)}</span>
-          </div>
-
-          <div className="divide-y divide-white/[0.03] p-1.5">
-            {activeArtist.tracks.map((track, i) => (
-              <TrackRow
-                key={`artist-track-${track.id}`}
-                track={track}
-                index={i + 1}
-                playlistContext={activeArtist.tracks}
-                onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
-              />
-            ))}
-          </div>
-        </section>
-
-        {playlistModalTrack && (
-          <AddToPlaylistModal
-            track={playlistModalTrack}
-            isOpen={Boolean(playlistModalTrack)}
-            onClose={() => setPlaylistModalTrack(null)}
-          />
-        )}
-      </div>
-    );
-  }
-
-  // -------------------------------------------------------------
-  // MAIN ARTISTS CATALOGUE GRID
-  // -------------------------------------------------------------
   return (
-    <div className="flex flex-col gap-6 sm:gap-8 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none pb-36 sm:pb-44">
-      
-      {/* Header */}
-      <section className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-white/[0.06]">
-        <div>
-          <div className="flex items-center gap-2 mb-1.5 text-xs font-mono text-zinc-400">
-            <User className="w-3.5 h-3.5 text-amber-400" />
-            <span className="uppercase tracking-wider text-[11px] font-semibold text-amber-400">Artist Catalogue</span>
-            <span className="text-zinc-600" aria-hidden="true">·</span>
-            <span>{artistList.length} artists in collection</span>
-          </div>
-
-          <h1 className="text-2xl sm:text-4xl font-page-title text-white tracking-tight">
-            Artists
-          </h1>
-          <p className="text-xs sm:text-sm text-zinc-400 mt-1 font-ui-meta">
-            Discover creators and performers across your local vault and connected streaming libraries.
-          </p>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <button
-            type="button"
-            onClick={() => setIsUploadModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer aura-focus-ring"
+    <>
+      <AnimatePresence mode="wait" initial={false}>
+        {activeArtist ? (
+          <MotionFadeSlide
+            key={`artist-detail:${activeArtist.id}`}
+            direction="up"
+            distance={8}
+            duration="standard"
+            className="flex flex-col gap-6 sm:gap-8 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none pb-36 sm:pb-44"
           >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>Import Music</span>
-          </button>
-        </div>
-      </section>
+            {/* Navigation Breadcrumb */}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setSelectedArtistId(null)}
+                className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 hover:text-white text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-pressable"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back to Artists</span>
+              </button>
+            </div>
+
+            {/* Large Artist Header */}
+            <section className="relative overflow-hidden rounded-3xl aura-glass-island p-6 sm:p-8 border border-white/10 shadow-2xl flex flex-col md:flex-row items-center md:items-end gap-6 sm:gap-8">
+              {/* Avatar / Cover */}
+              <div className="relative w-36 h-36 sm:w-48 sm:h-48 rounded-full overflow-hidden shrink-0 bg-zinc-900 border-2 border-white/15 shadow-2xl">
+                {representativeActiveCover ? (
+                  <img
+                    src={representativeActiveCover}
+                    alt={activeArtist.name}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className={`w-full h-full bg-gradient-to-br ${getArtistGradient(activeArtist.name)} flex items-center justify-center text-white font-bold text-4xl`}>
+                    {activeArtist.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+
+              {/* Details */}
+              <div className="flex-1 min-w-0 text-center md:text-left">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-300 px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/25 inline-block mb-2">
+                  ARTIST COLLECTION
+                </span>
+
+                <h1 className="text-2xl sm:text-4xl font-page-title text-white tracking-tight line-clamp-2">
+                  {activeArtist.name}
+                </h1>
+
+                <div className="flex items-center justify-center md:justify-start gap-2 mt-2 text-xs sm:text-sm text-zinc-300 font-ui-meta">
+                  <span>{activeArtist.tracks.length} tracks in library</span>
+                  <span className="text-zinc-600" aria-hidden="true">·</span>
+                  <span>{activeArtist.albums.length} releases</span>
+                  <span className="text-zinc-600" aria-hidden="true">·</span>
+                  <span className="font-mono text-zinc-400">{formatDuration(activeArtist.totalDuration)}</span>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-center md:justify-start gap-2.5 mt-5 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => handlePlayArtist(activeArtist, false)}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
+                  >
+                    <Play className="w-4 h-4 fill-current text-black translate-x-0.2" />
+                    <span>Play All</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handlePlayArtist(activeArtist, true)}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
+                  >
+                    <Shuffle className="w-3.5 h-3.5 text-sky-400" />
+                    <span>Shuffle</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleAddArtistToQueue(activeArtist)}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
+                  >
+                    <ListPlus className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>Add to Queue</span>
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {/* Artist Albums in Collection */}
+            {activeArtist.albums.length > 0 && (
+              <section className="flex flex-col gap-3">
+                <h3 className="text-base font-bold text-white font-ui-title">Releases in Library</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {activeArtist.albums.map((album) => (
+                    <div
+                      key={album.id}
+                      onClick={() => handlePlayArtist({ ...activeArtist, tracks: album.tracks }, false)}
+                      className="group relative flex flex-col p-3 rounded-2xl aura-glass-ambient hover:border-white/20 transition-colors cursor-pointer shadow-md aura-hover-scale aura-pressable-subtle"
+                    >
+                      <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-zinc-900 border border-white/10 mb-2">
+                        {album.coverUrl ? (
+                          <img src={album.coverUrl} alt={album.title} className={`w-full h-full object-cover transition-transform ${canHover ? 'group-hover:scale-105' : ''}`} />
+                        ) : (
+                          <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
+                            <Disc className="w-8 h-8 text-white/40" />
+                          </div>
+                        )}
+                        <div className={`absolute inset-0 bg-black/40 opacity-0 flex items-center justify-center transition-opacity ${canHover ? 'group-hover:opacity-100' : 'pointer-events-none'}`}>
+                          <div className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center shadow-lg">
+                            <Play className="w-3.5 h-3.5 fill-current translate-x-0.2" />
+                          </div>
+                        </div>
+                      </div>
+                      <h4 className="text-xs font-semibold text-white truncate">{album.title}</h4>
+                      <p className="text-[11px] text-zinc-400">{album.tracks.length} tracks</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Artist All Tracks */}
+            <section className="flex flex-col rounded-2xl aura-glass-ambient border border-white/10 overflow-hidden">
+              <div className="p-3 sm:p-4 border-b border-white/[0.06] flex items-center justify-between">
+                <h3 className="text-sm font-bold text-white font-ui-title">All Tracks ({activeArtist.tracks.length})</h3>
+                <span className="text-xs font-mono text-zinc-400">{formatDuration(activeArtist.totalDuration)}</span>
+              </div>
+
+              <div className="divide-y divide-white/[0.03] p-1.5">
+                {activeArtist.tracks.map((track, i) => (
+                  <TrackRow
+                    key={`artist-track-${track.id}`}
+                    track={track}
+                    index={i + 1}
+                    playlistContext={activeArtist.tracks}
+                    onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
+                  />
+                ))}
+              </div>
+            </section>
+          </MotionFadeSlide>
+        ) : (
+          <MotionFadeSlide
+            key="artist-grid"
+            direction="up"
+            distance={6}
+            duration="micro"
+            className="flex flex-col gap-6 sm:gap-8 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none pb-36 sm:pb-44"
+          >
+            {/* Header */}
+            <section className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-white/[0.06]">
+              <div>
+                <div className="flex items-center gap-2 mb-1.5 text-xs font-mono text-zinc-400">
+                  <User className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="uppercase tracking-wider text-[11px] font-semibold text-amber-400">Artist Catalogue</span>
+                  <span className="text-zinc-600" aria-hidden="true">·</span>
+                  <span>{artistList.length} artists in collection</span>
+                </div>
+
+                <h1 className="text-2xl sm:text-4xl font-page-title text-white tracking-tight">
+                  Artists
+                </h1>
+                <p className="text-xs sm:text-sm text-zinc-400 mt-1 font-ui-meta">
+                  Discover creators and performers across your local vault and connected streaming libraries.
+                </p>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setIsUploadModalOpen(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
+                >
+                  <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span>Import Music</span>
+                </button>
+              </div>
+            </section>
 
       {/* Library Navigation */}
       <LibraryNav activeView="artists" />
@@ -455,7 +455,7 @@ export const ArtistsView: React.FC = () => {
               <div
                 key={artist.id}
                 onClick={() => setSelectedArtistId(artist.id)}
-                className="group relative flex flex-col items-center p-4 rounded-2xl aura-glass-ambient hover:border-white/20 transition-all duration-300 cursor-pointer select-none shadow-md text-center"
+                className="group relative flex flex-col items-center p-4 rounded-2xl aura-glass-ambient hover:border-white/20 transition-colors cursor-pointer select-none shadow-md text-center aura-hover-scale aura-pressable-subtle"
               >
                 {/* Circular Portrait Avatar */}
                 <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden bg-zinc-900 border-2 border-white/10 shadow-md mb-3">
@@ -463,7 +463,7 @@ export const ArtistsView: React.FC = () => {
                     <img
                       src={representativeCover}
                       alt={artist.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className={`w-full h-full object-cover transition-transform duration-500 ${canHover ? 'group-hover:scale-105' : ''}`}
                       referrerPolicy="no-referrer"
                       loading="lazy"
                     />
@@ -474,14 +474,14 @@ export const ArtistsView: React.FC = () => {
                   )}
 
                   {/* Play Overlay */}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200">
+                  <div className={`absolute inset-0 bg-black/40 opacity-0 flex items-center justify-center transition-opacity duration-200 ${canHover ? 'group-hover:opacity-100' : 'pointer-events-none'}`}>
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         handlePlayArtist(artist, false);
                       }}
-                      className="w-10 h-10 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-transform cursor-pointer"
+                      className="w-10 h-10 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-xl aura-hover-scale aura-pressable cursor-pointer"
                       title={`Play ${artist.name}`}
                     >
                       <Play className="w-4 h-4 fill-current text-black translate-x-0.2" />
@@ -514,15 +514,15 @@ export const ArtistsView: React.FC = () => {
           </p>
         </div>
       )}
+          </MotionFadeSlide>
+        )}
+      </AnimatePresence>
 
-      {playlistModalTrack && (
-        <AddToPlaylistModal
-          track={playlistModalTrack}
-          isOpen={Boolean(playlistModalTrack)}
-          onClose={() => setPlaylistModalTrack(null)}
-        />
-      )}
-
-    </div>
+      <AddToPlaylistModal
+        track={playlistModalTrack}
+        isOpen={Boolean(playlistModalTrack)}
+        onClose={() => setPlaylistModalTrack(null)}
+      />
+    </>
   );
 };

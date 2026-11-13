@@ -1,7 +1,20 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useMusic } from '../../context/MusicContext';
 import { useListenTogether } from '../../context/ListenTogetherContext';
 import { OpticalGlassSurface } from '../common/OpticalGlassSurface';
+import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
+import {
+  MOTION_DURATION,
+  MOTION_EASE,
+  MOTION_TRANSITION,
+} from '../../motion/tokens';
+import {
+  MotionArtwork,
+  MotionFadeSlide,
+  MotionIconSwap,
+  MotionPress,
+} from '../common/motion';
 import {
   Play,
   Pause,
@@ -60,6 +73,8 @@ export const MobileMiniPlayer: React.FC = () => {
   const lastSeekAtRef = useRef(0);
   const throttleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingSeekRef = useRef<number | null>(null);
+
+  const { prefersReducedMotion, sharedTransition } = useMotionCapabilities();
 
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [scrubRatio, setScrubRatio] = useState<number | null>(null);
@@ -197,14 +212,17 @@ export const MobileMiniPlayer: React.FC = () => {
   const quietSource = getQuietMobileSource(currentTrack.source);
 
   return (
-    <div
+    <MotionFadeSlide
       id="mobile-mini-player"
       aria-label="Current Track Mini Player"
-      className="lg:hidden fixed bottom-[calc(78px+env(safe-area-inset-bottom,0px))] left-3 right-3 max-w-md mx-auto z-30 select-none animate-in fade-in slide-in-from-bottom-2 duration-200"
+      direction="up"
+      distance={8}
+      duration="micro"
+      className="lg:hidden fixed bottom-[calc(78px+env(safe-area-inset-bottom,0px))] left-3 right-3 max-w-md mx-auto z-30 select-none"
     >
       <OpticalGlassSurface
         onClick={() => setIsExpandedPlayerOpen(true)}
-        className="w-full px-2.5 sm:px-3 pt-2 pb-3 flex flex-col justify-between cursor-pointer active:scale-[0.99] shadow-[0_14px_36px_rgba(0,0,0,0.72)]"
+        className="w-full px-2.5 sm:px-3 pt-2 pb-3 flex flex-col justify-between cursor-pointer active:scale-[0.99] transition-transform duration-150 shadow-[0_14px_36px_rgba(0,0,0,0.72)]"
         artworkUrl={currentTrack.coverUrl}
         refractionScale={8}
         intensity="moderate"
@@ -213,29 +231,43 @@ export const MobileMiniPlayer: React.FC = () => {
         {/* COMPACT SINGLE ROW — ARTWORK | TITLE + ARTIST | COMPACT ACTIONS */}
         <div className="flex items-center justify-between gap-2 sm:gap-2.5 min-w-0">
           {/* Left: Fixed 40px Artwork */}
-          <div className="relative shrink-0 w-10 h-10 rounded-xl overflow-hidden bg-[#0d1017] border border-white/[0.1] shadow-sm flex items-center justify-center">
-            {currentTrack.coverUrl ? (
-              <img
-                src={currentTrack.coverUrl}
-                alt={currentTrack.title}
-                className={`w-full h-full object-cover transition-transform duration-500 ${
-                  isPlaying ? 'scale-105' : ''
-                }`}
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  (e.currentTarget as HTMLElement).style.display = 'none';
-                }}
-              />
-            ) : (
-              <div
-                className={`w-full h-full bg-gradient-to-br ${
-                  currentTrack.coverColor || 'from-[#141a29] to-[#080b12]'
-                } flex items-center justify-center text-white`}
+          <motion.div
+            animate={
+              prefersReducedMotion
+                ? undefined
+                : { scale: isPlaying && !isLocallySilenced ? 1.03 : 1 }
+            }
+            transition={sharedTransition}
+            className="relative shrink-0 w-10 h-10 rounded-xl overflow-hidden bg-[#0d1017] border border-white/[0.1] shadow-sm flex items-center justify-center"
+          >
+            <AnimatePresence initial={false}>
+              <MotionArtwork
+                key={`${currentTrack.id}:${currentTrack.coverUrl || ''}`}
+                artworkKey={`${currentTrack.id}:${currentTrack.coverUrl || ''}`}
+                className="absolute inset-0 w-full h-full"
               >
-                <Music className="w-4 h-4 opacity-70" />
-              </div>
-            )}
-          </div>
+                {currentTrack.coverUrl ? (
+                  <img
+                    src={currentTrack.coverUrl}
+                    alt={currentTrack.title}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div
+                    className={`w-full h-full bg-gradient-to-br ${
+                      currentTrack.coverColor || 'from-[#141a29] to-[#080b12]'
+                    } flex items-center justify-center text-white`}
+                  >
+                    <Music className="w-4 h-4 opacity-70" />
+                  </div>
+                )}
+              </MotionArtwork>
+            </AnimatePresence>
+          </motion.div>
 
           {/* Center: Title & Artist + Quiet Source */}
           <div className="min-w-0 flex-1">
@@ -263,47 +295,61 @@ export const MobileMiniPlayer: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Favorite Heart */}
-            <button
-              type="button"
+            <MotionPress
               onClick={() => toggleFavorite(currentTrack.id)}
+              intensity="control"
               aria-label={currentTrack.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               aria-pressed={Boolean(currentTrack.isFavorite)}
-              className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center active:scale-110 transition-all cursor-pointer aura-focus-ring ${
+              className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center transition-colors cursor-pointer aura-focus-ring ${
                 currentTrack.isFavorite
                   ? 'text-rose-500'
                   : 'text-zinc-300 hover:text-rose-400'
               }`}
             >
-              <Heart
-                className={`w-4 h-4 ${
-                  currentTrack.isFavorite ? 'fill-rose-500 text-rose-500' : ''
-                }`}
-              />
-            </button>
+              <motion.span
+                key={`${currentTrack.id}:${Boolean(currentTrack.isFavorite)}`}
+                className="inline-flex items-center justify-center"
+                initial={false}
+                animate={
+                  prefersReducedMotion
+                    ? undefined
+                    : { scale: currentTrack.isFavorite ? [1, 1.24, 1] : [1, 0.9, 1] }
+                }
+                transition={{ duration: MOTION_DURATION.standard, ease: MOTION_EASE.emphasized }}
+              >
+                <Heart
+                  className={`w-4 h-4 transition-colors ${
+                    currentTrack.isFavorite ? 'fill-rose-500 text-rose-500' : ''
+                  }`}
+                />
+              </motion.span>
+            </MotionPress>
 
             {/* Primary Play/Pause */}
-            <button
-              type="button"
+            <MotionPress
               onClick={isInRoom ? roomTogglePlay : togglePlay}
+              intensity="control"
               aria-label={isPlaying && !isLocallySilenced ? 'Pause' : 'Play'}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full text-zinc-950 bg-white hover:bg-zinc-100 flex items-center justify-center shadow-[0_2px_10px_rgba(0,0,0,0.4)] active:scale-95 transition-all cursor-pointer aura-focus-ring shrink-0"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full text-zinc-950 bg-white hover:bg-zinc-100 flex items-center justify-center shadow-[0_2px_10px_rgba(0,0,0,0.4)] transition-colors cursor-pointer aura-focus-ring shrink-0"
             >
-              {isPlaying && !isLocallySilenced ? (
-                <Pause className="w-4 h-4 fill-current text-zinc-950" />
-              ) : (
-                <Play className="w-4 h-4 fill-current text-zinc-950 translate-x-[1px]" />
-              )}
-            </button>
+              <MotionIconSwap stateKey={isPlaying && !isLocallySilenced ? 'pause' : 'play'}>
+                {isPlaying && !isLocallySilenced ? (
+                  <Pause className="w-4 h-4 fill-current text-zinc-950" />
+                ) : (
+                  <Play className="w-4 h-4 fill-current text-zinc-950 translate-x-[1px]" />
+                )}
+              </MotionIconSwap>
+            </MotionPress>
 
             {/* Next Track */}
-            <button
-              type="button"
+            <MotionPress
               onClick={isInRoom ? roomNext : nextTrack}
+              intensity="control"
               aria-label="Next Track"
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-zinc-300 hover:text-white active:scale-95 transition-all cursor-pointer aura-focus-ring"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-zinc-300 hover:text-white transition-colors cursor-pointer aura-focus-ring"
             >
               <SkipForward className="w-4 h-4 fill-current" />
-            </button>
+            </MotionPress>
           </div>
         </div>
 
@@ -335,20 +381,32 @@ export const MobileMiniPlayer: React.FC = () => {
             ) : hasValidDuration ? (
               <>
                 <div
-                  className="h-full rounded-full bg-white/85 transition-[width] duration-100 ease-linear"
-                  style={{ width: `${progressPercent}%` }}
+                  key={currentTrack.id}
+                  className={`h-full w-full origin-left rounded-full bg-white/85 ${
+                    isScrubbing || prefersReducedMotion
+                      ? 'transition-none'
+                      : 'transition-transform duration-200 ease-linear'
+                  }`}
+                  style={{ transform: `scaleX(${progressPercent / 100})` }}
                 />
-                {isScrubbing && (
-                  <div
-                    className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-white shadow-sm"
-                    style={{ left: `${progressPercent}%` }}
-                  />
-                )}
+                <AnimatePresence>
+                  {isScrubbing && (
+                    <motion.div
+                      key="mobile-mini-scrub-thumb"
+                      initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.6 }}
+                      animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
+                      exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.6 }}
+                      transition={MOTION_TRANSITION.micro}
+                      className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-white shadow-sm"
+                      style={{ left: `${progressPercent}%` }}
+                    />
+                  )}
+                </AnimatePresence>
               </>
             ) : null}
           </div>
         </div>
       </OpticalGlassSurface>
-    </div>
+    </MotionFadeSlide>
   );
 };

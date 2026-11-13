@@ -1,10 +1,13 @@
 import React, { useState, useMemo } from 'react';
+import { AnimatePresence, LayoutGroup } from 'motion/react';
 import { useMusic } from '../../context/MusicContext';
 import { Track } from '../../types';
 import { LibraryNav } from '../library/LibraryNav';
 import { TrackRow } from '../library/TrackRow';
 import { TrackGridCard } from '../library/TrackGridCard';
 import { AddToPlaylistModal } from '../playlists/AddToPlaylistModal';
+import { MotionFadeSlide } from '../common/motion/MotionSurface';
+import { SharedIndicator } from '../common/motion/MotionInteractive';
 import { 
   Heart, 
   Play, 
@@ -139,7 +142,7 @@ export const FavoritesView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handlePlayAll(false)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer aura-focus-ring"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
               >
                 <Play className="w-4 h-4 fill-current text-black translate-x-0.2" />
                 <span>Play All</span>
@@ -148,7 +151,7 @@ export const FavoritesView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handlePlayAll(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
               >
                 <Shuffle className="w-3.5 h-3.5 text-sky-400" />
                 <span>Shuffle</span>
@@ -157,7 +160,7 @@ export const FavoritesView: React.FC = () => {
               <button
                 type="button"
                 onClick={handleAddAllToQueue}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
               >
                 <ListPlus className="w-3.5 h-3.5 text-indigo-400" />
                 <span>Add to Queue</span>
@@ -197,98 +200,125 @@ export const FavoritesView: React.FC = () => {
             )}
           </div>
 
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-white/[0.05] border border-white/10 self-end sm:self-auto">
-            <button
-              type="button"
-              onClick={() => setViewMode('row')}
-              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                viewMode === 'row' ? 'bg-white/15 text-white shadow-sm' : 'text-zinc-400 hover:text-white'
-              }`}
-              title="List View"
-            >
-              <List className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                viewMode === 'grid' ? 'bg-white/15 text-white shadow-sm' : 'text-zinc-400 hover:text-white'
-              }`}
-              title="Grid View"
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </button>
-          </div>
+          <LayoutGroup id="favorites-viewmode">
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-white/[0.05] border border-white/10 self-end sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setViewMode('row')}
+                className={`relative p-1.5 rounded-lg transition-colors cursor-pointer aura-pressable ${
+                  viewMode === 'row' ? 'text-white' : 'text-zinc-400 hover:text-white'
+                }`}
+                title="List View"
+              >
+                {viewMode === 'row' && (
+                  <SharedIndicator
+                    layoutId="favorites-viewmode-pill"
+                    className="absolute inset-0 rounded-lg bg-white/15 shadow-sm"
+                  />
+                )}
+                <List className="relative z-10 w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={`relative p-1.5 rounded-lg transition-colors cursor-pointer aura-pressable ${
+                  viewMode === 'grid' ? 'text-white' : 'text-zinc-400 hover:text-white'
+                }`}
+                title="Grid View"
+              >
+                {viewMode === 'grid' && (
+                  <SharedIndicator
+                    layoutId="favorites-viewmode-pill"
+                    className="absolute inset-0 rounded-lg bg-white/15 shadow-sm"
+                  />
+                )}
+                <LayoutGrid className="relative z-10 w-4 h-4" />
+              </button>
+            </div>
+          </LayoutGroup>
         </section>
       )}
 
       {/* -------------------------------------------------------------
           4. TRACK LISTING (LIST OR GRID)
           ------------------------------------------------------------- */}
-      {favoriteTracks.length === 0 ? (
-        <div className="p-12 sm:p-20 rounded-3xl aura-glass-ambient border border-dashed border-white/10 flex flex-col items-center justify-center text-center gap-3">
-          <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/25 flex items-center justify-center text-rose-400 mb-1">
-            <Heart className="w-7 h-7 stroke-1" />
-          </div>
-          <h3 className="text-base font-bold text-white font-ui-title">No liked songs yet</h3>
-          <p className="text-xs text-zinc-400 max-w-sm font-ui-meta leading-relaxed">
-            Click the heart icon on any track row, mini-player, or expanded studio player to save your favorite songs here for quick listening.
-          </p>
-          <div className="flex items-center gap-2.5 mt-3">
-            <button
-              type="button"
-              onClick={() => setCurrentView('home')}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-zinc-950 text-xs font-bold shadow-md cursor-pointer aura-focus-ring"
-            >
-              <Compass className="w-3.5 h-3.5 text-zinc-950" />
-              <span>Explore Music</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setCurrentView('songs')}
-              className="px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium border border-white/10 cursor-pointer aura-focus-ring"
-            >
-              Browse Library
-            </button>
-          </div>
-        </div>
-      ) : filteredFavorites.length === 0 ? (
-        <div className="p-10 rounded-2xl aura-glass-ambient border border-white/10 text-center text-xs text-zinc-400">
-          No liked songs match &quot;{searchQuery}&quot;.
-        </div>
-      ) : viewMode === 'row' ? (
-        <div className="flex flex-col rounded-2xl aura-glass-ambient border border-white/10 overflow-hidden divide-y divide-white/[0.03] p-1.5">
-          {filteredFavorites.map((track, i) => (
-            <TrackRow
-              key={`fav-${track.id}`}
-              track={track}
-              index={i + 1}
-              playlistContext={filteredFavorites}
-              onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5">
-          {filteredFavorites.map((track) => (
-            <TrackGridCard
-              key={`fav-grid-${track.id}`}
-              track={track}
-              playlistContext={filteredFavorites}
-              onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
-            />
-          ))}
-        </div>
-      )}
+      <AnimatePresence mode="wait" initial={false}>
+        <MotionFadeSlide
+          key={
+            favoriteTracks.length === 0
+              ? 'empty'
+              : filteredFavorites.length === 0
+                ? 'no-match'
+                : viewMode
+          }
+          direction="up"
+          distance={6}
+          duration="micro"
+        >
+          {favoriteTracks.length === 0 ? (
+            <div className="p-12 sm:p-20 rounded-3xl aura-glass-ambient border border-dashed border-white/10 flex flex-col items-center justify-center text-center gap-3">
+              <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/25 flex items-center justify-center text-rose-400 mb-1">
+                <Heart className="w-7 h-7 stroke-1" />
+              </div>
+              <h3 className="text-base font-bold text-white font-ui-title">No liked songs yet</h3>
+              <p className="text-xs text-zinc-400 max-w-sm font-ui-meta leading-relaxed">
+                Click the heart icon on any track row, mini-player, or expanded studio player to save your favorite songs here for quick listening.
+              </p>
+              <div className="flex items-center gap-2.5 mt-3">
+                <button
+                  type="button"
+                  onClick={() => setCurrentView('home')}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-zinc-950 text-xs font-bold shadow-md cursor-pointer aura-focus-ring aura-pressable"
+                >
+                  <Compass className="w-3.5 h-3.5 text-zinc-950" />
+                  <span>Explore Music</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentView('songs')}
+                  className="px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium border border-white/10 cursor-pointer aura-focus-ring aura-pressable"
+                >
+                  Browse Library
+                </button>
+              </div>
+            </div>
+          ) : filteredFavorites.length === 0 ? (
+            <div className="p-10 rounded-2xl aura-glass-ambient border border-white/10 text-center text-xs text-zinc-400">
+              No liked songs match &quot;{searchQuery}&quot;.
+            </div>
+          ) : viewMode === 'row' ? (
+            <div className="flex flex-col rounded-2xl aura-glass-ambient border border-white/10 overflow-hidden divide-y divide-white/[0.03] p-1.5">
+              {filteredFavorites.map((track, i) => (
+                <TrackRow
+                  key={`fav-${track.id}`}
+                  track={track}
+                  index={i + 1}
+                  playlistContext={filteredFavorites}
+                  onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5">
+              {filteredFavorites.map((track) => (
+                <TrackGridCard
+                  key={`fav-grid-${track.id}`}
+                  track={track}
+                  playlistContext={filteredFavorites}
+                  onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
+                />
+              ))}
+            </div>
+          )}
+        </MotionFadeSlide>
+      </AnimatePresence>
 
       {/* Add To Playlist Modal */}
-      {playlistModalTrack && (
-        <AddToPlaylistModal
-          track={playlistModalTrack}
-          isOpen={Boolean(playlistModalTrack)}
-          onClose={() => setPlaylistModalTrack(null)}
-        />
-      )}
+      <AddToPlaylistModal
+        track={playlistModalTrack}
+        isOpen={Boolean(playlistModalTrack)}
+        onClose={() => setPlaylistModalTrack(null)}
+      />
 
     </div>
   );

@@ -4,6 +4,7 @@ import { Playlist, Track } from '../../types';
 import { LibraryNav } from '../library/LibraryNav';
 import { PlaylistModal } from '../playlists/PlaylistModal';
 import { DeletePlaylistModal } from '../playlists/DeletePlaylistModal';
+import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
 import { 
   ListMusic, 
   Plus, 
@@ -79,6 +80,7 @@ export const PlaylistsView: React.FC = () => {
     playTrack,
   } = useMusic();
 
+  const { canHover } = useMotionCapabilities();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'title' | 'tracks' | 'updated' | 'created'>('updated');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -190,7 +192,7 @@ export const PlaylistsView: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsPlaylistModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer aura-focus-ring"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Create Playlist</span>
@@ -210,7 +212,7 @@ export const PlaylistsView: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search playlists by title or description..."
-            className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-white/[0.05] border border-white/10 text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-all font-ui-title"
+            className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-white/[0.05] border border-white/10 text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors font-ui-title"
           />
           {searchQuery && (
             <button
@@ -254,7 +256,7 @@ export const PlaylistsView: React.FC = () => {
             <div
               key={playlist.id}
               onClick={() => handleOpenPlaylist(playlist.id)}
-              className="group relative flex flex-col p-3 rounded-2xl aura-glass-ambient hover:border-white/20 transition-all duration-300 cursor-pointer select-none shadow-md"
+              className="group relative flex flex-col p-3 rounded-2xl aura-glass-ambient hover:border-white/20 transition-colors cursor-pointer select-none shadow-md aura-hover-scale aura-pressable-subtle"
             >
               {/* Artwork Container */}
               <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-zinc-900 border border-white/10 shadow-sm mb-3">
@@ -264,14 +266,14 @@ export const PlaylistsView: React.FC = () => {
                 />
 
                 {/* Floating Play Overlay */}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200">
+                <div className={`absolute inset-0 bg-black/40 opacity-0 flex items-center justify-center transition-opacity duration-200 ${canHover ? 'group-hover:opacity-100' : 'pointer-events-none'}`}>
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       handlePlayPlaylist(playlist);
                     }}
-                    className="w-11 h-11 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-transform cursor-pointer"
+                    className="w-11 h-11 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-xl aura-hover-scale aura-pressable cursor-pointer"
                     title={`Play ${playlist.title}`}
                   >
                     <Play className="w-4 h-4 fill-current text-black translate-x-0.2" />
@@ -301,11 +303,11 @@ export const PlaylistsView: React.FC = () => {
                 </div>
 
                 {/* Quick Edit / Delete Menu */}
-                <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className={`flex items-center gap-0.5 shrink-0 transition-opacity ${canHover ? 'opacity-0 group-hover:opacity-100 focus-within:opacity-100' : 'opacity-80'}`}>
                   <button
                     type="button"
                     onClick={(e) => handleEditClick(e, playlist)}
-                    className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer"
+                    className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer aura-pressable aura-focus-ring"
                     title="Edit playlist"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
@@ -313,7 +315,7 @@ export const PlaylistsView: React.FC = () => {
                   <button
                     type="button"
                     onClick={(e) => handleDeleteClick(e, playlist)}
-                    className="p-1 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                    className="p-1 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
                     title="Delete playlist"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -338,7 +340,7 @@ export const PlaylistsView: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsPlaylistModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-white text-zinc-950 text-xs font-bold shadow cursor-pointer aura-focus-ring"
+              className="px-4 py-2 rounded-xl bg-white text-zinc-950 text-xs font-bold shadow cursor-pointer aura-focus-ring aura-pressable"
             >
               Create Playlist
             </button>
@@ -347,29 +349,25 @@ export const PlaylistsView: React.FC = () => {
       )}
 
       {/* Edit Playlist Modal */}
-      {playlistToEdit && (
-        <PlaylistModal
-          playlist={playlistToEdit}
-          isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setPlaylistToEdit(null);
-          }}
-        />
-      )}
+      <PlaylistModal
+        playlistToEdit={playlistToEdit}
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setPlaylistToEdit(null);
+        }}
+      />
 
       {/* Delete Confirmation Modal */}
-      {playlistToDelete && (
-        <DeletePlaylistModal
-          playlist={playlistToDelete}
-          isOpen={Boolean(playlistToDelete)}
-          onClose={() => setPlaylistToDelete(null)}
-          onConfirm={() => {
-            deletePlaylist(playlistToDelete.id);
-            setPlaylistToDelete(null);
-          }}
-        />
-      )}
+      <DeletePlaylistModal
+        playlist={playlistToDelete}
+        isOpen={Boolean(playlistToDelete)}
+        onClose={() => setPlaylistToDelete(null)}
+        onConfirmDelete={(id) => {
+          deletePlaylist(id);
+          setPlaylistToDelete(null);
+        }}
+      />
 
     </div>
   );

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { AnimatePresence } from 'motion/react';
+import { MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
 import { useMusic } from '../../context/MusicContext';
 import { Playlist } from '../../types';
 import { X, ListPlus, Edit3, Sparkles } from 'lucide-react';
@@ -53,8 +55,6 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
     }
   }, [playlistToEdit, modalOpen]);
 
-  if (!modalOpen) return null;
-
   const handleClose = () => {
     if (propOnClose) {
       propOnClose();
@@ -90,8 +90,18 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150 select-none">
-      <div className="relative w-full max-w-md rounded-2xl bg-[#0e1017] border border-white/10 shadow-2xl p-6 flex flex-col gap-5">
+    <AnimatePresence>
+      {modalOpen && (
+        <MotionBackdrop
+          onClick={handleClose}
+          style={{ pointerEvents: modalOpen ? 'auto' : 'none' }}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 select-none"
+        >
+          <MotionModal
+            variant="center"
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-md rounded-2xl bg-[#0e1017] border border-white/10 shadow-2xl p-6 flex flex-col gap-5"
+          >
         
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -111,7 +121,7 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
 
           <button
             onClick={handleClose}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer aura-pressable"
           >
             <X className="w-5 h-5" />
           </button>
@@ -134,7 +144,7 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
                     type="button"
                     aria-label={`Select gradient ${grad}`}
                     onClick={() => setSelectedGradient(grad)}
-                    className={`w-6 h-6 rounded-full bg-gradient-to-br ${grad} border-2 transition-transform cursor-pointer ${
+                    className={`w-6 h-6 rounded-full bg-gradient-to-br ${grad} border-2 transition-transform cursor-pointer aura-pressable aura-focus-ring ${
                       selectedGradient === grad ? 'border-white scale-110 shadow-sm' : 'border-transparent hover:scale-105'
                     }`}
                   ></button>
@@ -176,7 +186,7 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
                 key={tag}
                 type="button"
                 onClick={() => setDescription(tag)}
-                className="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+                className="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer aura-pressable aura-focus-ring"
               >
                 + {tag}
               </button>
@@ -188,21 +198,23 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
             <button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-white/5 hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
+              className="px-4 py-2 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-white/5 hover:bg-white/10 rounded-xl transition-colors cursor-pointer aura-pressable aura-focus-ring"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!title.trim()}
-              className="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-xl transition-colors shadow-md shadow-indigo-600/20 cursor-pointer"
+              className="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors shadow-md shadow-indigo-600/20 cursor-pointer aura-pressable aura-focus-ring"
             >
               {isEditing ? 'Save Changes' : 'Create Space'}
             </button>
           </div>
         </form>
 
-      </div>
-    </div>
+          </MotionModal>
+        </MotionBackdrop>
+      )}
+    </AnimatePresence>
   );
 };

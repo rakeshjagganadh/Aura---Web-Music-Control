@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { AnimatePresence, LayoutGroup } from 'motion/react';
 import { useListenTogether } from '../../context/ListenTogetherContext';
 import { useMusic } from '../../context/MusicContext';
 import {
@@ -49,6 +50,9 @@ import { SolidCard } from '../common/primitives/SolidCard';
 import { TactileButton } from '../common/primitives/TactileButton';
 import { TelemetryBadge } from '../common/primitives/TelemetryBadge';
 import { roomService } from '../../services/realtime/roomService';
+import { MotionFadeSlide, MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
+import { MotionIconSwap, SharedIndicator } from '../common/motion/MotionInteractive';
+import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
 
 function formatRelativeTime(timestamp: number): string {
   const diffSec = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
@@ -99,6 +103,7 @@ export const ListenTogetherView: React.FC = () => {
   } = useListenTogether();
 
   const { currentTime, duration, showToast, setCurrentView } = useMusic();
+  const { canHover, prefersReducedMotion } = useMotionCapabilities();
 
   // Modal & Form states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -411,7 +416,7 @@ export const ListenTogetherView: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl mb-12">
           
           {/* Action 1: Create Room */}
-          <GlassPanel intensity="prominent" elevation="lg" className="p-6 sm:p-8 rounded-2xl flex flex-col justify-between group hover:border-indigo-500/30 transition-all">
+          <GlassPanel intensity="prominent" elevation="lg" className="p-6 sm:p-8 rounded-2xl flex flex-col justify-between group hover:border-indigo-500/30 transition-colors">
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div className="p-3 rounded-xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/20">
@@ -441,7 +446,7 @@ export const ListenTogetherView: React.FC = () => {
           </GlassPanel>
 
           {/* Action 2: Join Room */}
-          <GlassPanel intensity="prominent" elevation="lg" className="p-6 sm:p-8 rounded-2xl flex flex-col justify-between group hover:border-white/20 transition-all">
+          <GlassPanel intensity="prominent" elevation="lg" className="p-6 sm:p-8 rounded-2xl flex flex-col justify-between group hover:border-white/20 transition-colors">
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div className="p-3 rounded-xl bg-purple-500/15 text-purple-400 border border-purple-500/20">
@@ -537,180 +542,207 @@ export const ListenTogetherView: React.FC = () => {
         </div>
 
         {/* CREATE ROOM MODAL */}
-        {isCreateModalOpen && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-            <GlassPanel intensity="prominent" elevation="lg" className="w-full max-w-md p-6 sm:p-8 rounded-2xl text-left">
-              <h2 className="text-lg font-bold text-white mb-1">Create Listening Room</h2>
-              <p className="text-xs text-zinc-400 mb-6">
-                Establish a new synchronized listening room as the session host.
-              </p>
+        <AnimatePresence>
+          {isCreateModalOpen && (
+            <MotionBackdrop
+              onClick={() => setIsCreateModalOpen(false)}
+              style={{ pointerEvents: isCreateModalOpen ? 'auto' : 'none' }}
+              className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+            >
+              <MotionModal
+                variant="center"
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-md"
+              >
+                <GlassPanel intensity="prominent" elevation="lg" className="w-full p-6 sm:p-8 rounded-2xl text-left">
+                  <h2 className="text-lg font-bold text-white mb-1">Create Listening Room</h2>
+                  <p className="text-xs text-zinc-400 mb-6">
+                    Establish a new synchronized listening room as the session host.
+                  </p>
 
-              <form onSubmit={handleCreateSubmit} className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-mono text-zinc-300 uppercase tracking-wider">Room Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={roomNameInput}
-                    onChange={(e) => setRoomNameInput(e.target.value)}
-                    placeholder="e.g. Late Night Vibes, Lo-Fi Study"
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#08090d] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/60"
-                  />
-                </div>
+                  <form onSubmit={handleCreateSubmit} className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-mono text-zinc-300 uppercase tracking-wider">Room Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={roomNameInput}
+                        onChange={(e) => setRoomNameInput(e.target.value)}
+                        placeholder="e.g. Late Night Vibes, Lo-Fi Study"
+                        className="w-full px-4 py-2.5 rounded-xl bg-[#08090d] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/60"
+                      />
+                    </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-mono text-zinc-300 uppercase tracking-wider">Your Host Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={displayNameInput}
-                    onChange={(e) => {
-                      setDisplayNameInput(e.target.value);
-                      setUserDisplayName(e.target.value);
-                    }}
-                    placeholder="e.g. Host Name"
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#08090d] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/60"
-                  />
-                </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-mono text-zinc-300 uppercase tracking-wider">Your Host Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={displayNameInput}
+                        onChange={(e) => {
+                          setDisplayNameInput(e.target.value);
+                          setUserDisplayName(e.target.value);
+                        }}
+                        placeholder="e.g. Host Name"
+                        className="w-full px-4 py-2.5 rounded-xl bg-[#08090d] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/60"
+                      />
+                    </div>
 
-                {createError && (
-                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span>{createError}</span>
-                  </div>
-                )}
-
-                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between text-xs text-zinc-400 font-mono">
-                  <span>Playback Control Mode:</span>
-                  <TelemetryBadge variant="emerald" size="sm">Host Seek + Shared Play</TelemetryBadge>
-                </div>
-
-                <div className="flex items-center gap-3 pt-2">
-                  <TactileButton
-                    variant="ghost"
-                    size="md"
-                    className="flex-1"
-                    onClick={() => setIsCreateModalOpen(false)}
-                  >
-                    Cancel
-                  </TactileButton>
-
-                  <TactileButton
-                    variant="primary"
-                    size="md"
-                    type="submit"
-                    disabled={isSubmitting || !roomNameInput.trim()}
-                    className="flex-1"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        <span>Creating...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>Create Room</span>
-                      </>
+                    {createError && (
+                      <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        <span>{createError}</span>
+                      </div>
                     )}
-                  </TactileButton>
-                </div>
-              </form>
-            </GlassPanel>
-          </div>
-        )}
+
+                    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between text-xs text-zinc-400 font-mono">
+                      <span>Playback Control Mode:</span>
+                      <TelemetryBadge variant="emerald" size="sm">Host Seek + Shared Play</TelemetryBadge>
+                    </div>
+
+                    <div className="flex items-center gap-3 pt-2">
+                      <TactileButton
+                        variant="ghost"
+                        size="md"
+                        className="flex-1"
+                        onClick={() => setIsCreateModalOpen(false)}
+                      >
+                        Cancel
+                      </TactileButton>
+
+                      <TactileButton
+                        variant="primary"
+                        size="md"
+                        type="submit"
+                        disabled={isSubmitting || !roomNameInput.trim()}
+                        className="flex-1"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            <span>Creating...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Create Room</span>
+                          </>
+                        )}
+                      </TactileButton>
+                    </div>
+                  </form>
+                </GlassPanel>
+              </MotionModal>
+            </MotionBackdrop>
+          )}
+        </AnimatePresence>
 
         {/* JOIN ROOM MODAL */}
-        {isJoinModalOpen && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-            <GlassPanel intensity="prominent" elevation="lg" className="w-full max-w-md p-6 sm:p-8 rounded-2xl text-left">
-              <h2 className="text-lg font-bold text-white mb-1">Join Listening Room</h2>
-              <p className="text-xs text-zinc-400 mb-6">
-                Enter the 6-character room code or full invite URL.
-              </p>
+        <AnimatePresence>
+          {isJoinModalOpen && (
+            <MotionBackdrop
+              onClick={() => {
+                setIsJoinModalOpen(false);
+                setJoinError(null);
+              }}
+              style={{ pointerEvents: isJoinModalOpen ? 'auto' : 'none' }}
+              className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+            >
+              <MotionModal
+                variant="center"
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-md"
+              >
+                <GlassPanel intensity="prominent" elevation="lg" className="w-full p-6 sm:p-8 rounded-2xl text-left">
+                  <h2 className="text-lg font-bold text-white mb-1">Join Listening Room</h2>
+                  <p className="text-xs text-zinc-400 mb-6">
+                    Enter the 6-character room code or full invite URL.
+                  </p>
 
-              <form onSubmit={handleJoinSubmit} className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-mono text-zinc-300 uppercase tracking-wider">Room Code / URL</label>
-                    <button
-                      type="button"
-                      onClick={handlePasteCode}
-                      className="text-[11px] font-mono text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer"
-                    >
-                      <Clipboard className="w-3 h-3" />
-                      <span>Paste</span>
-                    </button>
-                  </div>
-                  <input
-                    type="text"
-                    required
-                    value={joinCodeInput}
-                    onChange={(e) => handleCodeInputChange(e.target.value)}
-                    placeholder="e.g. ABC123 or https://app/listen/abc123"
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#08090d] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/60 uppercase font-mono tracking-wider"
-                  />
-                </div>
+                  <form onSubmit={handleJoinSubmit} className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-mono text-zinc-300 uppercase tracking-wider">Room Code / URL</label>
+                        <button
+                          type="button"
+                          onClick={handlePasteCode}
+                          className="text-[11px] font-mono text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer aura-pressable"
+                        >
+                          <Clipboard className="w-3 h-3" />
+                          <span>Paste</span>
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        required
+                        value={joinCodeInput}
+                        onChange={(e) => handleCodeInputChange(e.target.value)}
+                        placeholder="e.g. ABC123 or https://app/listen/abc123"
+                        className="w-full px-4 py-2.5 rounded-xl bg-[#08090d] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/60 uppercase font-mono tracking-wider"
+                      />
+                    </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-mono text-zinc-300 uppercase tracking-wider">Your Display Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={displayNameInput}
-                    onChange={(e) => {
-                      setDisplayNameInput(e.target.value);
-                      setUserDisplayName(e.target.value);
-                    }}
-                    placeholder="e.g. Listener Name"
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#08090d] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/60"
-                  />
-                </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-mono text-zinc-300 uppercase tracking-wider">Your Display Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={displayNameInput}
+                        onChange={(e) => {
+                          setDisplayNameInput(e.target.value);
+                          setUserDisplayName(e.target.value);
+                        }}
+                        placeholder="e.g. Listener Name"
+                        className="w-full px-4 py-2.5 rounded-xl bg-[#08090d] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/60"
+                      />
+                    </div>
 
-                {joinError && (
-                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span>{joinError}</span>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-3 pt-2">
-                  <TactileButton
-                    variant="ghost"
-                    size="md"
-                    className="flex-1"
-                    onClick={() => {
-                      setIsJoinModalOpen(false);
-                      setJoinError(null);
-                    }}
-                  >
-                    Cancel
-                  </TactileButton>
-
-                  <TactileButton
-                    variant="primary"
-                    size="md"
-                    type="submit"
-                    disabled={isSubmitting || !joinCodeInput.trim()}
-                    className="flex-1"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        <span>Searching...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Users className="w-3.5 h-3.5" />
-                        <span>Join Session</span>
-                      </>
+                    {joinError && (
+                      <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        <span>{joinError}</span>
+                      </div>
                     )}
-                  </TactileButton>
-                </div>
-              </form>
-            </GlassPanel>
-          </div>
-        )}
+
+                    <div className="flex items-center gap-3 pt-2">
+                      <TactileButton
+                        variant="ghost"
+                        size="md"
+                        className="flex-1"
+                        onClick={() => {
+                          setIsJoinModalOpen(false);
+                          setJoinError(null);
+                        }}
+                      >
+                        Cancel
+                      </TactileButton>
+
+                      <TactileButton
+                        variant="primary"
+                        size="md"
+                        type="submit"
+                        disabled={isSubmitting || !joinCodeInput.trim()}
+                        className="flex-1"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            <span>Searching...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Users className="w-3.5 h-3.5" />
+                            <span>Join Session</span>
+                          </>
+                        )}
+                      </TactileButton>
+                    </div>
+                  </form>
+                </GlassPanel>
+              </MotionModal>
+            </MotionBackdrop>
+          )}
+        </AnimatePresence>
 
       </div>
     );
@@ -752,14 +784,16 @@ export const ListenTogetherView: React.FC = () => {
                 type="button"
                 onClick={handleCopyRoomCode}
                 title="Click to copy 6-character room code"
-                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-zinc-300 font-mono text-[11px] font-semibold transition-colors cursor-pointer group active:scale-95"
+                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-zinc-300 font-mono text-[11px] font-semibold transition-colors cursor-pointer group aura-pressable aura-focus-ring"
               >
                 <span>#{activeRoom.roomId.toUpperCase()}</span>
-                {copiedCode ? (
-                  <Check className="w-3 h-3 text-emerald-400" />
-                ) : (
-                  <Copy className="w-3 h-3 text-zinc-400 group-hover:text-white" />
-                )}
+                <MotionIconSwap stateKey={copiedCode ? 'copied' : 'copy'}>
+                  {copiedCode ? (
+                    <Check className="w-3 h-3 text-emerald-400" />
+                  ) : (
+                    <Copy className="w-3 h-3 text-zinc-400 group-hover:text-white" />
+                  )}
+                </MotionIconSwap>
               </button>
 
               <TelemetryBadge variant={connectionStatus === 'CONNECTED' ? 'emerald' : 'amber'} size="sm" dot dotPulse>
@@ -769,7 +803,7 @@ export const ListenTogetherView: React.FC = () => {
 
             <div className="flex items-center gap-2 sm:gap-3 mt-1 text-xs text-zinc-400 flex-wrap">
               <div className="flex items-center gap-1.5 text-emerald-400 font-medium shrink-0">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className={`w-2 h-2 rounded-full bg-emerald-400 ${!prefersReducedMotion ? 'animate-pulse' : ''}`} />
                 <span>{participants.length || 1} Listening Now</span>
               </div>
               <span className="text-zinc-600">·</span>
@@ -792,7 +826,9 @@ export const ListenTogetherView: React.FC = () => {
             onClick={handleCopyLink}
             title="Copy full invite link"
           >
-            {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-zinc-400" />}
+            <MotionIconSwap stateKey={copiedLink ? 'copied' : 'copy'}>
+              {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-zinc-400" />}
+            </MotionIconSwap>
             <span>{copiedLink ? 'Link Copied' : 'Invite Link'}</span>
           </TactileButton>
 
@@ -837,7 +873,7 @@ export const ListenTogetherView: React.FC = () => {
             {/* Top Bar inside Now Playing */}
             <div className="flex items-center justify-between text-xs text-zinc-400 border-b border-white/5 pb-3">
               <div className="flex items-center gap-2">
-                <Disc className={`w-3.5 h-3.5 text-indigo-400 ${isPlaying ? 'animate-spin [animation-duration:4s]' : ''}`} />
+                <Disc className={`w-3.5 h-3.5 text-indigo-400 ${isPlaying && !prefersReducedMotion ? 'animate-spin [animation-duration:4s]' : ''}`} />
                 <span className="font-mono uppercase tracking-widest text-[10px] text-zinc-400 font-semibold">
                   ROOM AUDIO CENTREPIECE
                 </span>
@@ -869,7 +905,7 @@ export const ListenTogetherView: React.FC = () => {
                       <img
                         src={currentTrack.coverUrl}
                         alt={currentTrack.title}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        className={`w-full h-full object-cover transition-transform duration-700 ${canHover ? 'group-hover:scale-105' : ''}`}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-950/70 via-purple-950/50 to-zinc-950 text-indigo-300">
@@ -881,10 +917,10 @@ export const ListenTogetherView: React.FC = () => {
                     {isPlaying && !isLocallySilenced && (
                       <div className="absolute inset-0 bg-black/35 backdrop-blur-[1px] flex items-end justify-center pb-3 pointer-events-none">
                         <span className="flex items-end gap-1.5 h-6">
-                          <span className="w-1.5 bg-indigo-400 animate-[bounce_0.8s_infinite_100ms] rounded-full h-4" />
-                          <span className="w-1.5 bg-indigo-400 animate-[bounce_0.8s_infinite_300ms] rounded-full h-6" />
-                          <span className="w-1.5 bg-indigo-400 animate-[bounce_0.8s_infinite_200ms] rounded-full h-3" />
-                          <span className="w-1.5 bg-indigo-400 animate-[bounce_0.8s_infinite_400ms] rounded-full h-5" />
+                          <span className={`w-1.5 bg-indigo-400 rounded-full h-4 ${!prefersReducedMotion ? 'animate-[pulse_0.8s_ease-in-out_infinite_100ms]' : ''}`} />
+                          <span className={`w-1.5 bg-indigo-400 rounded-full h-6 ${!prefersReducedMotion ? 'animate-[pulse_0.9s_ease-in-out_infinite_300ms]' : ''}`} />
+                          <span className={`w-1.5 bg-indigo-400 rounded-full h-3 ${!prefersReducedMotion ? 'animate-[pulse_0.7s_ease-in-out_infinite_200ms]' : ''}`} />
+                          <span className={`w-1.5 bg-indigo-400 rounded-full h-5 ${!prefersReducedMotion ? 'animate-[pulse_1s_ease-in-out_infinite_400ms]' : ''}`} />
                         </span>
                       </div>
                     )}
@@ -938,7 +974,7 @@ export const ListenTogetherView: React.FC = () => {
                     }}
                   >
                     <div
-                      className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-400 rounded-full transition-all duration-100"
+                      className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-400 rounded-full transition-[width] duration-100"
                       style={{ width: `${progressPercent}%` }}
                     />
                   </div>
@@ -971,11 +1007,13 @@ export const ListenTogetherView: React.FC = () => {
                     title={isPlaying && !isLocallySilenced ? 'Pause for room' : 'Play for room'}
                     className="rounded-full w-14 h-14 p-0 flex items-center justify-center shadow-xl shadow-indigo-600/30"
                   >
-                    {isPlaying && !isLocallySilenced ? (
-                      <Pause className="w-6 h-6 fill-current" />
-                    ) : (
-                      <Play className="w-6 h-6 fill-current ml-0.5" />
-                    )}
+                    <MotionIconSwap stateKey={isPlaying && !isLocallySilenced ? 'pause' : 'play'}>
+                      {isPlaying && !isLocallySilenced ? (
+                        <Pause className="w-6 h-6 fill-current" />
+                      ) : (
+                        <Play className="w-6 h-6 fill-current ml-0.5" />
+                      )}
+                    </MotionIconSwap>
                   </TactileButton>
 
                   <TactileButton
@@ -994,24 +1032,25 @@ export const ListenTogetherView: React.FC = () => {
                   <button
                     type="button"
                     onClick={togglePersonalSilence}
-                    className={`max-w-full px-4 py-2 rounded-xl text-xs font-medium flex items-center gap-2.5 border transition-all cursor-pointer ${
+                    className={`max-w-full px-4 py-2 rounded-xl text-xs font-medium flex items-center gap-2.5 border transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                       isLocallySilenced
                         ? 'bg-amber-500/20 text-amber-300 border-amber-500/30 shadow-[0_0_16px_rgba(245,158,11,0.2)]'
                         : 'bg-white/5 text-zinc-400 border-white/10 hover:text-white hover:bg-white/10'
                     }`}
                     title="Pause playback on your device only without interrupting others"
                   >
-                    {isLocallySilenced ? (
-                      <>
+                    <MotionIconSwap stateKey={isLocallySilenced ? 'muted' : 'active'}>
+                      {isLocallySilenced ? (
                         <VolumeX className="w-4 h-4 text-amber-400 shrink-0" />
-                        <span className="truncate">Solo Break Active (Muted for You) · Click to Resume</span>
-                      </>
-                    ) : (
-                      <>
+                      ) : (
                         <Volume2 className="w-4 h-4 text-zinc-400 shrink-0" />
-                        <span className="truncate">Take Solo Break (Mute for You Only)</span>
-                      </>
-                    )}
+                      )}
+                    </MotionIconSwap>
+                    <span className="truncate">
+                      {isLocallySilenced
+                        ? 'Solo Break Active (Muted for You) · Click to Resume'
+                        : 'Take Solo Break (Mute for You Only)'}
+                    </span>
                   </button>
                 </div>
               </>
@@ -1094,7 +1133,7 @@ export const ListenTogetherView: React.FC = () => {
                     <SolidCard
                       key={`${track.id}-${idx}`}
                       variant="elevated"
-                      className="p-3 rounded-xl flex items-center justify-between gap-3 transition-all"
+                      className="p-3 rounded-xl flex items-center justify-between gap-3 transition-colors"
                     >
                       {/* Left: Index / Cover / Title / Artist */}
                       <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -1140,7 +1179,7 @@ export const ListenTogetherView: React.FC = () => {
                             type="button"
                             disabled={idx === 0}
                             onClick={() => handleMoveUpcomingTrack(idx, 'up')}
-                            className="p-1 hover:bg-white/10 text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:bg-transparent cursor-pointer"
+                            className="p-1 hover:bg-white/10 text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed cursor-pointer aura-pressable aura-focus-ring transition-colors"
                             title="Move track up in Up Next"
                           >
                             <ChevronUp className="w-3.5 h-3.5" />
@@ -1149,7 +1188,7 @@ export const ListenTogetherView: React.FC = () => {
                             type="button"
                             disabled={idx === upcomingTracks.length - 1}
                             onClick={() => handleMoveUpcomingTrack(idx, 'down')}
-                            className="p-1 hover:bg-white/10 text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:bg-transparent cursor-pointer border-l border-white/10"
+                            className="p-1 hover:bg-white/10 text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed cursor-pointer border-l border-white/10 aura-pressable aura-focus-ring transition-colors"
                             title="Move track down in Up Next"
                           >
                             <ChevronDown className="w-3.5 h-3.5" />
@@ -1194,7 +1233,7 @@ export const ListenTogetherView: React.FC = () => {
             <div className="p-3.5 sm:p-4 border-b border-white/5 bg-white/[0.02] flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className={`w-2 h-2 rounded-full bg-emerald-400 ${!prefersReducedMotion ? 'animate-pulse' : ''}`} />
                   <span className="text-[11px] font-mono uppercase tracking-widest text-zinc-300 font-bold">
                     ROOM SOCIAL HUB
                   </span>
@@ -1205,59 +1244,87 @@ export const ListenTogetherView: React.FC = () => {
               </div>
 
               {/* Segmented Control */}
-              <div className="grid grid-cols-3 gap-1 bg-[#0b0d14] p-1 rounded-xl border border-white/5">
-                <button
-                  type="button"
-                  onClick={() => setActiveSocialTab('chat')}
-                  className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                    activeSocialTab === 'chat'
-                      ? 'bg-indigo-600 text-white shadow-sm font-semibold'
-                      : 'text-zinc-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  <span>Chat</span>
-                  {chatMessages.length > 0 && (
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                      activeSocialTab === 'chat' ? 'bg-white/20 text-white' : 'bg-white/10 text-zinc-300'
+              <LayoutGroup id="listen-together-social-tabs">
+                <div className="grid grid-cols-3 gap-1 bg-[#0b0d14] p-1 rounded-xl border border-white/5">
+                  <button
+                    type="button"
+                    onClick={() => setActiveSocialTab('chat')}
+                    className={`relative flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-medium transition-colors cursor-pointer aura-pressable ${
+                      activeSocialTab === 'chat'
+                        ? 'text-white font-semibold'
+                        : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {activeSocialTab === 'chat' && (
+                      <SharedIndicator
+                        layoutId="listen-together-social-tab-pill"
+                        className="absolute inset-0 rounded-lg bg-indigo-600 shadow-sm"
+                      />
+                    )}
+                    <MessageSquare className="relative z-10 w-3.5 h-3.5" />
+                    <span className="relative z-10">Chat</span>
+                    {chatMessages.length > 0 && (
+                      <span className={`relative z-10 text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                        activeSocialTab === 'chat' ? 'bg-white/20 text-white' : 'bg-white/10 text-zinc-300'
+                      }`}>
+                        {chatMessages.length}
+                      </span>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveSocialTab('participants')}
+                    className={`relative flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-medium transition-colors cursor-pointer aura-pressable ${
+                      activeSocialTab === 'participants'
+                        ? 'text-white font-semibold'
+                        : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {activeSocialTab === 'participants' && (
+                      <SharedIndicator
+                        layoutId="listen-together-social-tab-pill"
+                        className="absolute inset-0 rounded-lg bg-indigo-600 shadow-sm"
+                      />
+                    )}
+                    <Users className="relative z-10 w-3.5 h-3.5" />
+                    <span className="relative z-10">People</span>
+                    <span className={`relative z-10 text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                      activeSocialTab === 'participants' ? 'bg-white/20 text-white' : 'bg-white/10 text-zinc-300'
                     }`}>
-                      {chatMessages.length}
+                      {participants.length || 1}
                     </span>
-                  )}
-                </button>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => setActiveSocialTab('participants')}
-                  className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                    activeSocialTab === 'participants'
-                      ? 'bg-indigo-600 text-white shadow-sm font-semibold'
-                      : 'text-zinc-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <Users className="w-3.5 h-3.5" />
-                  <span>People</span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                    activeSocialTab === 'participants' ? 'bg-white/20 text-white' : 'bg-white/10 text-zinc-300'
-                  }`}>
-                    {participants.length || 1}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveSocialTab('activity')}
-                  className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                    activeSocialTab === 'activity'
-                      ? 'bg-indigo-600 text-white shadow-sm font-semibold'
-                      : 'text-zinc-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <Activity className="w-3.5 h-3.5" />
-                  <span>Activity</span>
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSocialTab('activity')}
+                    className={`relative flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-medium transition-colors cursor-pointer aura-pressable ${
+                      activeSocialTab === 'activity'
+                        ? 'text-white font-semibold'
+                        : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {activeSocialTab === 'activity' && (
+                      <SharedIndicator
+                        layoutId="listen-together-social-tab-pill"
+                        className="absolute inset-0 rounded-lg bg-indigo-600 shadow-sm"
+                      />
+                    )}
+                    <Activity className="relative z-10 w-3.5 h-3.5" />
+                    <span className="relative z-10">Activity</span>
+                  </button>
+                </div>
+              </LayoutGroup>
             </div>
+
+            <AnimatePresence mode="wait" initial={false}>
+              <MotionFadeSlide
+                key={activeSocialTab}
+                direction="up"
+                distance={6}
+                duration="micro"
+              >
 
             {/* TAB 1: LIVE CHAT */}
             {activeSocialTab === 'chat' && (
@@ -1359,7 +1426,7 @@ export const ListenTogetherView: React.FC = () => {
                     <button
                       type="submit"
                       disabled={!chatInputText.trim() || isSendingChat}
-                      className="shrink-0 px-3 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-30 disabled:hover:bg-indigo-600 transition-all cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-1.5 font-medium text-xs shadow-sm"
+                      className="shrink-0 px-3 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-30 disabled:hover:bg-indigo-600 transition-colors cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-1.5 font-medium text-xs shadow-sm aura-pressable aura-focus-ring"
                       title="Send message (Enter)"
                     >
                       <Send className="w-3.5 h-3.5" />
@@ -1488,6 +1555,8 @@ export const ListenTogetherView: React.FC = () => {
                 </div>
               </div>
             )}
+              </MotionFadeSlide>
+            </AnimatePresence>
           </GlassPanel>
 
           {/* QUICK SESSION GUIDELINES */}
@@ -1506,52 +1575,64 @@ export const ListenTogetherView: React.FC = () => {
       </div>
 
       {/* DIAGNOSTICS & SYNC MODAL */}
-      {isDiagnosticsModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <GlassPanel intensity="prominent" elevation="lg" className="w-full max-w-md p-6 rounded-2xl text-left">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
-              <div className="flex items-center gap-2">
-                <SlidersHorizontal className="w-4 h-4 text-indigo-400" />
-                <h2 className="text-base font-bold text-white">Room Connection Diagnostics</h2>
-              </div>
-              <TactileButton
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsDiagnosticsModalOpen(false)}
-              >
-                Close
-              </TactileButton>
-            </div>
+      <AnimatePresence>
+        {isDiagnosticsModalOpen && (
+          <MotionBackdrop
+            onClick={() => setIsDiagnosticsModalOpen(false)}
+            style={{ pointerEvents: isDiagnosticsModalOpen ? 'auto' : 'none' }}
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <MotionModal
+              variant="center"
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md"
+            >
+              <GlassPanel intensity="prominent" elevation="lg" className="w-full p-6 rounded-2xl text-left">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+                  <div className="flex items-center gap-2">
+                    <SlidersHorizontal className="w-4 h-4 text-indigo-400" />
+                    <h2 className="text-base font-bold text-white">Room Connection Diagnostics</h2>
+                  </div>
+                  <TactileButton
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsDiagnosticsModalOpen(false)}
+                  >
+                    Close
+                  </TactileButton>
+                </div>
 
-            <div className="flex flex-col gap-3 text-xs font-mono">
-              <div className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03]">
-                <span className="text-zinc-400">Room Code:</span>
-                <span className="text-white font-bold">#{activeRoom.roomId.toUpperCase()}</span>
-              </div>
-              <div className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03]">
-                <span className="text-zinc-400">Sync Engine:</span>
-                <span className="text-emerald-400 capitalize">{backendType} Realtime</span>
-              </div>
-              <div className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03]">
-                <span className="text-zinc-400">State Sequence:</span>
-                <span className="text-zinc-300">v{activeRoom.version || 1}</span>
-              </div>
-              <div className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03]">
-                <span className="text-zinc-400">Drift Correction:</span>
-                <span className="text-indigo-300">Monotonic Arrival Anchor</span>
-              </div>
-              <div className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03]">
-                <span className="text-zinc-400">Seek Permission:</span>
-                <span className="text-amber-400">{isOwner ? 'You (Host)' : 'Host Only'}</span>
-              </div>
-            </div>
+                <div className="flex flex-col gap-3 text-xs font-mono">
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03]">
+                    <span className="text-zinc-400">Room Code:</span>
+                    <span className="text-white font-bold">#{activeRoom.roomId.toUpperCase()}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03]">
+                    <span className="text-zinc-400">Sync Engine:</span>
+                    <span className="text-emerald-400 capitalize">{backendType} Realtime</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03]">
+                    <span className="text-zinc-400">State Sequence:</span>
+                    <span className="text-zinc-300">v{activeRoom.version || 1}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03]">
+                    <span className="text-zinc-400">Drift Correction:</span>
+                    <span className="text-indigo-300">Monotonic Arrival Anchor</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03]">
+                    <span className="text-zinc-400">Seek Permission:</span>
+                    <span className="text-amber-400">{isOwner ? 'You (Host)' : 'Host Only'}</span>
+                  </div>
+                </div>
 
-            <p className="text-[11px] text-zinc-500 mt-4 leading-relaxed font-sans">
-              All room state updates are timestamped and monotonically sequenced to prevent multi-device clock skew.
-            </p>
-          </GlassPanel>
-        </div>
-      )}
+                <p className="text-[11px] text-zinc-500 mt-4 leading-relaxed font-sans">
+                  All room state updates are timestamped and monotonically sequenced to prevent multi-device clock skew.
+                </p>
+              </GlassPanel>
+            </MotionModal>
+          </MotionBackdrop>
+        )}
+      </AnimatePresence>
 
       {/* UNIVERSAL SEARCH MODAL FOR ADDING MUSIC */}
       <UniversalSearchModal

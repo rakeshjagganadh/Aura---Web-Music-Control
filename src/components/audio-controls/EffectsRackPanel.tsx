@@ -1,4 +1,5 @@
 import React from 'react';
+import { MotionIconSwap } from '../common/motion/MotionInteractive';
 import { useMusic } from '../../context/MusicContext';
 import { 
   Sparkles, 
@@ -57,7 +58,7 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
           <button
             type="button"
             onClick={handleBypassAll}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-white/5 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             title="Bypass and reset all modular DSP effects to flat defaults"
           >
             <RotateCcw className="w-3 h-3" />
@@ -106,7 +107,7 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
         {/* ======================================================== */}
         {/* MODULE 1: STUDIO CONVOLVER / ALGORITHMIC REVERB          */}
         {/* ======================================================== */}
-        <div className={`p-5 rounded-2xl border transition-all duration-200 flex flex-col justify-between gap-4.5 ${
+        <div className={`p-5 rounded-2xl border transition-colors duration-200 flex flex-col justify-between gap-4.5 ${
           effects.reverb.enabled
             ? 'bg-zinc-950/80 border-indigo-500/30 shadow-xl shadow-indigo-500/5'
             : 'bg-zinc-950/40 border-white/5'
@@ -126,13 +127,15 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
             <button
               type="button"
               onClick={() => updateEffects({ reverb: { ...effects.reverb, enabled: !effects.reverb.enabled } })}
-              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg transition-colors border ${
+              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg transition-colors border cursor-pointer aura-pressable aura-focus-ring ${
                 effects.reverb.enabled
                   ? 'bg-indigo-600/25 text-indigo-200 border-indigo-500/40 shadow-sm'
                   : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border-white/5'
               }`}
             >
-              <Power className="w-3 h-3" />
+              <MotionIconSwap stateKey={Boolean(effects.reverb.enabled)}>
+                <Power className="w-3 h-3" />
+              </MotionIconSwap>
               <span>{effects.reverb.enabled ? 'ACTIVE' : 'BYPASS'}</span>
             </button>
           </div>
@@ -222,7 +225,7 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
         {/* ======================================================== */}
         {/* MODULE 2: TAPE ECHO / ANALOG DELAY                       */}
         {/* ======================================================== */}
-        <div className={`p-5 rounded-2xl border transition-all duration-200 flex flex-col justify-between gap-4.5 ${
+        <div className={`p-5 rounded-2xl border transition-colors duration-200 flex flex-col justify-between gap-4.5 ${
           effects.echo.enabled
             ? 'bg-zinc-950/80 border-cyan-500/30 shadow-xl shadow-cyan-500/5'
             : 'bg-zinc-950/40 border-white/5'
@@ -242,13 +245,15 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
             <button
               type="button"
               onClick={() => updateEffects({ echo: { ...effects.echo, enabled: !effects.echo.enabled } })}
-              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg transition-colors border ${
+              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg transition-colors border cursor-pointer aura-pressable aura-focus-ring ${
                 effects.echo.enabled
                   ? 'bg-cyan-600/25 text-cyan-200 border-cyan-500/40 shadow-sm'
                   : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border-white/5'
               }`}
             >
-              <Power className="w-3 h-3" />
+              <MotionIconSwap stateKey={Boolean(effects.echo.enabled)}>
+                <Power className="w-3 h-3" />
+              </MotionIconSwap>
               <span>{effects.echo.enabled ? 'ACTIVE' : 'BYPASS'}</span>
             </button>
           </div>
@@ -285,7 +290,7 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
                       type="button"
                       disabled={!effects.echo.enabled}
                       onClick={() => updateEffects({ echo: { ...effects.echo, delayTime: snap.ms } })}
-                      className={`py-0.5 text-[10px] font-mono rounded transition-colors border ${
+                      className={`py-0.5 text-[10px] font-mono rounded transition-colors border cursor-pointer aura-pressable aura-focus-ring disabled:cursor-not-allowed ${
                         isCurrent
                           ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 font-bold'
                           : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border-white/5 disabled:opacity-40'
@@ -355,7 +360,7 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
         {/* ======================================================== */}
         {/* MODULE 3: STEREO CHORUS                                  */}
         {/* ======================================================== */}
-        <div className={`p-5 rounded-2xl border transition-all duration-200 flex flex-col justify-between gap-4.5 ${
+        <div className={`p-5 rounded-2xl border transition-colors duration-200 flex flex-col justify-between gap-4.5 ${
           effects.chorus?.enabled
             ? 'bg-zinc-950/80 border-purple-500/30 shadow-xl shadow-purple-500/5'
             : 'bg-zinc-950/40 border-white/5'
@@ -375,13 +380,15 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
             <button
               type="button"
               onClick={() => updateEffects({ chorus: { ...effects.chorus, enabled: !effects.chorus?.enabled } })}
-              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg transition-colors border ${
+              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg transition-colors border cursor-pointer aura-pressable aura-focus-ring ${
                 effects.chorus?.enabled
                   ? 'bg-purple-600/25 text-purple-200 border-purple-500/40 shadow-sm'
                   : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border-white/5'
               }`}
             >
-              <Power className="w-3 h-3" />
+              <MotionIconSwap stateKey={Boolean(effects.chorus?.enabled)}>
+                <Power className="w-3 h-3" />
+              </MotionIconSwap>
               <span>{effects.chorus?.enabled ? 'ACTIVE' : 'BYPASS'}</span>
             </button>
           </div>
@@ -471,7 +478,7 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
         {/* ======================================================== */}
         {/* MODULE 4: ANALOG SATURATION (WAVESHAPER)                */}
         {/* ======================================================== */}
-        <div className={`p-5 rounded-2xl border transition-all duration-200 flex flex-col justify-between gap-4.5 ${
+        <div className={`p-5 rounded-2xl border transition-colors duration-200 flex flex-col justify-between gap-4.5 ${
           effects.saturation?.enabled
             ? 'bg-zinc-950/80 border-amber-500/30 shadow-xl shadow-amber-500/5'
             : 'bg-zinc-950/40 border-white/5'
@@ -489,13 +496,15 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
             <button
               type="button"
               onClick={() => updateEffects({ saturation: { ...effects.saturation, enabled: !effects.saturation?.enabled } })}
-              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg transition-colors border ${
+              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg transition-colors border cursor-pointer aura-pressable aura-focus-ring ${
                 effects.saturation?.enabled
                   ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
                   : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border-white/5'
               }`}
             >
-              <Power className="w-3 h-3" />
+              <MotionIconSwap stateKey={Boolean(effects.saturation?.enabled)}>
+                <Power className="w-3 h-3" />
+              </MotionIconSwap>
               <span>{effects.saturation?.enabled ? 'ACTIVE' : 'BYPASS'}</span>
             </button>
           </div>
@@ -512,7 +521,7 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
                     type="button"
                     disabled={!effects.saturation?.enabled}
                     onClick={() => updateEffects({ saturation: { ...effects.saturation, type: t } })}
-                    className={`py-1.5 text-xs font-bold uppercase rounded-lg transition-all border ${
+                    className={`py-1.5 text-xs font-bold uppercase rounded-lg transition-colors border cursor-pointer aura-pressable aura-focus-ring disabled:cursor-not-allowed ${
                       effects.saturation?.type === t
                         ? 'bg-amber-500/25 text-amber-300 border-amber-500/40 shadow-sm'
                         : 'bg-zinc-900/60 text-zinc-400 hover:text-zinc-200 border-white/5 disabled:opacity-40'
@@ -560,7 +569,7 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
         {/* ======================================================== */}
         {/* MODULE 5: HF AIR EXCITER                                 */}
         {/* ======================================================== */}
-        <div className={`p-5 rounded-2xl border transition-all duration-200 flex flex-col justify-between gap-4.5 ${
+        <div className={`p-5 rounded-2xl border transition-colors duration-200 flex flex-col justify-between gap-4.5 ${
           effects.exciter?.enabled
             ? 'bg-zinc-950/80 border-emerald-500/30 shadow-xl shadow-emerald-500/5'
             : 'bg-zinc-950/40 border-white/5'
@@ -578,13 +587,15 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
             <button
               type="button"
               onClick={() => updateEffects({ exciter: { ...effects.exciter, enabled: !effects.exciter?.enabled } })}
-              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg transition-colors border ${
+              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg transition-colors border cursor-pointer aura-pressable aura-focus-ring ${
                 effects.exciter?.enabled
                   ? 'bg-emerald-600/25 text-emerald-200 border-emerald-500/40 shadow-sm'
                   : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border-white/5'
               }`}
             >
-              <Power className="w-3 h-3" />
+              <MotionIconSwap stateKey={Boolean(effects.exciter?.enabled)}>
+                <Power className="w-3 h-3" />
+              </MotionIconSwap>
               <span>{effects.exciter?.enabled ? 'ACTIVE' : 'BYPASS'}</span>
             </button>
           </div>

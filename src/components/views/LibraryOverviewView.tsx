@@ -164,7 +164,7 @@ export const LibraryOverviewView: React.FC = () => {
             <button
               type="button"
               onClick={handleShuffleAll}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-focus-ring"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
               title="Shuffle all tracks in library"
             >
               <Shuffle className="w-3.5 h-3.5 text-sky-400" />
@@ -175,7 +175,7 @@ export const LibraryOverviewView: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsPlaylistModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-focus-ring"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
             title="Create a new playlist"
           >
             <Plus className="w-3.5 h-3.5 text-emerald-400" />
@@ -185,7 +185,7 @@ export const LibraryOverviewView: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsUploadModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer aura-focus-ring"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
             title="Import audio files into vault"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -205,7 +205,7 @@ export const LibraryOverviewView: React.FC = () => {
       <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <div 
           onClick={() => setCurrentView('songs')}
-          className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-all duration-300 hover:scale-[1.02] shadow-lg"
+          className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-lg aura-hover-scale aura-pressable-subtle"
         >
           <div className="flex items-center justify-between text-zinc-400">
             <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300">Tracks</span>
@@ -219,7 +219,7 @@ export const LibraryOverviewView: React.FC = () => {
 
         <div 
           onClick={() => setCurrentView('albums')}
-          className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-all duration-300 hover:scale-[1.02] shadow-lg"
+          className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-lg aura-hover-scale aura-pressable-subtle"
         >
           <div className="flex items-center justify-between text-zinc-400">
             <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300">Albums</span>
@@ -233,7 +233,7 @@ export const LibraryOverviewView: React.FC = () => {
 
         <div 
           onClick={() => setCurrentView('artists')}
-          className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-all duration-300 hover:scale-[1.02] shadow-lg"
+          className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-lg aura-hover-scale aura-pressable-subtle"
         >
           <div className="flex items-center justify-between text-zinc-400">
             <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300">Artists</span>
@@ -247,7 +247,7 @@ export const LibraryOverviewView: React.FC = () => {
 
         <div 
           onClick={() => setCurrentView('playlists')}
-          className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-all duration-300 hover:scale-[1.02] shadow-lg"
+          className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-lg aura-hover-scale aura-pressable-subtle"
         >
           <div className="flex items-center justify-between text-zinc-400">
             <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300">Playlists</span>
@@ -261,7 +261,7 @@ export const LibraryOverviewView: React.FC = () => {
 
         <div 
           onClick={() => setCurrentView('favorites')}
-          className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-all duration-300 hover:scale-[1.02] shadow-lg"
+          className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-lg aura-hover-scale aura-pressable-subtle"
         >
           <div className="flex items-center justify-between text-zinc-400">
             <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300">Liked Songs</span>
@@ -302,7 +302,7 @@ export const LibraryOverviewView: React.FC = () => {
           <button
             type="button"
             onClick={() => setCurrentView('songs')}
-            className="text-xs text-zinc-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer font-medium"
+            className="text-xs text-zinc-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer font-medium aura-pressable"
           >
             <span>View All</span>
             <ChevronRight className="w-3.5 h-3.5" />
@@ -333,14 +333,14 @@ export const LibraryOverviewView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsUploadModalOpen(true)}
-                className="px-4 py-2 rounded-xl bg-white text-zinc-950 text-xs font-bold shadow-md cursor-pointer aura-focus-ring"
+                className="px-4 py-2 rounded-xl bg-white text-zinc-950 text-xs font-bold shadow-md cursor-pointer aura-focus-ring aura-pressable"
               >
                 Import Local Audio
               </button>
               <button
                 type="button"
                 onClick={loadDemoPack}
-                className="px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium border border-white/10 cursor-pointer aura-focus-ring"
+                className="px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium border border-white/10 cursor-pointer aura-focus-ring aura-pressable"
               >
                 Load Demo Pack
               </button>
@@ -419,7 +419,7 @@ export const LibraryOverviewView: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsUploadModalOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer aura-focus-ring"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>Import Audio Files</span>
@@ -428,13 +428,11 @@ export const LibraryOverviewView: React.FC = () => {
       </section>
 
       {/* Add To Playlist Modal */}
-      {playlistModalTrack && (
-        <AddToPlaylistModal
-          track={playlistModalTrack}
-          isOpen={Boolean(playlistModalTrack)}
-          onClose={() => setPlaylistModalTrack(null)}
-        />
-      )}
+      <AddToPlaylistModal
+        track={playlistModalTrack}
+        isOpen={Boolean(playlistModalTrack)}
+        onClose={() => setPlaylistModalTrack(null)}
+      />
 
     </div>
   );

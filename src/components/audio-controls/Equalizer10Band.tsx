@@ -1,4 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { AnimatePresence } from 'motion/react';
+import { MotionFadeSlide } from '../common/motion/MotionSurface';
 import { EqualizerPreset } from '../../types';
 import { useMusic } from '../../context/MusicContext';
 import { EQ_10_BANDS } from '../../services/audioEngine';
@@ -219,8 +221,9 @@ export const Equalizer10Band: React.FC<{ className?: string }> = ({ className = 
         <div className="flex items-center gap-2 flex-wrap">
           {isAdvancedMode && (
             <button
+              type="button"
               onClick={() => setShowQControls(!showQControls)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                 showQControls 
                   ? 'bg-indigo-600/25 text-indigo-300 border-indigo-500/40' 
                   : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border-white/5'
@@ -232,16 +235,18 @@ export const Equalizer10Band: React.FC<{ className?: string }> = ({ className = 
           )}
 
           <button
+            type="button"
             onClick={() => setIsSavingPreset(!isSavingPreset)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-white/10 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
             <Bookmark className="w-3.5 h-3.5 text-indigo-400" />
             <span>Save Preset</span>
           </button>
 
           <button
+            type="button"
             onClick={resetEQ}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-white/5 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             title="Reset all 10 bands to 0 dB flat"
           >
             <RotateCcw className="w-3 h-3" />
@@ -251,32 +256,36 @@ export const Equalizer10Band: React.FC<{ className?: string }> = ({ className = 
       </div>
 
       {/* Save Preset Inline Form */}
-      {isSavingPreset && (
-        <form onSubmit={handleSaveCustomPreset} className="flex items-center gap-2 p-3 rounded-xl bg-zinc-900 border border-indigo-500/30 animate-in fade-in duration-150">
-          <input
-            type="text"
-            placeholder="Custom EQ preset name (e.g. Warm Vinyl, Vocal Cut)..."
-            value={presetNameInput}
-            onChange={(e) => setPresetNameInput(e.target.value)}
-            className="flex-1 bg-zinc-950 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500 font-sans"
-            autoFocus
-          />
-          <button
-            type="submit"
-            disabled={!presetNameInput.trim()}
-            className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-colors"
-          >
-            Save
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsSavingPreset(false)}
-            className="px-3 py-1.5 text-zinc-400 hover:text-zinc-200 text-xs font-medium"
-          >
-            Cancel
-          </button>
-        </form>
-      )}
+      <AnimatePresence initial={false}>
+        {isSavingPreset && (
+          <MotionFadeSlide key="eq-save-preset" direction="down" distance={6} duration="micro">
+            <form onSubmit={handleSaveCustomPreset} className="flex items-center gap-2 p-3 rounded-xl bg-zinc-900 border border-indigo-500/30">
+              <input
+                type="text"
+                placeholder="Custom EQ preset name (e.g. Warm Vinyl, Vocal Cut)..."
+                value={presetNameInput}
+                onChange={(e) => setPresetNameInput(e.target.value)}
+                className="flex-1 bg-zinc-950 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500 font-sans"
+                autoFocus
+              />
+              <button
+                type="submit"
+                disabled={!presetNameInput.trim()}
+                className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer aura-pressable aura-focus-ring"
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsSavingPreset(false)}
+                className="px-3 py-1.5 text-zinc-400 hover:text-zinc-200 text-xs font-medium transition-colors cursor-pointer aura-pressable aura-focus-ring rounded-lg"
+              >
+                Cancel
+              </button>
+            </form>
+          </MotionFadeSlide>
+        )}
+      </AnimatePresence>
 
       {/* Real-time Frequency Response Canvas */}
       <section aria-label="Frequency Response Curve" className="flex flex-col gap-1.5">
@@ -355,21 +364,25 @@ export const Equalizer10Band: React.FC<{ className?: string }> = ({ className = 
               </span>
 
               {/* Advanced Q Bandwidth input */}
-              {showQControls && (
-                <div className="flex flex-col items-center gap-0.5 mt-1 pt-1 border-t border-white/5 w-full">
-                  <span className="text-[9px] font-mono text-zinc-400 tabular-nums">Q:{qVal.toFixed(1)}</span>
-                  <input
-                    type="range"
-                    min="0.4"
-                    max="4.0"
-                    step="0.1"
-                    value={qVal}
-                    onChange={(e) => handleQChange(idx, parseFloat(e.target.value))}
-                    className="w-full h-1 accent-indigo-400"
-                    title={`Q resonance factor for ${band.label}`}
-                  />
-                </div>
-              )}
+              <AnimatePresence initial={false}>
+                {showQControls && (
+                  <MotionFadeSlide key={`q-ctrl-${band.freq}`} direction="down" distance={4} duration="micro" className="w-full">
+                    <div className="flex flex-col items-center gap-0.5 mt-1 pt-1 border-t border-white/5 w-full">
+                      <span className="text-[9px] font-mono text-zinc-400 tabular-nums">Q:{qVal.toFixed(1)}</span>
+                      <input
+                        type="range"
+                        min="0.4"
+                        max="4.0"
+                        step="0.1"
+                        value={qVal}
+                        onChange={(e) => handleQChange(idx, parseFloat(e.target.value))}
+                        className="w-full h-1 accent-indigo-400"
+                        title={`Q resonance factor for ${band.label}`}
+                      />
+                    </div>
+                  </MotionFadeSlide>
+                )}
+              </AnimatePresence>
             </div>
           );
         })}
@@ -396,9 +409,10 @@ export const Equalizer10Band: React.FC<{ className?: string }> = ({ className = 
                   return (
                     <button
                       key={p.id}
+                      type="button"
                       onClick={() => setEQPreset(p.id)}
                       title={p.desc}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all whitespace-nowrap border ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap border cursor-pointer aura-pressable-subtle aura-focus-ring ${
                         isActive
                           ? 'bg-indigo-600/25 text-indigo-200 border-indigo-500/50 shadow-sm'
                           : 'bg-zinc-900/60 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border-white/5'
@@ -425,8 +439,9 @@ export const Equalizer10Band: React.FC<{ className?: string }> = ({ className = 
                   return (
                     <button
                       key={up.id || up.name}
+                      type="button"
                       onClick={() => setEQPreset(up.name as EqualizerPreset)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all whitespace-nowrap border ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap border cursor-pointer aura-pressable-subtle aura-focus-ring ${
                         isActive
                           ? 'bg-indigo-600/25 text-indigo-200 border-indigo-500/50'
                           : 'bg-zinc-900/60 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border-white/5'

@@ -1,4 +1,5 @@
 import React from 'react';
+import { MotionIconSwap } from '../common/motion/MotionInteractive';
 import { useMusic } from '../../context/MusicContext';
 import { ChannelMode } from '../../types';
 import { 
@@ -119,7 +120,7 @@ export const ChannelMatrixPanel: React.FC<{ className?: string }> = ({ className
           <button
             type="button"
             onClick={handleResetAll}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-white/5 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             title="Reset Channel Matrix, Balance Pan, and Pitch/Tempo to studio defaults"
           >
             <RotateCcw className="w-3 h-3" />
@@ -155,7 +156,7 @@ export const ChannelMatrixPanel: React.FC<{ className?: string }> = ({ className
                     key={m.id}
                     type="button"
                     onClick={() => updateChannels({ mode: m.id })}
-                    className={`p-3 rounded-xl border text-left flex items-center justify-between gap-3 transition-all ${
+                    className={`p-3 rounded-xl border text-left flex items-center justify-between gap-3 transition-colors cursor-pointer aura-pressable-subtle aura-focus-ring ${
                       isSelected
                         ? 'bg-blue-500/15 border-blue-500/40 text-white shadow-sm'
                         : 'bg-zinc-900/50 border-white/5 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
@@ -204,7 +205,7 @@ export const ChannelMatrixPanel: React.FC<{ className?: string }> = ({ className
                 <button
                   type="button"
                   onClick={handleCenterBalance}
-                  className="text-[11px] text-blue-400 hover:text-blue-300 font-medium hover:underline"
+                  className="text-[11px] text-blue-400 hover:text-blue-300 font-medium hover:underline cursor-pointer aura-pressable aura-focus-ring rounded px-1"
                 >
                   Center
                 </button>
@@ -268,7 +269,7 @@ export const ChannelMatrixPanel: React.FC<{ className?: string }> = ({ className
                     <button
                       type="button"
                       onClick={handleResetPitch}
-                      className="text-[11px] text-amber-400 hover:text-amber-300 font-medium hover:underline"
+                      className="text-[11px] text-amber-400 hover:text-amber-300 font-medium hover:underline cursor-pointer aura-pressable aura-focus-ring rounded px-1"
                     >
                       Reset
                     </button>
@@ -309,7 +310,7 @@ export const ChannelMatrixPanel: React.FC<{ className?: string }> = ({ className
                     <button
                       type="button"
                       onClick={handleResetTempo}
-                      className="text-[11px] text-amber-400 hover:text-amber-300 font-medium hover:underline"
+                      className="text-[11px] text-amber-400 hover:text-amber-300 font-medium hover:underline cursor-pointer aura-pressable aura-focus-ring rounded px-1"
                     >
                       1.0×
                     </button>
@@ -344,7 +345,7 @@ export const ChannelMatrixPanel: React.FC<{ className?: string }> = ({ className
                         setPlaybackRate(rate);
                         updatePitchTempo({ playbackRate: rate });
                       }}
-                      className={`py-1 text-[11px] font-mono rounded-lg transition-colors border ${
+                      className={`py-1 text-[11px] font-mono rounded-lg transition-colors border cursor-pointer aura-pressable aura-focus-ring ${
                         isCurrent
                           ? 'bg-amber-500/25 text-amber-300 border-amber-500/40 font-bold shadow-sm'
                           : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border-white/5'
@@ -361,11 +362,13 @@ export const ChannelMatrixPanel: React.FC<{ className?: string }> = ({ className
           {/* Key Lock / Varispeed Segmented Toggle */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-zinc-900/50 border border-white/5">
             <div className="flex items-center gap-2.5">
-              {pitchTempo.preservePitch ? (
-                <Lock className="w-4 h-4 text-emerald-400 shrink-0" />
-              ) : (
-                <Unlock className="w-4 h-4 text-amber-400 shrink-0" />
-              )}
+              <MotionIconSwap stateKey={pitchTempo.preservePitch} className="inline-flex items-center justify-center shrink-0">
+                {pitchTempo.preservePitch ? (
+                  <Lock className="w-4 h-4 text-emerald-400 shrink-0" />
+                ) : (
+                  <Unlock className="w-4 h-4 text-amber-400 shrink-0" />
+                )}
+              </MotionIconSwap>
               <div>
                 <span className="text-xs font-bold text-white block">
                   {pitchTempo.preservePitch ? 'Key Lock Active (Pitch Preserved)' : 'Varispeed Mode (Pitch Linked)'}
@@ -381,7 +384,7 @@ export const ChannelMatrixPanel: React.FC<{ className?: string }> = ({ className
             <button
               type="button"
               onClick={() => updatePitchTempo({ preservePitch: !pitchTempo.preservePitch })}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors border whitespace-nowrap shrink-0 ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors border whitespace-nowrap shrink-0 cursor-pointer aura-pressable aura-focus-ring ${
                 pitchTempo.preservePitch
                   ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm'
                   : 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'

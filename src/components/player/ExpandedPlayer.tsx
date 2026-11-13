@@ -1,8 +1,24 @@
 import React, { useState, useMemo } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useMusic } from '../../context/MusicContext';
 import { WaveformScrubber } from '../waveform/WaveformScrubber';
 import { AudioVisualizer } from '../visualizer/AudioVisualizer';
 import { AuraBrandMark } from '../common/AuraBrandMark';
+import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
+import {
+  dialogVariants,
+  fadeVariants,
+  MOTION_DURATION,
+  MOTION_EASE,
+  MOTION_TRANSITION,
+  REDUCED_FADE_TRANSITION,
+} from '../../motion/tokens';
+import {
+  MotionArtwork,
+  MotionFadeSlide,
+  MotionIconSwap,
+  MotionPress,
+} from '../common/motion';
 import { 
   X, 
   Play, 
@@ -94,6 +110,7 @@ export const ExpandedPlayer: React.FC = () => {
     roomSeek,
   } = useListenTogether();
 
+  const { prefersReducedMotion, sharedTransition } = useMotionCapabilities();
   const [isQueueCollapsed, setIsQueueCollapsed] = useState(false);
 
   // Up Next tracks list (tracks strictly following current queue index)
@@ -160,7 +177,7 @@ export const ExpandedPlayer: React.FC = () => {
     showToast('Upcoming queue shuffled', 'info');
   };
 
-  if (!isExpandedPlayerOpen || !currentTrack) return null;
+  if (!currentTrack) return null;
 
   const formatTime = (secs: number) => {
     if (isNaN(secs) || secs < 0) return '0:00';
@@ -203,111 +220,133 @@ export const ExpandedPlayer: React.FC = () => {
       <MobileExpandedPlayer />
 
       {/* Desktop Expanded Now Playing Experience */}
-      <div
-        id="expanded-player-modal"
-        className="hidden lg:flex fixed inset-0 z-50 bg-[#06070a]/98 backdrop-blur-3xl overflow-y-auto flex-col justify-between p-6 sm:p-8 select-none relative"
-      >
-        {/* Full-bleed Ambient Artwork Canvas Behind the Sanctuary */}
-        {currentTrack.coverUrl && (
-          <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden">
-            <img 
-              src={currentTrack.coverUrl} 
-              alt="" 
-              className="w-full h-full object-cover blur-[90px] opacity-25 scale-125 filter brightness-75"
-              referrerPolicy="no-referrer"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#06070a] via-[#06070a]/80 to-[#06070a]/90" />
-          </div>
-        )}
-        {/* -------------------------------------------------------------
-            TOP BAR NAVIGATION
-            ------------------------------------------------------------- */}
-        <div className="flex items-center justify-between w-full max-w-7xl mx-auto pb-4 border-b border-white/[0.08] shrink-0">
-          <div className="flex items-center gap-3">
-            <AuraBrandMark size={24} isPlaying={isPlaying} />
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-bold uppercase tracking-widest text-zinc-300">
-                NOW PLAYING
-              </span>
-              <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${sourceBadge.color}`}>
-                {sourceBadge.label}
-              </span>
-              {currentTrack.fileFormat && (
-                <span className="text-[10px] px-2 py-0.5 rounded bg-white/[0.04] text-zinc-400 font-mono border border-white/[0.06]">
-                  {currentTrack.fileFormat} {currentTrack.fileSize ? `• ${formatBytes(currentTrack.fileSize)}` : ''}
-                </span>
+      <AnimatePresence>
+        {isExpandedPlayerOpen && (
+          <motion.div
+            key="desktop-expanded-player"
+            id="expanded-player-modal"
+            variants={prefersReducedMotion ? fadeVariants : dialogVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            style={{ pointerEvents: isExpandedPlayerOpen ? 'auto' : 'none' }}
+            className="hidden lg:flex fixed inset-0 z-50 bg-[#06070a]/98 backdrop-blur-3xl overflow-y-auto flex-col justify-between p-6 sm:p-8 select-none relative"
+          >
+            {/* Full-bleed Ambient Artwork Canvas Behind the Sanctuary */}
+            <AnimatePresence initial={false}>
+              {currentTrack.coverUrl && (
+                <motion.div
+                  key={`desktop-ambient-${currentTrack.coverUrl}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={prefersReducedMotion ? REDUCED_FADE_TRANSITION : MOTION_TRANSITION.emphasized}
+                  className="absolute inset-0 pointer-events-none -z-10 overflow-hidden"
+                >
+                  <img
+                    src={currentTrack.coverUrl}
+                    alt=""
+                    className="w-full h-full object-cover blur-[90px] opacity-25 scale-125 filter brightness-75"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#06070a] via-[#06070a]/80 to-[#06070a]/90" />
+                </motion.div>
               )}
-            </div>
-          </div>
+            </AnimatePresence>
+            {/* -------------------------------------------------------------
+                TOP BAR NAVIGATION
+                ------------------------------------------------------------- */}
+            <div className="flex items-center justify-between w-full max-w-7xl mx-auto pb-4 border-b border-white/[0.08] shrink-0">
+              <div className="flex items-center gap-3">
+                <AuraBrandMark size={24} isPlaying={isPlaying} />
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono font-bold uppercase tracking-widest text-zinc-300">
+                    NOW PLAYING
+                  </span>
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${sourceBadge.color}`}>
+                    {sourceBadge.label}
+                  </span>
+                  {currentTrack.fileFormat && (
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-white/[0.04] text-zinc-400 font-mono border border-white/[0.06]">
+                      {currentTrack.fileFormat} {currentTrack.fileSize ? `• ${formatBytes(currentTrack.fileSize)}` : ''}
+                    </span>
+                  )}
+                </div>
+              </div>
 
-          {/* Center Room Status (if active in Listen Together) */}
-          {isInRoom && activeRoom && (
-            <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs font-semibold text-emerald-300 font-mono">
-                Room: {activeRoom.roomName}
-              </span>
-              <span className="text-zinc-500 text-xs">•</span>
-              <span className="text-[11px] text-zinc-400">
-                {participants.length} listening {isOwner ? '(Host)' : ''}
-              </span>
-            </div>
-          )}
-
-          {/* Top Right Quick Actions */}
-          <div className="flex items-center gap-2">
-            {/* Quick Audio DSP Studio */}
-            <button
-              onClick={() => setIsAudioControlsOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white border border-white/[0.06] text-xs font-medium transition-colors cursor-pointer"
-              title="Open Audio Studio (10-Band EQ, Effects & Dynamics)"
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Audio Studio</span>
-            </button>
-
-            {/* Queue Collapse / Expand Toggle */}
-            <button
-              onClick={() => setIsQueueCollapsed(!isQueueCollapsed)}
-              className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white border border-white/[0.06] text-xs font-medium transition-colors cursor-pointer"
-              title={isQueueCollapsed ? 'Show Up Next Queue' : 'Collapse Up Next Queue'}
-            >
-              {isQueueCollapsed ? (
-                <>
-                  <PanelRightOpen className="w-3.5 h-3.5 text-zinc-400" />
-                  <span>Show Queue</span>
-                </>
-              ) : (
-                <>
-                  <PanelRightClose className="w-3.5 h-3.5 text-zinc-400" />
-                  <span>Hide Queue</span>
-                </>
+              {/* Center Room Status (if active in Listen Together) */}
+              {isInRoom && activeRoom && (
+                <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-xs font-semibold text-emerald-300 font-mono">
+                    Room: {activeRoom.roomName}
+                  </span>
+                  <span className="text-zinc-500 text-xs">•</span>
+                  <span className="text-[11px] text-zinc-400">
+                    {participants.length} listening {isOwner ? '(Host)' : ''}
+                  </span>
+                </div>
               )}
-            </button>
 
-            {/* Sleep Timer */}
-            <button
-              onClick={() => setIsSleepTimerModalOpen(true)}
-              className={`p-2 rounded-xl border transition-colors cursor-pointer ${
-                isSleepTimerActive
-                  ? 'text-white bg-white/10 border-white/20'
-                  : 'text-zinc-400 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.06]'
-              }`}
-              title={isSleepTimerActive ? `Sleep Timer Active (${sleepTimerRemainingSecs ? Math.ceil(sleepTimerRemainingSecs / 60) + 'm left' : 'End of track'})` : 'Set Sleep Timer'}
-            >
-              <Moon className="w-4 h-4" />
-            </button>
+              {/* Top Right Quick Actions */}
+              <div className="flex items-center gap-2">
+                {/* Quick Audio DSP Studio */}
+                <MotionPress
+                  onClick={() => setIsAudioControlsOpen(true)}
+                  intensity="subtle"
+                  enableHoverScale
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white border border-white/[0.06] text-xs font-medium transition-colors cursor-pointer"
+                  title="Open Audio Studio (10-Band EQ, Effects & Dynamics)"
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Audio Studio</span>
+                </MotionPress>
 
-            {/* Close / Minimize Button */}
-            <button
-              onClick={() => setIsExpandedPlayerOpen(false)}
-              className="p-2 rounded-xl text-zinc-400 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] transition-colors cursor-pointer"
-              title="Minimize Player (Esc)"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+                {/* Queue Collapse / Expand Toggle */}
+                <MotionPress
+                  onClick={() => setIsQueueCollapsed(!isQueueCollapsed)}
+                  intensity="subtle"
+                  enableHoverScale
+                  className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white border border-white/[0.06] text-xs font-medium transition-colors cursor-pointer"
+                  title={isQueueCollapsed ? 'Show Up Next Queue' : 'Collapse Up Next Queue'}
+                >
+                  <MotionIconSwap stateKey={isQueueCollapsed ? 'open' : 'close'}>
+                    {isQueueCollapsed ? (
+                      <PanelRightOpen className="w-3.5 h-3.5 text-zinc-400" />
+                    ) : (
+                      <PanelRightClose className="w-3.5 h-3.5 text-zinc-400" />
+                    )}
+                  </MotionIconSwap>
+                  <span>{isQueueCollapsed ? 'Show Queue' : 'Hide Queue'}</span>
+                </MotionPress>
+
+                {/* Sleep Timer */}
+                <MotionPress
+                  onClick={() => setIsSleepTimerModalOpen(true)}
+                  intensity="control"
+                  enableHoverScale
+                  className={`p-2 rounded-xl border transition-colors cursor-pointer ${
+                    isSleepTimerActive
+                      ? 'text-white bg-white/10 border-white/20'
+                      : 'text-zinc-400 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.06]'
+                  }`}
+                  title={isSleepTimerActive ? `Sleep Timer Active (${sleepTimerRemainingSecs ? Math.ceil(sleepTimerRemainingSecs / 60) + 'm left' : 'End of track'})` : 'Set Sleep Timer'}
+                >
+                  <Moon className="w-4 h-4" />
+                </MotionPress>
+
+                {/* Close / Minimize Button */}
+                <MotionPress
+                  onClick={() => setIsExpandedPlayerOpen(false)}
+                  intensity="control"
+                  enableHoverScale
+                  className="p-2 rounded-xl text-zinc-400 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] transition-colors cursor-pointer"
+                  title="Minimize Player (Esc)"
+                >
+                  <X className="w-4 h-4" />
+                </MotionPress>
+              </div>
+            </div>
 
         {/* -------------------------------------------------------------
             MAIN BODY — THREE BALANCED AREAS
@@ -322,67 +361,100 @@ export const ExpandedPlayer: React.FC = () => {
             {/* Large Album Artwork with Ambient Refraction Halo */}
             <div className="relative group w-72 h-72 sm:w-80 sm:h-80 xl:w-84 xl:h-84 flex items-center justify-center">
               {/* Sound-reactive soft ambient halo */}
-              {currentTrack.coverUrl && isPlaying && (
-                <div 
-                  className="absolute -inset-3 rounded-3xl scale-110 pointer-events-none transition-opacity duration-700 -z-10"
-                  style={{
-                    backgroundImage: `url(${currentTrack.coverUrl})`,
-                    backgroundSize: 'cover',
-                    filter: 'blur(50px)',
-                    opacity: 0.55,
-                  }}
-                />
-              )}
-
-              <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-[0_24px_70px_rgba(0,0,0,0.9)] border border-white/25 bg-[#0d1017] flex items-center justify-center transition-all">
-                {currentTrack.coverUrl ? (
-                  <img
-                    src={currentTrack.coverUrl}
-                    alt={currentTrack.title}
-                    className={`w-full h-full object-cover transition-transform duration-700 ${
-                      isPlaying ? 'scale-[1.02]' : 'scale-100'
-                    }`}
-                    referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLElement).style.display = 'none';
+              <AnimatePresence>
+                {currentTrack.coverUrl && isPlaying && (
+                  <motion.div
+                    key={`halo-${currentTrack.coverUrl}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.55 }}
+                    exit={{ opacity: 0 }}
+                    transition={prefersReducedMotion ? REDUCED_FADE_TRANSITION : MOTION_TRANSITION.emphasized}
+                    className="absolute -inset-3 rounded-3xl scale-110 pointer-events-none -z-10"
+                    style={{
+                      backgroundImage: `url(${currentTrack.coverUrl})`,
+                      backgroundSize: 'cover',
+                      filter: 'blur(50px)',
                     }}
                   />
-                ) : (
-                  <div className={`w-full h-full bg-gradient-to-br ${currentTrack.coverColor || 'from-[#141a29] to-[#080b12]'} flex flex-col items-center justify-center p-6 text-white`}>
-                    <Music className="w-16 h-16 opacity-30 mb-3" />
-                    <span className="text-xs font-mono tracking-widest opacity-40 uppercase font-semibold">
-                      AURA AUDIO
-                    </span>
-                  </div>
                 )}
+              </AnimatePresence>
+
+              <motion.div
+                animate={
+                  prefersReducedMotion
+                    ? undefined
+                    : { scale: isPlaying && !isLocallySilenced ? 1.02 : 1 }
+                }
+                transition={sharedTransition}
+                className="relative w-full h-full rounded-3xl overflow-hidden shadow-[0_24px_70px_rgba(0,0,0,0.9)] border border-white/25 bg-[#0d1017] flex items-center justify-center"
+              >
+                <AnimatePresence initial={false}>
+                  <MotionArtwork
+                    key={`${currentTrack.id}:${currentTrack.coverUrl || ''}`}
+                    artworkKey={`${currentTrack.id}:${currentTrack.coverUrl || ''}`}
+                    className="absolute inset-0 w-full h-full"
+                  >
+                    {currentTrack.coverUrl ? (
+                      <img
+                        src={currentTrack.coverUrl}
+                        alt={currentTrack.title}
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLElement).style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div className={`w-full h-full bg-gradient-to-br ${currentTrack.coverColor || 'from-[#141a29] to-[#080b12]'} flex flex-col items-center justify-center p-6 text-white`}>
+                        <Music className="w-16 h-16 opacity-30 mb-3" />
+                        <span className="text-xs font-mono tracking-widest opacity-40 uppercase font-semibold">
+                          AURA AUDIO
+                        </span>
+                      </div>
+                    )}
+                  </MotionArtwork>
+                </AnimatePresence>
 
                 {/* Source Attribution Tag */}
-                <div className="absolute top-3 left-3">
+                <div className="absolute top-3 left-3 z-10">
                   <span className={`text-[10px] font-mono px-2 py-0.5 rounded-lg backdrop-blur-md border ${sourceBadge.color}`}>
                     {sourceBadge.label}
                   </span>
                 </div>
-              </div>
+              </motion.div>
             </div>
 
             {/* Track Metadata */}
             <div className="mt-5 w-full max-w-sm">
-              <h2 className="text-2xl font-page-title text-white tracking-tight leading-tight line-clamp-2">
-                {currentTrack.title}
-              </h2>
-              <p className="text-sm font-artist-name text-zinc-300 mt-1 truncate">
-                {currentTrack.artist}
-              </p>
-              {currentTrack.album && currentTrack.album !== 'YouTube Stream' && currentTrack.album !== 'Audius Stream' && (
-                <p className="text-xs text-zinc-500 font-mono mt-0.5 truncate">
-                  {currentTrack.album}
-                </p>
-              )}
+              <AnimatePresence mode="wait" initial={false}>
+                <MotionFadeSlide
+                  key={currentTrack.id}
+                  direction="up"
+                  distance={4}
+                  duration="micro"
+                >
+                  <h2 className="text-2xl font-page-title text-white tracking-tight leading-tight line-clamp-2">
+                    {currentTrack.title}
+                  </h2>
+                  <p className="text-sm font-artist-name text-zinc-300 mt-1 truncate">
+                    {currentTrack.artist}
+                  </p>
+                  {currentTrack.album && currentTrack.album !== 'YouTube Stream' && currentTrack.album !== 'Audius Stream' && (
+                    <p className="text-xs text-zinc-500 font-mono mt-0.5 truncate">
+                      {currentTrack.album}
+                    </p>
+                  )}
+                </MotionFadeSlide>
+              </AnimatePresence>
 
               {/* Action Toolbar */}
               <div className="flex items-center justify-center xl:justify-start gap-2 mt-4 pt-3 border-t border-white/[0.06]">
-                <button
+                <MotionPress
                   onClick={() => toggleFavorite(currentTrack.id)}
+                  intensity="control"
+                  enableHoverScale
+                  aria-label={currentTrack.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                  aria-pressed={Boolean(currentTrack.isFavorite)}
                   className={`p-2.5 rounded-xl border transition-colors cursor-pointer ${
                     currentTrack.isFavorite
                       ? 'bg-rose-500/10 text-rose-500 border-rose-500/30'
@@ -390,16 +462,30 @@ export const ExpandedPlayer: React.FC = () => {
                   }`}
                   title={currentTrack.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                 >
-                  <Heart className={`w-4 h-4 ${currentTrack.isFavorite ? 'fill-current' : ''}`} />
-                </button>
+                  <motion.span
+                    key={`${currentTrack.id}:${Boolean(currentTrack.isFavorite)}`}
+                    className="inline-flex items-center justify-center"
+                    initial={false}
+                    animate={
+                      prefersReducedMotion
+                        ? undefined
+                        : { scale: currentTrack.isFavorite ? [1, 1.24, 1] : [1, 0.9, 1] }
+                    }
+                    transition={{ duration: MOTION_DURATION.standard, ease: MOTION_EASE.emphasized }}
+                  >
+                    <Heart className={`w-4 h-4 ${currentTrack.isFavorite ? 'fill-current' : ''}`} />
+                  </motion.span>
+                </MotionPress>
 
-                <button
+                <MotionPress
                   onClick={() => currentTrack && openTrackInfo(currentTrack)}
+                  intensity="control"
+                  enableHoverScale
                   className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-400 hover:text-white border border-white/[0.06] transition-colors cursor-pointer"
                   title="Track Details & Metadata (I)"
                 >
                   <Info className="w-4 h-4" />
-                </button>
+                </MotionPress>
 
                 {currentTrack.genre && (
                   <span className="text-[10px] font-mono px-2 py-1 rounded-lg bg-white/[0.03] text-zinc-400 border border-white/[0.05] truncate max-w-[120px]">
@@ -514,74 +600,94 @@ export const ExpandedPlayer: React.FC = () => {
             {/* Master Controls Floating Glass Tray */}
             <div className="flex items-center justify-center">
               <div className="flex items-center justify-center gap-2.5 sm:gap-4 px-5 sm:px-6 py-2.5 rounded-full bg-white/[0.06] backdrop-blur-xl border border-white/[0.10] shadow-lg">
-                <button
+                <MotionPress
                   onClick={toggleShuffle}
+                  intensity="control"
+                  enableHoverScale
+                  aria-pressed={isShuffle}
                   className={`p-2.5 rounded-full transition-colors cursor-pointer ${
                     isShuffle ? 'text-sky-300 bg-white/15 border border-white/20' : 'text-zinc-400 hover:text-white'
                   }`}
                   title={`Shuffle: ${isShuffle ? 'On' : 'Off'}`}
                 >
                   <Shuffle className="w-4 h-4" />
-                </button>
+                </MotionPress>
 
-                <button
+                <MotionPress
                   onClick={() => handleSeekRelative(-10)}
+                  intensity="control"
+                  enableHoverScale={!isInRoom || isOwner}
                   className={`p-2.5 rounded-full transition-colors ${
                     isInRoom && !isOwner ? 'text-zinc-600 cursor-not-allowed' : 'text-zinc-400 hover:text-white cursor-pointer'
                   }`}
                   title={isInRoom && !isOwner ? 'Only room host can seek' : 'Rewind 10s'}
                 >
                   <RotateCcw className="w-4 h-4" />
-                </button>
+                </MotionPress>
 
-                <button
+                <MotionPress
                   onClick={isInRoom ? roomPrev : prevTrack}
-                  className="p-2.5 text-zinc-300 hover:text-white rounded-full transition-colors cursor-pointer active:scale-95"
+                  intensity="control"
+                  enableHoverScale
+                  className="p-2.5 text-zinc-300 hover:text-white rounded-full transition-colors cursor-pointer"
                   title="Previous Track"
                 >
                   <SkipBack className="w-5 h-5 fill-current" />
-                </button>
+                </MotionPress>
 
                 {/* Prominent 64px Circular Play/Pause */}
-                <button
+                <MotionPress
                   onClick={isInRoom ? roomTogglePlay : togglePlay}
-                  className="w-16 h-16 rounded-full bg-white text-zinc-950 hover:bg-zinc-100 flex items-center justify-center shadow-[0_0_36px_rgba(255,255,255,0.55)] active:scale-95 transition-all cursor-pointer shrink-0"
+                  intensity="control"
+                  enableHoverScale
+                  className="w-16 h-16 rounded-full bg-white text-zinc-950 hover:bg-zinc-100 flex items-center justify-center shadow-[0_0_36px_rgba(255,255,255,0.55)] transition-colors cursor-pointer shrink-0"
                   title={isPlaying && !isLocallySilenced ? 'Pause' : 'Play'}
                 >
-                  {isPlaying && !isLocallySilenced ? (
-                    <Pause className="w-7 h-7 fill-current" />
-                  ) : (
-                    <Play className="w-7 h-7 fill-current translate-x-0.5" />
-                  )}
-                </button>
+                  <MotionIconSwap stateKey={isPlaying && !isLocallySilenced ? 'pause' : 'play'}>
+                    {isPlaying && !isLocallySilenced ? (
+                      <Pause className="w-7 h-7 fill-current" />
+                    ) : (
+                      <Play className="w-7 h-7 fill-current translate-x-0.5" />
+                    )}
+                  </MotionIconSwap>
+                </MotionPress>
 
-                <button
+                <MotionPress
                   onClick={isInRoom ? roomNext : nextTrack}
-                  className="p-2.5 text-zinc-300 hover:text-white rounded-full transition-colors cursor-pointer active:scale-95"
+                  intensity="control"
+                  enableHoverScale
+                  className="p-2.5 text-zinc-300 hover:text-white rounded-full transition-colors cursor-pointer"
                   title="Next Track"
                 >
                   <SkipForward className="w-5 h-5 fill-current" />
-                </button>
+                </MotionPress>
 
-                <button
+                <MotionPress
                   onClick={() => handleSeekRelative(10)}
+                  intensity="control"
+                  enableHoverScale={!isInRoom || isOwner}
                   className={`p-2.5 rounded-full transition-colors ${
                     isInRoom && !isOwner ? 'text-zinc-600 cursor-not-allowed' : 'text-zinc-400 hover:text-white cursor-pointer'
                   }`}
                   title={isInRoom && !isOwner ? 'Only room host can seek' : 'Forward 10s'}
                 >
                   <RotateCw className="w-4 h-4" />
-                </button>
+                </MotionPress>
 
-                <button
+                <MotionPress
                   onClick={cycleRepeat}
+                  intensity="control"
+                  enableHoverScale
+                  aria-pressed={repeatMode !== 'off'}
                   className={`p-2.5 rounded-full transition-colors cursor-pointer ${
                     repeatMode !== 'off' ? 'text-sky-300 bg-white/15 border border-white/20' : 'text-zinc-400 hover:text-white'
                   }`}
                   title={`Repeat: ${repeatMode}`}
                 >
-                  {repeatMode === 'one' ? <Repeat1 className="w-4 h-4" /> : <Repeat className="w-4 h-4" />}
-                </button>
+                  <MotionIconSwap stateKey={repeatMode}>
+                    {repeatMode === 'one' ? <Repeat1 className="w-4 h-4" /> : <Repeat className="w-4 h-4" />}
+                  </MotionIconSwap>
+                </MotionPress>
               </div>
             </div>
 
@@ -591,9 +697,10 @@ export const ExpandedPlayer: React.FC = () => {
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] font-mono uppercase text-zinc-400 mr-1 hidden sm:inline">Speed:</span>
                 {[0.75, 1.0, 1.25, 1.5].map((rate) => (
-                  <button
+                  <MotionPress
                     key={rate}
                     onClick={() => setPlaybackRate(rate)}
+                    intensity="subtle"
                     className={`px-2.5 py-1 text-xs font-mono rounded-lg transition-colors cursor-pointer ${
                       Math.abs(playbackRate - rate) < 0.01
                         ? 'bg-white text-zinc-950 font-bold shadow-sm'
@@ -601,23 +708,27 @@ export const ExpandedPlayer: React.FC = () => {
                     }`}
                   >
                     {rate}×
-                  </button>
+                  </MotionPress>
                 ))}
               </div>
 
               {/* Master Volume */}
               <div className="flex items-center gap-2">
-                <button
+                <MotionPress
                   onClick={toggleMute}
+                  intensity="control"
+                  enableHoverScale
                   className="p-1.5 text-zinc-400 hover:text-white transition-colors cursor-pointer"
                   title={isMuted ? 'Unmute' : 'Mute'}
                 >
-                  {isMuted || volume === 0 ? (
-                    <VolumeX className="w-4 h-4 text-rose-400" />
-                  ) : (
-                    <Volume2 className="w-4 h-4" />
-                  )}
-                </button>
+                  <MotionIconSwap stateKey={isMuted || volume === 0 ? 'muted' : 'audible'}>
+                    {isMuted || volume === 0 ? (
+                      <VolumeX className="w-4 h-4 text-rose-400" />
+                    ) : (
+                      <Volume2 className="w-4 h-4" />
+                    )}
+                  </MotionIconSwap>
+                </MotionPress>
                 <div className="w-24">
                   <input
                     type="range"
@@ -626,10 +737,10 @@ export const ExpandedPlayer: React.FC = () => {
                     step="0.01"
                     value={isMuted ? 0 : volume}
                     onChange={(e) => setVolume(parseFloat(e.target.value))}
-                    className="w-full accent-white"
+                    className="w-full accent-white transition-[filter] duration-150 hover:brightness-110"
                   />
                 </div>
-                <span className="text-[11px] font-mono text-zinc-400 w-8 text-right">
+                <span className="text-[11px] font-mono tabular-nums text-zinc-400 w-8 text-right">
                   {Math.round((isMuted ? 0 : volume) * 100)}%
                 </span>
               </div>
@@ -638,8 +749,15 @@ export const ExpandedPlayer: React.FC = () => {
           </div>
 
           {/* AREA 3: RIGHT LISTENING CONTEXT (UP NEXT QUEUE) */}
-          {!isQueueCollapsed && (
-            <div className="hidden xl:flex xl:col-span-3 flex-col h-[520px] rounded-3xl glass-ambient border border-white/[0.12] p-4 shadow-[0_16px_40px_rgba(0,0,0,0.7)] overflow-hidden">
+          <AnimatePresence initial={false}>
+            {!isQueueCollapsed && (
+              <MotionFadeSlide
+                key="desktop-up-next-panel"
+                direction="right"
+                distance={14}
+                duration="surface"
+                className="hidden xl:flex xl:col-span-3 flex-col h-[520px] rounded-3xl glass-ambient border border-white/[0.12] p-4 shadow-[0_16px_40px_rgba(0,0,0,0.7)] overflow-hidden"
+              >
               {/* Queue Header */}
               <div className="flex items-center justify-between pb-3 border-b border-white/[0.06] shrink-0">
                 <div className="flex items-center gap-2">
@@ -678,15 +796,23 @@ export const ExpandedPlayer: React.FC = () => {
               {/* Pinned Current Playing Track */}
               <div className="my-3 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05] flex items-center gap-3 shrink-0">
                 <div className="w-9 h-9 rounded-lg overflow-hidden bg-zinc-900 border border-white/10 shrink-0 relative">
-                  {currentTrack.coverUrl ? (
-                    <img src={currentTrack.coverUrl} alt={currentTrack.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-400">
-                      <Music className="w-4 h-4" />
-                    </div>
-                  )}
+                  <AnimatePresence initial={false}>
+                    <MotionArtwork
+                      key={`pinned-${currentTrack.id}:${currentTrack.coverUrl || ''}`}
+                      artworkKey={`pinned-${currentTrack.id}:${currentTrack.coverUrl || ''}`}
+                      className="absolute inset-0 w-full h-full"
+                    >
+                      {currentTrack.coverUrl ? (
+                        <img src={currentTrack.coverUrl} alt={currentTrack.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-400">
+                          <Music className="w-4 h-4" />
+                        </div>
+                      )}
+                    </MotionArtwork>
+                  </AnimatePresence>
                   {isPlaying && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <div className="absolute inset-0 z-10 bg-black/40 flex items-center justify-center">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     </div>
                   )}
@@ -782,11 +908,14 @@ export const ExpandedPlayer: React.FC = () => {
                 )}
               </div>
 
-            </div>
-          )}
+              </MotionFadeSlide>
+            )}
+          </AnimatePresence>
 
         </div>
-      </div>
+      </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };

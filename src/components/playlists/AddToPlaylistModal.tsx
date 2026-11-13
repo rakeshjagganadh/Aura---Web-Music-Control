@@ -1,4 +1,7 @@
 import React from 'react';
+import { AnimatePresence } from 'motion/react';
+import { MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
+import { MotionIconSwap } from '../common/motion/MotionInteractive';
 import { useMusic } from '../../context/MusicContext';
 import { Track } from '../../types';
 import { X, Plus, Check } from 'lucide-react';
@@ -24,8 +27,6 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
     return [];
   }, [track, tracks]);
 
-  if (!isOpen || targetTracks.length === 0) return null;
-
   const isBulk = targetTracks.length > 1;
 
   const handlePlaylistClick = (playlistId: string, inPlaylist: boolean) => {
@@ -37,8 +38,18 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150 select-none">
-      <div className="relative w-full max-w-sm rounded-2xl bg-[#0e1017] border border-white/10 shadow-2xl p-5 flex flex-col gap-4">
+    <AnimatePresence>
+      {isOpen && targetTracks.length > 0 && (
+        <MotionBackdrop
+          onClick={onClose}
+          style={{ pointerEvents: isOpen ? 'auto' : 'none' }}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 select-none"
+        >
+          <MotionModal
+            variant="center"
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-sm rounded-2xl bg-[#0e1017] border border-white/10 shadow-2xl p-5 flex flex-col gap-4"
+          >
         
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -52,7 +63,7 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer aura-pressable"
           >
             <X className="w-4 h-4" />
           </button>
@@ -73,7 +84,7 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
                 <button
                   key={pl.id}
                   onClick={() => handlePlaylistClick(pl.id, allInPlaylist)}
-                  className={`flex items-center justify-between p-2.5 rounded-xl text-xs transition-colors cursor-pointer ${
+                  className={`flex items-center justify-between p-2.5 rounded-xl text-xs transition-colors cursor-pointer aura-pressable-subtle ${
                     allInPlaylist
                       ? 'bg-indigo-950/40 text-indigo-200 border border-indigo-500/40'
                       : someInPlaylist
@@ -88,11 +99,13 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
                     <span className="truncate">{pl.title}</span>
                   </div>
 
-                  {allInPlaylist ? (
-                    <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                  ) : (
-                    <Plus className="w-4 h-4 text-zinc-500 hover:text-zinc-300 shrink-0" />
-                  )}
+                  <MotionIconSwap stateKey={allInPlaylist} className="inline-flex items-center justify-center shrink-0">
+                    {allInPlaylist ? (
+                      <Check className="w-4 h-4 text-indigo-400" />
+                    ) : (
+                      <Plus className="w-4 h-4 text-zinc-500 hover:text-zinc-300" />
+                    )}
+                  </MotionIconSwap>
                 </button>
               );
             })
@@ -105,13 +118,15 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
             onClose();
             setIsPlaylistModalOpen(true);
           }}
-          className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-semibold text-indigo-300 bg-indigo-600/15 hover:bg-indigo-600/25 border border-indigo-500/30 rounded-xl transition-colors cursor-pointer"
+          className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-semibold text-indigo-300 bg-indigo-600/15 hover:bg-indigo-600/25 border border-indigo-500/30 rounded-xl transition-colors cursor-pointer aura-pressable"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>Create New Space</span>
         </button>
 
-      </div>
-    </div>
+          </MotionModal>
+        </MotionBackdrop>
+      )}
+    </AnimatePresence>
   );
 };

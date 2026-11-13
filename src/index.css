@@ -52,6 +52,18 @@
     --glass-ambient-bg: rgba(16, 22, 36, 0.48);
     --glass-frosted-bg: rgba(12, 15, 25, 0.82);
     --glass-solid-bg: #141722;
+
+    /* Global Motion System Tokens (Durations & Cubic-Bezier Easings) */
+    --motion-duration-instant: 120ms;
+    --motion-duration-micro: 160ms;
+    --motion-duration-standard: 240ms;
+    --motion-duration-surface: 300ms;
+    --motion-duration-page: 340ms;
+    --motion-duration-shared: 420ms;
+
+    --motion-ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+    --motion-ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+    --motion-ease-exit: cubic-bezier(0.4, 0, 1, 1);
   }
 
   body {
@@ -166,19 +178,26 @@
   box-shadow: 
     inset 0 1px 0 0 rgba(255, 255, 255, 0.22),
     0 4px 16px rgba(0, 0, 0, 0.45);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    transform var(--motion-duration-micro) var(--motion-ease-emphasized),
+    background-color var(--motion-duration-micro) var(--motion-ease-emphasized),
+    border-color var(--motion-duration-micro) var(--motion-ease-emphasized),
+    box-shadow var(--motion-duration-micro) var(--motion-ease-emphasized),
+    opacity var(--motion-duration-micro) var(--motion-ease-standard);
 }
 
-.glass-reflective:hover {
-  background-color: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.18);
-  border-top-color: rgba(255, 255, 255, 0.35);
-  box-shadow: 
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.30),
-    0 8px 22px rgba(0, 0, 0, 0.55);
+@media (hover: hover) and (pointer: fine) {
+  .glass-reflective:hover {
+    background-color: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.18);
+    border-top-color: rgba(255, 255, 255, 0.35);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.30),
+      0 8px 22px rgba(0, 0, 0, 0.55);
+  }
 }
 
-.glass-reflective:active {
+.glass-reflective:active:not(:disabled) {
   transform: scale(0.97);
   background-color: rgba(255, 255, 255, 0.08);
 }
@@ -195,17 +214,23 @@
   box-shadow: 
     inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
     0 8px 24px rgba(0, 0, 0, 0.50);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    transform var(--motion-duration-standard) var(--motion-ease-emphasized),
+    background-color var(--motion-duration-standard) var(--motion-ease-emphasized),
+    border-color var(--motion-duration-standard) var(--motion-ease-emphasized),
+    box-shadow var(--motion-duration-standard) var(--motion-ease-emphasized),
+    opacity var(--motion-duration-standard) var(--motion-ease-standard);
 }
 
-.glass-ambient:hover, .aura-glass-ambient:hover, .aura-glass-tier3:hover {
-  background-color: rgba(22, 28, 48, 0.60);
-  border-color: rgba(255, 255, 255, 0.14);
-  border-top-color: rgba(255, 255, 255, 0.24);
-  box-shadow: 
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.20),
-    0 14px 32px rgba(0, 0, 0, 0.65);
-  transform: translateY(-2px);
+@media (hover: hover) and (pointer: fine) {
+  .glass-ambient:hover, .aura-glass-ambient:hover, .aura-glass-tier3:hover {
+    background-color: rgba(22, 28, 48, 0.60);
+    border-color: rgba(255, 255, 255, 0.14);
+    border-top-color: rgba(255, 255, 255, 0.24);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.20),
+      0 14px 32px rgba(0, 0, 0, 0.65);
+  }
 }
 
 /* Tier 5: Frosted Glass — Context menus, dropdowns, tooltips, dialogs */
@@ -290,8 +315,10 @@
   border-radius: 9999px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.28);
+@media (hover: hover) and (pointer: fine) {
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.28);
+  }
 }
 
 /* Range input styling - tactile high-precision audio hardware */
@@ -300,6 +327,10 @@ input[type="range"] {
   appearance: none;
   background: transparent;
   cursor: pointer;
+}
+
+input[type="range"]:disabled {
+  cursor: not-allowed;
 }
 
 input[type="range"]:focus {
@@ -321,15 +352,23 @@ input[type="range"]::-webkit-slider-thumb {
   background: #ffffff;
   margin-top: -5px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.4);
-  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease;
+  transition: transform var(--motion-duration-instant) var(--motion-ease-emphasized), background-color var(--motion-duration-instant) ease;
 }
 
-input[type="range"]:hover::-webkit-slider-thumb {
-  transform: scale(1.25);
-  background: #ffffff;
+input[type="range"]:disabled::-webkit-slider-thumb {
+  transform: none;
+  box-shadow: none;
+  cursor: not-allowed;
 }
 
-input[type="range"]:active::-webkit-slider-thumb {
+@media (hover: hover) and (pointer: fine) {
+  input[type="range"]:not(:disabled):hover::-webkit-slider-thumb {
+    transform: scale(1.25);
+    background: #ffffff;
+  }
+}
+
+input[type="range"]:not(:disabled):active::-webkit-slider-thumb {
   transform: scale(1.35);
   background: #ffffff;
 }
@@ -358,6 +397,7 @@ input[type="range"].slider-vertical::-webkit-slider-thumb {
   background: #ffffff;
   margin-left: -5px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  transition: transform var(--motion-duration-instant) var(--motion-ease-emphasized), background-color var(--motion-duration-instant) ease;
 }
 
 /* Safe Area Inset Utilities */
@@ -383,8 +423,93 @@ input[type="range"].slider-vertical::-webkit-slider-thumb {
   scrollbar-width: none;
 }
 
+/* Opt-in Global Motion Utilities (strictly GPU transform/opacity) */
+.aura-pressable {
+  transition:
+    transform var(--motion-duration-instant) var(--motion-ease-standard),
+    opacity var(--motion-duration-instant) var(--motion-ease-standard);
+}
+
+.aura-pressable:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.aura-pressable-subtle {
+  transition:
+    transform var(--motion-duration-instant) var(--motion-ease-standard),
+    opacity var(--motion-duration-instant) var(--motion-ease-standard);
+}
+
+.aura-pressable-subtle:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.aura-icon-transition {
+  transition:
+    transform var(--motion-duration-micro) var(--motion-ease-standard),
+    opacity var(--motion-duration-micro) var(--motion-ease-standard),
+    color var(--motion-duration-micro) var(--motion-ease-standard);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .aura-hover-lift {
+    transition: transform var(--motion-duration-micro) var(--motion-ease-standard);
+  }
+
+  .aura-hover-lift:hover {
+    transform: translateY(-2px);
+  }
+
+  .aura-hover-scale {
+    transition: transform var(--motion-duration-micro) var(--motion-ease-standard);
+  }
+
+  .aura-hover-scale:hover {
+    transform: scale(1.015);
+  }
+
+  .aura-hover-scale:active:not(:disabled) {
+    transform: scale(0.985);
+  }
+}
+
+/* Calm GPU-composited dark loading skeleton shimmer */
+@keyframes aura-skeleton-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.aura-skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: rgba(255, 255, 255, 0.035);
+}
+
+.aura-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.055) 50%,
+    transparent 100%
+  );
+  animation: aura-skeleton-shimmer 1.8s var(--motion-ease-standard) infinite;
+  will-change: transform;
+  pointer-events: none;
+}
+
 /* Reduced motion accessibility constraint */
 @media (prefers-reduced-motion: reduce) {
+  .aura-skeleton::after {
+    display: none;
+  }
   *, ::before, ::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

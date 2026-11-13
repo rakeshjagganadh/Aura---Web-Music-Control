@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { AnimatePresence } from 'motion/react';
+import { MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
 import { useMusic } from '../../context/MusicContext';
 import { formatSeconds, formatPreciseSeconds } from '../../utils/formatTime';
 import { 
@@ -41,8 +43,6 @@ export const TrimExportModal: React.FC = () => {
   const [bitDepth, setBitDepth] = useState<16 | 24 | 32>(24);
   const [sampleRate, setSampleRate] = useState<44100 | 48000 | 96000>(44100);
   const [customFilename, setCustomFilename] = useState('');
-
-  if (!isTrimExportModalOpen) return null;
 
   const trackDuration = duration || currentTrack?.duration || 180;
   const trimStart = trimFade.trimStart || 0;
@@ -101,8 +101,18 @@ export const TrimExportModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-      <div className="relative w-full max-w-2xl bg-zinc-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <AnimatePresence>
+      {isTrimExportModalOpen && (
+        <MotionBackdrop
+          onClick={() => setIsTrimExportModalOpen(false)}
+          style={{ pointerEvents: isTrimExportModalOpen ? 'auto' : 'none' }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+        >
+          <MotionModal
+            variant="center"
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-2xl bg-zinc-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+          >
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/5">
           <div className="flex items-center gap-3">
@@ -118,7 +128,7 @@ export const TrimExportModal: React.FC = () => {
           </div>
           <button
             onClick={() => setIsTrimExportModalOpen(false)}
-            className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+            className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer aura-pressable"
           >
             <X className="w-5 h-5" />
           </button>
@@ -355,7 +365,7 @@ export const TrimExportModal: React.FC = () => {
             <button
               onClick={handleSaveToLibrary}
               disabled={isSavingClip || isExporting}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold border border-white/10 disabled:opacity-50 transition-colors"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold border border-white/10 disabled:opacity-50 transition-colors cursor-pointer aura-pressable"
             >
               <Save className="w-3.5 h-3.5 text-cyan-400" />
               {isSavingClip ? 'Saving...' : 'Save Clip to Library'}
@@ -364,14 +374,16 @@ export const TrimExportModal: React.FC = () => {
             <button
               onClick={handleExportDownload}
               disabled={isExporting || isSavingClip}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/20 disabled:opacity-50 transition-all"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/20 disabled:opacity-50 transition-colors cursor-pointer aura-pressable"
             >
               <Download className="w-3.5 h-3.5" />
               {isExporting ? 'Rendering Audio...' : 'Export WAV Master'}
             </button>
           </div>
         </div>
-      </div>
-    </div>
+          </MotionModal>
+        </MotionBackdrop>
+      )}
+    </AnimatePresence>
   );
 };

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AnimatePresence, LayoutGroup } from 'motion/react';
 import { useMusic } from '../../context/MusicContext';
 import { QuickSoundControls } from '../sound-lab/QuickSoundControls';
 import { LoopABController } from '../sound-lab/LoopABController';
@@ -15,6 +16,8 @@ import { PresetsProfilesPanel } from '../audio-controls/PresetsProfilesPanel';
 import { StemsPlaceholderPanel } from '../audio-controls/StemsPlaceholderPanel';
 import { AudioVisualizer } from '../visualizer/AudioVisualizer';
 import { WaveformScrubber } from '../waveform/WaveformScrubber';
+import { MotionFadeSlide } from '../common/motion/MotionSurface';
+import { SharedIndicator } from '../common/motion/MotionInteractive';
 import { 
   Sparkles, 
   SlidersHorizontal, 
@@ -254,7 +257,7 @@ export const StudioView: React.FC = () => {
             <button
               onClick={toggleABBypass}
               title="A/B Comparison: Toggle between original unprocessed audio (A: RAW) and studio DSP (B: DSP)"
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all border ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-colors border cursor-pointer aura-pressable ${
                 isABBypassed
                   ? 'bg-zinc-900 text-amber-300 border-amber-500/30 shadow-sm'
                   : 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40 shadow-cyan-500/10 shadow-sm'
@@ -267,7 +270,7 @@ export const StudioView: React.FC = () => {
             {/* Lossless Export / Trim Modal Launcher */}
             <button
               onClick={() => setIsTrimExportModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600/90 hover:bg-emerald-500 text-white shadow-sm transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600/90 hover:bg-emerald-500 text-white shadow-sm transition-colors cursor-pointer aura-pressable"
               title="Open Lossless Audio Trimmer & WAV Master Export"
             >
               <Scissors className="w-3.5 h-3.5" />
@@ -277,7 +280,7 @@ export const StudioView: React.FC = () => {
             {/* Pro / Simple Mode Toggle */}
             <button
               onClick={toggleAdvancedMode}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border transition-colors cursor-pointer aura-pressable ${
                 isAdvancedMode 
                   ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30' 
                   : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border-white/5'
@@ -292,7 +295,7 @@ export const StudioView: React.FC = () => {
             <button
               onClick={resetAllAudioProcessing}
               title="Reset all studio audio processing, filters, and effects to flat defaults"
-              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-xl transition-colors"
+              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-xl transition-colors cursor-pointer aura-pressable"
             >
               <RefreshCw className="w-3 h-3" />
               <span>Reset All</span>
@@ -301,7 +304,7 @@ export const StudioView: React.FC = () => {
             {/* Full Screen Expanded Player */}
             <button
               onClick={() => setIsExpandedPlayerOpen(true)}
-              className="p-1.5 text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-xl transition-colors"
+              className="p-1.5 text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-xl transition-colors cursor-pointer aura-pressable"
               title="Open Fullscreen Visual Player"
               aria-label="Open Fullscreen Visual Player"
             >
@@ -362,49 +365,65 @@ export const StudioView: React.FC = () => {
       {/* ======================================================== */}
       <nav aria-label="Studio Categories" className="flex flex-col gap-3">
         {/* Primary 5-Category Tabs Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 p-1.5 rounded-2xl aura-glass-ambient">
-          {CATEGORIES.map((cat) => {
-            const isActive = activeCategory === cat.id;
-            return (
-              <button
-                key={cat.id}
-                onClick={() => handleSelectCategory(cat.id)}
-                className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all text-left ${
-                  isActive
-                    ? 'bg-zinc-800 text-white border border-white/15 shadow-sm'
-                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 border border-transparent'
-                }`}
-              >
-                <div className="shrink-0">{cat.icon}</div>
-                <div className="truncate">
-                  <span className="block truncate">{cat.label}</span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Sub-Navigation if category has multiple modules */}
-        {currentCategoryConfig.subModules && currentCategoryConfig.subModules.length > 1 && (
-          <div className="flex items-center gap-1.5 px-1 overflow-x-auto scrollbar-none">
-            {currentCategoryConfig.subModules.map((sub) => {
-              const isSubActive = activeSubModule === sub.id;
+        <LayoutGroup id="studio-categories">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 p-1.5 rounded-2xl aura-glass-ambient">
+            {CATEGORIES.map((cat) => {
+              const isActive = activeCategory === cat.id;
               return (
                 <button
-                  key={sub.id}
-                  onClick={() => handleSelectSubModule(sub.id)}
-                  className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-all ${
-                    isSubActive
-                      ? 'bg-zinc-800 text-cyan-300 border border-cyan-500/30 shadow-sm'
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60 border border-white/5'
+                  key={cat.id}
+                  onClick={() => handleSelectCategory(cat.id)}
+                  className={`relative flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-colors text-left cursor-pointer aura-pressable ${
+                    isActive
+                      ? 'text-white'
+                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 border border-transparent'
                   }`}
                 >
-                  <span className={isSubActive ? 'text-cyan-400' : 'text-zinc-500'}>{sub.icon}</span>
-                  <span>{sub.label}</span>
+                  {isActive && (
+                    <SharedIndicator
+                      layoutId="studio-category-pill"
+                      className="absolute inset-0 rounded-xl bg-zinc-800 border border-white/15 shadow-sm"
+                    />
+                  )}
+                  <div className="relative z-10 shrink-0">{cat.icon}</div>
+                  <div className="relative z-10 truncate">
+                    <span className="block truncate">{cat.label}</span>
+                  </div>
                 </button>
               );
             })}
           </div>
+        </LayoutGroup>
+
+        {/* Sub-Navigation if category has multiple modules */}
+        {currentCategoryConfig.subModules && currentCategoryConfig.subModules.length > 1 && (
+          <LayoutGroup id={`studio-submodules-${activeCategory}`}>
+            <div className="flex items-center gap-1.5 px-1 overflow-x-auto scrollbar-none">
+              {currentCategoryConfig.subModules.map((sub) => {
+                const isSubActive = activeSubModule === sub.id;
+                return (
+                  <button
+                    key={sub.id}
+                    onClick={() => handleSelectSubModule(sub.id)}
+                    className={`relative flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors cursor-pointer aura-pressable ${
+                      isSubActive
+                        ? 'text-cyan-300'
+                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60 border border-white/5'
+                    }`}
+                  >
+                    {isSubActive && (
+                      <SharedIndicator
+                        layoutId="studio-submodule-pill"
+                        className="absolute inset-0 rounded-lg bg-zinc-800 border border-cyan-500/30 shadow-sm"
+                      />
+                    )}
+                    <span className={`relative z-10 ${isSubActive ? 'text-cyan-400' : 'text-zinc-500'}`}>{sub.icon}</span>
+                    <span className="relative z-10">{sub.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </LayoutGroup>
         )}
       </nav>
 
@@ -412,72 +431,53 @@ export const StudioView: React.FC = () => {
       {/* ZONE 3: CONTEXTUAL CONTROL SURFACE                       */}
       {/* ======================================================== */}
       <main aria-label="Studio Workspace" className="w-full">
-        {/* Category 1: Tuning & Tone */}
-        {activeCategory === 'tuning' && (
-          <div className="animate-in fade-in duration-150">
-            <QuickSoundControls />
-          </div>
-        )}
+        <AnimatePresence mode="wait" initial={false}>
+          <MotionFadeSlide
+            key={`${activeCategory}:${activeSubModule}`}
+            direction="up"
+            distance={6}
+            duration="micro"
+          >
+            {/* Category 1: Tuning & Tone */}
+            {activeCategory === 'tuning' && <QuickSoundControls />}
 
-        {/* Category 2: EQ & Dynamics */}
-        {activeCategory === 'eq_dynamics' && (
-          <div className="animate-in fade-in duration-150">
-            {activeSubModule === 'eq' && (
-              <Equalizer10Band />
+            {/* Category 2: EQ & Dynamics */}
+            {activeCategory === 'eq_dynamics' && (
+              <>
+                {activeSubModule === 'eq' && <Equalizer10Band />}
+                {activeSubModule === 'dynamics' && <DynamicsPanel />}
+              </>
             )}
-            {activeSubModule === 'dynamics' && (
-              <DynamicsPanel />
-            )}
-          </div>
-        )}
 
-        {/* Category 3: Spatial & FX */}
-        {activeCategory === 'spatial_fx' && (
-          <div className="animate-in fade-in duration-150">
-            {activeSubModule === 'spatial' && (
-              <SpatialAudioPanel />
+            {/* Category 3: Spatial & FX */}
+            {activeCategory === 'spatial_fx' && (
+              <>
+                {activeSubModule === 'spatial' && <SpatialAudioPanel />}
+                {activeSubModule === 'effects' && <EffectsRackPanel />}
+                {activeSubModule === 'channels' && <ChannelMatrixPanel />}
+              </>
             )}
-            {activeSubModule === 'effects' && (
-              <EffectsRackPanel />
-            )}
-            {activeSubModule === 'channels' && (
-              <ChannelMatrixPanel />
-            )}
-          </div>
-        )}
 
-        {/* Category 4: Time & Cues */}
-        {activeCategory === 'time_cues' && (
-          <div className="animate-in fade-in duration-150">
-            {activeSubModule === 'loop' && (
-              <LoopABController />
+            {/* Category 4: Time & Cues */}
+            {activeCategory === 'time_cues' && (
+              <>
+                {activeSubModule === 'loop' && <LoopABController />}
+                {activeSubModule === 'stereo' && <StereoPhaseController />}
+                {activeSubModule === 'markers' && <WaveformMarkersOverlay />}
+                {activeSubModule === 'moments' && <AuraMomentsPanel />}
+              </>
             )}
-            {activeSubModule === 'stereo' && (
-              <StereoPhaseController />
-            )}
-            {activeSubModule === 'markers' && (
-              <WaveformMarkersOverlay />
-            )}
-            {activeSubModule === 'moments' && (
-              <AuraMomentsPanel />
-            )}
-          </div>
-        )}
 
-        {/* Category 5: Mastering & Analysis */}
-        {activeCategory === 'mastering_analysis' && (
-          <div className="animate-in fade-in duration-150">
-            {activeSubModule === 'analysis' && (
-              <AudioAnalysisPanel />
+            {/* Category 5: Mastering & Analysis */}
+            {activeCategory === 'mastering_analysis' && (
+              <>
+                {activeSubModule === 'analysis' && <AudioAnalysisPanel />}
+                {activeSubModule === 'presets' && <PresetsProfilesPanel />}
+                {activeSubModule === 'stems' && <StemsPlaceholderPanel />}
+              </>
             )}
-            {activeSubModule === 'presets' && (
-              <PresetsProfilesPanel />
-            )}
-            {activeSubModule === 'stems' && (
-              <StemsPlaceholderPanel />
-            )}
-          </div>
-        )}
+          </MotionFadeSlide>
+        </AnimatePresence>
       </main>
 
     </div>

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { AnimatePresence } from 'motion/react';
+import { MotionBackdrop, MotionModal, MotionFadeSlide } from '../common/motion/MotionSurface';
 import { useMusic } from '../../context/MusicContext';
 import { youtubeService } from '../../services/youtubeService';
 import { 
@@ -93,8 +95,6 @@ export const YouTubePlaylistImportModal: React.FC<YouTubePlaylistImportModalProp
     };
   }, [inputUrl]);
 
-  if (!isOpen) return null;
-
   const handlePlayNow = async () => {
     if (!extractedId) return;
     const title = oembedInfo?.title || `YouTube Playlist (${extractedId.slice(0, 8)})`;
@@ -133,14 +133,18 @@ export const YouTubePlaylistImportModal: React.FC<YouTubePlaylistImportModalProp
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200 select-none"
-      onClick={onClose}
-    >
-      <div
-        className="relative w-full max-w-lg rounded-3xl bg-[#090b11] border border-white/10 shadow-2xl p-6 sm:p-7 flex flex-col gap-5 aura-focus-ring overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <AnimatePresence>
+      {isOpen && (
+        <MotionBackdrop
+          style={{ pointerEvents: isOpen ? 'auto' : 'none' }}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 select-none"
+          onClick={onClose}
+        >
+          <MotionModal
+            variant="center"
+            className="relative w-full max-w-lg rounded-3xl bg-[#090b11] border border-white/10 shadow-2xl p-6 sm:p-7 flex flex-col gap-5 aura-focus-ring overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
         {/* Subtle background ambient glow */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/10 rounded-full blur-3xl pointer-events-none -z-10" />
 
@@ -163,7 +167,7 @@ export const YouTubePlaylistImportModal: React.FC<YouTubePlaylistImportModalProp
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-zinc-400 hover:text-white transition-colors cursor-pointer"
+            className="p-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-zinc-400 hover:text-white transition-colors cursor-pointer aura-pressable"
             title="Close modal"
           >
             <X className="w-4 h-4" />
@@ -205,49 +209,51 @@ export const YouTubePlaylistImportModal: React.FC<YouTubePlaylistImportModalProp
         </div>
 
         {/* Preview Card */}
-        {extractedId && (
-          <div className="p-3.5 rounded-2xl aura-glass-ambient border border-white/10 flex items-center gap-3.5">
-            <div className="w-14 h-14 rounded-xl overflow-hidden bg-zinc-900 border border-white/10 shrink-0 relative flex items-center justify-center">
-              {oembedInfo?.thumbnail ? (
-                <img
-                  src={oembedInfo.thumbnail}
-                  alt={oembedInfo.title}
-                  className="w-full h-full object-cover"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLElement).style.display = 'none';
-                  }}
-                />
-              ) : (
-                <Music className="w-6 h-6 text-zinc-600" />
-              )}
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <span className="text-[9px] font-mono font-bold uppercase text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20">
-                  PLAYLIST
-                </span>
-                <span className="text-[11px] text-zinc-400 font-mono truncate">
-                  ID: {extractedId.slice(0, 16)}...
-                </span>
+        <AnimatePresence>
+          {extractedId && (
+            <MotionFadeSlide direction="up" distance={8} duration="micro" className="p-3.5 rounded-2xl aura-glass-ambient border border-white/10 flex items-center gap-3.5">
+              <div className="w-14 h-14 rounded-xl overflow-hidden bg-zinc-900 border border-white/10 shrink-0 relative flex items-center justify-center">
+                {oembedInfo?.thumbnail ? (
+                  <img
+                    src={oembedInfo.thumbnail}
+                    alt={oembedInfo.title}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <Music className="w-6 h-6 text-zinc-600" />
+                )}
               </div>
-              <h4 className="text-xs sm:text-sm font-semibold text-white truncate mt-1">
-                {oembedInfo?.title || 'YouTube Playlist Stream'}
-              </h4>
-              <p className="text-[11px] text-zinc-400 truncate mt-0.5 font-ui-meta">
-                {oembedInfo?.author || 'Official Player'}
-              </p>
-            </div>
-          </div>
-        )}
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] font-mono font-bold uppercase text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20">
+                    PLAYLIST
+                  </span>
+                  <span className="text-[11px] text-zinc-400 font-mono truncate">
+                    ID: {extractedId.slice(0, 16)}...
+                  </span>
+                </div>
+                <h4 className="text-xs sm:text-sm font-semibold text-white truncate mt-1">
+                  {oembedInfo?.title || 'YouTube Playlist Stream'}
+                </h4>
+                <p className="text-[11px] text-zinc-400 truncate mt-0.5 font-ui-meta">
+                  {oembedInfo?.author || 'Official Player'}
+                </p>
+              </div>
+            </MotionFadeSlide>
+          )}
+        </AnimatePresence>
 
         {/* Action Buttons */}
         <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-white/[0.08]">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-white transition-colors cursor-pointer"
+            className="px-4 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-white transition-colors cursor-pointer aura-pressable"
           >
             Cancel
           </button>
@@ -256,7 +262,7 @@ export const YouTubePlaylistImportModal: React.FC<YouTubePlaylistImportModalProp
             type="button"
             disabled={!extractedId}
             onClick={handleAddToQueue}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] disabled:opacity-40 text-zinc-200 text-xs font-semibold border border-white/10 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] disabled:opacity-40 text-zinc-200 text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-pressable"
           >
             <ListPlus className="w-3.5 h-3.5" />
             <span>Add to Queue</span>
@@ -266,13 +272,15 @@ export const YouTubePlaylistImportModal: React.FC<YouTubePlaylistImportModalProp
             type="button"
             disabled={!extractedId}
             onClick={handlePlayNow}
-            className="flex items-center gap-2 px-5 py-2 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-40 text-zinc-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer aura-focus-ring"
+            className="flex items-center gap-2 px-5 py-2 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-40 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
           >
             <Play className="w-3.5 h-3.5 fill-current text-black translate-x-0.5" />
             <span>Play Now</span>
           </button>
         </div>
-      </div>
-    </div>
+          </MotionModal>
+        </MotionBackdrop>
+      )}
+    </AnimatePresence>
   );
 };

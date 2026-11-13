@@ -1,4 +1,8 @@
 import React, { useState, useMemo } from 'react';
+import { AnimatePresence, LayoutGroup } from 'motion/react';
+import { MotionBackdrop, MotionModal, MotionFadeSlide } from '../common/motion/MotionSurface';
+import { SharedIndicator } from '../common/motion/MotionInteractive';
+import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
 import { useMusic } from '../../context/MusicContext';
 import { useListenTogether } from '../../context/ListenTogetherContext';
 import { Track, MusicSourceType } from '../../types';
@@ -113,6 +117,7 @@ export const QueueDrawer: React.FC = () => {
   } = useMusic();
 
   const { isInRoom, isOwner, activeRoom } = useListenTogether();
+  const { canHover } = useMotionCapabilities();
 
   const [activeTab, setActiveTab] = useState<'queue' | 'history'>('queue');
 
@@ -141,8 +146,6 @@ export const QueueDrawer: React.FC = () => {
       hasUnknownDurations: unknownCount > 0,
     };
   }, [upNextTracks]);
-
-  if (!isQueueDrawerOpen) return null;
 
   // Shuffle only upcoming tracks after queueIndex using Fisher-Yates
   const handleShuffleUpNext = () => {
@@ -182,15 +185,19 @@ export const QueueDrawer: React.FC = () => {
   const isQueueControlRestricted = isInRoom && !isOwner;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-md animate-in fade-in duration-200 select-none">
-      {/* Backdrop tap to close */}
-      <div 
-        className="absolute inset-0" 
-        onClick={() => setIsQueueDrawerOpen(false)} 
-      />
-
-      {/* Drawer Surface */}
-      <div className="relative w-full max-w-full sm:max-w-md h-full glass-immersive border-l border-white/[0.14] flex flex-col shadow-[0_0_80px_rgba(0,0,0,0.9)] pb-safe animate-in slide-in-from-right duration-200">
+    <AnimatePresence>
+      {isQueueDrawerOpen && (
+        <MotionBackdrop
+          onClick={() => setIsQueueDrawerOpen(false)}
+          style={{ pointerEvents: isQueueDrawerOpen ? 'auto' : 'none' }}
+          className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-md select-none"
+        >
+          {/* Drawer Surface */}
+          <MotionModal
+            variant="drawer-right"
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-full sm:max-w-md h-full glass-immersive border-l border-white/[0.14] flex flex-col shadow-[0_0_80px_rgba(0,0,0,0.9)] pb-safe"
+          >
         
         {/* Header */}
         <div className="p-4 border-b border-white/[0.06] flex items-center justify-between">
@@ -220,7 +227,7 @@ export const QueueDrawer: React.FC = () => {
             {/* Sleep Timer button */}
             <button
               onClick={() => setIsSleepTimerModalOpen(true)}
-              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+              className={`p-1.5 rounded-lg transition-colors cursor-pointer aura-pressable ${
                 isSleepTimerActive 
                   ? 'text-indigo-400 bg-indigo-500/20' 
                   : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
@@ -235,7 +242,7 @@ export const QueueDrawer: React.FC = () => {
               <button
                 onClick={handleShuffleUpNext}
                 disabled={isQueueControlRestricted}
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-indigo-300 hover:bg-white/5 disabled:opacity-40 disabled:hover:text-zinc-400 transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-indigo-300 hover:bg-white/5 disabled:opacity-40 disabled:hover:text-zinc-400 transition-colors cursor-pointer aura-pressable"
                 title={isQueueControlRestricted ? 'Queue ordering managed by host' : 'Shuffle Up Next'}
               >
                 <Shuffle className="w-4 h-4" />
@@ -247,7 +254,7 @@ export const QueueDrawer: React.FC = () => {
               <button
                 onClick={handleClearUpcoming}
                 disabled={isQueueControlRestricted}
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-white/5 disabled:opacity-40 disabled:hover:text-zinc-400 transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-white/5 disabled:opacity-40 disabled:hover:text-zinc-400 transition-colors cursor-pointer aura-pressable"
                 title={isQueueControlRestricted ? 'Queue ordering managed by host' : 'Clear Up Next'}
               >
                 <Trash2 className="w-4 h-4" />
@@ -257,7 +264,7 @@ export const QueueDrawer: React.FC = () => {
             {/* Close Button */}
             <button
               onClick={() => setIsQueueDrawerOpen(false)}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer aura-pressable"
               title="Close Drawer"
             >
               <X className="w-5 h-5" />
@@ -277,36 +284,50 @@ export const QueueDrawer: React.FC = () => {
         )}
 
         {/* Tabs */}
-        <div className="flex items-center border-b border-white/[0.06] px-4 pt-1">
-          <button
-            onClick={() => setActiveTab('queue')}
-            className={`flex items-center gap-2 px-3 py-2 text-xs font-medium border-b-2 transition-colors cursor-pointer ${
-              activeTab === 'queue'
-                ? 'border-indigo-500 text-indigo-300 font-semibold'
-                : 'border-transparent text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <ListMusic className="w-3.5 h-3.5" />
-            <span>Up Next ({upNextTracks.length})</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('history')}
-            className={`flex items-center gap-2 px-3 py-2 text-xs font-medium border-b-2 transition-colors cursor-pointer ${
-              activeTab === 'history'
-                ? 'border-indigo-500 text-indigo-300 font-semibold'
-                : 'border-transparent text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <History className="w-3.5 h-3.5" />
-            <span>Recently Played ({history.length})</span>
-          </button>
-        </div>
+        <LayoutGroup id="queue-drawer-tabs">
+          <div className="flex items-center border-b border-white/[0.06] px-4 pt-1">
+            <button
+              onClick={() => setActiveTab('queue')}
+              className={`relative flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors cursor-pointer aura-pressable ${
+                activeTab === 'queue'
+                  ? 'text-indigo-300 font-semibold'
+                  : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              <ListMusic className="w-3.5 h-3.5" />
+              <span>Up Next ({upNextTracks.length})</span>
+              {activeTab === 'queue' && (
+                <SharedIndicator
+                  layoutId="queue-drawer-tab-bar"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-indigo-500"
+                />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`relative flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors cursor-pointer aura-pressable ${
+                activeTab === 'history'
+                  ? 'text-indigo-300 font-semibold'
+                  : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              <History className="w-3.5 h-3.5" />
+              <span>Recently Played ({history.length})</span>
+              {activeTab === 'history' && (
+                <SharedIndicator
+                  layoutId="queue-drawer-tab-bar"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-indigo-500"
+                />
+              )}
+            </button>
+          </div>
+        </LayoutGroup>
 
         {/* Content Body */}
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-5">
-          
-          {activeTab === 'queue' ? (
-            <>
+          <AnimatePresence mode="wait" initial={false}>
+            {activeTab === 'queue' ? (
+              <MotionFadeSlide key="queue" direction="up" distance={6} duration="micro" className="flex flex-col gap-5">
               {/* Now Playing Block */}
               {currentTrack && (
                 <div className="flex flex-col gap-2">
@@ -397,7 +418,7 @@ export const QueueDrawer: React.FC = () => {
                         setIsQueueDrawerOpen(false);
                         setCurrentView('songs');
                       }}
-                      className="px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-indigo-300 hover:text-indigo-200 transition-colors cursor-pointer"
+                      className="px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-indigo-300 hover:text-indigo-200 transition-colors cursor-pointer aura-pressable"
                     >
                       Browse Library
                     </button>
@@ -411,7 +432,7 @@ export const QueueDrawer: React.FC = () => {
                       return (
                         <div
                           key={`${track.id}-${actualIdx}`}
-                          className="group flex items-center gap-2.5 p-2 rounded-xl bg-[#0b0d13]/60 hover:bg-[#121520]/80 border border-white/[0.04] hover:border-white/[0.08] transition-all"
+                          className="group flex items-center gap-2.5 p-2 rounded-xl bg-[#0b0d13]/60 hover:bg-[#121520]/80 border border-white/[0.04] hover:border-white/[0.08] transition-colors"
                         >
                           {/* Play Thumbnail */}
                           <div
@@ -450,14 +471,15 @@ export const QueueDrawer: React.FC = () => {
                           </div>
 
                           {/* Reorder and Removal Controls */}
-                          <div className="flex items-center gap-0.5 opacity-60 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className={`flex items-center gap-0.5 transition-opacity ${!canHover ? 'opacity-90' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'}`}>
                             {/* Track Info */}
                             <button
+                              type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 openTrackInfo(track);
                               }}
-                              className="p-1 text-zinc-400 hover:text-white rounded hover:bg-white/10 transition-colors cursor-pointer"
+                              className="p-1 text-zinc-400 hover:text-white rounded hover:bg-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
                               title="Track Info"
                             >
                               <Info className="w-3 h-3" />
@@ -465,6 +487,7 @@ export const QueueDrawer: React.FC = () => {
 
                             {/* Move Up */}
                             <button
+                              type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (relativeIdx > 0 && !isQueueControlRestricted) {
@@ -472,7 +495,7 @@ export const QueueDrawer: React.FC = () => {
                                 }
                               }}
                               disabled={relativeIdx === 0 || isQueueControlRestricted}
-                              className="p-1 text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:text-zinc-400 rounded hover:bg-white/10 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                              className="p-1 text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:text-zinc-400 rounded hover:bg-white/10 transition-colors cursor-pointer disabled:cursor-not-allowed aura-pressable aura-focus-ring"
                               title={relativeIdx === 0 ? 'Cannot move above current track' : 'Move Up'}
                             >
                               <ChevronUp className="w-3.5 h-3.5" />
@@ -480,6 +503,7 @@ export const QueueDrawer: React.FC = () => {
 
                             {/* Move Down */}
                             <button
+                              type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (relativeIdx < upNextTracks.length - 1 && !isQueueControlRestricted) {
@@ -487,7 +511,7 @@ export const QueueDrawer: React.FC = () => {
                                 }
                               }}
                               disabled={relativeIdx === upNextTracks.length - 1 || isQueueControlRestricted}
-                              className="p-1 text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:text-zinc-400 rounded hover:bg-white/10 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                              className="p-1 text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:text-zinc-400 rounded hover:bg-white/10 transition-colors cursor-pointer disabled:cursor-not-allowed aura-pressable aura-focus-ring"
                               title={relativeIdx === upNextTracks.length - 1 ? 'End of queue' : 'Move Down'}
                             >
                               <ChevronDown className="w-3.5 h-3.5" />
@@ -495,6 +519,7 @@ export const QueueDrawer: React.FC = () => {
 
                             {/* Remove from queue */}
                             <button
+                              type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (!isQueueControlRestricted) {
@@ -502,7 +527,7 @@ export const QueueDrawer: React.FC = () => {
                                 }
                               }}
                               disabled={isQueueControlRestricted}
-                              className="p-1 text-zinc-400 hover:text-rose-400 disabled:opacity-30 rounded hover:bg-white/10 transition-colors cursor-pointer"
+                              className="p-1 text-zinc-400 hover:text-rose-400 disabled:opacity-30 rounded hover:bg-white/10 transition-colors cursor-pointer disabled:cursor-not-allowed aura-pressable aura-focus-ring"
                               title="Remove from queue"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -519,10 +544,10 @@ export const QueueDrawer: React.FC = () => {
                   </div>
                 )}
               </div>
-            </>
-          ) : (
-            /* History Tab */
-            <div className="flex flex-col gap-1.5">
+              </MotionFadeSlide>
+            ) : (
+              /* History Tab */
+              <MotionFadeSlide key="history" direction="up" distance={6} duration="micro" className="flex flex-col gap-1.5">
               {history.length === 0 ? (
                 <div className="flex flex-col items-center justify-center text-center py-12 px-4 rounded-2xl bg-[#0b0d13]/40 border border-dashed border-white/10">
                   <History className="w-8 h-8 text-zinc-600 mb-2 opacity-50" />
@@ -537,7 +562,7 @@ export const QueueDrawer: React.FC = () => {
                     <div
                       key={track.id}
                       onClick={() => playTrack(track)}
-                      className="group flex items-center gap-2.5 p-2 rounded-xl bg-[#0b0d13]/60 hover:bg-[#121520]/80 border border-white/[0.04] hover:border-white/[0.08] transition-all cursor-pointer"
+                      className="group flex items-center gap-2.5 p-2 rounded-xl bg-[#0b0d13]/60 hover:bg-[#121520]/80 border border-white/[0.04] hover:border-white/[0.08] transition-colors cursor-pointer aura-pressable-subtle"
                     >
                       <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-[#0e1017] border border-white/10">
                         {track.coverUrl ? (
@@ -568,11 +593,14 @@ export const QueueDrawer: React.FC = () => {
                   );
                 })
               )}
-            </div>
-          )}
+              </MotionFadeSlide>
+            )}
+          </AnimatePresence>
 
         </div>
-      </div>
-    </div>
+          </MotionModal>
+        </MotionBackdrop>
+      )}
+    </AnimatePresence>
   );
 };

@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { AnimatePresence } from 'motion/react';
+import { MotionBackdrop, MotionModal } from './motion/MotionSurface';
+import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
 import { useMusic } from '../../context/MusicContext';
 import { 
   X, 
@@ -26,8 +29,7 @@ export const SleepTimerModal: React.FC<SleepTimerModalProps> = ({ isOpen, onClos
   } = useMusic();
 
   const [customMinutes, setCustomMinutes] = useState<string>('20');
-
-  if (!isOpen) return null;
+  const { prefersReducedMotion } = useMotionCapabilities();
 
   const presets = [
     { label: '5 Minutes', value: 5 },
@@ -53,11 +55,18 @@ export const SleepTimerModal: React.FC<SleepTimerModalProps> = ({ isOpen, onClos
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
-      <div 
-        className="relative w-full max-w-md rounded-3xl bg-[#0e1017] border border-white/10 shadow-2xl p-6 flex flex-col gap-5 animate-in zoom-in-95 duration-150"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <AnimatePresence>
+      {isOpen && (
+        <MotionBackdrop
+          onClick={onClose}
+          style={{ pointerEvents: isOpen ? 'auto' : 'none' }}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+        >
+          <MotionModal
+            variant="center"
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-md rounded-3xl bg-[#0e1017] border border-white/10 shadow-2xl p-6 flex flex-col gap-5"
+          >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/5 pb-3">
           <div className="flex items-center gap-2.5">
@@ -71,8 +80,10 @@ export const SleepTimerModal: React.FC<SleepTimerModalProps> = ({ isOpen, onClos
           </div>
 
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+            aria-label="Close sleep timer modal"
+            className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
             <X className="w-4 h-4" />
           </button>
@@ -82,7 +93,7 @@ export const SleepTimerModal: React.FC<SleepTimerModalProps> = ({ isOpen, onClos
         {isSleepTimerActive && sleepTimerRemainingSecs !== null && (
           <div className="flex items-center justify-between p-3.5 rounded-2xl bg-indigo-950/30 border border-indigo-500/30">
             <div className="flex items-center gap-2.5">
-              <Timer className="w-4 h-4 text-indigo-400 animate-pulse" />
+              <Timer className={`w-4 h-4 text-indigo-400 ${!prefersReducedMotion ? 'animate-pulse' : ''}`} />
               <div>
                 <span className="text-xs font-semibold text-indigo-200">Active Timer Countdown</span>
                 <p className="text-[11px] text-zinc-400 font-mono">
@@ -92,10 +103,11 @@ export const SleepTimerModal: React.FC<SleepTimerModalProps> = ({ isOpen, onClos
             </div>
 
             <button
+              type="button"
               onClick={() => {
                 cancelSleepTimer();
               }}
-              className="px-3 py-1 text-xs font-medium text-rose-400 hover:bg-rose-500/10 border border-rose-500/20 rounded-lg transition-colors"
+              className="px-3 py-1 text-xs font-medium text-rose-400 hover:bg-rose-500/10 border border-rose-500/20 rounded-lg transition-colors cursor-pointer aura-pressable aura-focus-ring"
             >
               Cancel Timer
             </button>
@@ -109,11 +121,12 @@ export const SleepTimerModal: React.FC<SleepTimerModalProps> = ({ isOpen, onClos
             return (
               <button
                 key={p.value}
+                type="button"
                 onClick={() => {
                   startSleepTimer(p.value);
                   onClose();
                 }}
-                className={`flex items-center justify-between p-3 rounded-xl border text-xs font-medium transition-all ${
+                className={`flex items-center justify-between p-3 rounded-xl border text-xs font-medium transition-colors cursor-pointer aura-pressable-subtle aura-focus-ring ${
                   isSelected
                     ? 'bg-indigo-600/30 border-indigo-500/40 text-white font-semibold'
                     : 'bg-zinc-900/50 hover:bg-zinc-800/80 border-white/5 text-zinc-300 hover:text-white'
@@ -127,11 +140,12 @@ export const SleepTimerModal: React.FC<SleepTimerModalProps> = ({ isOpen, onClos
 
           {/* End of Current Track Button */}
           <button
+            type="button"
             onClick={() => {
               setSleepTimerAtTrackEnd();
               onClose();
             }}
-            className={`col-span-2 flex items-center justify-between p-3 rounded-xl border text-xs font-medium transition-all ${
+            className={`col-span-2 flex items-center justify-between p-3 rounded-xl border text-xs font-medium transition-colors cursor-pointer aura-pressable-subtle aura-focus-ring ${
               isSleepTimerActive && sleepTimerMinutes === -1
                 ? 'bg-indigo-600/30 border-indigo-500/40 text-white font-semibold'
                 : 'bg-zinc-900/50 hover:bg-zinc-800/80 border-white/5 text-zinc-300 hover:text-white'
@@ -160,13 +174,15 @@ export const SleepTimerModal: React.FC<SleepTimerModalProps> = ({ isOpen, onClos
           />
           <button
             type="submit"
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl transition-all shadow-md shadow-indigo-600/20 active:scale-95"
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl transition-colors shadow-md shadow-indigo-600/20 cursor-pointer aura-pressable"
           >
             Set Custom
           </button>
         </form>
 
-      </div>
-    </div>
+          </MotionModal>
+        </MotionBackdrop>
+      )}
+    </AnimatePresence>
   );
 };
