@@ -60,6 +60,7 @@ export const Header: React.FC<{
       case 'moments': return { section: 'Sound Lab', title: 'Aura Moments' };
       case 'studio': return { section: 'Experiences', title: 'Audio Studio & DSP' };
       case 'settings': return { section: 'System', title: 'Preferences' };
+      case 'optical-lab': return { section: 'Sound Lab', title: 'Optical Glass Lab' };
       default: return { section: 'AURA', title: 'Discover' };
     }
   };
@@ -71,7 +72,7 @@ export const Header: React.FC<{
       {/* -------------------------------------------------------------
           MOBILE HEADER: Compact fixed control surface (lg:hidden)
           ------------------------------------------------------------- */}
-      <header className="lg:hidden h-13 border-b border-white/[0.05] bg-[rgba(8,10,16,0.72)] backdrop-blur-2xl px-4 flex items-center justify-between gap-3 sticky top-0 z-20 select-none">
+      <header className="lg:hidden h-13 border-b border-white/[0.08] glass-floating px-4 flex items-center justify-between gap-3 sticky top-0 z-20 select-none shadow-md">
         {/* Mobile Brand */}
         <div 
           onClick={() => {
@@ -82,10 +83,7 @@ export const Header: React.FC<{
           id="mobile-header-brand"
         >
           <AuraBrandMark isPlaying={isPlaying} size={26} />
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-bold text-white tracking-[0.14em] font-display">AURA</span>
-            <span className="text-[9px] font-mono tracking-widest text-sky-400 font-semibold uppercase">SPATIAL</span>
-          </div>
+          <span className="text-sm font-bold text-white tracking-[0.14em] font-display">AURA</span>
         </div>
 
         {/* Mobile Right Utilities */}
@@ -144,7 +142,7 @@ export const Header: React.FC<{
           Detached glass island aligned with the main content grid
           ------------------------------------------------------------- */}
       <div className="hidden lg:block w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 mt-3.5 lg:mt-4 mb-1.5 shrink-0 z-20">
-        <header className="h-[54px] rounded-2xl aura-glass-island px-4 lg:px-5 flex items-center justify-between gap-4 select-none shadow-[0_16px_40px_rgba(0,0,0,0.65)]">
+        <header className="h-[54px] rounded-2xl bg-[#0a0d16]/75 backdrop-blur-xl border border-white/[0.08] px-4 lg:px-5 flex items-center justify-between gap-4 select-none shadow-[0_12px_32px_rgba(0,0,0,0.6)] relative overflow-hidden">
           
           {/* ZONE 1: BREADCRUMB / CURRENT LOCATION */}
           <div className="flex items-center gap-2.5 shrink-0 min-w-0">
@@ -182,7 +180,7 @@ export const Header: React.FC<{
           {/* ZONE 2: UNIVERSAL SEARCH COMMAND BAR (Central Visual Anchor) */}
           <div 
             onClick={() => onOpenUniversalSearch?.()}
-            className="flex-1 min-w-[140px] max-w-xs sm:max-w-sm md:max-w-md xl:max-w-lg items-center justify-between px-3 py-1.5 rounded-xl bg-white/[0.035] hover:bg-white/[0.06] border border-white/[0.07] hover:border-white/20 text-xs text-zinc-400 cursor-pointer transition-all flex group select-none shadow-sm aura-focus-ring"
+            className="flex-1 min-w-[140px] max-w-xs sm:max-w-sm md:max-w-md xl:max-w-lg items-center justify-between px-3.5 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.14] text-xs text-zinc-300 cursor-pointer transition-all flex group select-none shadow-sm aura-focus-ring"
             title="Universal Search (⌘K or /)"
             role="button"
             tabIndex={0}

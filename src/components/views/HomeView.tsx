@@ -2,12 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useMusic } from '../../context/MusicContext';
 import { SongObjectCard } from '../common/SongObjectCard';
 import { AddToPlaylistModal } from '../playlists/AddToPlaylistModal';
+import { YouTubePlaylistImportModal } from '../playlists/YouTubePlaylistImportModal';
 import { 
   Play, 
   Pause, 
   Sparkles, 
   Plus, 
-  Radio, 
+  Radio as RadioIcon, 
   ListMusic, 
   Flame, 
   Layers, 
@@ -16,22 +17,52 @@ import {
   Clock, 
   Heart, 
   Music,
-  Disc,
   Compass,
   ArrowUpRight,
+  Sun,
+  Moon,
+  CloudSun,
+  Zap,
+  Waves,
   Headphones,
   SlidersHorizontal,
-  Activity
+  Shuffle
 } from 'lucide-react';
 import { 
   CURATED_COLLECTIONS, 
-  GENRE_MOOD_CATEGORIES 
+  SONIC_ENVIRONMENTS,
+  CURATED_DISCOVERY_TRACKS
 } from '../../services/discoveryService';
+import { nativeDiscoveryService, AuraDiscoveryMix } from '../../services/nativeDiscoveryService';
 import { jamendoProvider } from '../../services/providers/jamendoProvider';
 import { audiusService } from '../../services/audiusService';
 import { radioBrowserProvider } from '../../services/providers/radioBrowserProvider';
 import { unifiedTrackToAuraTrack, radioStationToAuraTrack } from '../../services/providers/types';
 import { Track } from '../../types';
+
+// Genuine Music Genres with provider search queries
+const GENUINE_GENRES = [
+  { id: 'genre-electronic', name: 'Electronic', query: 'electronic', color: 'from-cyan-500/20 to-indigo-950/80', border: 'border-cyan-500/30', tag: 'Synthesizers & Beats' },
+  { id: 'genre-indie', name: 'Indie & Alt', query: 'indie', color: 'from-amber-500/20 to-stone-950/80', border: 'border-amber-500/30', tag: 'Guitar & Alternative' },
+  { id: 'genre-lofi', name: 'Lo-Fi Chill', query: 'lofi', color: 'from-amber-600/20 to-slate-950/80', border: 'border-amber-600/30', tag: 'Dusty Beats & Keys' },
+  { id: 'genre-hiphop', name: 'Hip-Hop', query: 'hiphop', color: 'from-rose-500/20 to-zinc-950/80', border: 'border-rose-500/30', tag: 'Flow & Kinetic Drums' },
+  { id: 'genre-classical', name: 'Classical', query: 'classical', color: 'from-blue-600/20 to-slate-950/80', border: 'border-blue-500/30', tag: 'Symphonic & Piano' },
+  { id: 'genre-jazz', name: 'Jazz & Soul', query: 'jazz', color: 'from-orange-500/20 to-zinc-950/80', border: 'border-orange-500/30', tag: 'Brass & Warm Chords' },
+  { id: 'genre-ambient', name: 'Ambient', query: 'ambient', color: 'from-emerald-500/20 to-teal-950/80', border: 'border-emerald-500/30', tag: 'Textural Drones' },
+  { id: 'genre-rock', name: 'Rock', query: 'rock', color: 'from-purple-500/20 to-slate-950/80', border: 'border-purple-500/30', tag: 'Driven Amps & Grooves' },
+];
+
+// 8 Expressive Mood Cards with bespoke visual styling
+const MOOD_CARDS = [
+  { id: 'deep-focus', name: 'Deep Focus', query: 'focus', gradient: 'from-sky-500/25 via-indigo-950/60 to-[#07090e]', border: 'border-sky-500/30 hover:border-sky-400/60', badgeColor: 'text-sky-300 bg-sky-500/10', desc: 'Minimal ambient & study flows' },
+  { id: 'night-drive', name: 'Night Drive', query: 'synthwave', gradient: 'from-purple-500/25 via-fuchsia-950/60 to-[#07090e]', border: 'border-purple-500/30 hover:border-purple-400/60', badgeColor: 'text-purple-300 bg-purple-500/10', desc: 'Retrowave & nocturnal synths' },
+  { id: 'feel-good', name: 'Feel Good', query: 'upbeat', gradient: 'from-amber-500/25 via-rose-950/60 to-[#07090e]', border: 'border-amber-500/30 hover:border-amber-400/60', badgeColor: 'text-amber-300 bg-amber-500/10', desc: 'Vibrant melodies & warm grooves' },
+  { id: 'late-night', name: 'Late Night Chill', query: 'chill', gradient: 'from-blue-600/25 via-slate-900/60 to-[#07090e]', border: 'border-blue-500/30 hover:border-blue-400/60', badgeColor: 'text-blue-300 bg-blue-500/10', desc: 'Slow tempos & moody textures' },
+  { id: 'calm-ambient', name: 'Calm & Ambient', query: 'ambient', gradient: 'from-emerald-500/25 via-teal-950/60 to-[#07090e]', border: 'border-emerald-500/30 hover:border-emerald-400/60', badgeColor: 'text-emerald-300 bg-emerald-500/10', desc: 'Generative soundscapes & drone' },
+  { id: 'energy-boost', name: 'Energy Boost', query: 'dance', gradient: 'from-rose-500/25 via-orange-950/60 to-[#07090e]', border: 'border-rose-500/30 hover:border-rose-400/60', badgeColor: 'text-rose-300 bg-rose-500/10', desc: 'High BPM kinetic rhythms' },
+  { id: 'retro-vibes', name: 'Retro Vibes', query: 'retro', gradient: 'from-violet-500/25 via-purple-950/60 to-[#07090e]', border: 'border-violet-500/30 hover:border-violet-400/60', badgeColor: 'text-violet-300 bg-violet-500/10', desc: '80s analog synths & tape warmth' },
+  { id: 'electronic-escape', name: 'Electronic Escape', query: 'electronic', gradient: 'from-cyan-500/25 via-blue-950/60 to-[#07090e]', border: 'border-cyan-500/30 hover:border-cyan-400/60', badgeColor: 'text-cyan-300 bg-cyan-500/10', desc: 'Immersive sound design & bass' },
+];
 
 export const HomeView: React.FC = () => {
   const {
@@ -44,13 +75,14 @@ export const HomeView: React.FC = () => {
     recentlyPlayed,
     favoriteItems,
     playlists,
-    setSelectedPlaylistId,
     setCurrentView,
     setSearchQuery,
     setIsUploadModalOpen,
     loadDemoPack,
     setIsExpandedPlayerOpen,
     setIsAudioControlsOpen,
+    isYouTubeImportModalOpen,
+    setIsYouTubeImportModalOpen,
   } = useMusic();
 
   const [playlistModalTrack, setPlaylistModalTrack] = useState<Track | null>(null);
@@ -59,6 +91,14 @@ export const HomeView: React.FC = () => {
   const [trendingTracks, setTrendingTracks] = useState<Track[]>([]);
   const [topRadioStations, setTopRadioStations] = useState<Track[]>([]);
   const [isLoadingDiscovery, setIsLoadingDiscovery] = useState(true);
+
+  // Time-of-day greeting calculation
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return { text: 'Good Morning', icon: Sun, label: 'Morning Ritual' };
+    if (hour >= 12 && hour < 18) return { text: 'Good Afternoon', icon: CloudSun, label: 'Daytime Flow' };
+    return { text: 'Good Evening', icon: Moon, label: 'Night Sanctuary' };
+  }, []);
 
   // Fetch verified online streaming discovery
   useEffect(() => {
@@ -97,33 +137,60 @@ export const HomeView: React.FC = () => {
     return () => { isMounted = false; };
   }, []);
 
-  // Jump Back In (Recent tracks)
-  const jumpBackInTracks = useMemo(() => {
-    const list = (recentlyPlayed && recentlyPlayed.length > 0
-      ? recentlyPlayed.map((rp) => rp.track)
-      : history
-    ).filter(Boolean);
-    return list.slice(0, 6);
-  }, [recentlyPlayed, history]);
+  // AURA-Native Music Discovery Mixes (Daily Flow, Your Rotation, Vault Rewind, Deep Focus, Energy Boost)
+  const discoveryMixes = useMemo(() => {
+    return nativeDiscoveryService.getAllMixes({
+      tracks,
+      recentlyPlayed,
+      favoriteItems,
+      history,
+    });
+  }, [tracks, recentlyPlayed, favoriteItems, history]);
 
-  // Featured Spotlight Track
-  const spotlightTrack = useMemo<Track | null>(() => {
-    if (currentTrack) return currentTrack;
-    if (jumpBackInTracks.length > 0) return jumpBackInTracks[0];
-    if (tracks.length > 0) return tracks[0];
-    if (trendingTracks.length > 0) return trendingTracks[0];
-    return null;
-  }, [currentTrack, jumpBackInTracks, tracks, trendingTracks]);
+  // Handle Play Discovery Mix (sequential or shuffle)
+  const handlePlayDiscoveryMix = (mix: AuraDiscoveryMix, shuffle = false) => {
+    if (!mix.tracks || mix.tracks.length === 0) return;
+    const queue = shuffle ? [...mix.tracks].sort(() => Math.random() - 0.5) : mix.tracks;
+    playTrack(queue[0], queue);
+  };
 
-  const isSpotlightPlaying = currentTrack?.id === spotlightTrack?.id && isPlaying;
+  // Quick Picks pool (derived from recent, favorites, local tracks, or open streams)
+  const quickPicks = useMemo(() => {
+    const pool: Track[] = [];
+    const seen = new Set<string>();
 
-  const handleSpotlightAction = () => {
-    if (!spotlightTrack) return;
-    if (currentTrack?.id === spotlightTrack.id) {
-      togglePlay();
-    } else {
-      playTrack(spotlightTrack, jumpBackInTracks.length > 0 ? jumpBackInTracks : tracks);
+    const addTrack = (t: Track) => {
+      if (t && !seen.has(t.id)) {
+        seen.add(t.id);
+        pool.push(t);
+      }
+    };
+
+    recentlyPlayed?.forEach((rp) => rp.track && addTrack(rp.track));
+    favoriteItems?.forEach((f) => f.track && addTrack(f.track));
+    tracks?.forEach((t) => addTrack(t));
+    CURATED_DISCOVERY_TRACKS.forEach((t) => addTrack(t));
+    trendingTracks?.forEach((t) => addTrack(t));
+
+    return pool.slice(0, 8);
+  }, [recentlyPlayed, favoriteItems, tracks, trendingTracks]);
+
+  // Handle Daily Sanctuary Mix Playback Trigger
+  const handlePlayDailyMix = () => {
+    const dailyMix = discoveryMixes.find((m) => m.id === 'daily-flow');
+    if (dailyMix && dailyMix.tracks.length > 0) {
+      playTrack(dailyMix.tracks[0], dailyMix.tracks);
+      return;
     }
+    const mixQueue = quickPicks.length > 0 ? quickPicks : CURATED_DISCOVERY_TRACKS;
+    if (mixQueue.length > 0) {
+      playTrack(mixQueue[0], mixQueue);
+    }
+  };
+
+  const handleSelectMood = (moodQuery: string) => {
+    setSearchQuery(moodQuery);
+    setCurrentView('songs');
   };
 
   const handleSelectGenre = (genreQuery: string) => {
@@ -131,250 +198,143 @@ export const HomeView: React.FC = () => {
     setCurrentView('songs');
   };
 
+  const GreetingIcon = greeting.icon;
+
   return (
-    <div className="flex flex-col gap-8 sm:gap-12 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none">
+    <div className="flex flex-col gap-8 sm:gap-10 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none pb-36 sm:pb-44">
       
       {/* -------------------------------------------------------------
-          1. AURA SPATIAL LIVING SPOTLIGHT STAGE
+          1. COMPACT TIME-AWARE GREETING & QUICK LISTENING ACTION BAR
           ------------------------------------------------------------- */}
-      {spotlightTrack ? (
-        <section 
-          id="home-spotlight-hero"
-          className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden aura-glass-island"
-        >
-          {/* Sound-Reactive Ambient Artwork Glow */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {spotlightTrack.coverUrl ? (
-              <img 
-                src={spotlightTrack.coverUrl} 
-                alt="" 
-                className="w-full h-full object-cover scale-115 blur-3xl opacity-20 filter brightness-65"
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-indigo-950/25 via-zinc-900/40 to-black" />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#030407] via-[#030407]/70 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#030407] via-[#030407]/50 to-transparent" />
+      <section id="home-welcome-header" className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-2 border-b border-white/[0.06]">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <GreetingIcon className="w-4 h-4 text-sky-400" />
+            <span className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider font-medium">
+              {greeting.label}
+            </span>
           </div>
+          <h1 className="text-2xl sm:text-3xl font-page-title text-white tracking-tight">
+            {greeting.text}
+          </h1>
+          <p className="text-xs text-zinc-400 mt-0.5 font-ui-meta">
+            Your audio sanctuary is online · {quickPicks.length} instant tracks ready
+          </p>
+        </div>
 
-          {/* Controlled Foreground Hero Content */}
-          <div className="relative z-10 flex flex-col md:flex-row items-center sm:items-start md:items-center justify-between p-4 sm:p-6 lg:p-8 gap-4 sm:gap-6">
-            
-            {/* Left: Artwork as Primary Anchor + Metadata */}
-            <div className="flex flex-col sm:flex-row items-center sm:items-start md:items-center gap-5 sm:gap-6 flex-1 min-w-0 w-full sm:w-auto text-center sm:text-left">
-              
-              {/* Primary Artwork Stage */}
-              <div 
-                onClick={handleSpotlightAction}
-                className="relative group shrink-0 w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl border border-white/10 cursor-pointer bg-zinc-900"
-                title="Play / Pause Spotlight"
-              >
-                {spotlightTrack.coverUrl ? (
-                  <img 
-                    src={spotlightTrack.coverUrl} 
-                    alt={spotlightTrack.title} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLElement).style.display = 'none';
-                    }}
-                  />
-                ) : (
-                  <div className={`w-full h-full bg-gradient-to-br ${spotlightTrack.coverColor || 'from-indigo-600 to-zinc-900'} flex items-center justify-center`}>
-                    <Music className="w-12 h-12 text-white/50" />
-                  </div>
-                )}
+        {/* Quick Action Mix Bar */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={handlePlayDailyMix}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer aura-focus-ring"
+            title="Play Sanctuary Daily Flow Mix"
+          >
+            <Play className="w-3.5 h-3.5 fill-current text-black" />
+            <span>Daily Sanctuary Mix</span>
+          </button>
 
-                {/* Hover Play Button Overlay */}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200">
-                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-xl group-hover:scale-110 active:scale-95 transition-transform">
-                    {isSpotlightPlaying ? (
-                      <Pause className="w-5 h-5 fill-current text-black" />
-                    ) : (
-                      <Play className="w-5 h-5 fill-current text-black translate-x-0.5" />
-                    )}
-                  </div>
-                </div>
+          <button
+            type="button"
+            onClick={() => setIsYouTubeImportModalOpen(true)}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-medium border border-red-500/25 transition-colors cursor-pointer aura-focus-ring"
+            title="Import YouTube or YouTube Music Playlist"
+          >
+            <ListMusic className="w-3.5 h-3.5 text-red-400" />
+            <span>Import YouTube Playlist</span>
+          </button>
 
-                {/* Live Animated Equalizer Signal */}
-                {isSpotlightPlaying && (
-                  <div className="absolute bottom-2 left-2 flex items-end gap-1 px-2 py-0.5 rounded-md bg-black/80 backdrop-blur-md border border-white/15">
-                    <span className="w-1 h-3 bg-sky-400 rounded-full animate-pulse" />
-                    <span className="w-1 h-4.5 bg-indigo-300 rounded-full animate-[pulse_0.7s_ease-in-out_infinite]" />
-                    <span className="w-1 h-2 bg-white rounded-full animate-[pulse_1s_ease-in-out_infinite]" />
-                  </div>
-                )}
-              </div>
+          <button
+            type="button"
+            onClick={() => setCurrentView('library')}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-focus-ring"
+            title="Open Personal Vault Overview"
+          >
+            <HardDrive className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Personal Vault</span>
+          </button>
 
-              {/* Spotlight Metadata & Actions */}
-              <div className="flex flex-col justify-center min-w-0 flex-1">
-                <div className="flex items-center justify-center sm:justify-start gap-2 mb-1.5 flex-wrap text-xs font-mono">
-                  <span className="text-[10px] tracking-widest text-sky-400 font-medium uppercase">
-                    {currentTrack?.id === spotlightTrack.id ? 'Now Playing' : 'Spotlight'}
-                  </span>
-                  <span className="text-zinc-600 text-xs" aria-hidden="true">·</span>
-                  <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
-                    {spotlightTrack.source?.toUpperCase() || 'LOCAL VAULT'}
-                  </span>
-                  {spotlightTrack.fileFormat && (
-                    <>
-                      <span className="text-zinc-600 text-xs font-mono hidden sm:inline" aria-hidden="true">·</span>
-                      <span className="text-[10px] font-mono text-zinc-500 uppercase hidden sm:inline">
-                        {spotlightTrack.fileFormat}
-                      </span>
-                    </>
-                  )}
-                </div>
-
-                <h1 
-                  onClick={() => setIsExpandedPlayerOpen(true)}
-                  className="text-xl sm:text-2xl lg:text-3xl font-page-title text-white hover:text-zinc-200 cursor-pointer transition-colors line-clamp-2 leading-snug"
-                  title={spotlightTrack.title}
-                >
-                  {spotlightTrack.title}
-                </h1>
-
-                <p className="text-xs sm:text-sm font-artist-name text-zinc-300 mt-1 truncate max-w-lg">
-                  {spotlightTrack.artist}
-                  {spotlightTrack.album && (
-                    <span className="text-zinc-500 font-normal"> · {spotlightTrack.album}</span>
-                  )}
-                </p>
-
-                {/* Primary Action Buttons */}
-                <div className="flex items-center justify-center sm:justify-start gap-2.5 mt-4">
-                  <button
-                    type="button"
-                    onClick={handleSpotlightAction}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white hover:bg-zinc-100 active:scale-95 text-zinc-950 font-bold text-xs sm:text-sm shadow-md transition-all cursor-pointer aura-focus-ring"
-                  >
-                    {isSpotlightPlaying ? (
-                      <>
-                        <Pause className="w-4 h-4 fill-current text-black" />
-                        <span>Pause</span>
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-4 h-4 fill-current text-black translate-x-0.5" />
-                        <span>Play Now</span>
-                      </>
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setIsExpandedPlayerOpen(true)}
-                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white font-medium text-xs border border-white/10 transition-colors cursor-pointer aura-focus-ring"
-                  >
-                    <SlidersHorizontal className="w-3.5 h-3.5 text-zinc-300" />
-                    <span>Expand Canvas</span>
-                  </button>
-                </div>
-
-              </div>
-
-            </div>
-
-            {/* Right: Sound Lab Clean Integration Strip (Desktop) */}
-            <div className="hidden lg:flex flex-col gap-2 p-3.5 rounded-xl bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] w-64 shrink-0">
-              <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
-                <div className="flex items-center gap-1.5">
-                  <Activity className="w-3.5 h-3.5 text-sky-400" />
-                  <span className="text-[11px] font-semibold text-white">Audio Engine</span>
-                </div>
-                <span className="text-[9px] font-mono text-emerald-400 font-bold">DSP READY</span>
-              </div>
-
-              <div className="flex items-center justify-between text-[11px] text-zinc-400 font-mono">
-                <span>Signal Format:</span>
-                <span className="text-zinc-200 font-semibold">{spotlightTrack.fileFormat || 'PCM 48kHz'}</span>
-              </div>
-              <div className="flex items-center justify-between text-[11px] text-zinc-400 font-mono">
-                <span>DSP Architecture:</span>
-                <span className="text-indigo-300">10-Band EQ · 3D</span>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsAudioControlsOpen(true)}
-                className="mt-1 w-full py-1.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-[11px] font-semibold text-zinc-200 hover:text-white border border-white/[0.08] transition-colors flex items-center justify-center gap-1.5 cursor-pointer aura-focus-ring"
-              >
-                <SlidersHorizontal className="w-3 h-3 text-sky-400" />
-                <span>Audio Studio & DSP</span>
-              </button>
-            </div>
-
-          </div>
-        </section>
-      ) : null}
+          <button
+            type="button"
+            onClick={() => setCurrentView('sources')}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-focus-ring"
+            title="Open Live World Radio"
+          >
+            <RadioIcon className="w-3.5 h-3.5 text-amber-400" />
+            <span>Live Radio</span>
+          </button>
+        </div>
+      </section>
 
       {/* -------------------------------------------------------------
-          2. "JUMP BACK IN" — COMPACT HORIZONTAL RESUME SHELF
+          2. QUICK PICKS — TACTILE INSTANT-PLAY GRID (~60px ARTWORK TILES)
           ------------------------------------------------------------- */}
-      {jumpBackInTracks.length > 0 && (
+      {quickPicks.length > 0 && (
         <section className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-sky-400" />
-              <h2 className="font-section-title text-white">
-                Jump Back In
-              </h2>
-            </div>
-            <span className="text-xs text-zinc-500 font-mono hidden sm:inline">Recent Listening Flow</span>
+            <h2 className="font-section-title text-white flex items-center gap-2">
+              <Zap className="w-4 h-4 text-sky-400" />
+              Quick Picks
+            </h2>
+            <span className="text-xs text-zinc-500 font-mono hidden sm:inline">Instant Play</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-            {jumpBackInTracks.map((track) => {
-              const isThisTrackPlaying = currentTrack?.id === track.id && isPlaying;
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {quickPicks.map((track) => {
+              const isThisPlaying = currentTrack?.id === track.id && isPlaying;
               return (
                 <div
-                  key={`resume-${track.id}`}
-                  onClick={() => playTrack(track, jumpBackInTracks)}
-                  className={`group relative flex items-center gap-3 p-2.5 rounded-xl transition-all duration-200 cursor-pointer aura-focus-ring ${
+                  key={`quick-pick-${track.id}`}
+                  onClick={() => playTrack(track, quickPicks)}
+                  className={`group relative flex items-center gap-3.5 p-2.5 rounded-2xl transition-all duration-200 cursor-pointer aura-focus-ring ${
                     currentTrack?.id === track.id
-                      ? 'aura-glass-ambient border-white/25 shadow-lg'
-                      : 'aura-glass-ambient'
+                      ? 'bg-white/[0.10] border border-sky-400/50 shadow-md scale-[1.01]'
+                      : 'bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-white/[0.12] shadow-sm hover:shadow-md transition-all hover:scale-[1.01]'
                   }`}
                 >
-                  {/* Artwork */}
-                  <div className="relative w-11 h-11 rounded-lg overflow-hidden shrink-0 bg-zinc-900 border border-white/10 shadow-sm">
+                  {/* ~54px Tactile Artwork Tile */}
+                  <div className="relative w-13 h-13 rounded-xl overflow-hidden shrink-0 bg-zinc-900 border border-white/20 shadow-md">
                     {track.coverUrl ? (
-                      <img src={track.coverUrl} alt={track.title} className="w-full h-full object-cover" />
+                      <img 
+                        src={track.coverUrl} 
+                        alt={track.title} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        referrerPolicy="no-referrer"
+                      />
                     ) : (
-                      <div className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-zinc-800 to-black'} flex items-center justify-center`}>
-                        <Music className="w-4 h-4 text-zinc-400" />
+                      <div className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-indigo-900 to-black'} flex items-center justify-center`}>
+                        <Music className="w-5 h-5 text-white/60" />
                       </div>
                     )}
-                    
-                    {/* Micro Play Overlay */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <div className="w-6 h-6 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-md">
-                        {isThisTrackPlaying ? (
-                          <Pause className="w-3 h-3 fill-current text-black" />
+
+                    {/* Micro Play Hover Button */}
+                    <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <div className="w-7 h-7 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg group-hover:scale-110 active:scale-95 transition-transform">
+                        {isThisPlaying ? (
+                          <Pause className="w-3.5 h-3.5 fill-current text-black" />
                         ) : (
-                          <Play className="w-3 h-3 fill-current text-black translate-x-0.5" />
+                          <Play className="w-3.5 h-3.5 fill-current text-black translate-x-0.5" />
                         )}
                       </div>
                     </div>
                   </div>
 
-                  {/* Metadata */}
+                  {/* Title & Artist */}
                   <div className="min-w-0 flex-1">
                     <h3 className={`text-xs font-semibold truncate leading-tight ${currentTrack?.id === track.id ? 'text-white' : 'text-zinc-200 group-hover:text-white'}`}>
                       {track.title}
                     </h3>
-                    <p className="text-[11px] text-zinc-400 truncate mt-0.5">
+                    <p className="text-[11px] text-zinc-400 truncate mt-0.5 font-ui-meta group-hover:text-zinc-300 transition-colors">
                       {track.artist}
                     </p>
                   </div>
 
-                  {/* Active Indicator Waveform */}
-                  {isThisTrackPlaying && (
+                  {/* Active Equalizer Signal */}
+                  {isThisPlaying && (
                     <div className="flex items-end gap-0.5 pr-2 shrink-0">
-                      <span className="w-0.5 h-2.5 bg-sky-400 rounded-full animate-pulse" />
-                      <span className="w-0.5 h-3.5 bg-indigo-300 rounded-full animate-[pulse_0.7s_ease-in-out_infinite]" />
-                      <span className="w-0.5 h-2 bg-white rounded-full animate-[pulse_1s_ease-in-out_infinite]" />
+                      <span className="w-0.5 h-3 bg-sky-400 rounded-full animate-pulse" />
+                      <span className="w-0.5 h-4 bg-indigo-300 rounded-full animate-[pulse_0.7s_ease-in-out_infinite]" />
+                      <span className="w-0.5 h-2.5 bg-white rounded-full animate-[pulse_1s_ease-in-out_infinite]" />
                     </div>
                   )}
                 </div>
@@ -385,16 +345,409 @@ export const HomeView: React.FC = () => {
       )}
 
       {/* -------------------------------------------------------------
-          3. FEATURED SPACES & SOUNDSCAPES (Editorial Cards Shelf)
+          3. YOUR MUSIC DISCOVERY (NATIVE AURA MIXES + PLAYLIST IMPORT)
+          ------------------------------------------------------------- */}
+      <section className="flex flex-col gap-3.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 className="font-section-title text-white flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-indigo-400" />
+              Your Music Discovery
+            </h2>
+            <p className="text-xs text-zinc-400 mt-0.5 font-ui-meta">
+              Personalized listening experiences assembled natively from your library, playback history, and vault
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsYouTubeImportModalOpen(true)}
+            className="self-start sm:self-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-medium border border-red-500/25 transition-all cursor-pointer aura-focus-ring"
+          >
+            <ListMusic className="w-3.5 h-3.5 text-red-400" />
+            <span>Import YouTube Playlist</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {discoveryMixes.map((mix) => {
+            const isPlayingThisMix = currentTrack && mix.tracks.some((t) => t.id === currentTrack.id) && isPlaying;
+
+            return (
+              <div
+                key={mix.id}
+                className="group relative overflow-hidden rounded-3xl border border-white/[0.22] glass-ambient hover:glass-reflective flex flex-col justify-between transition-all duration-300 hover:border-white/40 shadow-xl hover:shadow-2xl hover:scale-[1.015]"
+              >
+                {/* Background Gradient */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${mix.coverColor} opacity-70 group-hover:opacity-85 transition-opacity`} />
+
+                {/* Top Section: Badges, Real Artwork and Descriptions */}
+                <div className="relative z-10 p-5 flex items-start gap-4">
+                  {/* Real Artwork Tile */}
+                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shrink-0 bg-zinc-900 border border-white/20 shadow-lg">
+                    {mix.coverUrl ? (
+                      <img
+                        src={mix.coverUrl}
+                        alt={mix.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
+                        <Music className="w-7 h-7 text-white/50" />
+                      </div>
+                    )}
+
+                    {/* Quick Play Overlay */}
+                    <button
+                      type="button"
+                      onClick={() => handlePlayDiscoveryMix(mix, false)}
+                      className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer"
+                      title={`Play ${mix.title}`}
+                    >
+                      <div className="w-9 h-9 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg transform group-hover:scale-105 active:scale-95 transition-transform">
+                        <Play className="w-4 h-4 fill-current text-black translate-x-0.5" />
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* Title & Metadata */}
+                  <div className="min-w-0 flex-1 flex flex-col justify-between h-full">
+                    <div>
+                      <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-white px-2 py-0.5 rounded-full bg-white/10 border border-white/15">
+                          {mix.badgeText}
+                        </span>
+                        {mix.isStarterMix ? (
+                          <span className="text-[9px] font-mono text-indigo-300 px-1.5 py-0.5 rounded bg-indigo-500/15 border border-indigo-500/25">
+                            STARTER
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-mono text-emerald-300 px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/25">
+                            PERSONALIZED
+                          </span>
+                        )}
+                      </div>
+
+                      <h3 className="text-base font-bold text-white group-hover:text-indigo-200 transition-colors font-display truncate">
+                        {mix.title}
+                      </h3>
+
+                      <p className="text-xs text-zinc-300 line-clamp-2 mt-0.5 leading-snug">
+                        {mix.subtitle}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-[11px] text-zinc-400 font-mono mt-2">
+                      <span>{mix.trackCount} tracks ready</span>
+                      {isPlayingThisMix && (
+                        <span className="flex items-center gap-1 text-sky-400 font-bold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-ping" />
+                          Playing
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Section: Honest Provenance & Controls */}
+                <div className="relative z-10 px-5 pb-4 pt-2 flex items-center justify-between border-t border-white/[0.06] bg-black/20">
+                  <p className="text-[11px] text-zinc-400 font-mono line-clamp-1 flex-1 pr-3" title={mix.reason}>
+                    {mix.reason}
+                  </p>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handlePlayDiscoveryMix(mix, true)}
+                      className="p-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 hover:text-white transition-colors cursor-pointer aura-focus-ring"
+                      title="Shuffle Mix"
+                    >
+                      <Shuffle className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePlayDiscoveryMix(mix, false)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-zinc-100 text-zinc-950 font-semibold text-xs transition-transform active:scale-95 cursor-pointer aura-focus-ring shadow"
+                      title={`Play ${mix.title}`}
+                    >
+                      <Play className="w-3 h-3 fill-current text-black translate-x-0.2" />
+                      <span>Play</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Quick-Launcher Card for YouTube Playlist Import */}
+          <div
+            onClick={() => setIsYouTubeImportModalOpen(true)}
+            className="group relative overflow-hidden rounded-2xl border border-red-500/20 hover:border-red-500/40 aura-glass-ambient flex flex-col justify-between transition-all duration-300 shadow-lg cursor-pointer min-h-[160px]"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-red-950/40 via-zinc-900/60 to-black/80 opacity-80 group-hover:opacity-100 transition-opacity" />
+            
+            <div className="relative z-10 p-5 flex items-start gap-4">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center shrink-0 text-red-400 group-hover:scale-105 transition-transform">
+                <ListMusic className="w-8 h-8" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-red-300 px-2 py-0.5 rounded-full bg-red-500/15 border border-red-500/25">
+                  OFFICIAL STREAMING
+                </span>
+                <h3 className="text-base font-bold text-white group-hover:text-red-200 transition-colors font-display mt-1">
+                  Import YouTube Playlist
+                </h3>
+                <p className="text-xs text-zinc-400 mt-1 line-clamp-2">
+                  Paste any YouTube or YouTube Music playlist URL or ID to stream officially inside AURA.
+                </p>
+              </div>
+            </div>
+
+            <div className="relative z-10 px-5 pb-4 pt-2 flex items-center justify-between border-t border-white/[0.06] bg-black/20">
+              <span className="text-[11px] font-mono text-zinc-400">
+                Official YouTube IFrame Player API
+              </span>
+              <button
+                type="button"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-400 text-white font-semibold text-xs transition-transform active:scale-95 cursor-pointer shadow"
+              >
+                <Plus className="w-3 h-3 stroke-[2.5]" />
+                <span>Import</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* -------------------------------------------------------------
+          4. EXPLORE BY MOOD (8 EXPRESSIVE MOOD CARDS)
           ------------------------------------------------------------- */}
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ListMusic className="w-4 h-4 text-indigo-400" />
-            <h2 className="font-section-title text-white">
-              Featured Spaces & Soundscapes
-            </h2>
+          <h2 className="font-section-title text-white flex items-center gap-2">
+            <Compass className="w-4 h-4 text-purple-400" />
+            Explore by Mood
+          </h2>
+          <span className="text-xs text-zinc-500 font-mono hidden sm:inline">Sonic Mood Filter</span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {MOOD_CARDS.map((mood) => (
+            <div
+              key={mood.id}
+              onClick={() => handleSelectMood(mood.query)}
+              className={`group relative overflow-hidden rounded-3xl aspect-[16/9] p-4 flex flex-col justify-between border ${mood.border} transition-all duration-300 cursor-pointer glass-ambient hover:glass-reflective shadow-lg hover:shadow-2xl hover:scale-[1.02]`}
+            >
+              <div className={`absolute inset-0 bg-gradient-to-br ${mood.gradient} opacity-75 group-hover:opacity-95 transition-opacity`} />
+              
+              <div className="relative z-10 flex items-center justify-between">
+                <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-white/10 ${mood.badgeColor}`}>
+                  {mood.name.toUpperCase()}
+                </span>
+                <ArrowUpRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white transition-colors" />
+              </div>
+
+              <div className="relative z-10">
+                <h3 className="text-xs sm:text-sm font-bold text-white group-hover:text-sky-200 transition-colors font-display">
+                  {mood.name}
+                </h3>
+                <p className="text-[10px] text-zinc-400 line-clamp-1 mt-0.5 font-ui-meta">
+                  {mood.desc}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* -------------------------------------------------------------
+          5. EXPLORE GENRES (GENUINE MUSIC GENRES CONNECTED TO SEARCH)
+          ------------------------------------------------------------- */}
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-section-title text-white flex items-center gap-2">
+            <Layers className="w-4 h-4 text-sky-400" />
+            Explore Genres
+          </h2>
+          <span className="text-xs text-zinc-500 font-mono hidden sm:inline">Provider Catalog Search</span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
+          {GENUINE_GENRES.map((g) => (
+            <div
+              key={g.id}
+              onClick={() => handleSelectGenre(g.query)}
+              className={`group relative overflow-hidden rounded-xl aspect-[4/3] p-3 flex flex-col justify-between border ${g.border} transition-all duration-200 cursor-pointer aura-glass-ambient shadow-sm hover:scale-[1.02]`}
+            >
+              <div className={`absolute inset-0 bg-gradient-to-br ${g.color} opacity-70 group-hover:opacity-95 transition-opacity`} />
+              
+              <div className="relative z-10 flex items-center justify-between">
+                <span className="text-[8px] font-mono text-zinc-400 uppercase tracking-wider">GENRE</span>
+              </div>
+
+              <div className="relative z-10">
+                <h3 className="text-xs font-bold text-white group-hover:text-sky-300 transition-colors font-display">
+                  {g.name}
+                </h3>
+                <p className="text-[9px] text-zinc-400 line-clamp-1 mt-0.5 font-ui-meta">
+                  {g.tag}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* -------------------------------------------------------------
+          6. EXPLORE SOUNDSCAPES (AURA CURATED SOUND CONCEPTS)
+          ------------------------------------------------------------- */}
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-section-title text-white flex items-center gap-2">
+            <Waves className="w-4 h-4 text-emerald-400" />
+            Explore Soundscapes
+          </h2>
+          <span className="text-xs text-zinc-500 font-mono hidden sm:inline">AURA Sonic Environments</span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+          {SONIC_ENVIRONMENTS.map((env) => (
+            <div
+              key={env.id}
+              onClick={() => playTrack(env.featuredTrack, [env.featuredTrack])}
+              className="group relative overflow-hidden rounded-xl aspect-[16/10] p-3 flex flex-col justify-between border border-white/[0.08] hover:border-white/20 transition-all cursor-pointer aura-glass-ambient shadow-sm"
+            >
+              <div className={`absolute inset-0 bg-gradient-to-br ${env.coverGradient} opacity-60 group-hover:opacity-85 transition-opacity`} />
+              
+              <div className="relative z-10 flex items-start justify-between">
+                <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-zinc-300 border border-white/10">
+                  SOUNDSCAPE
+                </span>
+                <div className="w-6 h-6 rounded-full bg-white text-zinc-950 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Play className="w-3 h-3 fill-current text-black translate-x-0.5" />
+                </div>
+              </div>
+
+              <div className="relative z-10">
+                <h3 className="text-xs font-bold text-white group-hover:text-sky-300 transition-colors font-display">
+                  {env.name}
+                </h3>
+                <p className="text-[9px] text-zinc-400 line-clamp-1 mt-0.5 font-ui-meta">
+                  {env.tagline}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* -------------------------------------------------------------
+          7. NEW & TRENDING DISCOVERIES (LIVE STREAM OBJECTS)
+          ------------------------------------------------------------- */}
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-section-title text-white flex items-center gap-2">
+            <Flame className="w-4 h-4 text-emerald-400" />
+            Trending & Open Discoveries
+          </h2>
+          <button
+            type="button"
+            onClick={() => setCurrentView('sources')}
+            className="text-xs text-zinc-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer font-medium"
+          >
+            All Sources <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        {trendingTracks.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-5">
+            {trendingTracks.map((track) => (
+              <SongObjectCard
+                key={`trending-${track.id}`}
+                track={track}
+                playlistContext={trendingTracks}
+                variant="grid"
+                onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
+              />
+            ))}
           </div>
+        ) : (
+          <div className="p-6 rounded-2xl aura-glass-ambient text-center text-xs text-zinc-400 font-mono">
+            {isLoadingDiscovery ? 'Loading live open streaming discoveries...' : 'Discoveries loaded.'}
+          </div>
+        )}
+      </section>
+
+      {/* -------------------------------------------------------------
+          8. TOP GLOBAL RADIO STATIONS
+          ------------------------------------------------------------- */}
+      {topRadioStations.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-section-title text-white flex items-center gap-2">
+              <RadioIcon className="w-4 h-4 text-amber-400" />
+              Live Broadcast Radio
+            </h2>
+            <button
+              type="button"
+              onClick={() => setCurrentView('sources')}
+              className="text-xs text-zinc-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer font-medium"
+            >
+              Radio Radar <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
+            {topRadioStations.map((station) => (
+              <div
+                key={`radio-${station.id}`}
+                onClick={() => playTrack(station, topRadioStations)}
+                className="group relative flex flex-col p-2.5 rounded-xl aura-glass-ambient transition-all cursor-pointer"
+              >
+                <div className="relative aspect-square rounded-lg overflow-hidden bg-zinc-900 border border-white/10 mb-2 flex items-center justify-center">
+                  {station.coverUrl ? (
+                    <img 
+                      src={station.coverUrl} 
+                      alt={station.title} 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                  ) : null}
+                  <div className="absolute inset-0 flex items-center justify-center bg-zinc-900 -z-10">
+                    <RadioIcon className="w-6 h-6 text-amber-400/50" />
+                  </div>
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                    <div className="w-8 h-8 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg">
+                      <Play className="w-3.5 h-3.5 fill-current text-black translate-x-0.5" />
+                    </div>
+                  </div>
+                  <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    LIVE
+                  </span>
+                </div>
+                <h4 className="text-xs font-semibold text-white truncate font-ui-title group-hover:text-amber-300">
+                  {station.title}
+                </h4>
+                <p className="text-[10px] text-zinc-400 truncate mt-0.5">
+                  {station.artist || 'World Radio'}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* -------------------------------------------------------------
+          9. FEATURED SPACES & SOUNDSCAPES
+          ------------------------------------------------------------- */}
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-section-title text-white flex items-center gap-2">
+            <ListMusic className="w-4 h-4 text-indigo-400" />
+            Featured Spaces & Collections
+          </h2>
           <button
             type="button"
             onClick={() => setCurrentView('playlists')}
@@ -444,147 +797,7 @@ export const HomeView: React.FC = () => {
       </section>
 
       {/* -------------------------------------------------------------
-          4. DYNAMIC TRENDING & OPEN DISCOVERY (Curated Music Objects)
-          ------------------------------------------------------------- */}
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Flame className="w-4 h-4 text-emerald-400" />
-            <h2 className="font-section-title text-white">
-              Trending Music & Community Discoveries
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={() => setCurrentView('sources')}
-            className="text-xs text-zinc-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer font-medium"
-          >
-            Explore Sources <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-
-        {trendingTracks.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-5">
-            {trendingTracks.map((track) => (
-              <SongObjectCard
-                key={`trending-${track.id}`}
-                track={track}
-                playlistContext={trendingTracks}
-                variant="grid"
-                onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="p-6 rounded-2xl aura-glass-ambient text-center text-xs text-zinc-400 font-mono">
-            {isLoadingDiscovery ? 'Synthesizing global open streaming discoveries...' : 'Trending catalog ready.'}
-          </div>
-        )}
-      </section>
-
-      {/* -------------------------------------------------------------
-          5. TOP GLOBAL LIVE RADIO RADAR (Compact Badged Shelf)
-          ------------------------------------------------------------- */}
-      {topRadioStations.length > 0 && (
-        <section className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Radio className="w-4 h-4 text-amber-400" />
-              <h2 className="font-section-title text-white">
-                Live Broadcast Stations
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={() => setCurrentView('sources')}
-              className="text-xs text-zinc-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer font-medium"
-            >
-              Browse Global Radio <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
-            {topRadioStations.map((station) => (
-              <div
-                key={`radio-${station.id}`}
-                onClick={() => playTrack(station, topRadioStations)}
-                className="group relative flex flex-col p-2.5 rounded-xl aura-glass-ambient transition-all cursor-pointer"
-              >
-                <div className="relative aspect-square rounded-lg overflow-hidden bg-zinc-900 border border-white/10 mb-2 flex items-center justify-center">
-                  {station.coverUrl ? (
-                    <img 
-                      src={station.coverUrl} 
-                      alt={station.title} 
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLElement).style.display = 'none';
-                      }}
-                    />
-                  ) : null}
-                  <div className="absolute inset-0 flex items-center justify-center bg-zinc-900 -z-10">
-                    <Radio className="w-6 h-6 text-amber-400/50" />
-                  </div>
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                    <div className="w-8 h-8 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg">
-                      <Play className="w-3.5 h-3.5 fill-current text-black translate-x-0.5" />
-                    </div>
-                  </div>
-                  <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                    LIVE
-                  </span>
-                </div>
-                <h4 className="text-xs font-semibold text-white truncate font-ui-title group-hover:text-amber-300">
-                  {station.title}
-                </h4>
-                <p className="text-[10px] text-zinc-400 truncate mt-0.5">
-                  {station.artist || 'World Radio'}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* -------------------------------------------------------------
-          6. GENRE & MOOD SPECTRUM (Compact Aspect Tiles)
-          ------------------------------------------------------------- */}
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Layers className="w-4 h-4 text-purple-400" />
-            <h2 className="font-section-title text-white">
-              Explore by Genre & Mood
-            </h2>
-          </div>
-          <span className="text-xs text-zinc-500 font-mono hidden sm:inline">Direct Catalog Search</span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
-          {GENRE_MOOD_CATEGORIES.map((cat) => (
-            <div
-              key={cat.id}
-              onClick={() => handleSelectGenre(cat.query)}
-              className="group relative overflow-hidden rounded-xl aspect-[16/10] p-3 flex flex-col justify-end border border-white/[0.08] hover:border-white/20 transition-all cursor-pointer shadow-sm aura-glass-ambient"
-            >
-              {/* Background gradient */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${cat.coverGradient} opacity-60 group-hover:opacity-85 transition-opacity`} />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
-              
-              <div className="relative z-10">
-                <h3 className="text-xs font-semibold text-white font-ui-title group-hover:text-sky-300 transition-colors">
-                  {cat.name}
-                </h3>
-                <p className="text-[9px] text-zinc-400 font-ui-meta line-clamp-1 mt-0.5">
-                  {cat.description}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* -------------------------------------------------------------
-          7. LOCAL MUSIC VAULT STATUS & QUICK IMPORT
+          10. LOCAL VAULT STATUS & QUICK IMPORT FOOTER
           ------------------------------------------------------------- */}
       <section className="p-5 sm:p-6 rounded-2xl aura-glass-ambient flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
@@ -595,10 +808,10 @@ export const HomeView: React.FC = () => {
             <h3 className="text-sm font-bold text-white font-ui-title">
               Your Personal Vault
             </h3>
-            <p className="text-xs text-zinc-400 mt-0.5">
+            <p className="text-xs text-zinc-400 mt-0.5 font-ui-meta">
               {tracks.length > 0 
                 ? `${tracks.length} audio tracks stored in IndexedDB offline storage.`
-                : 'Import local FLAC, MP3, WAV or AAC files for lossless browser-native listening.'}
+                : 'Import local MP3, WAV, FLAC or AAC files for browser-native offline listening.'}
             </p>
           </div>
         </div>
@@ -625,6 +838,11 @@ export const HomeView: React.FC = () => {
         </div>
       </section>
 
+      {/* End-of-view spatial buffer */}
+      <div className="h-8 sm:h-12 shrink-0 flex items-center justify-center text-[10px] font-mono text-zinc-600/40 select-none" aria-hidden="true">
+        <span>AURA Audio Sanctuary</span>
+      </div>
+
       {/* Add To Playlist Modal */}
       {playlistModalTrack && (
         <AddToPlaylistModal
@@ -634,7 +852,12 @@ export const HomeView: React.FC = () => {
         />
       )}
 
+      {/* YouTube Playlist Import Modal */}
+      <YouTubePlaylistImportModal
+        isOpen={isYouTubeImportModalOpen}
+        onClose={() => setIsYouTubeImportModalOpen(false)}
+      />
+
     </div>
   );
 };
-

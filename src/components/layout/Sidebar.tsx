@@ -111,7 +111,7 @@ export const Sidebar: React.FC = () => {
     <aside
       id="main-sidebar"
       aria-label="Spatial Navigation Dock"
-      className={`hidden lg:flex mt-3.5 lg:mt-4 ml-4 lg:ml-5 mb-3.5 lg:mb-4 h-[calc(100dvh-1.75rem)] lg:h-[calc(100dvh-2rem)] rounded-2xl aura-glass-dock flex-col justify-between select-none transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] z-30 shrink-0 shadow-[0_16px_40px_rgba(0,0,0,0.65)] ${
+      className={`hidden lg:flex mt-3.5 lg:mt-4 ml-4 lg:ml-5 mb-3.5 lg:mb-4 h-[calc(100dvh-1.75rem)] lg:h-[calc(100dvh-2rem)] rounded-3xl bg-[#0a0d16]/75 backdrop-blur-xl border border-white/[0.08] flex-col justify-between select-none transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] z-30 shrink-0 shadow-[0_16px_40px_rgba(0,0,0,0.7)] relative overflow-hidden ${
         isCollapsed ? 'w-[72px]' : 'w-60'
       }`}
     >
@@ -125,17 +125,12 @@ export const Sidebar: React.FC = () => {
             <div 
               onClick={() => handleNav('home')}
               className="flex items-center gap-3 cursor-pointer group flex-1 min-w-0"
-              title="AURA Studio Home"
+              title="AURA Home"
             >
               <AuraBrandMark isPlaying={isPlaying} size={26} />
-              <div className="flex flex-col min-w-0">
-                <span className="text-sm font-bold tracking-[0.14em] text-white font-display leading-none">
-                  AURA
-                </span>
-                <span className="text-[9px] font-mono tracking-widest text-zinc-500 uppercase mt-0.5">
-                  SPATIAL
-                </span>
-              </div>
+              <span className="text-sm font-bold tracking-[0.14em] text-white font-display leading-none">
+                AURA
+              </span>
             </div>
             <button
               type="button"
@@ -229,10 +224,10 @@ export const Sidebar: React.FC = () => {
                   key={item.id}
                   type="button"
                   onClick={() => handleNav(item.id)}
-                  className={`group relative flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl text-xs transition-all duration-150 cursor-pointer aura-focus-ring ${
+                  className={`group relative flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-all duration-200 cursor-pointer aura-focus-ring ${
                     isActive
-                      ? 'bg-gradient-to-r from-white/[0.10] to-white/[0.02] text-white font-semibold shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12)] before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2.5px] before:rounded-r-full before:bg-gradient-to-b before:from-sky-400 before:to-indigo-500 before:shadow-[0_0_10px_rgba(56,189,248,0.7)]'
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04] font-medium'
+                      ? 'bg-white/[0.10] border border-white/[0.12] text-white font-semibold shadow-sm before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-1 before:rounded-full before:bg-sky-400'
+                      : 'text-zinc-400 hover:text-white hover:bg-white/[0.06] font-medium'
                   }`}
                 >
                   <Icon

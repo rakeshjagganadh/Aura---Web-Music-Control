@@ -31,94 +31,101 @@ export const AuraAtmosphere: React.FC<AuraAtmosphereProps> = ({
 
       if (coverColor.includes('rose') || coverColor.includes('pink') || coverColor.includes('red')) {
         return {
-          primaryGlow: 'rgba(225, 29, 72, 0.16)',
-          secondaryGlow: 'rgba(159, 18, 57, 0.12)',
-          topAccent: 'rgba(244, 63, 94, 0.10)',
+          primaryGlow: 'rgba(244, 63, 94, 0.35)',
+          secondaryGlow: 'rgba(225, 29, 72, 0.28)',
+          topAccent: 'rgba(251, 113, 133, 0.24)',
           bottomDepth: 'rgba(12, 16, 26, 0.85)',
-          meshA: 'rgba(225, 29, 72, 0.08)',
-          meshB: 'rgba(99, 102, 241, 0.09)',
+          meshA: 'rgba(225, 29, 72, 0.20)',
+          meshB: 'rgba(99, 102, 241, 0.22)',
         };
       }
 
       if (coverColor.includes('amber') || coverColor.includes('orange') || coverColor.includes('yellow')) {
         return {
-          primaryGlow: 'rgba(245, 158, 11, 0.15)',
-          secondaryGlow: 'rgba(180, 83, 9, 0.10)',
-          topAccent: 'rgba(251, 191, 36, 0.08)',
+          primaryGlow: 'rgba(245, 158, 11, 0.35)',
+          secondaryGlow: 'rgba(217, 119, 6, 0.28)',
+          topAccent: 'rgba(252, 211, 77, 0.22)',
           bottomDepth: 'rgba(15, 17, 26, 0.85)',
-          meshA: 'rgba(217, 119, 6, 0.08)',
-          meshB: 'rgba(79, 70, 229, 0.09)',
+          meshA: 'rgba(217, 119, 6, 0.20)',
+          meshB: 'rgba(79, 70, 229, 0.22)',
         };
       }
 
       if (coverColor.includes('emerald') || coverColor.includes('teal') || coverColor.includes('green')) {
         return {
-          primaryGlow: 'rgba(16, 185, 129, 0.14)',
-          secondaryGlow: 'rgba(13, 148, 136, 0.10)',
-          topAccent: 'rgba(52, 211, 153, 0.08)',
+          primaryGlow: 'rgba(16, 185, 129, 0.32)',
+          secondaryGlow: 'rgba(13, 148, 136, 0.26)',
+          topAccent: 'rgba(52, 211, 153, 0.22)',
           bottomDepth: 'rgba(10, 18, 22, 0.85)',
-          meshA: 'rgba(5, 150, 105, 0.08)',
-          meshB: 'rgba(99, 102, 241, 0.08)',
+          meshA: 'rgba(5, 150, 105, 0.18)',
+          meshB: 'rgba(99, 102, 241, 0.20)',
         };
       }
 
       if (coverColor.includes('cyan') || coverColor.includes('sky') || coverColor.includes('blue')) {
         return {
-          primaryGlow: 'rgba(6, 182, 212, 0.15)',
-          secondaryGlow: 'rgba(30, 64, 175, 0.12)',
-          topAccent: 'rgba(56, 189, 248, 0.09)',
+          primaryGlow: 'rgba(6, 182, 212, 0.35)',
+          secondaryGlow: 'rgba(37, 99, 235, 0.28)',
+          topAccent: 'rgba(56, 189, 248, 0.24)',
           bottomDepth: 'rgba(8, 14, 26, 0.85)',
-          meshA: 'rgba(14, 165, 233, 0.09)',
-          meshB: 'rgba(99, 102, 241, 0.11)',
+          meshA: 'rgba(14, 165, 233, 0.22)',
+          meshB: 'rgba(99, 102, 241, 0.25)',
         };
       }
+
+      // Default with track active: rich oceanic indigo & vibrant violet
+      return {
+        primaryGlow: 'rgba(99, 102, 241, 0.35)',
+        secondaryGlow: 'rgba(147, 51, 234, 0.28)',
+        topAccent: 'rgba(56, 189, 248, 0.24)',
+        bottomDepth: 'rgba(8, 12, 22, 0.85)',
+        meshA: 'rgba(79, 70, 229, 0.22)',
+        meshB: 'rgba(6, 182, 212, 0.24)',
+      };
     }
 
-    // 2. Section-Adaptive Ambient Environments (Neutral obsidian, graphite, charcoal and cool slate)
+    // 2. Section-Adaptive Ambient Environments
     if (currentView === 'studio') {
-      // Audio Studio: Restrained, technical, deep carbon with subtle cyan/slate meter glow
       return {
-        primaryGlow: 'rgba(38, 52, 70, 0.12)',
-        secondaryGlow: 'rgba(24, 34, 48, 0.10)',
-        topAccent: 'rgba(45, 65, 85, 0.08)',
+        primaryGlow: 'rgba(56, 189, 248, 0.24)',
+        secondaryGlow: 'rgba(99, 102, 241, 0.20)',
+        topAccent: 'rgba(129, 140, 248, 0.16)',
         bottomDepth: 'rgba(8, 10, 15, 0.95)',
-        meshA: 'rgba(16, 185, 129, 0.03)',
-        meshB: 'rgba(14, 165, 233, 0.04)',
+        meshA: 'rgba(16, 185, 129, 0.12)',
+        meshB: 'rgba(14, 165, 233, 0.14)',
       };
     }
 
     if (currentView === 'listen-together') {
-      // Social Room: Warm, collaborative muted violet and slate depth
       return {
-        primaryGlow: 'rgba(99, 102, 241, 0.10)',
-        secondaryGlow: 'rgba(67, 56, 202, 0.08)',
-        topAccent: 'rgba(129, 140, 248, 0.06)',
+        primaryGlow: 'rgba(147, 51, 234, 0.28)',
+        secondaryGlow: 'rgba(99, 102, 241, 0.24)',
+        topAccent: 'rgba(168, 85, 247, 0.20)',
         bottomDepth: 'rgba(9, 11, 18, 0.92)',
-        meshA: 'rgba(147, 51, 234, 0.05)',
-        meshB: 'rgba(6, 182, 212, 0.05)',
+        meshA: 'rgba(236, 72, 153, 0.16)',
+        meshB: 'rgba(6, 182, 212, 0.16)',
       };
     }
 
     if (currentView === 'library' || currentView === 'songs' || currentView === 'albums' || currentView === 'artists') {
-      // Music Vault: Calm, focused deep obsidian, graphite and cool slate
       return {
-        primaryGlow: 'rgba(40, 50, 68, 0.10)',
-        secondaryGlow: 'rgba(25, 32, 45, 0.12)',
-        topAccent: 'rgba(148, 163, 184, 0.04)',
+        primaryGlow: 'rgba(79, 70, 229, 0.22)',
+        secondaryGlow: 'rgba(30, 64, 175, 0.20)',
+        topAccent: 'rgba(56, 189, 248, 0.16)',
         bottomDepth: 'rgba(7, 9, 13, 0.95)',
-        meshA: 'rgba(51, 65, 85, 0.06)',
-        meshB: 'rgba(30, 41, 59, 0.06)',
+        meshA: 'rgba(99, 102, 241, 0.14)',
+        meshB: 'rgba(30, 58, 138, 0.15)',
       };
     }
 
-    // Default Home / Discovery: Balanced graphite, smoked charcoal, and subtle cool slate (NOT purple plastic)
+    // Default Home / Discovery: Luminous sapphire, celestial cyan and deep indigo
     return {
-      primaryGlow: 'rgba(35, 48, 70, 0.13)',
-      secondaryGlow: 'rgba(22, 32, 48, 0.10)',
-      topAccent: 'rgba(56, 75, 105, 0.06)',
+      primaryGlow: 'rgba(79, 70, 229, 0.28)',
+      secondaryGlow: 'rgba(14, 165, 233, 0.24)',
+      topAccent: 'rgba(99, 102, 241, 0.18)',
       bottomDepth: 'rgba(8, 10, 16, 0.92)',
-      meshA: 'rgba(30, 42, 60, 0.07)',
-      meshB: 'rgba(18, 25, 38, 0.06)',
+      meshA: 'rgba(37, 99, 235, 0.18)',
+      meshB: 'rgba(168, 85, 247, 0.16)',
     };
   }, [currentTrack, currentView]);
 
@@ -205,19 +212,35 @@ export const AuraAtmosphere: React.FC<AuraAtmosphereProps> = ({
       aria-hidden="true"
       className={`pointer-events-none fixed inset-0 z-0 overflow-hidden select-none ${className}`}
     >
-      {/* 1. Deep Graphite Foundation Gradient */}
+      {/* 1. Deep Oceanic-Graphite Foundation Gradient */}
       <div 
         className="absolute inset-0 transition-colors duration-1000 ease-out"
         style={{
-          background: 'linear-gradient(175deg, #07090e 0%, #0c0f17 35%, #080a11 70%, #05060a 100%)',
+          background: 'linear-gradient(175deg, #090c14 0%, #0f1422 35%, #0b0e19 70%, #07090e 100%)',
         }}
       />
+
+      {/* Dynamic Full-Canvas Ambient Artwork Wash (Active Track Lighting) */}
+      {currentTrack?.coverUrl && (
+        <div 
+          className="absolute inset-0 pointer-events-none transition-opacity duration-1000 ease-out overflow-hidden"
+          style={{ opacity: isPlaying ? 0.22 : 0.12 }}
+        >
+          <img
+            src={currentTrack.coverUrl}
+            alt=""
+            className="w-full h-full object-cover blur-[100px] scale-140 filter saturate-120 brightness-70"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#07090e]/70 via-transparent to-[#05060a]/85" />
+        </div>
+      )}
 
       {/* 2. Top-Left Luminous Light Field (Provides vivid backlight for floating navigation and header) */}
       <div
         className="absolute -top-[15%] -left-[10%] w-[55vw] h-[55vh] rounded-full transition-all duration-1000 ease-out"
         style={{
-          background: `radial-gradient(circle, ${ambientPalette.primaryGlow} 0%, rgba(99, 102, 241, 0.03) 60%, transparent 80%)`,
+          background: `radial-gradient(circle, ${ambientPalette.primaryGlow} 0%, rgba(99, 102, 241, 0.08) 55%, transparent 80%)`,
           filter: 'blur(90px)',
           transform: `translate3d(${audioDynamics.shiftX * 0.6}px, ${audioDynamics.shiftY * 0.6}px, 0) scale(${audioDynamics.bassScale})`,
           opacity: audioDynamics.energyOpacity,
@@ -228,7 +251,7 @@ export const AuraAtmosphere: React.FC<AuraAtmosphereProps> = ({
       <div
         className="absolute -top-[10%] -right-[10%] w-[50vw] h-[50vh] rounded-full transition-all duration-1200 ease-out"
         style={{
-          background: `radial-gradient(circle, ${ambientPalette.meshB} 0%, rgba(6, 182, 212, 0.02) 65%, transparent 85%)`,
+          background: `radial-gradient(circle, ${ambientPalette.meshB} 0%, rgba(6, 182, 212, 0.06) 60%, transparent 85%)`,
           filter: 'blur(100px)',
           transform: `translate3d(${-audioDynamics.shiftX * 0.5}px, ${audioDynamics.shiftY * 0.5}px, 0)`,
         }}
@@ -241,18 +264,18 @@ export const AuraAtmosphere: React.FC<AuraAtmosphereProps> = ({
           background: `radial-gradient(ellipse 65% 50% at 50% 50%, ${ambientPalette.secondaryGlow} 0%, ${ambientPalette.meshA} 50%, transparent 80%)`,
           filter: 'blur(110px)',
           transform: `scale(${audioDynamics.bassScale * 1.02})`,
-          opacity: isPlaying ? audioDynamics.energyOpacity : 0.65,
+          opacity: isPlaying ? audioDynamics.energyOpacity : 0.75,
         }}
       />
 
-      {/* 5. Bottom Playback Island Reflection Field (Restrained natural reflection, NOT an obvious warm-to-blue painted gradient) */}
+      {/* 5. Bottom Playback Island Reflection Field (Luminous optical reflection under player) */}
       <div
-        className="absolute -bottom-[8%] left-[12%] right-[12%] h-[30vh] rounded-full transition-all duration-1000 ease-out pointer-events-none"
+        className="absolute -bottom-[8%] left-[10%] right-[10%] h-[32vh] rounded-full transition-all duration-1000 ease-out pointer-events-none"
         style={{
           background: currentTrack
-            ? `radial-gradient(ellipse 70% 50% at 50% 100%, ${ambientPalette.primaryGlow} 0%, rgba(16, 22, 34, 0.16) 45%, transparent 75%)`
-            : 'radial-gradient(ellipse 70% 50% at 50% 100%, rgba(255, 255, 255, 0.025) 0%, rgba(14, 18, 28, 0.15) 45%, transparent 75%)',
-          filter: 'blur(80px)',
+            ? `radial-gradient(ellipse 80% 60% at 50% 100%, ${ambientPalette.primaryGlow} 0%, ${ambientPalette.secondaryGlow} 40%, transparent 80%)`
+            : 'radial-gradient(ellipse 80% 60% at 50% 100%, rgba(99, 102, 241, 0.16) 0%, rgba(14, 165, 233, 0.10) 45%, transparent 75%)',
+          filter: 'blur(70px)',
         }}
       />
 

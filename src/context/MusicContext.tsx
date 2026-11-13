@@ -45,7 +45,7 @@ import { SOUND_LAB_PRESETS } from '../services/soundLabPresets';
 import { formatSeconds } from '../utils/formatTime';
 import { youtubePlayerBridge } from '../services/youtubePlayerBridge';
 import { backgroundAudioKeepAlive } from '../services/backgroundAudioKeepAlive';
-import { WEB_STREAM_CAPABILITIES } from '../services/sourceService';
+import { WEB_STREAM_CAPABILITIES, YOUTUBE_EMBED_CAPABILITIES } from '../services/sourceService';
 import { audiusService } from '../services/audiusService';
 
 interface Toast {
@@ -298,10 +298,13 @@ export interface MusicContextType {
   setIsMomentsModalOpen: (open: boolean) => void;
   isPresetsModalOpen: boolean;
   setIsPresetsModalOpen: (open: boolean) => void;
+  isYouTubeImportModalOpen: boolean;
+  setIsYouTubeImportModalOpen: (open: boolean) => void;
   isDraggingFile: boolean;
   setIsDraggingFile: (dragging: boolean) => void;
 
   // Player Actions
+  playYouTubePlaylist: (playlistId: string, title?: string, coverUrl?: string) => Promise<void>;
   switchToTrack: (track: Track | null, options?: { autoplay?: boolean; newQueue?: Track[]; index?: number; startTime?: number }) => Promise<void>;
   playTrack: (track: Track, fromQueue?: Track[]) => Promise<void>;
   togglePlay: () => void;
@@ -481,6 +484,9 @@ const pathToNavView = (pathname: string, search: string, hash: string): NavView 
   const params = new URLSearchParams(search);
   const h = hash.toLowerCase();
 
+  if (params.get('lab') === 'optical' || p === '/optical-lab' || h === '#optical-lab') {
+    return 'optical-lab';
+  }
   if (params.get('room') || p.startsWith('/listen') || h.includes('/listen')) {
     return 'listen-together';
   }
@@ -508,6 +514,7 @@ const navViewToPath = (view: NavView): string => {
     case 'favorites': return '/favorites';
     case 'settings': return '/settings';
     case 'listen-together': return '/listen';
+    case 'optical-lab': return '/optical-lab';
     default: return '/';
   }
 };
@@ -734,6 +741,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isTrimExportModalOpen, setIsTrimExportModalOpen] = useState(false);
   const [isMomentsModalOpen, setIsMomentsModalOpen] = useState(false);
   const [isPresetsModalOpen, setIsPresetsModalOpen] = useState(false);
+  const [isYouTubeImportModalOpen, setIsYouTubeImportModalOpen] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
 
   // Sleep Timer State
@@ -1106,15 +1114,24 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       activeSourceRef.current = 'youtube';
       setActiveSource('youtube');
 
-      const videoId = track.sourceId!;
-      youtubePlayerBridge.loadAndPlay(videoId, {
-        autoplay: shouldAutoplay,
-        volume: isMuted ? 0 : Math.round(volume * 100),
-        isMuted,
-        playbackRate,
-        requestId,
-        startTime: initialStartTime,
-      });
+      if (track.fileFormat === 'YOUTUBE_PLAYLIST') {
+        youtubePlayerBridge.loadPlaylist(track.sourceId!, {
+          autoplay: shouldAutoplay,
+          volume: isMuted ? 0 : Math.round(volume * 100),
+          isMuted,
+          playbackRate,
+        });
+      } else {
+        const videoId = track.sourceId!;
+        youtubePlayerBridge.loadAndPlay(videoId, {
+          autoplay: shouldAutoplay,
+          volume: isMuted ? 0 : Math.round(volume * 100),
+          isMuted,
+          playbackRate,
+          requestId,
+          startTime: initialStartTime,
+        });
+      }
     } else {
       setIsDirectStreamActive(false);
       // Local source: retrieve blob or URL
@@ -1198,6 +1215,31 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     }
   }, [volume, isMuted, playbackRate, useSongProfiles, applyPresetSnapshot, showToast]);
+
+  const playYouTubePlaylist = useCallback(
+    async (playlistId: string, title?: string, coverUrl?: string) => {
+      const playlistTrack: Track = {
+        id: `yt-playlist-${playlistId}`,
+        title: title || `YouTube Playlist`,
+        artist: 'YouTube Playlist Stream',
+        album: 'YouTube Playlist',
+        duration: 0,
+        fileFormat: 'YOUTUBE_PLAYLIST',
+        fileSize: 0,
+        dateAdded: Date.now(),
+        coverUrl: coverUrl || `https://i.ytimg.com/vi/default/hqdefault.jpg`,
+        coverColor: 'from-red-600 via-zinc-900 to-black',
+        source: 'youtube',
+        sourceId: playlistId,
+        sourceName: 'YouTube Playlist',
+        sourceUrl: `https://www.youtube.com/playlist?list=${playlistId}`,
+        isAvailable: true,
+        playbackCapability: YOUTUBE_EMBED_CAPABILITIES,
+      };
+      await switchToTrack(playlistTrack, { autoplay: true });
+    },
+    [switchToTrack]
+  );
 
   // Handle Play Track
   const playTrack = useCallback(async (track: Track, newQueue?: Track[]) => {
@@ -1340,6 +1382,11 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   handleTrackEndedRef.current = handleTrackEnded;
 
   const nextTrack = useCallback(() => {
+    if (currentTrackRef.current?.fileFormat === 'YOUTUBE_PLAYLIST' && queueRef.current.length <= 1) {
+      youtubePlayerBridge.nextVideo();
+      return;
+    }
+
     const currentQ = queueRef.current;
     const currentIdx = queueIndexRef.current;
     if (currentQ.length === 0) return;
@@ -1375,6 +1422,11 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const prevTrack = useCallback(() => {
     if (currentTime > 3) {
       seek(0);
+      return;
+    }
+
+    if (currentTrackRef.current?.fileFormat === 'YOUTUBE_PLAYLIST' && queueRef.current.length <= 1) {
+      youtubePlayerBridge.previousVideo();
       return;
     }
 
@@ -2864,10 +2916,13 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setIsPlaylistModalOpen,
         isShortcutsModalOpen,
         setIsShortcutsModalOpen,
+        isYouTubeImportModalOpen,
+        setIsYouTubeImportModalOpen,
         isDraggingFile,
         setIsDraggingFile,
 
         // Player Actions
+        playYouTubePlaylist,
         switchToTrack,
         playTrack,
         togglePlay,

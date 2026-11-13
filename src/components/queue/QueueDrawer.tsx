@@ -190,7 +190,7 @@ export const QueueDrawer: React.FC = () => {
       />
 
       {/* Drawer Surface */}
-      <div className="relative w-full max-w-full sm:max-w-md h-full bg-[#0c0d11]/95 border-l border-white/[0.08] backdrop-blur-2xl flex flex-col shadow-2xl pb-safe animate-in slide-in-from-right duration-200">
+      <div className="relative w-full max-w-full sm:max-w-md h-full glass-immersive border-l border-white/[0.14] flex flex-col shadow-[0_0_80px_rgba(0,0,0,0.9)] pb-safe animate-in slide-in-from-right duration-200">
         
         {/* Header */}
         <div className="p-4 border-b border-white/[0.06] flex items-center justify-between">

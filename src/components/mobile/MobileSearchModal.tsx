@@ -9,7 +9,7 @@ import {
   Music, 
   Disc, 
   User, 
-  Radio, 
+  Radio as RadioIcon, 
   Youtube, 
   HardDrive,
   Plus, 
@@ -17,7 +17,6 @@ import {
   History,
   FolderOpen,
   Globe,
-  SlidersHorizontal,
   Compass,
   ArrowRight
 } from 'lucide-react';
@@ -166,9 +165,9 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
     );
     setSearchResults(results);
 
-    // 2. Debounced External execution
+    // 2. Debounced External query execution
     const isDirectYt = !!youtubeService.parseVideoId(q);
-    const shouldSearchExternal = isDirectYt || (youtubeService.isConfigured() && q.length > 1) || q.length > 1;
+    const shouldSearchExternal = isDirectYt || q.length > 1;
 
     if (shouldSearchExternal) {
       setIsSearchingExternal(true);
@@ -187,7 +186,7 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
         );
         setSearchResults(fullResults);
         setIsSearchingExternal(false);
-      }, isDirectYt ? 50 : 320);
+      }, isDirectYt ? 50 : 280);
     } else {
       setIsSearchingExternal(false);
     }
@@ -235,6 +234,17 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
 
   const bestMatch = searchResults.songs[0];
 
+  const getSourceBadgeStyle = (source?: string) => {
+    switch (source) {
+      case 'audius': return 'text-purple-400 bg-purple-500/10 border-purple-500/20';
+      case 'jamendo': return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
+      case 'radio':
+      case 'radiobrowser': return 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20';
+      case 'youtube': return 'text-red-400 bg-red-500/10 border-red-500/20';
+      default: return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+    }
+  };
+
   return (
     <div
       id="mobile-search-modal"
@@ -250,7 +260,7 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
             placeholder="Search all 5 catalogs or paste YouTube link..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full pl-10 pr-10 py-3 rounded-2xl bg-white/[0.04] border border-white/[0.08] focus:border-sky-500/50 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none transition-all shadow-inner"
+            className="w-full pl-10 pr-10 py-3 rounded-2xl bg-white/[0.04] border border-white/[0.08] focus:border-sky-500/50 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none transition-all shadow-inner font-ui-body"
           />
           {query && (
             <button
@@ -370,12 +380,12 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
               <div className="min-w-0">
                 <div className="text-[10px] font-mono tracking-wider text-red-300 font-bold uppercase flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-                  Direct Video Link
+                  YouTube Link Detected
                 </div>
-                <h4 className="text-xs font-bold text-white truncate mt-0.5">
+                <h4 className="text-xs font-bold text-white truncate mt-0.5 font-ui-title">
                   {searchResults.detectedDirectTrack.title}
                 </h4>
-                <p className="text-[11px] text-zinc-400 truncate">
+                <p className="text-[11px] text-zinc-400 truncate font-ui-meta">
                   {searchResults.detectedDirectTrack.artist}
                 </p>
               </div>
@@ -418,7 +428,7 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
                       className="flex items-center gap-2 pl-3 pr-2 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] text-xs text-zinc-300 cursor-pointer min-h-[38px]"
                     >
                       <Search className="w-3 h-3 text-sky-400 shrink-0" />
-                      <span className="truncate max-w-[160px]">{term}</span>
+                      <span className="truncate max-w-[160px] font-ui-body">{term}</span>
                       <button
                         type="button"
                         onClick={(e) => {
@@ -451,7 +461,7 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
                     className="flex items-center gap-2.5 p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] text-left text-xs text-zinc-200 transition-all cursor-pointer min-h-[44px]"
                   >
                     <span className="text-base shrink-0">{mood.icon}</span>
-                    <span className="font-medium text-xs text-zinc-200 truncate">{mood.label}</span>
+                    <span className="font-medium text-xs text-zinc-200 truncate font-ui-body">{mood.label}</span>
                   </button>
                 ))}
               </div>
@@ -474,7 +484,7 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <HardDrive className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span className="text-xs font-semibold text-emerald-200 truncate">Local Vault</span>
+                    <span className="text-xs font-semibold text-emerald-200 truncate font-ui-title">Local Vault</span>
                   </div>
                   <ArrowRight className="w-3 h-3 text-emerald-400/60 shrink-0" />
                 </button>
@@ -486,7 +496,7 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <Sparkles className="w-4 h-4 text-purple-400 shrink-0" />
-                    <span className="text-xs font-semibold text-purple-200 truncate">Audius Live</span>
+                    <span className="text-xs font-semibold text-purple-200 truncate font-ui-title">Audius Live</span>
                   </div>
                   <ArrowRight className="w-3 h-3 text-purple-400/60 shrink-0" />
                 </button>
@@ -498,7 +508,7 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <Music className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span className="text-xs font-semibold text-amber-200 truncate">Jamendo CC</span>
+                    <span className="text-xs font-semibold text-amber-200 truncate font-ui-title">Jamendo CC</span>
                   </div>
                   <ArrowRight className="w-3 h-3 text-amber-400/60 shrink-0" />
                 </button>
@@ -507,13 +517,13 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
                   type="button"
                   onClick={() => {
                     onClose();
-                    setCurrentView('radio');
+                    setCurrentView('sources');
                   }}
                   className="p-3 rounded-xl bg-sky-500/10 border border-sky-500/20 text-left flex items-center justify-between min-h-[44px]"
                 >
                   <div className="flex items-center gap-2 min-w-0">
-                    <Radio className="w-4 h-4 text-sky-400 shrink-0" />
-                    <span className="text-xs font-semibold text-sky-200 truncate">World Radio</span>
+                    <RadioIcon className="w-4 h-4 text-sky-400 shrink-0" />
+                    <span className="text-xs font-semibold text-sky-200 truncate font-ui-title">World Radio</span>
                   </div>
                   <ArrowRight className="w-3 h-3 text-sky-400/60 shrink-0" />
                 </button>
@@ -543,8 +553,8 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h5 className="text-xs font-semibold text-zinc-200 truncate">{track.title}</h5>
-                        <p className="text-[11px] text-zinc-500 truncate">{track.artist}</p>
+                        <h5 className="text-xs font-semibold text-zinc-200 truncate font-ui-title">{track.title}</h5>
+                        <p className="text-[11px] text-zinc-500 truncate font-ui-meta">{track.artist}</p>
                       </div>
                       <Play className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                     </div>
@@ -575,20 +585,14 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
               </div>
 
               <div className="min-w-0 flex-1">
-                <h3 className="text-sm font-bold text-white truncate">
+                <h3 className="text-sm font-bold text-white truncate font-ui-title">
                   <HighlightText text={bestMatch.title} query={query} />
                 </h3>
-                <p className="text-xs text-zinc-400 truncate mt-0.5">
+                <p className="text-xs text-zinc-400 truncate mt-0.5 font-ui-meta">
                   <HighlightText text={bestMatch.artist} query={query} />
                 </p>
-                <div className="text-[10px] font-mono text-zinc-500 mt-1 flex items-center gap-1.5">
-                  <span className={`w-1.5 h-1.5 rounded-full ${
-                    bestMatch.source === 'audius' ? 'bg-purple-400' :
-                    bestMatch.source === 'jamendo' ? 'bg-amber-400' :
-                    bestMatch.source === 'radiobrowser' || bestMatch.source === 'radio' ? 'bg-cyan-400' :
-                    bestMatch.source === 'youtube' ? 'bg-red-400' : 'bg-emerald-400'
-                  }`} />
-                  <span className="uppercase tracking-wider">
+                <div className="text-[10px] font-mono mt-1">
+                  <span className={`px-1.5 py-0.2 rounded border font-semibold uppercase ${getSourceBadgeStyle(bestMatch.source)}`}>
                     {bestMatch.source === 'radiobrowser' ? 'RADIO' : (bestMatch.source || 'LOCAL')}
                   </span>
                 </div>
@@ -615,11 +619,6 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
             <div className="flex flex-col gap-1.5">
               {searchResults.songs.map((song) => {
                 const isPlayingThis = currentTrack?.id === song.id;
-                const sourceColor = 
-                  song.source === 'audius' ? 'text-purple-400' :
-                  song.source === 'jamendo' ? 'text-amber-400' :
-                  song.source === 'radiobrowser' || song.source === 'radio' ? 'text-cyan-400' :
-                  song.source === 'youtube' ? 'text-red-400' : 'text-emerald-400';
 
                 return (
                   <div
@@ -644,16 +643,16 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <h4 className={`text-xs font-semibold truncate ${isPlayingThis ? 'text-sky-300' : 'text-zinc-100'}`}>
+                        <h4 className={`text-xs font-semibold truncate font-ui-title ${isPlayingThis ? 'text-sky-300' : 'text-zinc-100'}`}>
                           <HighlightText text={song.title} query={query} />
                         </h4>
 
                         <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 truncate mt-0.5">
-                          <span className="truncate">
+                          <span className="truncate font-ui-meta">
                             <HighlightText text={song.artist} query={query} />
                           </span>
                           <span className="text-zinc-600">·</span>
-                          <span className={`text-[10px] font-mono uppercase tracking-wider shrink-0 font-medium ${sourceColor}`}>
+                          <span className={`text-[9px] font-mono px-1 py-0.2 rounded border uppercase shrink-0 font-semibold ${getSourceBadgeStyle(song.source)}`}>
                             {song.source === 'radiobrowser' ? 'RADIO' : (song.source || 'LOCAL')}
                           </span>
                         </div>
@@ -700,10 +699,10 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-zinc-100 truncate">
+                    <p className="text-xs font-bold text-zinc-100 truncate font-ui-title">
                       <HighlightText text={artist.name} query={query} />
                     </p>
-                    <p className="text-[10px] text-zinc-500">{artist.trackCount} {artist.trackCount === 1 ? 'track' : 'tracks'}</p>
+                    <p className="text-[10px] text-zinc-500 font-mono">{artist.trackCount} {artist.trackCount === 1 ? 'track' : 'tracks'}</p>
                   </div>
                   <ArrowRight className="w-3.5 h-3.5 text-zinc-600 shrink-0 mr-1" />
                 </div>
@@ -733,10 +732,10 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-zinc-100 truncate">
+                    <p className="text-xs font-bold text-zinc-100 truncate font-ui-title">
                       <HighlightText text={album.name} query={query} />
                     </p>
-                    <p className="text-[10px] text-zinc-500 truncate">{album.artist} · {album.trackCount} tracks</p>
+                    <p className="text-[10px] text-zinc-500 truncate font-ui-meta">{album.artist} · {album.trackCount} tracks</p>
                   </div>
                   <ArrowRight className="w-3.5 h-3.5 text-zinc-600 shrink-0 mr-1" />
                 </div>
@@ -766,10 +765,10 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-zinc-100 truncate">
+                    <p className="text-xs font-bold text-zinc-100 truncate font-ui-title">
                       <HighlightText text={pl.name} query={query} />
                     </p>
-                    <p className="text-[10px] text-zinc-500 truncate">{pl.trackCount} tracks</p>
+                    <p className="text-[10px] text-zinc-500 font-mono truncate">{pl.trackCount} tracks</p>
                   </div>
                   <ArrowRight className="w-3.5 h-3.5 text-zinc-600 shrink-0 mr-1" />
                 </div>
@@ -785,7 +784,7 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
               <Search className="w-6 h-6 opacity-60" />
             </div>
             <p className="text-sm font-bold text-zinc-200">No matches found for &quot;{query}&quot;</p>
-            <p className="text-xs text-zinc-400 max-w-xs leading-relaxed">
+            <p className="text-xs text-zinc-400 max-w-xs leading-relaxed font-ui-meta">
               Check spelling, try exploring different genres, or paste any YouTube video link directly.
             </p>
             <button

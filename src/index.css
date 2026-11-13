@@ -3,47 +3,55 @@
 @layer base {
   :root {
     /* -----------------------------------------------------------------
-       AURA SPATIAL DESIGN SYSTEM TOKENS
-       Next-Gen Spatial Audio Operating Environment
+       AURA 3.0 — LIQUID GLASS DESIGN SYSTEM TOKENS
+       Deep Void Canvas, Liquid Optical Refraction & Specular Physics
        ----------------------------------------------------------------- */
-    --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-display: 'Syne', 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --font-mono: 'Geist Mono', monospace;
+    --font-mono: 'JetBrains Mono', 'Geist Mono', monospace;
 
     /* Dimensional Spatial Canvas & Surface Scale */
-    --aura-void: #07090e;
-    --aura-carbon: #0b0e17;
-    --aura-graphite: #101422;
-    --aura-milled: #171d2e;
-    --aura-surface-solid: #1c2336;
+    --aura-void: #06070a;
+    --aura-carbon: #0b0d13;
+    --aura-graphite: #11131b;
+    --aura-milled: #171a24;
+    --aura-surface-solid: #1b1f2c;
 
     /* High-Contrast Text Hierarchy (WCAG AAA >= 7:1) */
-    --aura-text-primary: #f8fafc;
-    --aura-text-secondary: #94a3b8;
-    --aura-text-muted: #64748b;
-    --aura-text-disabled: #475569;
+    --aura-text-primary: #f4f5f8;
+    --aura-text-secondary: #9ca3af;
+    --aura-text-muted: #6b7280;
+    --aura-text-disabled: #4b5563;
 
-    /* Precision Specular Edges */
-    --aura-border-subtle: rgba(255, 255, 255, 0.06);
-    --aura-border-medium: rgba(255, 255, 255, 0.12);
-    --aura-border-strong: rgba(255, 255, 255, 0.22);
+    /* Precision Specular Edges & Highlights */
+    --aura-border-subtle: rgba(255, 255, 255, 0.08);
+    --aura-border-medium: rgba(255, 255, 255, 0.14);
+    --aura-border-strong: rgba(255, 255, 255, 0.28);
+    --aura-specular-top: rgba(255, 255, 255, 0.35);
 
     /* Semantic Signal Accents */
     --aura-accent-indigo: #6366f1;
-    --aura-accent-indigo-glow: rgba(99, 102, 241, 0.35);
+    --aura-accent-indigo-glow: rgba(99, 102, 241, 0.40);
     --aura-signal-cyan: #06b6d4;
-    --aura-signal-cyan-glow: rgba(6, 182, 212, 0.35);
+    --aura-signal-cyan-glow: rgba(6, 182, 212, 0.40);
     --aura-signal-emerald: #10b981;
-    --aura-signal-emerald-glow: rgba(16, 185, 129, 0.35);
+    --aura-signal-emerald-glow: rgba(16, 185, 129, 0.40);
     --aura-signal-rose: #f43f5e;
+    --aura-signal-rose-glow: rgba(244, 63, 94, 0.40);
     --aura-signal-amber: #f59e0b;
     --aura-signal-purple: #a855f7;
 
-    /* AURA SPATIAL 4-Tier Liquid Glass System (High Density for Pure Legibility & Liquid Refraction) */
-    --aura-glass-immersive-bg: rgba(8, 10, 16, 0.94);
-    --aura-glass-island-bg: rgba(10, 13, 22, 0.88);
-    --aura-glass-dock-bg: rgba(10, 13, 22, 0.90);
-    --aura-glass-ambient-bg: rgba(15, 19, 30, 0.68);
+    /* -----------------------------------------------------------------
+    /* -----------------------------------------------------------------
+       6-TIER LIQUID GLASS MATERIAL FOUNDATION
+       True optical translucency, multi-stop specular highlights & prism depth
+       ----------------------------------------------------------------- */
+    --glass-immersive-bg: rgba(10, 13, 22, 0.90);
+    --glass-floating-bg: rgba(14, 18, 30, 0.65);
+    --glass-reflective-bg: rgba(255, 255, 255, 0.12);
+    --glass-ambient-bg: rgba(16, 22, 36, 0.48);
+    --glass-frosted-bg: rgba(12, 15, 25, 0.82);
+    --glass-solid-bg: #141722;
   }
 
   body {
@@ -54,44 +62,45 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: -0.01em;
+    overflow-x: hidden;
   }
 }
 
 /* -----------------------------------------------------------------
-   TYPOGRAPHY SYSTEM UTILITIES — AURA SPATIAL
-   Controlled, balanced weights rather than uniform heavy bolding
+   TYPOGRAPHY SYSTEM UTILITIES — AURA 3.0
+   Syne for Display · Plus Jakarta Sans for UI · JetBrains Mono for Data
    ----------------------------------------------------------------- */
 .font-display, .aura-font-display, .font-ui-title {
   font-family: var(--font-display);
-  letter-spacing: -0.022em;
+  letter-spacing: -0.024em;
   font-feature-settings: "cv02" 1, "cv03" 1, "cv04" 1;
 }
 
 .font-page-title {
   font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: -0.025em;
-  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.028em;
+  line-height: 1.12;
 }
 
 .font-section-title {
   font-family: var(--font-display);
   font-weight: 600;
-  letter-spacing: -0.018em;
-  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+  font-size: 1.1rem;
 }
 
 .font-track-title {
   font-family: var(--font-sans);
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.012em;
   line-height: 1.25;
 }
 
 .font-artist-name {
   font-family: var(--font-sans);
   font-weight: 400;
-  letter-spacing: -0.005em;
+  letter-spacing: -0.006em;
   color: var(--aura-text-secondary);
 }
 
@@ -111,87 +120,141 @@
 }
 
 /* -----------------------------------------------------------------
-   EXPRESSIVE LIQUID GLASS MATERIAL SYSTEM (4 TIERS)
-   True optical refraction, layered specular reflections & depth
+   EXPRESSIVE 6-TIER LIQUID GLASS MATERIAL SYSTEM
+   Authentic optical glass refraction, directional sheen & deep translucency
    ----------------------------------------------------------------- */
 
-/* Tier A: Immersive Glass — Studio canvases, full overlays, search command center */
-.aura-glass-immersive, .aura-glass-tier1, .aura-glass-os {
-  background-color: rgba(8, 10, 16, 0.94);
+/* Tier 1: Immersive Glass — Full-screen audio views, search command center */
+.glass-immersive, .aura-glass-immersive, .aura-glass-tier1, .aura-glass-os {
+  background-color: var(--glass-immersive-bg);
   background-image: 
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 40%, rgba(0, 0, 0, 0.3) 100%),
-    var(--aura-glass-immersive-bg);
-  backdrop-filter: blur(40px) saturate(180%);
-  -webkit-backdrop-filter: blur(40px) saturate(180%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 35%, rgba(0, 0, 0, 0.25) 100%);
+  backdrop-filter: blur(28px) saturate(160%) brightness(105%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%) brightness(105%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-top-color: rgba(255, 255, 255, 0.20);
+  border-bottom-color: rgba(0, 0, 0, 0.50);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
+    0 28px 70px -12px rgba(0, 0, 0, 0.85);
+}
+
+/* Tier 2: Floating Glass — Floating mini-player, suspended navigation dock, top header */
+.glass-floating, .aura-glass-island, .aura-glass-dock, .aura-glass-tier2 {
+  background-color: var(--glass-floating-bg);
+  background-image: 
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 40%, rgba(0, 0, 0, 0.20) 100%);
+  backdrop-filter: blur(24px) saturate(160%) brightness(105%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%) brightness(105%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-top-color: rgba(255, 255, 255, 0.22);
+  border-bottom-color: rgba(0, 0, 0, 0.45);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.18),
+    0 16px 40px -8px rgba(0, 0, 0, 0.75);
+}
+
+/* Tier 3: Reflective Glass — Interactive buttons, active tab capsules, key actions */
+.glass-reflective {
+  background-color: var(--glass-reflective-bg);
+  background-image: 
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.03) 60%, rgba(0, 0, 0, 0.10) 100%);
+  backdrop-filter: blur(20px) saturate(150%) brightness(108%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%) brightness(108%);
   border: 1px solid rgba(255, 255, 255, 0.12);
+  border-top-color: rgba(255, 255, 255, 0.25);
   box-shadow: 
     inset 0 1px 0 0 rgba(255, 255, 255, 0.22),
-    inset 0 -1px 0 0 rgba(0, 0, 0, 0.5),
-    0 32px 80px -16px rgba(0, 0, 0, 0.95),
-    0 12px 28px -6px rgba(0, 0, 0, 0.70);
+    0 4px 16px rgba(0, 0, 0, 0.45);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Tier B: Floating Glass Island — Suspended playback islands, floating navigation docks */
-.aura-glass-island, .aura-glass-dock, .aura-glass-tier2 {
-  background-color: rgba(10, 13, 22, 0.88);
+.glass-reflective:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.18);
+  border-top-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.30),
+    0 8px 22px rgba(0, 0, 0, 0.55);
+}
+
+.glass-reflective:active {
+  transform: scale(0.97);
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Tier 4: Ambient Glass — Section tiles, discovery cards, track rows, playlist tiles */
+.glass-ambient, .aura-glass-ambient, .aura-glass-tier3 {
+  background-color: var(--glass-ambient-bg);
   background-image: 
-    linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.015) 45%, rgba(0, 0, 0, 0.25) 100%),
-    var(--aura-glass-island-bg);
-  backdrop-filter: blur(32px) saturate(180%);
-  -webkit-backdrop-filter: blur(32px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.01) 50%, rgba(0, 0, 0, 0.15) 100%);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
+    0 8px 24px rgba(0, 0, 0, 0.50);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-ambient:hover, .aura-glass-ambient:hover, .aura-glass-tier3:hover {
+  background-color: rgba(22, 28, 48, 0.60);
+  border-color: rgba(255, 255, 255, 0.14);
+  border-top-color: rgba(255, 255, 255, 0.24);
   box-shadow: 
     inset 0 1px 0 0 rgba(255, 255, 255, 0.20),
-    inset 0 -1px 0 0 rgba(0, 0, 0, 0.40),
-    0 24px 50px -10px rgba(0, 0, 0, 0.92),
-    0 8px 18px -4px rgba(0, 0, 0, 0.60);
+    0 14px 32px rgba(0, 0, 0, 0.65);
+  transform: translateY(-2px);
 }
 
-/* Tier C: Ambient Glass — Section tiles, interactive rows, shelf objects */
-.aura-glass-ambient, .aura-glass-tier3 {
-  background-color: rgba(15, 19, 30, 0.68);
+/* Tier 5: Frosted Glass — Context menus, dropdowns, tooltips, dialogs */
+.glass-frosted {
+  background-color: var(--glass-frosted-bg);
   background-image: 
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.008) 100%),
-    var(--aura-glass-ambient-bg);
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.02) 60%, rgba(0, 0, 0, 0.25) 100%);
+  backdrop-filter: blur(30px) saturate(160%);
+  -webkit-backdrop-filter: blur(30px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-top-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.20),
+    0 24px 56px rgba(0, 0, 0, 0.85);
+}
+
+/* Crystalline Prism Rim Utility */
+.glass-prism-rim {
+  position: relative;
+}
+
+/* Tier 6: Solid Contrast — Precision waveforms, EQ graphs, technical telemetry */
+.glass-solid, .aura-surface-solid {
+  background-color: var(--glass-solid-bg);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.10),
-    0 4px 14px -3px rgba(0, 0, 0, 0.45);
-  transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
 
-.aura-glass-ambient:hover, .aura-glass-tier3:hover {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.015) 100%), rgba(255, 255, 255, 0.035);
-  border-color: rgba(255, 255, 255, 0.10);
-  box-shadow: 
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.10),
-    0 8px 22px -5px rgba(0, 0, 0, 0.45);
+/* Dynamic Ambient Glow Helper */
+.ambient-artwork-glow {
+  filter: blur(70px);
+  opacity: 0.32;
+  pointer-events: none;
+  transform: translateZ(0);
 }
 
-/* Tier D: Solid Surface — High information density or technical precision */
-.aura-surface-solid {
-  background-color: var(--aura-surface-solid);
-  border: 1px solid var(--aura-border-medium);
-}
-
-/* Glass Fallback for reduced transparency or non-blur environments */
+/* Glass Fallback for reduced transparency */
 @media (prefers-reduced-transparency: reduce) {
-  .aura-glass-tier1 {
-    background-color: #07090e;
+  .glass-immersive, .aura-glass-tier1 {
+    background-color: #06070a;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
-  .aura-glass-tier2 {
-    background-color: #0c0e14;
+  .glass-floating, .aura-glass-tier2 {
+    background-color: #0b0d13;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
-  .aura-glass-tier3 {
+  .glass-ambient, .aura-glass-tier3 {
     background-color: #11131b;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -207,7 +270,7 @@
 
 .aura-focus-ring:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--aura-void), 0 0 0 4px rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 0 2px var(--aura-void), 0 0 0 4px rgba(255, 255, 255, 0.7);
 }
 
 /* -----------------------------------------------------------------
@@ -223,12 +286,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.14);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.28);
 }
 
 /* Range input styling - tactile high-precision audio hardware */
@@ -246,7 +309,7 @@ input[type="range"]:focus {
 input[type="range"]::-webkit-slider-runnable-track {
   height: 4px;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 input[type="range"]::-webkit-slider-thumb {
@@ -257,17 +320,17 @@ input[type="range"]::-webkit-slider-thumb {
   border-radius: 50%;
   background: #ffffff;
   margin-top: -5px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.4);
   transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease;
 }
 
 input[type="range"]:hover::-webkit-slider-thumb {
-  transform: scale(1.2);
+  transform: scale(1.25);
   background: #ffffff;
 }
 
 input[type="range"]:active::-webkit-slider-thumb {
-  transform: scale(1.3);
+  transform: scale(1.35);
   background: #ffffff;
 }
 
@@ -283,7 +346,7 @@ input[type="range"].slider-vertical::-webkit-slider-runnable-track {
   width: 4px;
   height: 140px;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 input[type="range"].slider-vertical::-webkit-slider-thumb {
@@ -294,7 +357,7 @@ input[type="range"].slider-vertical::-webkit-slider-thumb {
   border-radius: 50%;
   background: #ffffff;
   margin-left: -5px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
 }
 
 /* Safe Area Inset Utilities */

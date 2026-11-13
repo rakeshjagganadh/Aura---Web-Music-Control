@@ -188,6 +188,95 @@ export const youtubeService = {
   },
 
   /**
+   * Parse any YouTube or YouTube Music playlist URL or raw Playlist ID.
+   * Handles:
+   * - https://www.youtube.com/playlist?list=PL...
+   * - https://music.youtube.com/playlist?list=PL...
+   * - https://www.youtube.com/watch?v=...&list=PL...
+   * - https://music.youtube.com/watch?v=...&list=PL...
+   * - Raw playlist IDs: PL..., RD..., OLAK..., etc. (length >= 12)
+   */
+  parsePlaylistId(input: string): string | null {
+    if (!input || typeof input !== 'string') return null;
+    const clean = input.trim();
+
+    // Check if raw playlist ID format (alphanumeric length 12-64, no dots or slashes)
+    if (/^[a-zA-Z0-9_-]{12,64}$/.test(clean) && !clean.includes('.') && !clean.includes('/')) {
+      return clean;
+    }
+
+    try {
+      if (clean.startsWith('http://') || clean.startsWith('https://')) {
+        const url = new URL(clean);
+        const listParam = url.searchParams.get('list');
+        if (listParam && /^[a-zA-Z0-9_-]{12,64}$/.test(listParam)) {
+          return listParam;
+        }
+      }
+    } catch {
+      // not a full URL
+    }
+
+    const match = clean.match(/[?&]list=([a-zA-Z0-9_-]{12,64})/i);
+    if (match && match[1]) {
+      return match[1];
+    }
+
+    return null;
+  },
+
+  /**
+   * Fetches official oEmbed metadata for a YouTube playlist or video-linked playlist
+   */
+  async fetchPlaylistOEmbed(playlistId: string, fullInput?: string): Promise<{ title: string; author: string; thumbnail: string } | null> {
+    try {
+      // 1. If full input has a video ID (e.g. watch?v=...&list=...), query oEmbed on the video
+      if (fullInput) {
+        const videoMatch = fullInput.match(/[?&]v=([a-zA-Z0-9_-]{11})/i);
+        if (videoMatch && videoMatch[1]) {
+          const videoId = videoMatch[1];
+          const videoOEmbedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
+          const vRes = await fetch(videoOEmbedUrl);
+          if (vRes.ok) {
+            const vData = await vRes.json();
+            return {
+              title: this.decodeHtmlEntities(vData.title || `YouTube Playlist`),
+              author: this.decodeHtmlEntities(vData.author_name || 'YouTube Creator'),
+              thumbnail: vData.thumbnail_url || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+            };
+          }
+        }
+      }
+
+      // 2. Query oEmbed directly for playlist
+      const url = `https://www.youtube.com/playlist?list=${playlistId}`;
+      const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+      const res = await fetch(oembedUrl);
+      if (res.ok) {
+        const data = await res.json();
+        return {
+          title: this.decodeHtmlEntities(data.title || `YouTube Playlist`),
+          author: this.decodeHtmlEntities(data.author_name || 'YouTube Playlist'),
+          thumbnail: data.thumbnail_url || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80',
+        };
+      }
+
+      // 3. Fallback with verified AURA music asset
+      return {
+        title: `YouTube Playlist (${playlistId.slice(0, 10)})`,
+        author: 'YouTube Public Stream',
+        thumbnail: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80',
+      };
+    } catch {
+      return {
+        title: `YouTube Playlist (${playlistId.slice(0, 10)})`,
+        author: 'YouTube Public Stream',
+        thumbnail: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80',
+      };
+    }
+  },
+
+  /**
    * Fetches official oEmbed data (title, author, thumbnail) without needing an API key.
    */
   async fetchOEmbed(videoId: string): Promise<YouTubeOEmbedInfo | null> {

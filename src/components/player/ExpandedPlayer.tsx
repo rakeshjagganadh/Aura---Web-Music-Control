@@ -205,8 +205,20 @@ export const ExpandedPlayer: React.FC = () => {
       {/* Desktop Expanded Now Playing Experience */}
       <div
         id="expanded-player-modal"
-        className="hidden lg:flex fixed inset-0 z-50 aura-glass-tier1 overflow-y-auto flex-col justify-between p-6 sm:p-8 select-none"
+        className="hidden lg:flex fixed inset-0 z-50 bg-[#06070a]/98 backdrop-blur-3xl overflow-y-auto flex-col justify-between p-6 sm:p-8 select-none relative"
       >
+        {/* Full-bleed Ambient Artwork Canvas Behind the Sanctuary */}
+        {currentTrack.coverUrl && (
+          <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden">
+            <img 
+              src={currentTrack.coverUrl} 
+              alt="" 
+              className="w-full h-full object-cover blur-[90px] opacity-25 scale-125 filter brightness-75"
+              referrerPolicy="no-referrer"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#06070a] via-[#06070a]/80 to-[#06070a]/90" />
+          </div>
+        )}
         {/* -------------------------------------------------------------
             TOP BAR NAVIGATION
             ------------------------------------------------------------- */}
@@ -312,17 +324,17 @@ export const ExpandedPlayer: React.FC = () => {
               {/* Sound-reactive soft ambient halo */}
               {currentTrack.coverUrl && isPlaying && (
                 <div 
-                  className="absolute inset-0 rounded-3xl scale-105 pointer-events-none transition-opacity duration-700 -z-10"
+                  className="absolute -inset-3 rounded-3xl scale-110 pointer-events-none transition-opacity duration-700 -z-10"
                   style={{
                     backgroundImage: `url(${currentTrack.coverUrl})`,
                     backgroundSize: 'cover',
-                    filter: 'blur(40px)',
-                    opacity: 0.28,
+                    filter: 'blur(50px)',
+                    opacity: 0.55,
                   }}
                 />
               )}
 
-              <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-[#0d1017] flex items-center justify-center transition-all">
+              <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-[0_24px_70px_rgba(0,0,0,0.9)] border border-white/25 bg-[#0d1017] flex items-center justify-center transition-all">
                 {currentTrack.coverUrl ? (
                   <img
                     src={currentTrack.coverUrl}
@@ -449,108 +461,135 @@ export const ExpandedPlayer: React.FC = () => {
             </div>
 
             {/* Precision Waveform Scrubber Timeline */}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08]">
               <WaveformScrubber
                 peaks={currentTrack.waveformPeaks}
                 currentTime={currentTime}
                 duration={duration}
                 onSeek={handleSeek}
                 onSeekingChange={setIsSeeking}
-                height={46}
+                disabled={isInRoom && !isOwner}
+                isRadio={currentTrack.source === 'radio' || currentTrack.source === 'radiobrowser'}
+                isLoadingDuration={
+                  currentTrack.source !== 'radio' &&
+                  currentTrack.source !== 'radiobrowser' &&
+                  (!Number.isFinite(duration) || duration <= 0) &&
+                  isPlaying
+                }
+                variant="auto"
+                height={42}
                 barWidth={3}
                 barGap={2}
                 activeColor="#ffffff"
-                inactiveColor="rgba(255, 255, 255, 0.12)"
+                inactiveColor="rgba(255, 255, 255, 0.14)"
               />
 
-              <div className="flex items-center justify-between text-xs font-mono text-zinc-400 px-1">
-                <span className="text-white font-medium">{formatTime(currentTime)}</span>
-                <span className="text-[11px] text-zinc-500 font-sans">
+              <div className="flex items-center justify-between text-xs font-mono tabular-nums text-zinc-400 px-1">
+                <span className="text-white font-medium">
+                  {currentTrack.source === 'radio' || currentTrack.source === 'radiobrowser'
+                    ? 'LIVE'
+                    : formatTime(currentTime)}
+                </span>
+                <span className="text-[11px] text-zinc-400 font-sans">
                   {isInRoom && !isOwner
                     ? 'Only the room host can seek'
-                    : 'Click or drag waveform to scrub'}
+                    : currentTrack.source === 'radio' || currentTrack.source === 'radiobrowser'
+                      ? 'Live broadcast stream'
+                      : !Number.isFinite(duration) || duration <= 0
+                        ? isPlaying
+                          ? 'Loading track duration…'
+                          : 'Duration unavailable'
+                        : 'Click or drag timeline to scrub'}
                 </span>
-                <span>-{formatTime(Math.max(0, duration - currentTime))}</span>
+                <span>
+                  {currentTrack.source === 'radio' || currentTrack.source === 'radiobrowser'
+                    ? 'LIVE'
+                    : !Number.isFinite(duration) || duration <= 0
+                      ? '--:--'
+                      : `-${formatTime(Math.max(0, duration - currentTime))}`}
+                </span>
               </div>
             </div>
 
-            {/* Master Controls Row */}
-            <div className="flex items-center justify-center gap-3 sm:gap-5">
-              <button
-                onClick={toggleShuffle}
-                className={`p-2.5 rounded-xl transition-colors cursor-pointer ${
-                  isShuffle ? 'text-white bg-white/10 border border-white/15' : 'text-zinc-400 hover:text-zinc-200'
-                }`}
-                title={`Shuffle: ${isShuffle ? 'On' : 'Off'}`}
-              >
-                <Shuffle className="w-4 h-4" />
-              </button>
+            {/* Master Controls Floating Glass Tray */}
+            <div className="flex items-center justify-center">
+              <div className="flex items-center justify-center gap-2.5 sm:gap-4 px-5 sm:px-6 py-2.5 rounded-full bg-white/[0.06] backdrop-blur-xl border border-white/[0.10] shadow-lg">
+                <button
+                  onClick={toggleShuffle}
+                  className={`p-2.5 rounded-full transition-colors cursor-pointer ${
+                    isShuffle ? 'text-sky-300 bg-white/15 border border-white/20' : 'text-zinc-400 hover:text-white'
+                  }`}
+                  title={`Shuffle: ${isShuffle ? 'On' : 'Off'}`}
+                >
+                  <Shuffle className="w-4 h-4" />
+                </button>
 
-              <button
-                onClick={() => handleSeekRelative(-10)}
-                className={`p-2.5 rounded-xl transition-colors ${
-                  isInRoom && !isOwner ? 'text-zinc-600 cursor-not-allowed' : 'text-zinc-400 hover:text-zinc-200 cursor-pointer'
-                }`}
-                title={isInRoom && !isOwner ? 'Only room host can seek' : 'Rewind 10s'}
-              >
-                <RotateCcw className="w-4 h-4" />
-              </button>
+                <button
+                  onClick={() => handleSeekRelative(-10)}
+                  className={`p-2.5 rounded-full transition-colors ${
+                    isInRoom && !isOwner ? 'text-zinc-600 cursor-not-allowed' : 'text-zinc-400 hover:text-white cursor-pointer'
+                  }`}
+                  title={isInRoom && !isOwner ? 'Only room host can seek' : 'Rewind 10s'}
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
 
-              <button
-                onClick={isInRoom ? roomPrev : prevTrack}
-                className="p-2.5 text-zinc-300 hover:text-white rounded-xl transition-colors cursor-pointer active:scale-95"
-                title="Previous Track"
-              >
-                <SkipBack className="w-5 h-5 fill-current" />
-              </button>
+                <button
+                  onClick={isInRoom ? roomPrev : prevTrack}
+                  className="p-2.5 text-zinc-300 hover:text-white rounded-full transition-colors cursor-pointer active:scale-95"
+                  title="Previous Track"
+                >
+                  <SkipBack className="w-5 h-5 fill-current" />
+                </button>
 
-              {/* Prominent 64px Circular Play/Pause */}
-              <button
-                onClick={isInRoom ? roomTogglePlay : togglePlay}
-                className="w-16 h-16 rounded-full bg-white text-zinc-950 hover:bg-zinc-200 flex items-center justify-center shadow-2xl active:scale-95 transition-all cursor-pointer shrink-0"
-                title={isPlaying && !isLocallySilenced ? 'Pause' : 'Play'}
-              >
-                {isPlaying && !isLocallySilenced ? (
-                  <Pause className="w-7 h-7 fill-current" />
-                ) : (
-                  <Play className="w-7 h-7 fill-current translate-x-0.5" />
-                )}
-              </button>
+                {/* Prominent 64px Circular Play/Pause */}
+                <button
+                  onClick={isInRoom ? roomTogglePlay : togglePlay}
+                  className="w-16 h-16 rounded-full bg-white text-zinc-950 hover:bg-zinc-100 flex items-center justify-center shadow-[0_0_36px_rgba(255,255,255,0.55)] active:scale-95 transition-all cursor-pointer shrink-0"
+                  title={isPlaying && !isLocallySilenced ? 'Pause' : 'Play'}
+                >
+                  {isPlaying && !isLocallySilenced ? (
+                    <Pause className="w-7 h-7 fill-current" />
+                  ) : (
+                    <Play className="w-7 h-7 fill-current translate-x-0.5" />
+                  )}
+                </button>
 
-              <button
-                onClick={isInRoom ? roomNext : nextTrack}
-                className="p-2.5 text-zinc-300 hover:text-white rounded-xl transition-colors cursor-pointer active:scale-95"
-                title="Next Track"
-              >
-                <SkipForward className="w-5 h-5 fill-current" />
-              </button>
+                <button
+                  onClick={isInRoom ? roomNext : nextTrack}
+                  className="p-2.5 text-zinc-300 hover:text-white rounded-full transition-colors cursor-pointer active:scale-95"
+                  title="Next Track"
+                >
+                  <SkipForward className="w-5 h-5 fill-current" />
+                </button>
 
-              <button
-                onClick={() => handleSeekRelative(10)}
-                className={`p-2.5 rounded-xl transition-colors ${
-                  isInRoom && !isOwner ? 'text-zinc-600 cursor-not-allowed' : 'text-zinc-400 hover:text-zinc-200 cursor-pointer'
-                }`}
-                title={isInRoom && !isOwner ? 'Only room host can seek' : 'Forward 10s'}
-              >
-                <RotateCw className="w-4 h-4" />
-              </button>
+                <button
+                  onClick={() => handleSeekRelative(10)}
+                  className={`p-2.5 rounded-full transition-colors ${
+                    isInRoom && !isOwner ? 'text-zinc-600 cursor-not-allowed' : 'text-zinc-400 hover:text-white cursor-pointer'
+                  }`}
+                  title={isInRoom && !isOwner ? 'Only room host can seek' : 'Forward 10s'}
+                >
+                  <RotateCw className="w-4 h-4" />
+                </button>
 
-              <button
-                onClick={cycleRepeat}
-                className={`p-2.5 rounded-xl transition-colors cursor-pointer ${
-                  repeatMode !== 'off' ? 'text-white bg-white/10 border border-white/15' : 'text-zinc-400 hover:text-zinc-200'
-                }`}
-                title={`Repeat: ${repeatMode}`}
-              >
-                {repeatMode === 'one' ? <Repeat1 className="w-4 h-4" /> : <Repeat className="w-4 h-4" />}
-              </button>
+                <button
+                  onClick={cycleRepeat}
+                  className={`p-2.5 rounded-full transition-colors cursor-pointer ${
+                    repeatMode !== 'off' ? 'text-sky-300 bg-white/15 border border-white/20' : 'text-zinc-400 hover:text-white'
+                  }`}
+                  title={`Repeat: ${repeatMode}`}
+                >
+                  {repeatMode === 'one' ? <Repeat1 className="w-4 h-4" /> : <Repeat className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             {/* Sub-Controls: Speed Pills & Master Volume */}
-            <div className="flex items-center justify-between gap-4 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
+            <div className="flex items-center justify-between gap-4 p-3 rounded-2xl glass-ambient border border-white/[0.12] shadow-sm">
               {/* Playback Speed Pills */}
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-mono uppercase text-zinc-500 mr-1 hidden sm:inline">Speed:</span>
+                <span className="text-[10px] font-mono uppercase text-zinc-400 mr-1 hidden sm:inline">Speed:</span>
                 {[0.75, 1.0, 1.25, 1.5].map((rate) => (
                   <button
                     key={rate}
@@ -558,7 +597,7 @@ export const ExpandedPlayer: React.FC = () => {
                     className={`px-2.5 py-1 text-xs font-mono rounded-lg transition-colors cursor-pointer ${
                       Math.abs(playbackRate - rate) < 0.01
                         ? 'bg-white text-zinc-950 font-bold shadow-sm'
-                        : 'text-zinc-400 hover:text-white bg-white/[0.04]'
+                        : 'text-zinc-400 hover:text-white bg-white/[0.06]'
                     }`}
                   >
                     {rate}×
@@ -600,7 +639,7 @@ export const ExpandedPlayer: React.FC = () => {
 
           {/* AREA 3: RIGHT LISTENING CONTEXT (UP NEXT QUEUE) */}
           {!isQueueCollapsed && (
-            <div className="hidden xl:flex xl:col-span-3 flex-col h-[520px] rounded-2xl bg-[rgba(10,13,20,0.50)] border border-white/[0.06] p-4 backdrop-blur-xl shadow-xl overflow-hidden">
+            <div className="hidden xl:flex xl:col-span-3 flex-col h-[520px] rounded-3xl glass-ambient border border-white/[0.12] p-4 shadow-[0_16px_40px_rgba(0,0,0,0.7)] overflow-hidden">
               {/* Queue Header */}
               <div className="flex items-center justify-between pb-3 border-b border-white/[0.06] shrink-0">
                 <div className="flex items-center gap-2">

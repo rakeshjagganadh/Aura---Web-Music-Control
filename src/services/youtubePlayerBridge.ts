@@ -42,6 +42,16 @@ class YouTubePlayerBridge {
     startTime?: number;
   } | null = null;
 
+  private pendingPlaylistRequest: {
+    playlistId: string;
+    autoplay: boolean;
+    startIndex: number;
+    startSeconds: number;
+    volume?: number;
+    isMuted?: boolean;
+    playbackRate?: number;
+  } | null = null;
+
   private currentState: YouTubePlayerBridgeState = {
     isReady: false,
     isPlaying: false,
@@ -107,6 +117,12 @@ class YouTubePlayerBridge {
       this.executeLoadAndPlay(req);
     }
 
+    if (this.pendingPlaylistRequest) {
+      const pReq = this.pendingPlaylistRequest;
+      this.pendingPlaylistRequest = null;
+      this.executeLoadPlaylist(pReq);
+    }
+
     this.applyPendingSyncSeekIfNeeded();
   }
 
@@ -114,6 +130,7 @@ class YouTubePlayerBridge {
     this.playerInstance = null;
     this.isReady = false;
     this.pendingRequest = null;
+    this.pendingPlaylistRequest = null;
     this.pendingSyncSeek = null;
     if (this.seekResumeTimeout) {
       clearTimeout(this.seekResumeTimeout);
@@ -312,6 +329,108 @@ class YouTubePlayerBridge {
       }
     } catch (err) {
       console.warn('Error executing YouTube video load:', err);
+    }
+  }
+
+  // --- Official YouTube Playlist Execution ---
+
+  public loadPlaylist(
+    playlistId: string,
+    options: {
+      autoplay?: boolean;
+      startIndex?: number;
+      startSeconds?: number;
+      volume?: number;
+      isMuted?: boolean;
+      playbackRate?: number;
+    } = {}
+  ) {
+    this.userExplicitPause = false;
+    const autoplay = options.autoplay ?? true;
+    const startIndex = options.startIndex || 0;
+    const startSeconds = options.startSeconds || 0;
+
+    const req = {
+      playlistId,
+      autoplay,
+      startIndex,
+      startSeconds,
+      volume: options.volume,
+      isMuted: options.isMuted,
+      playbackRate: options.playbackRate,
+    };
+
+    if (!this.isReady || !this.playerInstance) {
+      this.pendingPlaylistRequest = req;
+      return;
+    }
+
+    this.executeLoadPlaylist(req);
+  }
+
+  private executeLoadPlaylist(req: {
+    playlistId: string;
+    autoplay: boolean;
+    startIndex: number;
+    startSeconds: number;
+    volume?: number;
+    isMuted?: boolean;
+    playbackRate?: number;
+  }) {
+    if (!this.playerInstance) return;
+
+    try {
+      if (typeof req.isMuted === 'boolean') {
+        this.setMute(req.isMuted);
+      }
+      if (typeof req.volume === 'number') {
+        this.setVolume(req.volume);
+      }
+      if (typeof req.playbackRate === 'number' && req.playbackRate > 0) {
+        this.setPlaybackRate(req.playbackRate);
+      }
+
+      if (req.autoplay) {
+        if (typeof this.playerInstance.loadPlaylist === 'function') {
+          this.playerInstance.loadPlaylist({
+            list: req.playlistId,
+            listType: 'playlist',
+            index: req.startIndex,
+            startSeconds: req.startSeconds,
+          });
+        }
+      } else {
+        if (typeof this.playerInstance.cuePlaylist === 'function') {
+          this.playerInstance.cuePlaylist({
+            list: req.playlistId,
+            listType: 'playlist',
+            index: req.startIndex,
+            startSeconds: req.startSeconds,
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('Error executing YouTube playlist load:', err);
+    }
+  }
+
+  public nextVideo() {
+    if (this.playerInstance && typeof this.playerInstance.nextVideo === 'function') {
+      try {
+        this.playerInstance.nextVideo();
+      } catch (e) {
+        console.warn('Error executing nextVideo on YouTube player:', e);
+      }
+    }
+  }
+
+  public previousVideo() {
+    if (this.playerInstance && typeof this.playerInstance.previousVideo === 'function') {
+      try {
+        this.playerInstance.previousVideo();
+      } catch (e) {
+        console.warn('Error executing previousVideo on YouTube player:', e);
+      }
     }
   }
 

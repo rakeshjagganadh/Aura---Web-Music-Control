@@ -11,7 +11,8 @@ export type NavView =
   | 'favorites'
   | 'moments'
   | 'studio'
-  | 'settings';
+  | 'settings'
+  | 'optical-lab';
 
 export type MusicSourceType = 'local' | 'curated_stream' | 'youtube' | 'web_stream' | 'radio' | 'audius' | 'jamendo' | 'radiobrowser';
 

@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useMusic } from '../../context/MusicContext';
 import { Track } from '../../types';
-import { SongObjectCard } from '../common/SongObjectCard';
+import { LibraryNav } from '../library/LibraryNav';
+import { TrackGridCard } from '../library/TrackGridCard';
 import { AddToPlaylistModal } from '../playlists/AddToPlaylistModal';
 import { 
   Music, 
@@ -15,7 +16,12 @@ import {
   HardDrive, 
   Sparkles,
   Shuffle,
-  Play
+  Play,
+  Search,
+  X,
+  ArrowUpRight,
+  Database,
+  FileAudio
 } from 'lucide-react';
 
 export const LibraryOverviewView: React.FC = () => {
@@ -27,30 +33,43 @@ export const LibraryOverviewView: React.FC = () => {
     history,
     setCurrentView,
     setIsUploadModalOpen,
+    setIsPlaylistModalOpen,
     loadDemoPack,
     playTrack,
     toggleShuffle,
     isShuffle,
     storageUsage,
+    setSearchQuery: setGlobalSearchQuery,
   } = useMusic();
 
-  const [playlistModalTrack, setPlaylistModalTrack] = React.useState<Track | null>(null);
+  const [playlistModalTrack, setPlaylistModalTrack] = useState<Track | null>(null);
+  const [libraryFilter, setLibraryFilter] = useState('');
 
-  // Derived metrics from genuine library data
+  // Genuine derived metrics from local IndexedDB data
+  const localVaultTracks = useMemo(() => {
+    return tracks.filter((t) => !t.source || t.source === 'local');
+  }, [tracks]);
+
   const recentlyAddedTracks = useMemo(() => {
-    return [...tracks].sort((a, b) => b.dateAdded - a.dateAdded).slice(0, 8);
+    return [...tracks].sort((a, b) => (b.dateAdded || 0) - (a.dateAdded || 0)).slice(0, 8);
   }, [tracks]);
   
   const recentHistoryTracks = useMemo(() => {
-    return (recentlyPlayed && recentlyPlayed.length > 0
+    const list = (recentlyPlayed && recentlyPlayed.length > 0
       ? recentlyPlayed.map((rp) => rp.track)
-      : history
-    ).filter(Boolean).slice(0, 8);
+      : history || []
+    ).filter(Boolean);
+    // Deduplicate
+    const seen = new Set<string>();
+    const deduped: Track[] = [];
+    for (const t of list) {
+      if (t && !seen.has(t.id)) {
+        seen.add(t.id);
+        deduped.push(t);
+      }
+    }
+    return deduped.slice(0, 8);
   }, [recentlyPlayed, history]);
-
-  const favoritedTracks = useMemo(() => {
-    return favoriteItems.slice(0, 8).map((f) => f.track).filter(Boolean);
-  }, [favoriteItems]);
 
   const albumCount = useMemo(() => {
     return new Set(tracks.map((t) => t.album).filter(Boolean)).size;
@@ -73,7 +92,10 @@ export const LibraryOverviewView: React.FC = () => {
   };
 
   const formatStorageMB = (bytes: number) => {
-    if (!bytes) return '0 MB';
+    if (!bytes || bytes <= 0) return '0.0 MB';
+    if (bytes >= 1024 * 1024 * 1024) {
+      return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+    }
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
@@ -84,241 +106,241 @@ export const LibraryOverviewView: React.FC = () => {
     playTrack(tracks[randomIndex], tracks);
   };
 
+  const handleLibrarySearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (libraryFilter.trim()) {
+      setGlobalSearchQuery(libraryFilter.trim());
+      setCurrentView('songs');
+    }
+  };
+
   return (
-    <div className="flex flex-col gap-10 sm:gap-14 p-4 sm:p-8 lg:p-10 max-w-[1600px] mx-auto select-none">
+    <div className="flex flex-col gap-8 sm:gap-10 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none pb-36 sm:pb-44">
       
       {/* -------------------------------------------------------------
-          1. LIBRARY HERO & AUDIO VAULT PANORAMA
+          1. REFINED EDITORIAL HEADER & COMPACT ACTIONS
           ------------------------------------------------------------- */}
-      <section className="relative overflow-hidden rounded-3xl aura-glass-island p-6 sm:p-10 shadow-[0_20px_60px_rgba(0,0,0,0.85)]">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 z-10 relative">
-          <div>
-            <div className="flex items-center gap-2 mb-2 text-xs font-mono">
-              <span className="text-[11px] tracking-widest uppercase text-sky-400/90 font-semibold">
-                Offline Vault
-              </span>
-              <span className="text-zinc-600" aria-hidden="true">·</span>
-              <span className="text-zinc-400">
-                IndexedDB Storage · {formatStorageMB(storageUsage.approxBytes)}
-              </span>
-            </div>
-
-            <h1 className="text-3xl sm:text-4xl font-semibold text-white tracking-tight font-display">
-              Music Vault
-            </h1>
-            <p className="text-xs sm:text-sm text-zinc-400 mt-2 max-w-xl font-ui-meta leading-relaxed">
-              Your personal lossless audio sanctuary. Manage imported audio files, curated albums, artists, saved favorites, and custom spaces in one high-performance hub.
-            </p>
-
-            <div className="flex items-center gap-4 sm:gap-6 mt-4 text-xs font-mono text-zinc-300">
-              <div>
-                <span className="text-white font-bold font-display text-base">{tracks.length}</span>
-                <span className="text-zinc-500 ml-1">Tracks</span>
-              </div>
-              <div className="w-[1px] h-3.5 bg-white/10" />
-              <div>
-                <span className="text-white font-bold font-display text-base">{albumCount}</span>
-                <span className="text-zinc-500 ml-1">Albums</span>
-              </div>
-              <div className="w-[1px] h-3.5 bg-white/10" />
-              <div>
-                <span className="text-white font-bold font-display text-base">{artistCount}</span>
-                <span className="text-zinc-500 ml-1">Artists</span>
-              </div>
-              <div className="w-[1px] h-3.5 bg-white/10" />
-              <div>
-                <span className="text-white font-bold font-display text-base">{formatTotalTime(totalDurationSeconds)}</span>
-                <span className="text-zinc-500 ml-1">Runtime</span>
-              </div>
-            </div>
+      <section className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-white/[0.06]">
+        <div>
+          <div className="flex items-center gap-2 mb-1.5 text-xs font-mono text-zinc-400">
+            <Database className="w-3.5 h-3.5 text-sky-400" />
+            <span className="uppercase tracking-wider text-[11px] font-semibold text-sky-400">Personal Collection</span>
+            <span className="text-zinc-600" aria-hidden="true">·</span>
+            <span>IndexedDB Vault</span>
           </div>
 
-          {/* Action CTAs */}
-          <div className="flex flex-wrap items-center gap-3 shrink-0">
-            {tracks.length > 0 && (
+          <h1 className="text-2xl sm:text-4xl font-page-title text-white tracking-tight">
+            Your Library
+          </h1>
+          <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-xl font-ui-meta leading-relaxed">
+            Your personal music catalogue, lossless local vault, and curated listening collections.
+          </p>
+        </div>
+
+        {/* Compact Actions */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Quick Search within Library */}
+          <form onSubmit={handleLibrarySearch} className="relative">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+            <input
+              type="text"
+              value={libraryFilter}
+              onChange={(e) => setLibraryFilter(e.target.value)}
+              placeholder="Filter library..."
+              className="w-40 sm:w-48 pl-8 pr-7 py-2 rounded-xl bg-white/[0.05] border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-sky-500/50 transition-all"
+            />
+            {libraryFilter && (
               <button
                 type="button"
-                onClick={handleShuffleAll}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring"
+                onClick={() => setLibraryFilter('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
               >
-                <Shuffle className="w-4 h-4 text-sky-400" />
-                <span>Shuffle All</span>
+                <X className="w-3 h-3" />
               </button>
             )}
+          </form>
 
+          {tracks.length > 0 && (
             <button
               type="button"
-              onClick={() => setIsUploadModalOpen(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 active:scale-95 text-zinc-950 text-xs font-bold shadow-md transition-all cursor-pointer aura-focus-ring"
+              onClick={handleShuffleAll}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-focus-ring"
+              title="Shuffle all tracks in library"
             >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span>Import Audio Files</span>
+              <Shuffle className="w-3.5 h-3.5 text-sky-400" />
+              <span>Shuffle</span>
             </button>
-          </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setIsPlaylistModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-focus-ring"
+            title="Create a new playlist"
+          >
+            <Plus className="w-3.5 h-3.5 text-emerald-400" />
+            <span>New Playlist</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsUploadModalOpen(true)}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer aura-focus-ring"
+            title="Import audio files into vault"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>Import Audio</span>
+          </button>
         </div>
       </section>
 
       {/* -------------------------------------------------------------
-          2. CATEGORY BENTO STRIP (Songs, Albums, Artists, Spaces, Favorites)
+          2. UNIFIED COLLECTION NAVIGATION
           ------------------------------------------------------------- */}
-      <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 sm:gap-4">
-        {/* Songs */}
-        <div
+      <LibraryNav activeView="library" />
+
+      {/* -------------------------------------------------------------
+          3. REAL COLLECTION METRICS BAR (ZERO INVENTED NUMBERS)
+          ------------------------------------------------------------- */}
+      <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div 
           onClick={() => setCurrentView('songs')}
-          className="group cursor-pointer p-4 rounded-2xl aura-glass-ambient hover:bg-white/[0.05] transition-all flex flex-col justify-between gap-4 shadow-sm"
+          className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-all duration-300 hover:scale-[1.02] shadow-lg"
         >
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-300 border border-sky-500/20 flex items-center justify-center group-hover:scale-105 transition-transform">
-              <Music className="w-5 h-5" />
-            </div>
-            <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-300 transition-colors" />
+          <div className="flex items-center justify-between text-zinc-400">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300">Tracks</span>
+            <Music className="w-4 h-4 text-sky-400" />
           </div>
-          <div>
-            <h3 className="text-sm font-semibold text-white group-hover:text-sky-300 transition-colors font-ui-title">
-              Tracks
-            </h3>
-            <p className="text-xs font-mono text-zinc-400 mt-0.5">
-              {tracks.length} {tracks.length === 1 ? 'track' : 'tracks'}
-            </p>
+          <div className="mt-3">
+            <span className="text-xl sm:text-2xl font-bold text-white font-mono tabular-nums">{tracks.length}</span>
+            <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta">In library</p>
           </div>
         </div>
 
-        {/* Albums */}
-        <div
+        <div 
           onClick={() => setCurrentView('albums')}
-          className="group cursor-pointer p-4 rounded-2xl aura-glass-ambient hover:bg-white/[0.05] transition-all flex flex-col justify-between gap-4 shadow-sm"
+          className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-all duration-300 hover:scale-[1.02] shadow-lg"
         >
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-300 border border-purple-500/20 flex items-center justify-center group-hover:scale-105 transition-transform">
-              <Disc className="w-5 h-5" />
-            </div>
-            <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-300 transition-colors" />
+          <div className="flex items-center justify-between text-zinc-400">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300">Albums</span>
+            <Disc className="w-4 h-4 text-purple-400" />
           </div>
-          <div>
-            <h3 className="text-sm font-semibold text-white group-hover:text-purple-300 transition-colors font-ui-title">
-              Albums
-            </h3>
-            <p className="text-xs font-mono text-zinc-400 mt-0.5">
-              {albumCount} {albumCount === 1 ? 'album' : 'albums'}
-            </p>
+          <div className="mt-3">
+            <span className="text-xl sm:text-2xl font-bold text-white font-mono tabular-nums">{albumCount}</span>
+            <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta">Catalogued</p>
           </div>
         </div>
 
-        {/* Artists */}
-        <div
+        <div 
           onClick={() => setCurrentView('artists')}
-          className="group cursor-pointer p-4 rounded-2xl aura-glass-ambient hover:bg-white/[0.05] transition-all flex flex-col justify-between gap-4 shadow-sm"
+          className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-all duration-300 hover:scale-[1.02] shadow-lg"
         >
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-300 border border-amber-500/20 flex items-center justify-center group-hover:scale-105 transition-transform">
-              <User className="w-5 h-5" />
-            </div>
-            <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-300 transition-colors" />
+          <div className="flex items-center justify-between text-zinc-400">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300">Artists</span>
+            <User className="w-4 h-4 text-amber-400" />
           </div>
-          <div>
-            <h3 className="text-sm font-semibold text-white group-hover:text-amber-300 transition-colors font-ui-title">
-              Artists
-            </h3>
-            <p className="text-xs font-mono text-zinc-400 mt-0.5">
-              {artistCount} {artistCount === 1 ? 'creator' : 'creators'}
-            </p>
+          <div className="mt-3">
+            <span className="text-xl sm:text-2xl font-bold text-white font-mono tabular-nums">{artistCount}</span>
+            <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta">Creators</p>
           </div>
         </div>
 
-        {/* Spaces */}
-        <div
+        <div 
           onClick={() => setCurrentView('playlists')}
-          className="group cursor-pointer p-4 rounded-2xl aura-glass-ambient hover:bg-white/[0.05] transition-all flex flex-col justify-between gap-4 shadow-sm"
+          className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-all duration-300 hover:scale-[1.02] shadow-lg"
         >
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 flex items-center justify-center group-hover:scale-105 transition-transform">
-              <ListMusic className="w-5 h-5" />
-            </div>
-            <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-300 transition-colors" />
+          <div className="flex items-center justify-between text-zinc-400">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300">Playlists</span>
+            <ListMusic className="w-4 h-4 text-emerald-400" />
           </div>
-          <div>
-            <h3 className="text-sm font-semibold text-white group-hover:text-emerald-300 transition-colors font-ui-title">
-              Spaces
-            </h3>
-            <p className="text-xs font-mono text-zinc-400 mt-0.5">
-              {playlists.length} {playlists.length === 1 ? 'space' : 'spaces'}
-            </p>
+          <div className="mt-3">
+            <span className="text-xl sm:text-2xl font-bold text-white font-mono tabular-nums">{playlists.length}</span>
+            <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta">Organized</p>
           </div>
         </div>
 
-        {/* Favorites */}
-        <div
+        <div 
           onClick={() => setCurrentView('favorites')}
-          className="group cursor-pointer p-4 rounded-2xl aura-glass-ambient hover:bg-white/[0.05] transition-all flex flex-col justify-between gap-4 shadow-sm col-span-2 sm:col-span-1"
+          className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-all duration-300 hover:scale-[1.02] shadow-lg"
         >
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-300 border border-rose-500/20 flex items-center justify-center group-hover:scale-105 transition-transform">
-              <Heart className="w-5 h-5 fill-current" />
-            </div>
-            <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-300 transition-colors" />
+          <div className="flex items-center justify-between text-zinc-400">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300">Liked Songs</span>
+            <Heart className="w-4 h-4 text-rose-400 fill-rose-500/20" />
           </div>
-          <div>
-            <h3 className="text-sm font-semibold text-white group-hover:text-rose-300 transition-colors font-ui-title">
-              Liked Songs
-            </h3>
-            <p className="text-xs font-mono text-zinc-400 mt-0.5">
-              {favoriteItems.length} {favoriteItems.length === 1 ? 'favorite' : 'favorites'}
-            </p>
+          <div className="mt-3">
+            <span className="text-xl sm:text-2xl font-bold text-white font-mono tabular-nums">{favoriteItems.length}</span>
+            <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta">Starred</p>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-3xl glass-ambient border border-white/[0.18] flex flex-col justify-between shadow-lg">
+          <div className="flex items-center justify-between text-zinc-400">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300">Vault Storage</span>
+            <HardDrive className="w-4 h-4 text-cyan-400" />
+          </div>
+          <div className="mt-3">
+            <span className="text-xl sm:text-2xl font-bold text-white font-mono tabular-nums">{formatStorageMB(storageUsage.approxBytes)}</span>
+            <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta">{localVaultTracks.length} local files</p>
           </div>
         </div>
       </section>
 
       {/* -------------------------------------------------------------
-          3. RECENTLY ADDED TO VAULT (Grid Layout)
+          4. RECENTLY ADDED (ARTWORK-LED SHELF)
           ------------------------------------------------------------- */}
       <section className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <HardDrive className="w-4 h-4 text-sky-400" />
-            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight font-ui-title">
-              Recently Added to Vault
+          <div>
+            <h2 className="font-section-title text-white flex items-center gap-2">
+              <Clock className="w-4 h-4 text-sky-400" />
+              Recently Added
             </h2>
+            <p className="text-xs text-zinc-400 mt-0.5 font-ui-meta">
+              Latest audio files and discovered tracks added to your collection
+            </p>
           </div>
           <button
             type="button"
             onClick={() => setCurrentView('songs')}
             className="text-xs text-zinc-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer font-medium"
           >
-            All Tracks <ChevronRight className="w-4 h-4" />
+            <span>View All</span>
+            <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
         {recentlyAddedTracks.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-5">
             {recentlyAddedTracks.map((track) => (
-              <SongObjectCard
+              <TrackGridCard
                 key={`rec-add-${track.id}`}
                 track={track}
                 playlistContext={recentlyAddedTracks}
-                variant="grid"
                 onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
               />
             ))}
           </div>
         ) : (
-          <div className="p-8 rounded-2xl bg-[#090b14]/70 border border-white/[0.06] flex flex-col items-center justify-center text-center gap-3">
-            <Music className="w-8 h-8 text-zinc-600" />
-            <p className="text-sm font-semibold text-zinc-200">No tracks added to vault yet</p>
+          <div className="p-8 sm:p-12 rounded-2xl aura-glass-ambient border border-dashed border-white/10 flex flex-col items-center justify-center text-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-zinc-500">
+              <FileAudio className="w-6 h-6 text-zinc-400" />
+            </div>
+            <h3 className="text-sm font-semibold text-zinc-200">Your library is currently empty</h3>
             <p className="text-xs text-zinc-400 max-w-sm font-ui-meta">
-              Upload local audio files or explore demo audio tracks to populate your personal offline library vault.
+              Import local audio files (MP3, FLAC, WAV, AAC) into your offline IndexedDB vault or load the demo sound pack to start listening.
             </p>
-            <div className="flex items-center gap-3 mt-2">
+            <div className="flex items-center gap-2.5 mt-2">
               <button
                 type="button"
                 onClick={() => setIsUploadModalOpen(true)}
-                className="px-4 py-2 rounded-xl bg-white text-zinc-950 text-xs font-semibold shadow-sm cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-white text-zinc-950 text-xs font-bold shadow-md cursor-pointer aura-focus-ring"
               >
-                Upload Audio
+                Import Local Audio
               </button>
               <button
                 type="button"
                 onClick={loadDemoPack}
-                className="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 text-xs font-semibold border border-white/10 cursor-pointer"
+                className="px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium border border-white/10 cursor-pointer aura-focus-ring"
               >
                 Load Demo Pack
               </button>
@@ -328,33 +350,82 @@ export const LibraryOverviewView: React.FC = () => {
       </section>
 
       {/* -------------------------------------------------------------
-          4. RECENTLY PLAYED HISTORY
+          5. RECENTLY PLAYED HISTORY (ONLY WHEN REAL DATA EXISTS)
           ------------------------------------------------------------- */}
       {recentHistoryTracks.length > 0 && (
         <section className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <Clock className="w-4 h-4 text-emerald-400" />
-              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight font-ui-title">
-                Recent Sessions History
+            <div>
+              <h2 className="font-section-title text-white flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-emerald-400" />
+                Recently Played
               </h2>
+              <p className="text-xs text-zinc-400 mt-0.5 font-ui-meta">
+                Tracks you recently experienced across your active playback sessions
+              </p>
             </div>
-            <span className="text-xs text-zinc-500 font-mono hidden sm:inline">Recently Active</span>
+            <span className="text-xs text-zinc-500 font-mono hidden sm:inline">Recent Sessions</span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-5">
             {recentHistoryTracks.map((track) => (
-              <SongObjectCard
+              <TrackGridCard
                 key={`rec-play-${track.id}`}
                 track={track}
                 playlistContext={recentHistoryTracks}
-                variant="grid"
                 onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
               />
             ))}
           </div>
         </section>
       )}
+
+      {/* -------------------------------------------------------------
+          6. LOCAL MUSIC VAULT MANAGEMENT (HONEST INDEXEDDB OVERVIEW)
+          ------------------------------------------------------------- */}
+      <section className="p-5 sm:p-7 rounded-2xl aura-glass-island border border-white/10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 shadow-xl">
+        <div className="flex items-start gap-4 max-w-2xl">
+          <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/25 flex items-center justify-center shrink-0 text-cyan-400">
+            <HardDrive className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-300 px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/25">
+                PRIVATE VAULT
+              </span>
+              <span className="text-xs font-mono text-zinc-400">
+                {localVaultTracks.length} tracks · {formatStorageMB(storageUsage.approxBytes)}
+              </span>
+            </div>
+            <h3 className="text-lg font-bold text-white font-ui-title">
+              Local Audio Vault & Offline Engine
+            </h3>
+            <p className="text-xs text-zinc-400 mt-1 font-ui-meta leading-relaxed">
+              Files imported into AURA are stored directly in your browser's private IndexedDB storage for instant offline listening and high-fidelity Web Audio DSP processing. No external tracking or uploads.
+            </p>
+            <div className="flex items-center gap-2 mt-3 flex-wrap text-[11px] font-mono text-zinc-400">
+              <span className="text-zinc-500">Supported Formats:</span>
+              <span className="px-1.5 py-0.5 rounded bg-white/[0.05] border border-white/10 text-zinc-300">FLAC</span>
+              <span className="px-1.5 py-0.5 rounded bg-white/[0.05] border border-white/10 text-zinc-300">WAV</span>
+              <span className="px-1.5 py-0.5 rounded bg-white/[0.05] border border-white/10 text-zinc-300">MP3</span>
+              <span className="px-1.5 py-0.5 rounded bg-white/[0.05] border border-white/10 text-zinc-300">AAC</span>
+              <span className="px-1.5 py-0.5 rounded bg-white/[0.05] border border-white/10 text-zinc-300">OGG</span>
+              <span className="px-1.5 py-0.5 rounded bg-white/[0.05] border border-white/10 text-zinc-300">WebM</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 shrink-0 self-end lg:self-center">
+          <button
+            type="button"
+            onClick={() => setIsUploadModalOpen(true)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer aura-focus-ring"
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>Import Audio Files</span>
+          </button>
+        </div>
+      </section>
 
       {/* Add To Playlist Modal */}
       {playlistModalTrack && (

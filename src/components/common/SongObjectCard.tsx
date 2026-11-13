@@ -93,10 +93,10 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
         {/* Artwork Container as the Core Physical/Digital Music Object */}
         <div
           onClick={handleCardClick}
-          className={`relative w-full aspect-square rounded-xl overflow-hidden bg-[#0c0f17] border border-white/[0.05] transition-all duration-300 ease-out ${
+          className={`relative w-full aspect-square rounded-2xl overflow-hidden bg-[#0c0f17] border border-white/[0.18] transition-all duration-300 ease-out ${
             isCurrent
-              ? 'ring-1 ring-white/30 shadow-xl scale-[1.01]'
-              : 'shadow-md group-hover:shadow-xl group-hover:scale-[1.015]'
+              ? 'ring-2 ring-white/50 shadow-2xl scale-[1.02]'
+              : 'shadow-lg group-hover:shadow-2xl group-hover:border-white/40 group-hover:scale-[1.02]'
           }`}
         >
           {/* Track Artwork */}
@@ -304,10 +304,10 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
         setIsHovered(false);
         setIsMenuOpen(false);
       }}
-      className={`group relative flex items-center justify-between p-2.5 sm:px-3 rounded-lg transition-all duration-150 cursor-pointer select-none ${
+      className={`group relative flex items-center justify-between p-2.5 sm:px-3.5 rounded-xl transition-all duration-200 cursor-pointer select-none ${
         isCurrent
-          ? 'bg-white/[0.08] text-white font-medium'
-          : 'hover:bg-white/[0.04] text-zinc-300'
+          ? 'glass-floating border-sky-400/40 text-white font-medium shadow-[0_4px_20px_rgba(56,189,248,0.2)]'
+          : 'hover:glass-ambient text-zinc-300 hover:text-white border border-transparent hover:border-white/15'
       } ${className}`}
       onClick={handleCardClick}
     >
@@ -323,7 +323,7 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
         )}
 
         {/* Thumbnail Object */}
-        <div className="relative w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-[#0e1017] border border-white/5 shadow-sm">
+        <div className="relative w-11 h-11 rounded-xl overflow-hidden shrink-0 bg-[#0e1017] border border-white/15 shadow-sm">
           {track.coverUrl && !imageError ? (
             <img
               src={track.coverUrl}

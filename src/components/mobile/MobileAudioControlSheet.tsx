@@ -123,7 +123,7 @@ export const MobileAudioControlSheet: React.FC = () => {
       />
 
       {/* Sheet Content Container */}
-      <div className="relative w-full max-h-[92vh] bg-[#0c0d12] border-t border-white/15 rounded-t-3xl shadow-2xl flex flex-col overflow-hidden pb-safe animate-in slide-in-from-bottom duration-300">
+      <div className="relative w-full max-h-[92vh] glass-immersive border-t border-white/[0.16] rounded-t-3xl shadow-[0_-16px_60px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden pb-safe animate-in slide-in-from-bottom duration-300">
         
         {/* Sheet Handle */}
         <div className="w-12 h-1.5 rounded-full bg-zinc-700 mx-auto mt-3 mb-1 shrink-0" />

@@ -9,7 +9,7 @@ import {
   Music, 
   Disc, 
   User, 
-  Radio, 
+  Radio as RadioIcon, 
   Youtube, 
   HardDrive,
   Plus, 
@@ -19,8 +19,9 @@ import {
   ListMusic,
   Heart,
   Globe,
-  SlidersHorizontal,
-  Compass
+  Compass,
+  ArrowRight,
+  ExternalLink
 } from 'lucide-react';
 import { universalSearchCoordinator, UniversalSearchResults, SearchMatchArtist, SearchMatchAlbum, SearchMatchPlaylist } from '../../services/sourceAdapters';
 import { youtubeService } from '../../services/youtubeService';
@@ -45,7 +46,7 @@ const HighlightMatch: React.FC<{ text: string; query: string; className?: string
     <span className={className}>
       {parts.map((part, i) =>
         regex.test(part) ? (
-          <span key={i} className="text-sky-300 font-semibold underline decoration-sky-400/50 underline-offset-2">
+          <span key={i} className="text-sky-300 font-semibold underline decoration-sky-400/40 underline-offset-2">
             {part}
           </span>
         ) : (
@@ -133,17 +134,17 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceTimerRef = useRef<any>(null);
 
-  // Focus and sync on open
+  // Focus input automatically on open & sync initialQuery
   useEffect(() => {
     if (isOpen) {
       if (initialQuery !== undefined) {
         setQuery(initialQuery);
       }
-      setTimeout(() => inputRef.current?.focus(), 40);
+      setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [isOpen, initialQuery]);
 
-  // Execute search when query changes
+  // Search execution logic
   const executeSearch = useCallback(async (searchQuery: string) => {
     const q = searchQuery.trim();
     if (!q) {
@@ -173,9 +174,9 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
     setSearchResults(results);
     setSelectedIndex(0);
 
-    // 2. Debounced External execution
+    // 2. Debounced External query execution across Jamendo, Audius, Radio Browser & YouTube
     const isDirectYt = !!youtubeService.parseVideoId(q);
-    const shouldSearchExternal = isDirectYt || (youtubeService.isConfigured() && q.length > 1) || q.length > 1;
+    const shouldSearchExternal = isDirectYt || q.length > 1;
 
     if (shouldSearchExternal) {
       setIsSearchingExternal(true);
@@ -194,7 +195,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
         );
         setSearchResults(fullResults);
         setIsSearchingExternal(false);
-      }, isDirectYt ? 50 : 350);
+      }, isDirectYt ? 50 : 280);
     } else {
       setIsSearchingExternal(false);
     }
@@ -327,14 +328,32 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
 
   const topMatch = songsToShow.length > 0 ? songsToShow[0] : null;
 
+  const getSourceBadgeStyle = (source?: string) => {
+    switch (source) {
+      case 'audius':
+        return 'text-purple-400 bg-purple-500/10 border-purple-500/20';
+      case 'jamendo':
+        return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
+      case 'radio':
+      case 'radiobrowser':
+        return 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20';
+      case 'youtube':
+        return 'text-red-400 bg-red-500/10 border-red-500/20';
+      default:
+        return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+    }
+  };
+
   return (
     <div
       id="aura-universal-search-modal"
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-2xl flex items-start justify-center p-3 sm:p-6 sm:pt-14 animate-in fade-in duration-200 select-none"
+      className="fixed inset-0 z-50 bg-black/75 backdrop-blur-2xl flex items-start justify-center p-3 sm:p-6 sm:pt-14 animate-in fade-in duration-200 select-none"
     >
-      <div className="relative w-full max-w-3xl max-h-[88vh] rounded-2xl sm:rounded-3xl aura-glass-tier1 flex flex-col overflow-hidden">
+      <div className="relative w-full max-w-3xl max-h-[88vh] rounded-2xl sm:rounded-3xl bg-[#0a0d18]/90 backdrop-blur-3xl flex flex-col overflow-hidden border border-white/[0.10] shadow-[0_32px_90px_rgba(0,0,0,0.95)]">
         
-        {/* Search Header Bar */}
+        {/* -------------------------------------------------------------
+            SEARCH HEADER BAR
+            ------------------------------------------------------------- */}
         <div className="p-4 sm:p-5 border-b border-white/[0.08] flex items-center gap-3 bg-white/[0.02]">
           <Search className={`w-5 h-5 shrink-0 transition-colors ${query ? 'text-sky-400' : 'text-zinc-500'}`} />
           <input
@@ -345,8 +364,8 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
             onKeyDown={handleKeyDown}
             placeholder={
               youtubeService.isConfigured()
-                ? 'Search songs, artists, albums, spaces, radio or paste a YouTube URL...'
-                : 'Search your vault, Jamendo, Audius, Live Radio or paste a YouTube URL...'
+                ? 'Search tracks, artists, albums, spaces, radio or paste a YouTube link...'
+                : 'Search your vault, Jamendo, Audius, Live Radio or paste a YouTube link...'
             }
             className="flex-1 bg-transparent text-sm sm:text-base text-white placeholder-zinc-500 focus:outline-none font-ui-body"
           />
@@ -380,17 +399,20 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
           <button
             onClick={onClose}
             className="px-2.5 py-1 rounded-xl text-xs font-mono font-medium text-zinc-400 hover:text-white hover:bg-white/10 border border-white/10 transition-colors cursor-pointer"
+            title="Close search (Esc)"
           >
             ESC
           </button>
         </div>
 
-        {/* Categories & Source Filter Tabs (When results exist) */}
+        {/* -------------------------------------------------------------
+            CATEGORIES & SOURCE FILTER TABS (When results exist)
+            ------------------------------------------------------------- */}
         {query && hasAnyResults && (
-          <div className="px-4 py-2.5 bg-[#0a0d16]/95 border-b border-white/[0.06] flex flex-col gap-2">
+          <div className="px-4 py-2.5 glass-ambient border-b border-white/[0.08] flex flex-col gap-2 shrink-0">
             
             {/* Primary Category Tabs */}
-            <div className="flex items-center gap-1.5 overflow-x-auto text-xs scrollbar-none">
+            <div className="flex items-center gap-1.5 overflow-x-auto text-xs no-scrollbar">
               <button
                 onClick={() => setActiveTab('all')}
                 className={`px-3 py-1 rounded-xl font-medium transition-colors cursor-pointer ${
@@ -463,7 +485,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                       : 'text-cyan-400 hover:bg-cyan-950/30'
                   }`}
                 >
-                  <Radio className="w-3.5 h-3.5" />
+                  <RadioIcon className="w-3.5 h-3.5" />
                   <span>Radio ({sourceCounts.radiobrowser})</span>
                 </button>
               )}
@@ -471,7 +493,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
 
             {/* Source Origin Filters */}
             {(activeTab === 'all' || activeTab === 'songs') && searchResults.songs.length > 0 && (
-              <div className="flex items-center gap-2 overflow-x-auto text-[11px] scrollbar-none pt-1 border-t border-white/[0.06]">
+              <div className="flex items-center gap-2 overflow-x-auto text-[11px] no-scrollbar pt-1 border-t border-white/[0.06]">
                 <span className="text-zinc-500 font-mono uppercase text-[9px] mr-0.5">Source:</span>
                 
                 <button
@@ -504,11 +526,11 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                     onClick={() => setActiveSourceFilter('jamendo')}
                     className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
                       activeSourceFilter === 'jamendo'
-                        ? 'bg-pink-500/20 text-pink-300 font-semibold'
-                        : 'text-zinc-400 hover:text-pink-300'
+                        ? 'bg-amber-500/20 text-amber-300 font-semibold'
+                        : 'text-zinc-400 hover:text-amber-300'
                     }`}
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-pink-400" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                     <span>Jamendo ({sourceCounts.jamendo})</span>
                   </button>
                 )}
@@ -559,12 +581,14 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
           </div>
         )}
 
-        {/* Content Area */}
+        {/* -------------------------------------------------------------
+            CONTENT AREA — SCROLLABLE RESULTS / LANDING STATE
+            ------------------------------------------------------------- */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-6 custom-scrollbar">
           
-          {/* Direct YouTube Video Link Card */}
+          {/* Direct YouTube Video Link Banner */}
           {searchResults.detectedDirectTrack && (
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-red-950/60 via-zinc-900 to-black border border-red-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-red-950/70 via-zinc-900 to-black border border-red-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
               <div className="flex items-center gap-3.5 min-w-0">
                 <div className="w-12 h-12 rounded-xl bg-red-600/20 border border-red-500/30 flex items-center justify-center text-red-400 shrink-0 overflow-hidden">
                   {searchResults.detectedDirectTrack.coverUrl ? (
@@ -574,25 +598,38 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   )}
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[9px] font-mono uppercase tracking-widest text-red-400 font-semibold">
+                  <span className="text-[9px] font-mono uppercase tracking-widest text-red-400 font-semibold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
                     YOUTUBE URL RECOGNIZED
                   </span>
                   <h4 className="text-sm font-bold text-white truncate mt-0.5 font-ui-title">
                     {searchResults.detectedDirectTrack.title}
                   </h4>
                   <p className="text-xs text-zinc-400 truncate mt-0.5 font-ui-meta">
-                    {searchResults.detectedDirectTrack.artist} · Direct IFrame Streaming
+                    {searchResults.detectedDirectTrack.artist} · Official IFrame API Stream
                   </p>
                 </div>
               </div>
 
-              <button
-                onClick={() => handlePlayTrack(searchResults.detectedDirectTrack!)}
-                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold shadow-md transition-all shrink-0 cursor-pointer"
-              >
-                <Play className="w-3.5 h-3.5 fill-current" />
-                <span>{onSelectTrack ? 'Add to Room' : 'Play Now'}</span>
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => handlePlayTrack(searchResults.detectedDirectTrack!)}
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold shadow-md transition-all cursor-pointer"
+                >
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <span>{onSelectTrack ? 'Add to Room' : 'Play Now'}</span>
+                </button>
+                <button
+                  onClick={() => {
+                    addToQueue(searchResults.detectedDirectTrack!);
+                    setQuery('');
+                  }}
+                  className="p-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-white transition-colors cursor-pointer"
+                  title="Add to queue"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           )}
 
@@ -600,7 +637,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
               LANDING EXPERIENCE (EMPTY QUERY)
               ------------------------------------------------------------- */}
           {!query && (
-            <div className="flex flex-col gap-7 py-2">
+            <div className="flex flex-col gap-7 py-1">
               
               {/* Recent Searches */}
               {recentSearches.length > 0 && (
@@ -643,11 +680,11 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 </div>
               )}
 
-              {/* Curated Mood & Frequency Discovery Chips */}
+              {/* Explore By Sound / Mood Categories */}
               <div className="flex flex-col gap-2.5">
                 <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold flex items-center gap-1.5">
                   <Compass className="w-3 h-3 text-sky-400" />
-                  Explore By Sonic Mood
+                  Explore By Sound & Mood
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {[
@@ -656,11 +693,11 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                     'Lo-Fi Chill',
                     'Neo-Classical',
                     'Binaural 3D',
-                    'Electronic Bass',
-                    'Global Radio',
+                    'Sub-Bass Dynamics',
+                    'Live Radio',
                     'Jazz Lounge',
-                    'Night Drive',
                     'Deep Focus',
+                    'Night Drive',
                   ].map((mood) => (
                     <button
                       key={mood}
@@ -673,90 +710,97 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 </div>
               </div>
 
-              {/* Direct Source Jump */}
+              {/* Browse Catalog Sources */}
               <div className="flex flex-col gap-2.5">
                 <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold flex items-center gap-1.5">
                   <Globe className="w-3 h-3 text-emerald-400" />
-                  Catalog Sources
+                  Supported Catalog Sources
                 </span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                  
+                  {/* Personal Vault */}
                   <button
                     onClick={() => {
                       setQuery('local');
                       setActiveSourceFilter('local');
                     }}
-                    className="p-3 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-emerald-500/30 text-left transition-colors cursor-pointer group"
+                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-emerald-500/30 text-left transition-all cursor-pointer group"
                   >
-                    <span className="text-[9px] font-mono text-emerald-400 uppercase font-semibold">IndexedDB</span>
-                    <h5 className="text-xs font-bold text-white mt-0.5 font-ui-title group-hover:text-emerald-300">Local Vault</h5>
-                    <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta">{tracks.length} tracks stored</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-mono text-emerald-400 uppercase font-semibold">INDEXEDDB</span>
+                      <HardDrive className="w-3.5 h-3.5 text-emerald-400" />
+                    </div>
+                    <h5 className="text-xs font-bold text-white mt-1.5 font-ui-title group-hover:text-emerald-300">Personal Vault</h5>
+                    <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta line-clamp-1">{tracks.length} local files</p>
                   </button>
 
+                  {/* Audius */}
                   <button
                     onClick={() => {
                       setQuery('audius');
                       setActiveSourceFilter('audius');
                     }}
-                    className="p-3 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-purple-500/30 text-left transition-colors cursor-pointer group"
+                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-purple-500/30 text-left transition-all cursor-pointer group"
                   >
-                    <span className="text-[9px] font-mono text-purple-400 uppercase font-semibold">Decentralized</span>
-                    <h5 className="text-xs font-bold text-white mt-0.5 font-ui-title group-hover:text-purple-300">Audius Music</h5>
-                    <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta">1M+ open tracks</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-mono text-purple-400 uppercase font-semibold">DECENTRALIZED</span>
+                      <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                    </div>
+                    <h5 className="text-xs font-bold text-white mt-1.5 font-ui-title group-hover:text-purple-300">Audius Network</h5>
+                    <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta line-clamp-1">1M+ open tracks</p>
                   </button>
 
+                  {/* Jamendo */}
                   <button
                     onClick={() => {
                       setQuery('jamendo');
                       setActiveSourceFilter('jamendo');
                     }}
-                    className="p-3 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-pink-500/30 text-left transition-colors cursor-pointer group"
+                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-amber-500/30 text-left transition-all cursor-pointer group"
                   >
-                    <span className="text-[9px] font-mono text-pink-400 uppercase font-semibold">Creative Commons</span>
-                    <h5 className="text-xs font-bold text-white mt-0.5 font-ui-title group-hover:text-pink-300">Jamendo Catalog</h5>
-                    <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta">Free independent music</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-mono text-amber-400 uppercase font-semibold">CREATIVE COMMONS</span>
+                      <Music className="w-3.5 h-3.5 text-amber-400" />
+                    </div>
+                    <h5 className="text-xs font-bold text-white mt-1.5 font-ui-title group-hover:text-amber-300">Jamendo Catalog</h5>
+                    <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta line-clamp-1">Free CC licensing</p>
                   </button>
 
+                  {/* Radio Browser */}
                   <button
                     onClick={() => {
                       setQuery('radio');
                       setActiveTab('radio');
                     }}
-                    className="p-3 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-cyan-500/30 text-left transition-colors cursor-pointer group"
+                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-cyan-500/30 text-left transition-all cursor-pointer group"
                   >
-                    <span className="text-[9px] font-mono text-cyan-400 uppercase font-semibold">Worldwide</span>
-                    <h5 className="text-xs font-bold text-white mt-0.5 font-ui-title group-hover:text-cyan-300">Radio Stations</h5>
-                    <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta">30,000+ live streams</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-mono text-cyan-400 uppercase font-semibold">LIVE RADIO</span>
+                      <RadioIcon className="w-3.5 h-3.5 text-cyan-400" />
+                    </div>
+                    <h5 className="text-xs font-bold text-white mt-1.5 font-ui-title group-hover:text-cyan-300">Radio Browser</h5>
+                    <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta line-clamp-1">30k+ live broadcasts</p>
                   </button>
+
+                  {/* YouTube */}
+                  <button
+                    onClick={() => {
+                      setShowApiKeyInput(true);
+                    }}
+                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-red-500/30 text-left transition-all cursor-pointer group col-span-2 sm:col-span-1"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-mono text-red-400 uppercase font-semibold">OFFICIAL IFRAME</span>
+                      <Youtube className="w-3.5 h-3.5 text-red-400" />
+                    </div>
+                    <h5 className="text-xs font-bold text-white mt-1.5 font-ui-title group-hover:text-red-300">YouTube Embed</h5>
+                    <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta line-clamp-1">Paste video URL or search</p>
+                  </button>
+
                 </div>
               </div>
 
-              {/* YouTube Integration Status */}
-              <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <Youtube className="w-4 h-4 text-red-400 shrink-0" />
-                  <p className="text-xs text-zinc-400">
-                    {youtubeService.isConfigured() ? (
-                      <span className="text-zinc-200">
-                        Official YouTube IFrame Player API connected. Live YouTube searches active.
-                      </span>
-                    ) : (
-                      <span>
-                        Paste any YouTube video or music URL to play instantly via official IFrame API.
-                      </span>
-                    )}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setShowApiKeyInput(!showApiKeyInput)}
-                  className="px-2.5 py-1 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 text-[11px] font-mono transition-colors cursor-pointer shrink-0"
-                >
-                  <Key className="w-3 h-3 inline-block mr-1" />
-                  {showApiKeyInput ? 'Hide' : 'API Key'}
-                </button>
-              </div>
-
+              {/* API Key Configuration Dropdown */}
               {showApiKeyInput && (
                 <form onSubmit={handleSaveApiKey} className="p-4 rounded-2xl bg-[#0c0e17] border border-white/10 flex flex-col gap-3">
                   <div className="flex items-center justify-between">
@@ -794,7 +838,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
           {/* -------------------------------------------------------------
               ACTIVE SEARCH: BEST MATCH SPOTLIGHT CARD
               ------------------------------------------------------------- */}
-          {query && topMatch && (activeTab === 'all' || activeTab === 'songs') && (
+          {query && topMatch && (activeTab === 'all' || activeTab === 'songs') && !searchResults.detectedDirectTrack && (
             <div className="flex flex-col gap-2">
               <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">
                 Best Match
@@ -819,10 +863,10 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   </div>
 
                   <div className="min-w-0">
-                    <span className="text-[9px] font-mono uppercase tracking-widest text-sky-400 font-semibold">
+                    <span className={`text-[9px] font-mono px-2 py-0.5 rounded-md border font-semibold uppercase ${getSourceBadgeStyle(topMatch.source)}`}>
                       {(topMatch.source || 'LOCAL').toUpperCase()} STREAM
                     </span>
-                    <h3 className="text-base font-bold text-white truncate mt-0.5 font-ui-title group-hover:text-sky-300 transition-colors">
+                    <h3 className="text-base font-bold text-white truncate mt-1 font-ui-title group-hover:text-sky-300 transition-colors">
                       <HighlightMatch text={topMatch.title} query={query} />
                     </h3>
                     <p className="text-xs text-zinc-400 truncate mt-0.5 font-ui-meta">
@@ -832,7 +876,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 shrink-0 sm:self-center">
+                <div className="flex items-center gap-2.5 shrink-0 sm:self-center">
                   <button
                     type="button"
                     onClick={(e) => {
@@ -909,8 +953,8 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                               <HighlightMatch text={song.title} query={query} />
                             </h4>
 
-                            <span className="text-[9px] font-mono text-zinc-500 uppercase shrink-0">
-                              · {(song.source || 'LOCAL').toUpperCase()}
+                            <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded border font-semibold uppercase ${getSourceBadgeStyle(song.source)}`}>
+                              {(song.source || 'LOCAL').toUpperCase()}
                             </span>
                           </div>
 
@@ -978,7 +1022,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                         <HighlightMatch text={artist.name} query={query} />
                       </h4>
                       <p className="text-[10px] text-zinc-500 font-mono mt-0.5">
-                        {artist.trackCount} tracks
+                        {artist.trackCount} {artist.trackCount === 1 ? 'track' : 'tracks'}
                       </p>
                     </div>
                   </div>
@@ -1002,11 +1046,11 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                     onClick={() => handleSelectAlbum(album.name)}
                     className="p-3 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-white/20 transition-all cursor-pointer flex items-center gap-3 group"
                   >
-                    <div className="w-11 h-11 rounded-xl bg-zinc-800 border border-white/10 flex items-center justify-center text-zinc-400 shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
+                    <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-white/10 flex items-center justify-center text-zinc-400 shrink-0 overflow-hidden">
                       {album.coverUrl ? (
                         <img src={album.coverUrl} alt={album.name} className="w-full h-full object-cover" />
                       ) : (
-                        <Disc className="w-5 h-5" />
+                        <Disc className="w-4 h-4 text-indigo-400" />
                       )}
                     </div>
                     <div className="min-w-0">
@@ -1059,8 +1103,8 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
           {query && !hasAnyResults && !isSearchingExternal && (
             <div className="p-10 rounded-2xl bg-[#0c0e17] border border-white/[0.06] text-center flex flex-col items-center justify-center gap-3">
               <Search className="w-8 h-8 text-zinc-600" />
-              <h4 className="text-sm font-semibold text-white">No results found for "{query}"</h4>
-              <p className="text-xs text-zinc-400 max-w-sm">
+              <h4 className="text-sm font-semibold text-white">No results found for &quot;{query}&quot;</h4>
+              <p className="text-xs text-zinc-400 max-w-sm font-ui-meta">
                 Try searching for an artist, album, genre, or paste a YouTube video link to stream directly.
               </p>
               <button

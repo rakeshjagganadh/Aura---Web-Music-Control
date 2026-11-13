@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { useMusic } from '../../context/MusicContext';
 import { Track } from '../../types';
+import { LibraryNav } from '../library/LibraryNav';
+import { TrackRow } from '../library/TrackRow';
+import { AddToPlaylistModal } from '../playlists/AddToPlaylistModal';
 import { 
   User, 
   Play, 
-  Music, 
   ArrowLeft, 
   Disc, 
   Shuffle, 
@@ -12,12 +14,10 @@ import {
   Search, 
   X, 
   Clock, 
-  LayoutGrid, 
-  List,
-  Layers
+  Music,
+  Plus,
+  ArrowUpDown
 } from 'lucide-react';
-import { SongObjectCard } from '../common/SongObjectCard';
-import { AddToPlaylistModal } from '../playlists/AddToPlaylistModal';
 
 export interface ArtistAlbumInfo {
   id: string;
@@ -91,13 +91,14 @@ export const ArtistsView: React.FC = () => {
     playTrack, 
     isShuffle, 
     toggleShuffle, 
-    addToQueue 
+    addToQueue,
+    setIsUploadModalOpen,
   } = useMusic();
 
   const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'tracks' | 'albums' | 'recent'>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [playlistModalTrack, setPlaylistModalTrack] = useState<Track | null>(null);
 
   // Group tracks by artist with album associations
@@ -122,7 +123,6 @@ export const ArtistsView: React.FC = () => {
 
       const artist = map[artistKey];
 
-      // Deduplicate track by id
       if (!artist.tracks.some((t) => t.id === track.id)) {
         artist.tracks.push(track);
         artist.totalDuration += track.duration || 0;
@@ -130,12 +130,11 @@ export const ArtistsView: React.FC = () => {
           artist.latestDateAdded = track.dateAdded;
         }
 
-        // Associate track to artist's album
         const rawAlbum = (track.album || '').trim();
         const normAlbum = rawAlbum.toLowerCase();
         const isGeneric = !rawAlbum || GENERIC_ALBUM_NAMES.has(normAlbum);
         const albumKey = isGeneric ? 'singles_and_other' : `album:::${normAlbum}`;
-        const albumTitle = isGeneric ? 'Singles & Other Tracks' : rawAlbum;
+        const albumTitle = isGeneric ? 'Singles & Other Releases' : rawAlbum;
 
         let existingAlbum = artist.albums.find((a) => a.id === albumKey);
         if (!existingAlbum) {
@@ -149,15 +148,11 @@ export const ArtistsView: React.FC = () => {
           };
           artist.albums.push(existingAlbum);
         } else {
-          existingAlbum.tracks.push(track);
-          if (!existingAlbum.coverUrl && track.coverUrl) {
-            existingAlbum.coverUrl = track.coverUrl;
-          }
-          if (!existingAlbum.coverColor && track.coverColor) {
-            existingAlbum.coverColor = track.coverColor;
-          }
-          if (!existingAlbum.year && track.year) {
-            existingAlbum.year = track.year;
+          if (!existingAlbum.tracks.some((t) => t.id === track.id)) {
+            existingAlbum.tracks.push(track);
+            if (!existingAlbum.coverUrl && track.coverUrl) {
+              existingAlbum.coverUrl = track.coverUrl;
+            }
           }
         }
       }
@@ -166,14 +161,11 @@ export const ArtistsView: React.FC = () => {
     return map;
   }, [tracks]);
 
-  // List of all artists
-  const allArtistsList: ArtistInfo[] = useMemo(() => {
-    return Object.values(artistsMap);
-  }, [artistsMap]);
+  const artistList = useMemo(() => Object.values(artistsMap), [artistsMap]);
 
   // Filtered and sorted artists
-  const displayedArtists: ArtistInfo[] = useMemo(() => {
-    let list = [...allArtistsList];
+  const displayedArtists = useMemo(() => {
+    let list = [...artistList];
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
@@ -181,224 +173,185 @@ export const ArtistsView: React.FC = () => {
     }
 
     list.sort((a, b) => {
+      let comp = 0;
       switch (sortBy) {
         case 'name':
-          return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+          comp = a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+          break;
         case 'tracks':
-          return b.tracks.length - a.tracks.length;
+          comp = a.tracks.length - b.tracks.length;
+          break;
         case 'albums':
-          return b.albums.length - a.albums.length;
+          comp = a.albums.length - b.albums.length;
+          break;
         case 'recent':
-          return b.latestDateAdded - a.latestDateAdded;
         default:
-          return 0;
+          comp = a.latestDateAdded - b.latestDateAdded;
+          break;
       }
+      return sortOrder === 'asc' ? comp : -comp;
     });
 
     return list;
-  }, [allArtistsList, searchQuery, sortBy]);
+  }, [artistList, searchQuery, sortBy, sortOrder]);
 
-  // Playback Handlers
-  const handlePlayArtist = (artist: ArtistInfo) => {
-    if (!artist.tracks.length) return;
-    playTrack(artist.tracks[0], artist.tracks);
-  };
+  const activeArtist = selectedArtistId ? artistsMap[selectedArtistId] : null;
 
-  const handleShuffleArtist = (artist: ArtistInfo) => {
-    if (!artist.tracks.length) return;
-
-    // 1. Create a true Fisher-Yates shuffled copy of the artist tracks
-    const shuffled = [...artist.tracks];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-
-    // 2. Ensure player shuffle state is active without turning it off if already on
-    if (!isShuffle) {
-      toggleShuffle();
-    }
-
-    // 3. Play the first shuffled track with the randomized queue
-    playTrack(shuffled[0], shuffled);
+  const handlePlayArtist = (artist: ArtistInfo, shuffle = false) => {
+    if (!artist.tracks || artist.tracks.length === 0) return;
+    const queue = shuffle ? [...artist.tracks].sort(() => Math.random() - 0.5) : artist.tracks;
+    playTrack(queue[0], queue);
   };
 
   const handleAddArtistToQueue = (artist: ArtistInfo) => {
-    artist.tracks.forEach((track) => {
-      addToQueue(track);
-    });
+    artist.tracks.forEach((t) => addToQueue(t));
   };
 
-  const handlePlayAlbumRail = (album: ArtistAlbumInfo) => {
-    if (!album.tracks.length) return;
-    playTrack(album.tracks[0], album.tracks);
-  };
-
-  // Selected Artist Detail View
-  const selectedArtist = selectedArtistId ? artistsMap[selectedArtistId] : null;
-
-  if (selectedArtist) {
-    const artistGradient = getArtistGradient(selectedArtist.name);
-    const initialChar = (selectedArtist.name.charAt(0) || 'A').toUpperCase();
+  // -------------------------------------------------------------
+  // ARTIST DETAIL VIEW
+  // -------------------------------------------------------------
+  if (activeArtist) {
+    const representativeCover = activeArtist.tracks.find((t) => t.coverUrl)?.coverUrl;
 
     return (
-      <div className="flex flex-col gap-6 p-4 sm:p-8 max-w-7xl mx-auto select-none animate-fadeIn">
+      <div className="flex flex-col gap-6 sm:gap-8 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none pb-36 sm:pb-44 animate-fadeIn">
         {/* Navigation Breadcrumb */}
-        <button
-          onClick={() => setSelectedArtistId(null)}
-          className="group inline-flex items-center gap-2 text-xs text-zinc-400 hover:text-white transition-colors w-fit px-3 py-1.5 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-          <span>Back to Artists</span>
-        </button>
-
-        {/* Artist Hero Section */}
-        <div className="relative overflow-hidden rounded-3xl bg-[#0b0d13]/80 border border-white/[0.08] backdrop-blur-2xl p-6 sm:p-8 shadow-2xl">
-          {/* Ambient background glow */}
-          <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="relative z-10 flex flex-col sm:flex-row items-center sm:items-end gap-6 sm:gap-8">
-            {/* Authentic Circular Initials Avatar */}
-            <div className={`w-36 h-36 sm:w-44 sm:h-44 rounded-full bg-gradient-to-br ${artistGradient} flex items-center justify-center shrink-0 border border-white/15 shadow-2xl relative group`}>
-              <span className="text-4xl sm:text-6xl font-extrabold text-white tracking-tight select-none">
-                {initialChar}
-              </span>
-            </div>
-
-            {/* Metadata & Controls */}
-            <div className="flex flex-col gap-2 text-center sm:text-left min-w-0 flex-1">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider font-semibold bg-purple-500/10 text-purple-300 border border-purple-500/20 w-fit mx-auto sm:mx-0">
-                <User className="w-3 h-3 text-purple-400" />
-                Artist Collection
-              </span>
-
-              <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight line-clamp-2">
-                {selectedArtist.name}
-              </h1>
-
-              {/* Verified Library Scope Statement */}
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs text-zinc-400 mt-1">
-                <span>{selectedArtist.tracks.length} {selectedArtist.tracks.length === 1 ? 'track' : 'tracks'} in collection</span>
-                <span>•</span>
-                <span>{selectedArtist.albums.length} {selectedArtist.albums.length === 1 ? 'album' : 'albums'}</span>
-                <span>•</span>
-                <span className="font-mono">{formatDuration(selectedArtist.totalDuration)} total runtime</span>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-4">
-                <button
-                  onClick={() => handlePlayArtist(selectedArtist)}
-                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-semibold shadow-lg shadow-white/10 transition-all active:scale-95 cursor-pointer"
-                >
-                  <Play className="w-4 h-4 fill-current" />
-                  <span>Play Artist</span>
-                </button>
-
-                <button
-                  onClick={() => handleShuffleArtist(selectedArtist)}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-200 hover:text-white border border-white/10 text-xs font-semibold transition-all active:scale-95 cursor-pointer backdrop-blur-md"
-                >
-                  <Shuffle className="w-4 h-4" />
-                  <span>Shuffle</span>
-                </button>
-
-                <button
-                  onClick={() => handleAddArtistToQueue(selectedArtist)}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/10 text-xs font-medium transition-all active:scale-95 cursor-pointer"
-                  title="Add all artist tracks to playback queue"
-                >
-                  <ListPlus className="w-4 h-4" />
-                  <span>Add to Queue</span>
-                </button>
-              </div>
-            </div>
-          </div>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setSelectedArtistId(null)}
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 hover:text-white text-xs font-medium border border-white/10 transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Back to Artists</span>
+          </button>
         </div>
 
-        {/* Albums by Artist Section (Horizontal Rail) */}
-        {selectedArtist.albums.length > 0 && (
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between px-2 text-xs font-mono uppercase tracking-wider text-zinc-400">
-              <span className="flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-indigo-400" />
-                Albums in Collection ({selectedArtist.albums.length})
-              </span>
+        {/* Large Artist Header */}
+        <section className="relative overflow-hidden rounded-3xl aura-glass-island p-6 sm:p-8 border border-white/10 shadow-2xl flex flex-col md:flex-row items-center md:items-end gap-6 sm:gap-8">
+          {/* Avatar / Cover */}
+          <div className="relative w-36 h-36 sm:w-48 sm:h-48 rounded-full overflow-hidden shrink-0 bg-zinc-900 border-2 border-white/15 shadow-2xl">
+            {representativeCover ? (
+              <img
+                src={representativeCover}
+                alt={activeArtist.name}
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className={`w-full h-full bg-gradient-to-br ${getArtistGradient(activeArtist.name)} flex items-center justify-center text-white font-bold text-4xl`}>
+                {activeArtist.name.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </div>
+
+          {/* Details */}
+          <div className="flex-1 min-w-0 text-center md:text-left">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-300 px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/25 inline-block mb-2">
+              ARTIST COLLECTION
+            </span>
+
+            <h1 className="text-2xl sm:text-4xl font-page-title text-white tracking-tight line-clamp-2">
+              {activeArtist.name}
+            </h1>
+
+            <div className="flex items-center justify-center md:justify-start gap-2 mt-2 text-xs sm:text-sm text-zinc-300 font-ui-meta">
+              <span>{activeArtist.tracks.length} tracks in library</span>
+              <span className="text-zinc-600" aria-hidden="true">·</span>
+              <span>{activeArtist.albums.length} releases</span>
+              <span className="text-zinc-600" aria-hidden="true">·</span>
+              <span className="font-mono text-zinc-400">{formatDuration(activeArtist.totalDuration)}</span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {selectedArtist.albums.map((album) => (
+            {/* Actions */}
+            <div className="flex items-center justify-center md:justify-start gap-2.5 mt-5 flex-wrap">
+              <button
+                type="button"
+                onClick={() => handlePlayArtist(activeArtist, false)}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer aura-focus-ring"
+              >
+                <Play className="w-4 h-4 fill-current text-black translate-x-0.2" />
+                <span>Play All</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handlePlayArtist(activeArtist, true)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring"
+              >
+                <Shuffle className="w-3.5 h-3.5 text-sky-400" />
+                <span>Shuffle</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleAddArtistToQueue(activeArtist)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring"
+              >
+                <ListPlus className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Add to Queue</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Artist Albums in Collection */}
+        {activeArtist.albums.length > 0 && (
+          <section className="flex flex-col gap-3">
+            <h3 className="text-base font-bold text-white font-ui-title">Releases in Library</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {activeArtist.albums.map((album) => (
                 <div
                   key={album.id}
-                  className="group relative flex flex-col gap-2.5 p-3 rounded-2xl bg-[#0b0d13]/60 hover:bg-[#121520]/80 border border-white/[0.06] hover:border-white/[0.14] backdrop-blur-xl transition-all duration-300 shadow-md hover:shadow-xl hover:scale-[1.02]"
+                  onClick={() => handlePlayArtist({ ...activeArtist, tracks: album.tracks }, false)}
+                  className="group relative flex flex-col p-3 rounded-2xl aura-glass-ambient hover:border-white/20 transition-all cursor-pointer shadow-md"
                 >
-                  {/* Album Cover Thumbnail */}
-                  <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-[#0e1017] border border-white/10 shadow-sm">
+                  <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-zinc-900 border border-white/10 mb-2">
                     {album.coverUrl ? (
-                      <img 
-                        src={album.coverUrl} 
-                        alt={album.title} 
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                      />
+                      <img src={album.coverUrl} alt={album.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                     ) : (
-                      <div className={`w-full h-full bg-gradient-to-br ${album.coverColor || 'from-indigo-600 via-indigo-900 to-zinc-950'} flex items-center justify-center`}>
-                        <Disc className="w-8 h-8 text-white/50" />
+                      <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
+                        <Disc className="w-8 h-8 text-white/40" />
                       </div>
                     )}
-
-                    {/* Quick Play Album Rail Overlay */}
-                    <button
-                      onClick={() => handlePlayAlbumRail(album)}
-                      className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
-                      title={`Play ${album.title}`}
-                    >
-                      <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
-                    </button>
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <div className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center shadow-lg">
+                        <Play className="w-3.5 h-3.5 fill-current translate-x-0.2" />
+                      </div>
+                    </div>
                   </div>
-
-                  <div className="px-0.5 min-w-0">
-                    <h4 className="text-xs font-semibold text-zinc-200 truncate group-hover:text-indigo-300 transition-colors">
-                      {album.title}
-                    </h4>
-                    <p className="text-[10px] font-mono text-zinc-500 mt-0.5">
-                      {album.tracks.length} {album.tracks.length === 1 ? 'track' : 'tracks'}
-                      {album.year ? ` • ${album.year}` : ''}
-                    </p>
-                  </div>
+                  <h4 className="text-xs font-semibold text-white truncate">{album.title}</h4>
+                  <p className="text-[11px] text-zinc-400">{album.tracks.length} tracks</p>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
         )}
 
-        {/* Tracks by Artist Section */}
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between px-2 text-xs font-mono uppercase tracking-wider text-zinc-400">
-            <span className="flex items-center gap-1.5">
-              <Music className="w-3.5 h-3.5 text-indigo-400" />
-              Tracks in Collection ({selectedArtist.tracks.length})
-            </span>
-            <span>{formatDuration(selectedArtist.totalDuration)}</span>
+        {/* Artist All Tracks */}
+        <section className="flex flex-col rounded-2xl aura-glass-ambient border border-white/10 overflow-hidden">
+          <div className="p-3 sm:p-4 border-b border-white/[0.06] flex items-center justify-between">
+            <h3 className="text-sm font-bold text-white font-ui-title">All Tracks ({activeArtist.tracks.length})</h3>
+            <span className="text-xs font-mono text-zinc-400">{formatDuration(activeArtist.totalDuration)}</span>
           </div>
 
-          <div className="divide-y divide-white/[0.04] rounded-2xl bg-[#0b0d13]/60 border border-white/[0.06] overflow-hidden p-2 backdrop-blur-xl shadow-lg">
-            {selectedArtist.tracks.map((track, i) => (
-              <SongObjectCard
-                key={track.id}
+          <div className="divide-y divide-white/[0.03] p-1.5">
+            {activeArtist.tracks.map((track, i) => (
+              <TrackRow
+                key={`artist-track-${track.id}`}
                 track={track}
-                playlistContext={selectedArtist.tracks}
-                variant="row"
-                showIndex={i + 1}
+                index={i + 1}
+                playlistContext={activeArtist.tracks}
                 onOpenPlaylistModal={(t) => setPlaylistModalTrack(t)}
               />
             ))}
           </div>
-        </div>
+        </section>
 
-        {/* Playlist Modal Integration */}
         {playlistModalTrack && (
           <AddToPlaylistModal
             track={playlistModalTrack}
+            isOpen={Boolean(playlistModalTrack)}
             onClose={() => setPlaylistModalTrack(null)}
           />
         )}
@@ -406,209 +359,170 @@ export const ArtistsView: React.FC = () => {
     );
   }
 
-  // Main Artists Browsing Grid
+  // -------------------------------------------------------------
+  // MAIN ARTISTS CATALOGUE GRID
+  // -------------------------------------------------------------
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-8 max-w-7xl mx-auto select-none animate-fadeIn">
-      {/* Header & Controls Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="flex flex-col gap-6 sm:gap-8 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none pb-36 sm:pb-44">
+      
+      {/* Header */}
+      <section className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-white/[0.06]">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Artists</h1>
-          <p className="text-xs text-zinc-400 mt-0.5">
-            {allArtistsList.length} {allArtistsList.length === 1 ? 'artist' : 'artists'} represented in your collection
+          <div className="flex items-center gap-2 mb-1.5 text-xs font-mono text-zinc-400">
+            <User className="w-3.5 h-3.5 text-amber-400" />
+            <span className="uppercase tracking-wider text-[11px] font-semibold text-amber-400">Artist Catalogue</span>
+            <span className="text-zinc-600" aria-hidden="true">·</span>
+            <span>{artistList.length} artists in collection</span>
+          </div>
+
+          <h1 className="text-2xl sm:text-4xl font-page-title text-white tracking-tight">
+            Artists
+          </h1>
+          <p className="text-xs sm:text-sm text-zinc-400 mt-1 font-ui-meta">
+            Discover creators and performers across your local vault and connected streaming libraries.
           </p>
         </div>
 
-        {/* Controls Toolbar */}
-        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
-          {/* Search Input */}
-          <div className="relative flex-1 sm:w-60">
-            <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search artists..."
-              className="w-full bg-[#0b0d13]/80 border border-white/10 rounded-xl pl-8 pr-8 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500/50 backdrop-blur-xl"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            )}
-          </div>
-
-          {/* Sort Selector */}
-          <div className="flex items-center gap-1.5 bg-[#0b0d13]/80 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-zinc-300">
-            <span className="text-[10px] uppercase font-mono text-zinc-500">Sort</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="bg-transparent text-xs text-white focus:outline-none cursor-pointer"
-            >
-              <option value="name" className="bg-zinc-900 text-white">Name (A–Z)</option>
-              <option value="tracks" className="bg-zinc-900 text-white">Track Count</option>
-              <option value="albums" className="bg-zinc-900 text-white">Album Count</option>
-              <option value="recent" className="bg-zinc-900 text-white">Recently Added</option>
-            </select>
-          </div>
-
-          {/* View Mode Toggle */}
-          <div className="flex items-center bg-[#0b0d13]/80 border border-white/10 rounded-xl p-0.5">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-lg transition-colors ${
-                viewMode === 'grid' 
-                  ? 'bg-white/10 text-white shadow-sm' 
-                  : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-              title="Grid View"
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded-lg transition-colors ${
-                viewMode === 'list' 
-                  ? 'bg-white/10 text-white shadow-sm' 
-                  : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-              title="List View"
-            >
-              <List className="w-3.5 h-3.5" />
-            </button>
-          </div>
+        {/* Actions */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setIsUploadModalOpen(true)}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer aura-focus-ring"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>Import Music</span>
+          </button>
         </div>
-      </div>
+      </section>
 
-      {/* Artist Collection Content */}
-      {displayedArtists.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center rounded-3xl bg-[#0b0d13]/40 border border-white/[0.04] p-8">
-          <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-3">
-            <User className="w-7 h-7 text-zinc-500" />
-          </div>
-          <h3 className="text-sm font-semibold text-zinc-200">
-            {searchQuery ? 'No artists match your search' : 'No artists in your library'}
-          </h3>
-          <p className="text-xs text-zinc-500 max-w-sm mt-1">
-            {searchQuery
-              ? `No artists found for "${searchQuery}". Clear your search to view all artists.`
-              : 'Add music files to your library or import tracks to explore artists in your collection.'}
-          </p>
+      {/* Library Navigation */}
+      <LibraryNav activeView="artists" />
+
+      {/* Filter & Sort Bar */}
+      <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="relative flex-1 max-w-md">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search artists by name..."
+            className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-white/[0.05] border border-white/10 text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500/50 transition-all font-ui-title"
+          />
           {searchQuery && (
             <button
+              type="button"
               onClick={() => setSearchQuery('')}
-              className="mt-4 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-zinc-300 transition-colors cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
             >
-              Clear Search
+              <X className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
-      ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5">
-          {displayedArtists.map((artist) => {
-            const gradient = getArtistGradient(artist.name);
-            const initial = (artist.name.charAt(0) || 'A').toUpperCase();
 
-            return (
-              <div
-                key={artist.id}
-                onClick={() => setSelectedArtistId(artist.id)}
-                className="group cursor-pointer flex flex-col items-center text-center gap-3 p-4 rounded-2xl bg-[#0b0d13]/70 hover:bg-[#121520]/80 border border-white/[0.06] hover:border-white/[0.14] backdrop-blur-xl transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-[1.02]"
-              >
-                {/* Circular Avatar Container */}
-                <div className="relative">
-                  <div className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-extrabold text-2xl sm:text-3xl border border-white/15 group-hover:scale-105 transition-transform duration-300 shadow-xl`}>
-                    {initial}
-                  </div>
-
-                  {/* Quick Play Hover Button */}
-                  <div
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePlayArtist(artist);
-                    }}
-                    className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-xl opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:scale-105 active:scale-95"
-                    title={`Play ${artist.name}`}
-                  >
-                    <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
-                  </div>
-                </div>
-
-                {/* Artist Info */}
-                <div className="min-w-0 w-full px-1">
-                  <h4 className="text-xs font-semibold text-zinc-100 truncate group-hover:text-indigo-300 transition-colors">
-                    {artist.name}
-                  </h4>
-                  <p className="text-[10px] font-mono text-zinc-500 mt-1">
-                    {artist.tracks.length} {artist.tracks.length === 1 ? 'track' : 'tracks'} • {artist.albums.length} {artist.albums.length === 1 ? 'album' : 'albums'}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <div className="relative flex items-center gap-1 px-3 py-2 rounded-xl bg-white/[0.05] border border-white/10 text-xs text-zinc-300 font-medium">
+            <ArrowUpDown className="w-3.5 h-3.5 text-zinc-400" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="bg-transparent text-xs text-white focus:outline-none cursor-pointer pr-1"
+            >
+              <option value="name" className="bg-[#12141c] text-white">Artist Name</option>
+              <option value="tracks" className="bg-[#12141c] text-white">Track Count</option>
+              <option value="albums" className="bg-[#12141c] text-white">Albums</option>
+              <option value="recent" className="bg-[#12141c] text-white">Recently Added</option>
+            </select>
+            <button
+              type="button"
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              className="hover:text-white px-1 text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400 cursor-pointer"
+            >
+              {sortOrder}
+            </button>
+          </div>
         </div>
-      ) : (
-        /* List View */
-        <div className="divide-y divide-white/[0.04] rounded-2xl bg-[#0b0d13]/60 border border-white/[0.06] overflow-hidden backdrop-blur-xl">
+      </section>
+
+      {/* Artists Grid */}
+      {displayedArtists.length > 0 ? (
+        <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5">
           {displayedArtists.map((artist) => {
-            const gradient = getArtistGradient(artist.name);
-            const initial = (artist.name.charAt(0) || 'A').toUpperCase();
+            const representativeCover = artist.tracks.find((t) => t.coverUrl)?.coverUrl;
 
             return (
               <div
                 key={artist.id}
                 onClick={() => setSelectedArtistId(artist.id)}
-                className="group flex items-center justify-between p-3 px-4 hover:bg-white/[0.04] transition-colors cursor-pointer"
+                className="group relative flex flex-col items-center p-4 rounded-2xl aura-glass-ambient hover:border-white/20 transition-all duration-300 cursor-pointer select-none shadow-md text-center"
               >
-                <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                  {/* Avatar Thumbnail */}
-                  <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold text-sm border border-white/10 shrink-0`}>
-                    {initial}
-                  </div>
+                {/* Circular Portrait Avatar */}
+                <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden bg-zinc-900 border-2 border-white/10 shadow-md mb-3">
+                  {representativeCover ? (
+                    <img
+                      src={representativeCover}
+                      alt={artist.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      referrerPolicy="no-referrer"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className={`w-full h-full bg-gradient-to-br ${getArtistGradient(artist.name)} flex items-center justify-center text-white font-bold text-2xl`}>
+                      {artist.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
 
-                  {/* Text Info */}
-                  <div className="min-w-0 flex-1">
-                    <h4 className="text-xs font-semibold text-zinc-200 truncate group-hover:text-indigo-300 transition-colors">
-                      {artist.name}
-                    </h4>
-                    <p className="text-[11px] text-zinc-500 truncate mt-0.5">
-                      {artist.albums.length} {artist.albums.length === 1 ? 'album' : 'albums'} in collection
-                    </p>
+                  {/* Play Overlay */}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePlayArtist(artist, false);
+                      }}
+                      className="w-10 h-10 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-transform cursor-pointer"
+                      title={`Play ${artist.name}`}
+                    >
+                      <Play className="w-4 h-4 fill-current text-black translate-x-0.2" />
+                    </button>
                   </div>
                 </div>
 
-                {/* Meta & Actions */}
-                <div className="flex items-center gap-4 text-xs font-mono text-zinc-500 shrink-0">
-                  <span>{artist.tracks.length} tracks</span>
-                  <span className="hidden sm:inline">{formatDuration(artist.totalDuration)}</span>
-
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePlayArtist(artist);
-                    }}
-                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white transition-colors"
-                    title={`Play ${artist.name}`}
-                  >
-                    <Play className="w-3.5 h-3.5 fill-current" />
-                  </button>
-                </div>
+                {/* Name & Counts */}
+                <h3 className="text-xs sm:text-sm font-semibold text-white group-hover:text-amber-300 transition-colors truncate w-full font-ui-title leading-tight">
+                  {artist.name}
+                </h3>
+                <p className="text-[11px] text-zinc-400 mt-1 font-ui-meta">
+                  {artist.tracks.length} {artist.tracks.length === 1 ? 'track' : 'tracks'}
+                  {artist.albums.length > 0 && ` · ${artist.albums.length} ${artist.albums.length === 1 ? 'release' : 'releases'}`}
+                </p>
               </div>
             );
           })}
+        </section>
+      ) : (
+        <div className="p-10 sm:p-16 rounded-2xl aura-glass-ambient border border-dashed border-white/10 flex flex-col items-center justify-center text-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-zinc-500">
+            <User className="w-6 h-6 text-zinc-400" />
+          </div>
+          <h3 className="text-sm font-semibold text-zinc-200">No artists found</h3>
+          <p className="text-xs text-zinc-400 max-w-sm font-ui-meta">
+            {searchQuery 
+              ? `No artists match your search query "${searchQuery}".` 
+              : 'Artists are automatically catalogued from your imported audio track metadata.'}
+          </p>
         </div>
       )}
 
-      {/* Playlist Modal Integration */}
       {playlistModalTrack && (
         <AddToPlaylistModal
           track={playlistModalTrack}
+          isOpen={Boolean(playlistModalTrack)}
           onClose={() => setPlaylistModalTrack(null)}
         />
       )}
+
     </div>
   );
 };

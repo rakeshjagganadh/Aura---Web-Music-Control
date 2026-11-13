@@ -80,7 +80,7 @@ export const AudioControlCenter: React.FC = () => {
         />
 
       {/* Main Drawer Container */}
-      <div className="relative w-full max-w-4xl h-full bg-[#0d0e12] border-l border-white/10 shadow-2xl flex flex-col z-10 overflow-hidden">
+      <div className="relative w-full max-w-4xl h-full glass-immersive border-l border-white/[0.14] shadow-[0_0_80px_rgba(0,0,0,0.95)] flex flex-col z-10 overflow-hidden">
         
         {/* Top Studio Header */}
         <div className="p-4 sm:p-5 border-b border-white/10 flex flex-col gap-3 bg-zinc-950/80 backdrop-blur-xl shrink-0">

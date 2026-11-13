@@ -3,7 +3,7 @@ import React from 'react';
 export interface GlassPanelProps extends React.HTMLAttributes<HTMLElement> {
   children?: React.ReactNode;
   as?: React.ElementType;
-  tier?: 'tier1' | 'tier2' | 'tier3';
+  tier?: 'immersive' | 'floating' | 'reflective' | 'ambient' | 'frosted' | 'solid' | 'tier1' | 'tier2' | 'tier3';
   intensity?: 'subtle' | 'standard' | 'prominent'; // Backwards compatibility alias
   interactive?: boolean;
   elevation?: 'none' | 'sm' | 'md' | 'lg';
@@ -22,16 +22,24 @@ export const GlassPanel: React.FC<GlassPanelProps> = ({
 }) => {
   // Map tier or legacy intensity to AURA 3.0 Glass System Tiers
   const resolvedTier = tier || {
-    subtle: 'tier3',
-    standard: 'tier2',
-    prominent: 'tier1',
+    subtle: 'ambient',
+    standard: 'floating',
+    prominent: 'immersive',
   }[intensity];
 
-  const tierClasses = {
-    tier1: 'aura-glass-tier1',
-    tier2: 'aura-glass-tier2',
-    tier3: 'aura-glass-tier3',
-  }[resolvedTier];
+  const tierClasses: Record<string, string> = {
+    immersive: 'glass-immersive',
+    floating: 'glass-floating',
+    reflective: 'glass-reflective',
+    ambient: 'glass-ambient',
+    frosted: 'glass-frosted',
+    solid: 'glass-solid',
+    tier1: 'glass-immersive',
+    tier2: 'glass-floating',
+    tier3: 'glass-ambient',
+  };
+
+  const selectedTierClass = tierClasses[resolvedTier] || 'glass-floating';
 
   const elevationClasses = {
     none: '',
@@ -46,7 +54,7 @@ export const GlassPanel: React.FC<GlassPanelProps> = ({
 
   return (
     <Component
-      className={`relative rounded-2xl ${tierClasses} ${elevationClasses} ${interactiveClasses} ${className}`}
+      className={`relative rounded-2xl ${selectedTierClass} ${elevationClasses} ${interactiveClasses} ${className}`}
       tabIndex={interactive && props.tabIndex === undefined ? 0 : props.tabIndex}
       {...props}
     >

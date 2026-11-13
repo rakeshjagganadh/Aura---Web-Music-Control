@@ -194,7 +194,7 @@ export const StudioView: React.FC = () => {
       {/* ======================================================== */}
       <section 
         aria-label="Master Signal and Timeline"
-        className="rounded-2xl aura-glass-island p-4 sm:p-5 shadow-2xl flex flex-col gap-4"
+        className="rounded-3xl bg-[#0a0d18]/80 backdrop-blur-2xl p-4 sm:p-5 shadow-xl border border-white/[0.08] flex flex-col gap-4"
       >
         {/* Top Bar: Track Info & Quick Master Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-3.5">

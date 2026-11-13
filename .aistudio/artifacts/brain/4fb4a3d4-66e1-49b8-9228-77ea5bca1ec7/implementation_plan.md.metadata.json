@@ -1,6 +1,0 @@
-{
-  "summary":  "Detailed implementation plan for Phase 3.4E: Queue Management & Playback Queue Experience in AURA 2.0. Enhances QueueDrawer with Obsidian Liquid Glass styling, remaining queue duration calculation, smooth track reordering, shuffle/clear upcoming controls, source indicators, and robust Listen Together separation.",
-  "updatedAt":  "2026-11-07T07:05:40.090026720Z",
-  "requestFeedback":  true,
-  "userFacing":  true
-}

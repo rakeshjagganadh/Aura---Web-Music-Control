@@ -42,6 +42,7 @@ import { AuraMomentsPanel } from './components/sound-lab/AuraMomentsPanel';
 import { StudioView } from './components/views/StudioView';
 import { SettingsView } from './components/views/SettingsView';
 import { ListenTogetherView } from './components/views/ListenTogetherView';
+import { OpticalGlassLab } from './components/dev/OpticalGlassLab';
 import { ListenTogetherProvider } from './context/ListenTogetherContext';
 import { Analytics } from '@vercel/analytics/react';
 
@@ -236,8 +237,8 @@ const MainLayout: React.FC = () => {
             onInstall={pwa.promptInstall}
           />
 
-          {/* Dynamic Main Viewport (with generous clearance for floating player on desktop & mobile) */}
-          <main className="flex-1 overflow-y-auto pb-44 lg:pb-32 scroll-smooth focus:outline-none">
+          {/* Dynamic Main Viewport (with calculated safe-area clearance for floating player on desktop & mobile) */}
+          <main className="flex-1 overflow-y-auto pb-[calc(210px+env(safe-area-inset-bottom,0px))] sm:pb-56 lg:pb-52 scroll-smooth focus:outline-none">
             {selectedPlaylistId && currentView === 'playlist-detail' ? (
               <PlaylistDetailView />
             ) : currentView === 'home' ? (
@@ -266,6 +267,8 @@ const MainLayout: React.FC = () => {
               <StudioView />
             ) : currentView === 'settings' ? (
               <SettingsView />
+            ) : currentView === 'optical-lab' ? (
+              <OpticalGlassLab />
             ) : (
               <HomeView />
             )}

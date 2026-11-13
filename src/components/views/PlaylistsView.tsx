@@ -1,24 +1,21 @@
 import React, { useState, useMemo } from 'react';
 import { useMusic } from '../../context/MusicContext';
 import { Playlist, Track } from '../../types';
+import { LibraryNav } from '../library/LibraryNav';
+import { PlaylistModal } from '../playlists/PlaylistModal';
+import { DeletePlaylistModal } from '../playlists/DeletePlaylistModal';
 import { 
   ListMusic, 
   Plus, 
   Play, 
   Trash2, 
-  Disc, 
   Edit3, 
   Search, 
   X, 
-  LayoutGrid, 
-  List, 
-  MoreHorizontal,
-  Clock,
-  Layers,
-  Sparkles
+  Clock, 
+  ArrowUpDown,
+  MoreHorizontal
 } from 'lucide-react';
-import { PlaylistModal } from '../playlists/PlaylistModal';
-import { DeletePlaylistModal } from '../playlists/DeletePlaylistModal';
 
 // Dynamic 4-Quadrant Artwork Collage Component
 export const PlaylistCoverCollage: React.FC<{
@@ -26,7 +23,6 @@ export const PlaylistCoverCollage: React.FC<{
   allKnownTracks: Map<string, Track>;
   className?: string;
 }> = ({ playlist, allKnownTracks, className = '' }) => {
-  // Extract verified cover URLs from playlist's member tracks
   const validCovers = useMemo(() => {
     const urls: string[] = [];
     const seen = new Set<string>();
@@ -42,10 +38,9 @@ export const PlaylistCoverCollage: React.FC<{
     return urls;
   }, [playlist.trackIds, allKnownTracks]);
 
-  // If 4 or more distinct cover URLs exist, render a 2x2 grid collage
   if (validCovers.length >= 4) {
     return (
-      <div className={`relative w-full aspect-square rounded-xl overflow-hidden bg-[#0e1017] border border-white/10 shadow-md grid grid-cols-2 grid-rows-2 ${className}`}>
+      <div className={`relative w-full aspect-square rounded-xl overflow-hidden bg-zinc-900 border border-white/10 shadow-md grid grid-cols-2 grid-rows-2 ${className}`}>
         {validCovers.slice(0, 4).map((url, i) => (
           <img key={i} src={url} alt="" className="w-full h-full object-cover" />
         ))}
@@ -53,20 +48,17 @@ export const PlaylistCoverCollage: React.FC<{
     );
   }
 
-  // If 1 to 3 covers exist, render the primary cover art
   if (validCovers.length > 0) {
     return (
-      <div className={`relative w-full aspect-square rounded-xl overflow-hidden bg-[#0e1017] border border-white/10 shadow-md ${className}`}>
+      <div className={`relative w-full aspect-square rounded-xl overflow-hidden bg-zinc-900 border border-white/10 shadow-md ${className}`}>
         <img src={validCovers[0]} alt={playlist.title} className="w-full h-full object-cover" />
       </div>
     );
   }
 
-  // Fallback: Obsidian Theme Gradient with Initial Character
   return (
-    <div className={`relative w-full aspect-square rounded-xl bg-gradient-to-br ${playlist.coverGradient || 'from-indigo-600 to-purple-800'} shadow-md flex items-center justify-center text-white font-bold text-2xl overflow-hidden border border-white/10 ${className}`}>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.25),transparent_70%)]" />
-      <span className="relative z-10 opacity-90 select-none">
+    <div className={`relative w-full aspect-square rounded-xl bg-gradient-to-br ${playlist.coverGradient || 'from-emerald-900 via-teal-950 to-black'} shadow-md flex items-center justify-center text-white font-bold text-2xl overflow-hidden border border-white/10 ${className}`}>
+      <span className="relative z-10 opacity-80 select-none">
         {playlist.title ? playlist.title.charAt(0).toUpperCase() : 'P'}
       </span>
     </div>
@@ -87,12 +79,9 @@ export const PlaylistsView: React.FC = () => {
     playTrack,
   } = useMusic();
 
-  // Search & Filter States
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'title' | 'tracks' | 'updated' | 'created'>('updated');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-
-  // Modal States
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [playlistToEdit, setPlaylistToEdit] = useState<Playlist | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [playlistToDelete, setPlaylistToDelete] = useState<Playlist | null>(null);
@@ -126,219 +115,206 @@ export const PlaylistsView: React.FC = () => {
     }
 
     list.sort((a, b) => {
+      let comp = 0;
       switch (sortBy) {
         case 'title':
-          return a.title.localeCompare(b.title, undefined, { sensitivity: 'base' });
+          comp = a.title.localeCompare(b.title, undefined, { sensitivity: 'base' });
+          break;
         case 'tracks':
-          return b.trackIds.length - a.trackIds.length;
+          comp = a.trackIds.length - b.trackIds.length;
+          break;
         case 'updated':
-          return (b.updatedAt || 0) - (a.updatedAt || 0);
+          comp = (a.updatedAt || 0) - (b.updatedAt || 0);
+          break;
         case 'created':
-          return (b.createdAt || 0) - (a.createdAt || 0);
         default:
-          return 0;
+          comp = (a.createdAt || 0) - (b.createdAt || 0);
+          break;
       }
+      return sortOrder === 'asc' ? comp : -comp;
     });
 
     return list;
-  }, [playlists, searchQuery, sortBy]);
+  }, [playlists, searchQuery, sortBy, sortOrder]);
 
-  // Play playlist action
   const handlePlayPlaylist = (playlist: Playlist) => {
-    if (!playlist.trackIds.length) return;
-    const resolvedTracks = playlist.trackIds
-      .map((id) => allKnownTracks.get(id))
-      .filter((t): t is Track => t !== undefined);
-
-    if (resolvedTracks.length > 0) {
-      playTrack(resolvedTracks[0], resolvedTracks);
+    const pTracks: Track[] = [];
+    playlist.trackIds.forEach((id) => {
+      const t = allKnownTracks.get(id);
+      if (t) pTracks.push(t);
+    });
+    if (pTracks.length > 0) {
+      playTrack(pTracks[0], pTracks);
     }
   };
 
-  const handleOpenEdit = (playlist: Playlist, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    setPlaylistToEdit(playlist);
+  const handleOpenPlaylist = (id: string) => {
+    setSelectedPlaylistId(id);
+    setCurrentView('playlist-detail');
+  };
+
+  const handleEditClick = (e: React.MouseEvent, p: Playlist) => {
+    e.stopPropagation();
+    setPlaylistToEdit(p);
     setIsEditModalOpen(true);
   };
 
-  const handleOpenDelete = (playlist: Playlist, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    setPlaylistToDelete(playlist);
+  const handleDeleteClick = (e: React.MouseEvent, p: Playlist) => {
+    e.stopPropagation();
+    setPlaylistToDelete(p);
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-8 max-w-7xl mx-auto select-none animate-fadeIn">
+    <div className="flex flex-col gap-6 sm:gap-8 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none pb-36 sm:pb-44">
       
-      {/* Header & Controls Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Header */}
+      <section className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-white/[0.06]">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Playlists & Spaces</h1>
-          <p className="text-xs text-zinc-400 mt-0.5">
-            {playlists.length} {playlists.length === 1 ? 'curated space' : 'curated spaces'} in your collection
+          <div className="flex items-center gap-2 mb-1.5 text-xs font-mono text-zinc-400">
+            <ListMusic className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="uppercase tracking-wider text-[11px] font-semibold text-emerald-400">Playlists & Spaces</span>
+            <span className="text-zinc-600" aria-hidden="true">·</span>
+            <span>{playlists.length} custom collections</span>
+          </div>
+
+          <h1 className="text-2xl sm:text-4xl font-page-title text-white tracking-tight">
+            Playlists
+          </h1>
+          <p className="text-xs sm:text-sm text-zinc-400 mt-1 font-ui-meta">
+            Curate custom track orders, mix audio from local vaults and streaming sources, and save sonic journeys.
           </p>
         </div>
 
-        {/* Controls Toolbar */}
-        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
-          {/* Search Input */}
-          <div className="relative flex-1 sm:w-60">
-            <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search spaces..."
-              className="w-full bg-[#0b0d13]/80 border border-white/10 rounded-xl pl-8 pr-8 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500/50 backdrop-blur-xl"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            )}
-          </div>
+        {/* Actions */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setIsPlaylistModalOpen(true)}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer aura-focus-ring"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>Create Playlist</span>
+          </button>
+        </div>
+      </section>
 
-          {/* Sort Selector */}
-          <div className="flex items-center gap-1.5 bg-[#0b0d13]/80 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-zinc-300">
-            <span className="text-[10px] uppercase font-mono text-zinc-500">Sort</span>
+      {/* Library Navigation */}
+      <LibraryNav activeView="playlists" />
+
+      {/* Search & Sort Bar */}
+      <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="relative flex-1 max-w-md">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search playlists by title or description..."
+            className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-white/[0.05] border border-white/10 text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-all font-ui-title"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <div className="relative flex items-center gap-1 px-3 py-2 rounded-xl bg-white/[0.05] border border-white/10 text-xs text-zinc-300 font-medium">
+            <ArrowUpDown className="w-3.5 h-3.5 text-zinc-400" />
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="bg-transparent text-xs text-white focus:outline-none cursor-pointer"
+              className="bg-transparent text-xs text-white focus:outline-none cursor-pointer pr-1"
             >
-              <option value="updated" className="bg-zinc-900 text-white">Recently Updated</option>
-              <option value="title" className="bg-zinc-900 text-white">Title (A–Z)</option>
-              <option value="tracks" className="bg-zinc-900 text-white">Track Count</option>
-              <option value="created" className="bg-zinc-900 text-white">Date Created</option>
+              <option value="updated" className="bg-[#12141c] text-white">Recently Updated</option>
+              <option value="created" className="bg-[#12141c] text-white">Date Created</option>
+              <option value="title" className="bg-[#12141c] text-white">Playlist Title</option>
+              <option value="tracks" className="bg-[#12141c] text-white">Track Count</option>
             </select>
-          </div>
-
-          {/* View Mode Toggle */}
-          <div className="flex items-center bg-[#0b0d13]/80 border border-white/10 rounded-xl p-0.5">
             <button
-              onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-lg transition-colors ${
-                viewMode === 'grid' 
-                  ? 'bg-white/10 text-white shadow-sm' 
-                  : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-              title="Grid View"
+              type="button"
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              className="hover:text-white px-1 text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 cursor-pointer"
             >
-              <LayoutGrid className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded-lg transition-colors ${
-                viewMode === 'list' 
-                  ? 'bg-white/10 text-white shadow-sm' 
-                  : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-              title="List View"
-            >
-              <List className="w-3.5 h-3.5" />
+              {sortOrder}
             </button>
           </div>
+        </div>
+      </section>
 
-          {/* Create Space CTA */}
-          <button
-            onClick={() => setIsPlaylistModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Create Space</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Playlist Content */}
-      {playlists.length === 0 ? (
-        <div className="flex flex-col items-center justify-center text-center p-16 rounded-3xl bg-[#0b0d13]/60 border border-dashed border-white/10">
-          <ListMusic className="w-10 h-10 text-zinc-600 mb-3 stroke-1" />
-          <h3 className="text-base font-semibold text-zinc-300">No playlists or spaces created yet</h3>
-          <p className="text-xs text-zinc-500 max-w-xs mt-1 mb-5">
-            Group your songs into acoustic sets for focus, energy, evening unwind, or spatial audio tests.
-          </p>
-          <button
-            onClick={() => setIsPlaylistModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-medium cursor-pointer shadow-md shadow-indigo-600/20"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Create Space
-          </button>
-        </div>
-      ) : displayedPlaylists.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center rounded-3xl bg-[#0b0d13]/40 border border-white/[0.04] p-8">
-          <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-3">
-            <Search className="w-7 h-7 text-zinc-500" />
-          </div>
-          <h3 className="text-sm font-semibold text-zinc-200">No spaces match your search</h3>
-          <p className="text-xs text-zinc-500 max-w-sm mt-1">
-            No playlists found for "{searchQuery}". Clear your search query to view all spaces.
-          </p>
-          <button
-            onClick={() => setSearchQuery('')}
-            className="mt-4 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-zinc-300 transition-colors cursor-pointer"
-          >
-            Clear Search
-          </button>
-        </div>
-      ) : viewMode === 'grid' ? (
-        /* Grid View */
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5">
-          {displayedPlaylists.map((pl) => (
+      {/* Playlist Cards Grid */}
+      {displayedPlaylists.length > 0 ? (
+        <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5">
+          {displayedPlaylists.map((playlist) => (
             <div
-              key={pl.id}
-              onClick={() => {
-                setSelectedPlaylistId(pl.id);
-                setCurrentView('playlist-detail');
-              }}
-              className="group relative cursor-pointer flex flex-col gap-2.5 p-3 rounded-2xl bg-[#0b0d13]/70 hover:bg-[#121520]/80 border border-white/[0.06] hover:border-white/[0.14] backdrop-blur-xl transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-[1.02]"
+              key={playlist.id}
+              onClick={() => handleOpenPlaylist(playlist.id)}
+              className="group relative flex flex-col p-3 rounded-2xl aura-glass-ambient hover:border-white/20 transition-all duration-300 cursor-pointer select-none shadow-md"
             >
-              {/* Cover Collage Thumbnail */}
-              <div className="relative">
-                <PlaylistCoverCollage playlist={pl} allKnownTracks={allKnownTracks} />
+              {/* Artwork Container */}
+              <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-zinc-900 border border-white/10 shadow-sm mb-3">
+                <PlaylistCoverCollage
+                  playlist={playlist}
+                  allKnownTracks={allKnownTracks}
+                />
 
-                {/* Quick Play Hover Button */}
-                {pl.trackIds.length > 0 && (
-                  <div
+                {/* Floating Play Overlay */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200">
+                  <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handlePlayPlaylist(pl);
+                      handlePlayPlaylist(playlist);
                     }}
-                    className="absolute bottom-2.5 right-2.5 w-10 h-10 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:scale-105 active:scale-95"
-                    title={`Play ${pl.title}`}
+                    className="w-11 h-11 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-transform cursor-pointer"
+                    title={`Play ${playlist.title}`}
                   >
-                    <Play className="w-4 h-4 fill-current ml-0.5" />
-                  </div>
-                )}
+                    <Play className="w-4 h-4 fill-current text-black translate-x-0.2" />
+                  </button>
+                </div>
+
+                {/* Track count watermark */}
+                <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm text-[10px] font-mono text-zinc-300 tabular-nums">
+                  {playlist.trackIds.length} {playlist.trackIds.length === 1 ? 'track' : 'tracks'}
+                </div>
               </div>
 
               {/* Title & Metadata */}
-              <div className="flex items-start justify-between gap-1 px-0.5">
+              <div className="flex items-start justify-between gap-1 min-w-0">
                 <div className="min-w-0 flex-1">
-                  <h4 className="text-xs font-semibold text-zinc-100 truncate group-hover:text-indigo-300 transition-colors">
-                    {pl.title}
-                  </h4>
-                  <p className="text-[10px] font-mono text-zinc-500 mt-0.5 truncate">
-                    {pl.trackIds.length} {pl.trackIds.length === 1 ? 'track' : 'tracks'}
+                  <h3 className="text-xs sm:text-sm font-semibold text-white group-hover:text-emerald-300 transition-colors truncate font-ui-title leading-tight">
+                    {playlist.title}
+                  </h3>
+                  {playlist.description && (
+                    <p className="text-[11px] text-zinc-400 truncate mt-0.5 font-ui-meta">
+                      {playlist.description}
+                    </p>
+                  )}
+                  <p className="text-[10px] font-mono text-zinc-500 mt-1">
+                    {playlist.trackIds.length} tracks
                   </p>
                 </div>
 
-                {/* Actions Menu */}
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {/* Quick Edit / Delete Menu */}
+                <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
-                    onClick={(e) => handleOpenEdit(pl, e)}
-                    className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
-                    title="Edit space"
+                    type="button"
+                    onClick={(e) => handleEditClick(e, playlist)}
+                    className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer"
+                    title="Edit playlist"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
                   </button>
                   <button
-                    onClick={(e) => handleOpenDelete(pl, e)}
-                    className="p-1.5 text-zinc-400 hover:text-rose-400 rounded-lg hover:bg-white/10 transition-colors"
-                    title="Delete space"
+                    type="button"
+                    onClick={(e) => handleDeleteClick(e, playlist)}
+                    className="p-1 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                    title="Delete playlist"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -346,95 +322,54 @@ export const PlaylistsView: React.FC = () => {
               </div>
             </div>
           ))}
-        </div>
+        </section>
       ) : (
-        /* List View */
-        <div className="divide-y divide-white/[0.04] rounded-2xl bg-[#0b0d13]/60 border border-white/[0.06] overflow-hidden backdrop-blur-xl">
-          {displayedPlaylists.map((pl) => (
-            <div
-              key={pl.id}
-              onClick={() => {
-                setSelectedPlaylistId(pl.id);
-                setCurrentView('playlist-detail');
-              }}
-              className="group flex items-center justify-between p-3 px-4 hover:bg-white/[0.04] transition-colors cursor-pointer"
+        <div className="p-10 sm:p-16 rounded-2xl aura-glass-ambient border border-dashed border-white/10 flex flex-col items-center justify-center text-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-zinc-500">
+            <ListMusic className="w-6 h-6 text-zinc-400" />
+          </div>
+          <h3 className="text-sm font-semibold text-zinc-200">No playlists found</h3>
+          <p className="text-xs text-zinc-400 max-w-sm font-ui-meta">
+            {searchQuery 
+              ? `No playlists match "${searchQuery}".` 
+              : 'Create custom playlists to group and sequence tracks from your library and streaming sources.'}
+          </p>
+          <div className="flex items-center gap-2 mt-2">
+            <button
+              type="button"
+              onClick={() => setIsPlaylistModalOpen(true)}
+              className="px-4 py-2 rounded-xl bg-white text-zinc-950 text-xs font-bold shadow cursor-pointer aura-focus-ring"
             >
-              <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                {/* Thumbnail Collage */}
-                <div className="w-11 h-11 shrink-0">
-                  <PlaylistCoverCollage playlist={pl} allKnownTracks={allKnownTracks} />
-                </div>
-
-                {/* Text Info */}
-                <div className="min-w-0 flex-1">
-                  <h4 className="text-xs font-semibold text-zinc-200 truncate group-hover:text-indigo-300 transition-colors">
-                    {pl.title}
-                  </h4>
-                  {pl.description && (
-                    <p className="text-[11px] text-zinc-400 truncate mt-0.5 max-w-md">
-                      {pl.description}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Meta & Actions */}
-              <div className="flex items-center gap-4 text-xs font-mono text-zinc-500 shrink-0">
-                <span>{pl.trackIds.length} tracks</span>
-
-                {pl.trackIds.length > 0 && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePlayPlaylist(pl);
-                    }}
-                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white transition-colors"
-                    title={`Play ${pl.title}`}
-                  >
-                    <Play className="w-3.5 h-3.5 fill-current" />
-                  </button>
-                )}
-
-                <button
-                  onClick={(e) => handleOpenEdit(pl, e)}
-                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
-                  title="Edit space"
-                >
-                  <Edit3 className="w-3.5 h-3.5" />
-                </button>
-
-                <button
-                  onClick={(e) => handleOpenDelete(pl, e)}
-                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-rose-400 transition-colors"
-                  title="Delete space"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          ))}
+              Create Playlist
+            </button>
+          </div>
         </div>
       )}
 
       {/* Edit Playlist Modal */}
-      <PlaylistModal
-        playlistToEdit={playlistToEdit}
-        isOpen={isEditModalOpen}
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setPlaylistToEdit(null);
-        }}
-      />
+      {playlistToEdit && (
+        <PlaylistModal
+          playlist={playlistToEdit}
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setPlaylistToEdit(null);
+          }}
+        />
+      )}
 
-      {/* Custom Non-Destructive Safe Delete Confirmation Modal */}
-      <DeletePlaylistModal
-        playlist={playlistToDelete}
-        isOpen={!!playlistToDelete}
-        onClose={() => setPlaylistToDelete(null)}
-        onConfirmDelete={(id) => {
-          deletePlaylist(id);
-        }}
-      />
+      {/* Delete Confirmation Modal */}
+      {playlistToDelete && (
+        <DeletePlaylistModal
+          playlist={playlistToDelete}
+          isOpen={Boolean(playlistToDelete)}
+          onClose={() => setPlaylistToDelete(null)}
+          onConfirm={() => {
+            deletePlaylist(playlistToDelete.id);
+            setPlaylistToDelete(null);
+          }}
+        />
+      )}
 
     </div>
   );

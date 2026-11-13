@@ -28,7 +28,7 @@ export const TactileButton = React.forwardRef<HTMLButtonElement, TactileButtonPr
       ghost:
         'bg-transparent text-zinc-400 font-medium hover:text-white hover:bg-white/[0.06] active:bg-white/[0.10]',
       glass:
-        'aura-glass-tier2 text-white font-medium hover:border-white/25 active:scale-[0.98]',
+        'glass-reflective text-white font-medium hover:border-white/30 active:scale-[0.98]',
       danger:
         'bg-rose-500/20 text-rose-300 font-medium border border-rose-500/30 hover:bg-rose-500/30 active:bg-rose-500/40',
       indigo:
