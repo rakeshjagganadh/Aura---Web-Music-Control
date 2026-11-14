@@ -134,6 +134,8 @@ export class AudioEngine {
   private normalizerGain: GainNode | null = null;
   private limiterCompressor: DynamicsCompressorNode | null = null;
   private limiterCeilingGain: GainNode | null = null;
+  private limiterBypassGain: GainNode | null = null;
+  private limiterActiveGain: GainNode | null = null;
 
   // 6. Channel Controls (Stereo, Mono, Swap, Phase Invert)
   private channelSplitter: ChannelSplitterNode | null = null;
@@ -597,21 +599,33 @@ export class AudioEngine {
     this.normalizerGain.gain.value = 1.0;
 
     this.limiterCompressor = this.ctx.createDynamicsCompressor();
-    this.limiterCompressor.threshold.value = -1.0;
-    this.limiterCompressor.knee.value = 6.0; // Soft knee for clean musical transition
-    this.limiterCompressor.ratio.value = 8.0; // Smooth peak control, avoids brickwall squashing
-    this.limiterCompressor.attack.value = 0.012; // 12ms attack: envelope level, avoids tracking bass sine waves (eliminates ghur-ghur)
-    this.limiterCompressor.release.value = 0.12; // 120ms release: prevents low-frequency pumping modulation
+    this.limiterCompressor.threshold.value = 0;
+    this.limiterCompressor.knee.value = 10.0;
+    this.limiterCompressor.ratio.value = 1.0;
+    this.limiterCompressor.attack.value = 0.003;
+    this.limiterCompressor.release.value = 0.25;
 
     this.limiterCeilingGain = this.ctx.createGain();
     this.limiterCeilingGain.gain.value = 1.0;
 
+    // Parallel clean bypass for limiter: audio completely avoids compressor when disabled
+    this.limiterBypassGain = this.ctx.createGain();
+    this.limiterBypassGain.gain.value = 1.0; // Clean, uncompressed transparent passthrough on by default
+    this.limiterActiveGain = this.ctx.createGain();
+    this.limiterActiveGain.gain.value = 0.0; // Limiter processing off by default
+
     this.channelMerger.connect(this.normalizerGain);
+    this.normalizerGain.connect(this.limiterBypassGain);
     this.normalizerGain.connect(this.limiterCompressor);
     this.limiterCompressor.connect(this.limiterCeilingGain);
+    this.limiterCeilingGain.connect(this.limiterActiveGain);
+
+    const limiterSumGain = this.ctx.createGain();
+    this.limiterBypassGain.connect(limiterSumGain);
+    this.limiterActiveGain.connect(limiterSumGain);
 
     // Processed Output into wetB_Gain
-    this.limiterCeilingGain.connect(this.wetB_Gain);
+    limiterSumGain.connect(this.wetB_Gain);
 
     // Summing Node for A/B (Dry Original vs Wet Processed)
     const masterSum = this.ctx.createGain();
@@ -909,10 +923,12 @@ export class AudioEngine {
   public setVolume(val: number): void {
     const clamped = Math.max(0, Math.min(1, val));
     if (this.masterGain && this.ctx) {
-      this.masterGain.gain.setValueAtTime(clamped, this.ctx.currentTime);
+      // Smooth linear transition prevents digital clicking/zipper noise on volume adjustments
+      this.masterGain.gain.setTargetAtTime(clamped, this.ctx.currentTime, 0.015);
     }
     if (this.audioEl) {
-      this.audioEl.volume = clamped;
+      // Maintain audioEl at unity gain 1.0; WebAudio masterGain manages volume cleanly without double attenuation
+      this.audioEl.volume = 1.0;
     }
     if (this.directAudioEl) {
       this.directAudioEl.volume = clamped;
@@ -1073,19 +1089,24 @@ export class AudioEngine {
   // --- Limiter & Loudness Normalization Controls ---
 
   public setLimiter(settings: LimiterSettings): void {
-    if (!this.ctx || !this.limiterCompressor || !this.limiterCeilingGain) return;
+    if (!this.ctx || !this.limiterCompressor || !this.limiterCeilingGain || !this.limiterBypassGain || !this.limiterActiveGain) return;
     const now = this.ctx.currentTime;
 
     if (settings.enabled) {
-      this.limiterCompressor.threshold.setValueAtTime(settings.threshold, now);
-      this.limiterCompressor.release.setValueAtTime(Math.max(0.08, settings.release || 0.12), now);
-      this.limiterCompressor.knee.setValueAtTime(6.0, now);
-      this.limiterCompressor.ratio.setValueAtTime(8.0, now);
-      this.limiterCompressor.attack.setValueAtTime(0.012, now);
+      this.limiterCompressor.threshold.setValueAtTime(settings.threshold ?? -1.0, now);
+      // Ensure release time is at least 0.2s (200ms) to prevent low-frequency wave tracking / intermodulation flutter
+      this.limiterCompressor.release.setValueAtTime(Math.max(0.2, settings.release || 0.25), now);
+      this.limiterCompressor.knee.setValueAtTime(10.0, now);
+      this.limiterCompressor.ratio.setValueAtTime(12.0, now);
+      this.limiterCompressor.attack.setValueAtTime(0.003, now);
       const ceilingLinear = Math.pow(10, (settings.ceiling || -0.2) / 20);
       this.limiterCeilingGain.gain.setValueAtTime(ceilingLinear, now);
+
+      this.limiterActiveGain.gain.setTargetAtTime(1.0, now, 0.015);
+      this.limiterBypassGain.gain.setTargetAtTime(0.0, now, 0.015);
     } else {
-      // 1.0 ratio = transparent unity pass-through without dynamic modification
+      this.limiterActiveGain.gain.setTargetAtTime(0.0, now, 0.015);
+      this.limiterBypassGain.gain.setTargetAtTime(1.0, now, 0.015);
       this.limiterCompressor.ratio.setValueAtTime(1.0, now);
       this.limiterCompressor.threshold.setValueAtTime(0, now);
       this.limiterCeilingGain.gain.setValueAtTime(1.0, now);
@@ -1661,10 +1682,10 @@ export class AudioEngine {
       if (snapshot.limiter && snapshot.limiter.enabled) {
         const limiter = offlineCtx.createDynamicsCompressor();
         limiter.threshold.value = snapshot.limiter.threshold || -0.5;
-        limiter.knee.value = 0;
-        limiter.ratio.value = 20;
-        limiter.attack.value = 0.001;
-        limiter.release.value = 0.05;
+        limiter.knee.value = 10.0;
+        limiter.ratio.value = 12.0;
+        limiter.attack.value = 0.003;
+        limiter.release.value = Math.max(0.2, snapshot.limiter.release || 0.25);
 
         const ceil = offlineCtx.createGain();
         ceil.gain.value = Math.pow(10, (snapshot.limiter.ceiling || 0) / 20);

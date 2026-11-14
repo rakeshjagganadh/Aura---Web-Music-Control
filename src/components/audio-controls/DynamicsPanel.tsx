@@ -470,23 +470,23 @@ export const DynamicsPanel: React.FC<{ className?: string }> = ({ className = ''
               <div className="flex items-center justify-between text-xs">
                 <span className="text-zinc-300 font-medium">Release Time</span>
                 <span className="font-mono text-xs font-bold text-zinc-200 tabular-nums">
-                  {Math.round((limiter.release || 0.12) * 1000)} ms
+                  {Math.round((limiter.release || 0.25) * 1000)} ms
                 </span>
               </div>
               <input
                 type="range"
-                min="0.05"
-                max="0.4"
+                min="0.1"
+                max="0.5"
                 step="0.01"
-                value={limiter.release || 0.12}
+                value={limiter.release || 0.25}
                 disabled={!limiter.enabled}
                 onChange={(e) => updateLimiter({ release: parseFloat(e.target.value) })}
                 className="w-full h-1.5 bg-zinc-800 rounded accent-emerald-400 cursor-pointer disabled:opacity-40"
                 aria-label="Limiter Release Time"
               />
               <div className="flex justify-between text-[9px] font-mono text-zinc-500 tabular-nums">
-                <span>50 ms</span>
-                <span>400 ms</span>
+                <span>100 ms</span>
+                <span>500 ms</span>
               </div>
             </div>
           </div>

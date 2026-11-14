@@ -32,10 +32,10 @@ export const SOUND_LAB_PRESETS: SoundLabPreset[] = [
         simpleIntensity: 0,
       },
       limiter: {
-        enabled: true,
+        enabled: false,
         ceiling: -0.2,
         threshold: -0.5,
-        release: 0.05,
+        release: 0.25,
       },
       loudness: {
         enabled: false,
@@ -120,7 +120,7 @@ export const SOUND_LAB_PRESETS: SoundLabPreset[] = [
         enabled: true,
         ceiling: -0.2,
         threshold: -1.0,
-        release: 0.05,
+        release: 0.25,
       },
       loudness: {
         enabled: true,
@@ -205,7 +205,7 @@ export const SOUND_LAB_PRESETS: SoundLabPreset[] = [
         enabled: true,
         ceiling: -0.2,
         threshold: -0.8,
-        release: 0.05,
+        release: 0.25,
       },
       loudness: {
         enabled: true,
@@ -290,7 +290,7 @@ export const SOUND_LAB_PRESETS: SoundLabPreset[] = [
         enabled: true,
         ceiling: -0.2,
         threshold: -0.5,
-        release: 0.05,
+        release: 0.25,
       },
       loudness: {
         enabled: false,
@@ -375,7 +375,7 @@ export const SOUND_LAB_PRESETS: SoundLabPreset[] = [
         enabled: true,
         ceiling: -0.2,
         threshold: -0.5,
-        release: 0.05,
+        release: 0.25,
       },
       loudness: {
         enabled: false,
@@ -460,7 +460,7 @@ export const SOUND_LAB_PRESETS: SoundLabPreset[] = [
         enabled: true,
         ceiling: -0.2,
         threshold: -0.5,
-        release: 0.05,
+        release: 0.25,
       },
       loudness: {
         enabled: false,
@@ -545,7 +545,7 @@ export const SOUND_LAB_PRESETS: SoundLabPreset[] = [
         enabled: true,
         ceiling: -1.5,
         threshold: -3.0,
-        release: 0.08,
+        release: 0.25,
       },
       loudness: {
         enabled: true,
@@ -630,7 +630,7 @@ export const SOUND_LAB_PRESETS: SoundLabPreset[] = [
         enabled: true,
         ceiling: -0.2,
         threshold: -0.5,
-        release: 0.05,
+        release: 0.25,
       },
       loudness: {
         enabled: false,
@@ -715,7 +715,7 @@ export const SOUND_LAB_PRESETS: SoundLabPreset[] = [
         enabled: true,
         ceiling: -0.2,
         threshold: -0.8,
-        release: 0.05,
+        release: 0.25,
       },
       loudness: {
         enabled: true,
@@ -800,7 +800,7 @@ export const SOUND_LAB_PRESETS: SoundLabPreset[] = [
         enabled: true,
         ceiling: -0.2,
         threshold: -0.5,
-        release: 0.05,
+        release: 0.25,
       },
       loudness: {
         enabled: false,

@@ -389,10 +389,10 @@ const DEFAULT_COMPRESSOR: CompressorSettings = {
 };
 
 const DEFAULT_LIMITER: LimiterSettings = {
-  enabled: true,
+  enabled: false,
   ceiling: -0.2,
   threshold: -1.0,
-  release: 0.12,
+  release: 0.25,
 };
 
 const DEFAULT_LOUDNESS: LoudnessSettings = {
@@ -974,6 +974,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         setTracks(tracksWithFav);
         await refreshStorageStats();
+        audioEngine.setLimiter(DEFAULT_LIMITER);
 
       } catch (err) {
         console.error('Failed to initialize local music storage:', err);
