@@ -5,8 +5,7 @@ export class AudioAnalysisService {
    * Performs real client-side DSP analysis on the decoded audio buffer
    */
   public static async analyzeTrack(track: Track): Promise<OfflineTrackAnalysis> {
-    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    const tempCtx = new AudioContextClass();
+    const decodeCtx = new OfflineAudioContext(1, 1, 44100);
 
     try {
       let arrayBuffer: ArrayBuffer;
@@ -19,9 +18,8 @@ export class AudioAnalysisService {
         throw new Error('No audio source found for analysis');
       }
 
-      // Decode audio data
-      const audioBuffer = await tempCtx.decodeAudioData(arrayBuffer.slice(0));
-      await tempCtx.close();
+      // Decode audio data without opening hardware audio device
+      const audioBuffer = await decodeCtx.decodeAudioData(arrayBuffer.slice(0));
 
       const sampleRate = audioBuffer.sampleRate;
       const numChannels = audioBuffer.numberOfChannels;
