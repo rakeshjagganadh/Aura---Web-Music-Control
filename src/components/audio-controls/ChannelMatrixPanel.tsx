@@ -282,9 +282,10 @@ export const ChannelMatrixPanel: React.FC<{ className?: string }> = ({ className
                 min="-12"
                 max="12"
                 step="1"
+                disabled={pitchTempo.preservePitch}
                 value={pitchTempo.pitchSemitones || 0}
                 onChange={(e) => updatePitchTempo({ pitchSemitones: parseInt(e.target.value, 10) })}
-                className="w-full h-1.5 bg-zinc-800 rounded accent-amber-400 cursor-pointer"
+                className={`w-full h-1.5 bg-zinc-800 rounded accent-amber-400 ${pitchTempo.preservePitch ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                 aria-label="Pitch Transposition in Semitones"
               />
 
@@ -293,6 +294,19 @@ export const ChannelMatrixPanel: React.FC<{ className?: string }> = ({ className
                 <span>0 st (Original Key)</span>
                 <span>+12 st (+1 Octave)</span>
               </div>
+
+              {pitchTempo.preservePitch && (
+                <div className="flex items-center justify-between gap-2 pt-1.5 mt-0.5 border-t border-white/5 text-[11px]">
+                  <span className="text-zinc-400">Requires Varispeed Mode (Key Lock is active)</span>
+                  <button
+                    type="button"
+                    onClick={() => updatePitchTempo({ preservePitch: false })}
+                    className="px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-mono text-[10px] font-semibold cursor-pointer aura-pressable aura-focus-ring shrink-0"
+                  >
+                    Enable Varispeed
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* 2. Playback Speed (Tempo) */}

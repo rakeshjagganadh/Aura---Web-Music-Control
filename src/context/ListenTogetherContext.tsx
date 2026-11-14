@@ -53,6 +53,7 @@ export interface ListenTogetherContextType {
   roomRemoveTrack: (trackId: string) => Promise<void>;
   roomReorderQueue: (newQueue: SharedRoomTrack[]) => Promise<void>;
   roomPlayTrack: (track: Track) => Promise<void>;
+  roomKickParticipant: (targetUserId: string) => Promise<void>;
 }
 
 const ListenTogetherContext = createContext<ListenTogetherContextType | null>(null);
@@ -358,14 +359,31 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
       setConnectionStatus(status);
     });
 
+    const unsubError = roomService.onError((err) => {
+      showToast(err.message, 'error');
+      if (err.code === 'KICKED') {
+        roomService.leaveRoom();
+        setActiveRoom(null);
+        setParticipants([]);
+        setActivities([]);
+        setChatMessages([]);
+        setConnectionStatus('ROOM_CLOSED');
+        switchToTrack(null);
+        if (typeof window !== 'undefined') {
+          window.history.pushState(null, '', '/');
+        }
+      }
+    });
+
     return () => {
       unsubState();
       unsubParticipants();
       unsubActivity();
       unsubChat();
       unsubStatus();
+      unsubError();
     };
-  }, [handleRemoteStateUpdate]);
+  }, [handleRemoteStateUpdate, showToast, switchToTrack]);
 
   // Register track completion callback with MusicContext:
   // When a song finishes, loop smoothly to the next song in the room queue
@@ -521,11 +539,11 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
         return true;
       }
     } catch {
-      // Fallback
+      // Clipboard blocked in iframe/non-secure context
     }
 
-    prompt('Copy room invite link:', url);
-    return true;
+    showToast(`Room code: #${activeRoom.roomId.toUpperCase()} (${url})`, 'info');
+    return false;
   }, [activeRoom, showToast]);
 
   // Web Share API
@@ -644,6 +662,10 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
   const roomRemoveTrack = useCallback(
     async (trackId: string) => {
       if (!activeRoom) return;
+      if (!isOwner) {
+        showToast('Only the room host can remove queued tracks.', 'info');
+        return;
+      }
       setActiveRoom((prev) => {
         if (!prev) return prev;
         const currentPos = roomService.calculateCurrentPosition(prev);
@@ -657,12 +679,16 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
       });
       await roomService.dispatchAction('REMOVE_TRACK', { trackId }, activeRoom);
     },
-    [activeRoom]
+    [activeRoom, isOwner, showToast]
   );
 
   const roomReorderQueue = useCallback(
     async (newQueue: SharedRoomTrack[]) => {
       if (!activeRoom) return;
+      if (!isOwner) {
+        showToast('Only the room host can reorder the queue.', 'info');
+        return;
+      }
       setActiveRoom((prev) => {
         if (!prev) return prev;
         const currentPos = roomService.calculateCurrentPosition(prev);
@@ -676,7 +702,20 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
       });
       await roomService.dispatchAction('REORDER_QUEUE', { queue: newQueue }, activeRoom);
     },
-    [activeRoom]
+    [activeRoom, isOwner, showToast]
+  );
+
+  const roomKickParticipant = useCallback(
+    async (targetUserId: string) => {
+      if (!activeRoom || !isOwner) return;
+      const ok = await roomService.kickParticipant(targetUserId);
+      if (ok) {
+        showToast('Participant removed from the room.', 'info');
+      } else {
+        showToast('Could not remove participant.', 'error');
+      }
+    },
+    [activeRoom, isOwner, showToast]
   );
 
   const roomPlayTrack = useCallback(
@@ -748,6 +787,7 @@ export const ListenTogetherProvider: React.FC<{ children: React.ReactNode }> = (
     roomRemoveTrack,
     roomReorderQueue,
     roomPlayTrack,
+    roomKickParticipant,
   };
 
   return (

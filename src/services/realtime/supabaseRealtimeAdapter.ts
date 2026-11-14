@@ -8,6 +8,7 @@ import {
   RoomActivityItem,
   RoomChatMessage,
   RoomConnectionStatus,
+  RoomErrorPayload,
   RoomParticipant,
   SharedRoomState,
 } from './types';
@@ -27,6 +28,8 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
   private activityListeners = new Set<(activity: RoomActivityItem) => void>();
   private statusListeners = new Set<(status: RoomConnectionStatus) => void>();
   private chatListeners = new Set<(message: RoomChatMessage) => void>();
+  private actionListeners = new Set<(action: RoomActionPayload) => void>();
+  private errorListeners = new Set<(error: RoomErrorPayload) => void>();
 
   constructor() {
     this.client = getSupabaseClient();
@@ -36,13 +39,13 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
     this.livePositionProvider = provider;
   }
 
-  /**
-   * Captures the host's actual live playback position directly from the player engine.
-   * Updates position and sets updatedAt = Date.now() so joining participants never extrapolate stale time.
-   */
-  private getAuthoritativeHostState(): SharedRoomState {
-    if (!this.currentState) return this.currentState as any;
-    let liveState = { ...this.currentState };
+  public getVerifiedParticipantId(): string | null {
+    return this.currentParticipant?.id || null;
+  }
+
+  private getAuthoritativeHostState(): SharedRoomState | null {
+    if (!this.currentState) return null;
+    const liveState = { ...this.currentState };
 
     if (this.livePositionProvider) {
       try {
@@ -59,15 +62,13 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
           this.currentState = liveState;
           return liveState;
         }
-      } catch (err) {
-        console.warn('Error querying live playback position provider on host:', err);
+      } catch {
+        // Ignore live provider read failure
       }
     }
 
-    // Fallback if no live provider registered: calculate elapsed since last update
     if (liveState.isPlaying && liveState.updatedAt) {
       const rawElapsed = (Date.now() - liveState.updatedAt) / 1000;
-      // Cap at 3s if unanchored to avoid large jumps
       const elapsed = Math.max(0, Math.min(3, rawElapsed)) * (liveState.playbackRate || 1);
       const maxDur = liveState.currentTrack?.duration || 999999;
       liveState.position = Math.min(maxDur, (liveState.position || 0) + elapsed);
@@ -76,6 +77,28 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
     }
 
     return liveState;
+  }
+
+  private async ensureAuthenticatedUid(): Promise<string> {
+    if (!this.client) {
+      throw new Error('Supabase client is not configured');
+    }
+
+    const { data: sessionData } = await this.client.auth.getSession();
+    const existingUid = sessionData?.session?.user?.id;
+    if (existingUid) {
+      return existingUid;
+    }
+
+    const { data: anonData, error: anonError } = await this.client.auth.signInAnonymously();
+    if (anonError || !anonData?.user?.id) {
+      const msg =
+        'Supabase Anonymous Authentication must be enabled under Authentication → Providers to use Supabase Listen Together rooms.';
+      this.notifyError({ code: 'SUPABASE_ANON_AUTH_DISABLED', message: msg });
+      throw new Error(msg);
+    }
+
+    return anonData.user.id;
   }
 
   public async connect(
@@ -88,13 +111,88 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
       throw new Error('Supabase client is not configured');
     }
 
-    // Clean and normalize roomId
     const cleanRoom = roomId.trim().toLowerCase();
     this.roomId = cleanRoom;
-    this.currentParticipant = participant;
     this.notifyStatus('CONNECTING');
 
-    // 1. Fetch existing room state from database if available
+    // 1. Obtain verified Supabase auth.uid() required by scoped V2 RLS policies
+    let verifiedUid: string;
+    try {
+      verifiedUid = await this.ensureAuthenticatedUid();
+    } catch (err) {
+      this.notifyStatus('DISCONNECTED');
+      throw err;
+    }
+
+    const verifiedParticipant: RoomParticipant = {
+      ...participant,
+      id: verifiedUid,
+      isSelf: true,
+    };
+    this.currentParticipant = verifiedParticipant;
+
+    let normalizedInitialState: SharedRoomState | undefined;
+    if (initialState) {
+      normalizedInitialState = {
+        ...initialState,
+        roomId: cleanRoom,
+        ownerId: verifiedUid,
+        ownerName: verifiedParticipant.name,
+      };
+    }
+
+    // 2. Check room ban list before joining
+    try {
+      const { data: banRow } = await this.client
+        .from('aura_room_bans')
+        .select('participant_id')
+        .eq('room_id', cleanRoom)
+        .eq('participant_id', verifiedUid)
+        .maybeSingle();
+
+      if (banRow) {
+        this.notifyError({
+          code: 'KICKED',
+          message: 'You were removed from this room by the host.',
+        });
+        this.notifyStatus('ROOM_CLOSED');
+        return null;
+      }
+    } catch {
+      // Ban table may not be readable if user isn't owner/banned; continue
+    }
+
+    // 3. Enforce strict FK ordering: aura_rooms -> aura_room_members -> aura_room_state
+    const now = Date.now();
+    if (normalizedInitialState) {
+      const { error: roomInsertErr } = await this.client.from('aura_rooms').upsert({
+        id: cleanRoom,
+        name: normalizedInitialState.roomName,
+        owner_id: verifiedUid,
+        owner_name: normalizedInitialState.ownerName,
+        created_at: now,
+        updated_at: now,
+        status: 'active',
+      });
+      if (roomInsertErr) {
+        this.notifyError({ code: 'ROOM_CREATE_FAILED', message: roomInsertErr.message });
+      }
+    }
+
+    // Register current participant in aura_room_members before reading aura_room_state (RLS requirement)
+    try {
+      await this.client.from('aura_room_members').upsert({
+        room_id: cleanRoom,
+        participant_id: verifiedUid,
+        display_name: verifiedParticipant.name,
+        joined_at: verifiedParticipant.joinedAt || now,
+        last_seen: now,
+      });
+    } catch {
+      // Continue; realtime presence still operates
+    }
+
+    // 4. Fetch existing room state from database if available
     let loadedState: SharedRoomState | null = null;
     try {
       const { data, error } = await this.client
@@ -107,8 +205,8 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
         loadedState = {
           roomId: data.room_id,
           roomName: data.room_name || 'AURA Listening Room',
-          ownerId: data.owner_id || participant.id,
-          ownerName: data.owner_name || participant.name,
+          ownerId: data.owner_id || verifiedUid,
+          ownerName: data.owner_name || verifiedParticipant.name,
           currentTrack: data.current_track,
           queue: Array.isArray(data.queue) ? data.queue : [],
           isPlaying: Boolean(data.is_playing),
@@ -120,26 +218,26 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
         };
       }
     } catch {
-      // Table may not exist yet or offline
+      // Continue
     }
 
-    // If no state exists in database and initial state is provided (e.g. Creator)
-    if (!loadedState && initialState) {
-      loadedState = initialState;
+    // If creating a room and no state row exists yet, persist initial state as verified owner
+    if (!loadedState && normalizedInitialState) {
+      loadedState = normalizedInitialState;
       try {
         await this.client.from('aura_room_state').upsert({
-          room_id: initialState.roomId,
-          room_name: initialState.roomName,
-          owner_id: initialState.ownerId,
-          owner_name: initialState.ownerName,
-          current_track: initialState.currentTrack,
-          queue: initialState.queue,
-          is_playing: initialState.isPlaying,
-          position: initialState.position,
-          playback_rate: initialState.playbackRate,
-          updated_at: initialState.updatedAt,
-          version: initialState.version,
-          last_action: initialState.lastAction,
+          room_id: normalizedInitialState.roomId,
+          room_name: normalizedInitialState.roomName,
+          owner_id: verifiedUid,
+          owner_name: normalizedInitialState.ownerName,
+          current_track: normalizedInitialState.currentTrack,
+          queue: normalizedInitialState.queue,
+          is_playing: normalizedInitialState.isPlaying,
+          position: normalizedInitialState.position,
+          playback_rate: normalizedInitialState.playbackRate,
+          updated_at: normalizedInitialState.updatedAt,
+          version: normalizedInitialState.version,
+          last_action: normalizedInitialState.lastAction,
         });
       } catch {
         // Continue with memory state
@@ -150,16 +248,15 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
       this.currentState = loadedState;
     }
 
-    // 2. Setup Supabase Realtime Channel
+    // 5. Setup Supabase Realtime Channel
     const channelName = `aura-room:${cleanRoom}`;
     this.channel = this.client.channel(channelName, {
       config: {
         broadcast: { ack: false, self: false },
-        presence: { key: participant.id },
+        presence: { key: verifiedUid },
       },
     });
 
-    // Connection resolver to support peer state sync
     let isConnectResolved = false;
     let connectResolver: ((state: SharedRoomState | null) => void) | null = null;
 
@@ -173,12 +270,11 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
       }
     };
 
-    // Listen for broadcasted state updates
+    // Listen for broadcasted state updates (reject updates claiming a mismatched room)
     this.channel.on('broadcast', { event: 'ROOM_STATE_UPDATED' }, ({ payload }) => {
       const incomingState = payload as SharedRoomState;
       if (!incomingState || (incomingState.roomId && incomingState.roomId.toLowerCase() !== this.roomId)) return;
 
-      // Version monotonic guard: do not accept stale updates unless it is a fresh live sync response from the host
       const isFreshHostSync = Math.abs(Date.now() - (incomingState.updatedAt || 0)) < 4000;
       if (this.currentState && incomingState.version < this.currentState.version && !isFreshHostSync) {
         return;
@@ -186,8 +282,6 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
 
       this.currentState = incomingState;
       this.notifyState(incomingState);
-
-      // Successfully received authoritative state from host
       resolveConnection(incomingState);
 
       if (incomingState.lastAction) {
@@ -200,25 +294,26 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
       }
     });
 
-    // Listen for state requests from joining peers (Host answers with fresh live state)
+    // Host replies to REQUEST_ROOM_STATE
     this.channel.on('broadcast', { event: 'REQUEST_ROOM_STATE' }, () => {
       const isOwner =
         this.currentParticipant &&
         this.currentState &&
         this.currentState.ownerId === this.currentParticipant.id;
 
-      // ONLY the room host/owner answers to avoid multi-peer state collision
       if (isOwner && this.channel && this.currentState) {
         const liveState = this.getAuthoritativeHostState();
-        this.channel.send({
-          type: 'broadcast',
-          event: 'ROOM_STATE_UPDATED',
-          payload: liveState,
-        });
+        if (liveState) {
+          this.channel.send({
+            type: 'broadcast',
+            event: 'ROOM_STATE_UPDATED',
+            payload: liveState,
+          });
+        }
       }
     });
 
-    // Listen for broadcasted playback actions
+    // Listen for collaborative actions and let host reduce them authoritatively
     this.channel.on('broadcast', { event: 'PLAYBACK_ACTION' }, ({ payload }) => {
       const action = payload as RoomActionPayload;
       if (!action) return;
@@ -229,16 +324,31 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
         actionText: this.formatActionDescription(action),
         timestamp: action.timestamp,
       });
+
+      this.actionListeners.forEach((fn) => fn(action));
     });
 
-    // Listen for broadcasted room chat messages
+    // Listen for host kick events
+    this.channel.on('broadcast', { event: 'PARTICIPANT_KICKED' }, ({ payload }) => {
+      const targetId = payload?.targetUserId;
+      if (targetId && this.currentParticipant && targetId === this.currentParticipant.id) {
+        this.notifyError({
+          code: 'KICKED',
+          message: 'You were removed from the room by the host.',
+        });
+        this.notifyStatus('ROOM_CLOSED');
+        this.disconnect();
+      }
+    });
+
+    // Listen for room chat messages
     this.channel.on('broadcast', { event: 'CHAT_MESSAGE' }, ({ payload }) => {
       const msg = payload as RoomChatMessage;
       if (!msg || (msg.roomId && msg.roomId.toLowerCase() !== this.roomId)) return;
       this.notifyChatMessage(msg);
     });
 
-    // Listen for Presence sync
+    // Presence sync
     this.channel.on('presence', { event: 'sync' }, () => {
       if (!this.channel) return;
       const presenceState = this.channel.presenceState();
@@ -252,59 +362,27 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
             id: key,
             name: p.name || 'Listener',
             joinedAt: p.joinedAt || Date.now(),
-            isOwner: Boolean(p.isOwner),
-            isSelf: key === participant.id,
+            isOwner: this.currentState ? key === this.currentState.ownerId : Boolean(p.isOwner),
+            isSelf: key === verifiedUid,
           });
         }
       });
 
       this.notifyParticipants(participants);
 
-      // If other participants are present in the room and we are waiting to resolve:
       const others = participants.filter((p) => !p.isSelf);
-      if (others.length > 0) {
-        // Request state from room host/peers
-        if (this.channel) {
-          this.channel.send({
-            type: 'broadcast',
-            event: 'REQUEST_ROOM_STATE',
-            payload: { requesterId: participant.id },
-          });
-        }
-
-        // If host hasn't broadcasted state yet within 1.5s, create active session from presence
-        setTimeout(() => {
-          if (!isConnectResolved) {
-            const hostUser = others.find((p) => p.isOwner) || others[0];
-            const fallbackRoomState: SharedRoomState = {
-              roomId: this.roomId || cleanRoom,
-              roomName: `${hostUser?.name || 'AURA'}'s Room`,
-              ownerId: hostUser?.id || 'host',
-              ownerName: hostUser?.name || 'Host',
-              currentTrack: null,
-              queue: [],
-              isPlaying: false,
-              position: 0,
-              playbackRate: 1,
-              updatedAt: Date.now(),
-              version: 1,
-              lastAction: {
-                type: 'PLAY',
-                userName: hostUser?.name || 'Host',
-                userId: hostUser?.id || 'host',
-                description: 'is hosting the session',
-                timestamp: Date.now(),
-              },
-            };
-            resolveConnection(fallbackRoomState);
-          }
-        }, 1500);
+      if (others.length > 0 && !isConnectResolved) {
+        this.channel.send({
+          type: 'broadcast',
+          event: 'REQUEST_ROOM_STATE',
+          payload: { requesterId: verifiedUid },
+        });
       }
     });
 
     this.channel.on('presence', { event: 'join' }, ({ newPresences }) => {
       newPresences.forEach((p: any) => {
-        if (p.id !== participant.id) {
+        if (p.id !== verifiedUid) {
           this.notifyActivity({
             id: `join-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
             userName: p.name || 'Someone',
@@ -326,7 +404,6 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
       });
     });
 
-    // Subscribe to channel
     return new Promise((resolve) => {
       connectResolver = resolve;
 
@@ -334,77 +411,56 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
         if (status === 'SUBSCRIBED') {
           this.notifyStatus('CONNECTED');
           await this.channel?.track({
-            id: participant.id,
-            name: participant.name,
-            joinedAt: participant.joinedAt,
-            isOwner: participant.isOwner,
+            id: verifiedUid,
+            name: verifiedParticipant.name,
+            joinedAt: verifiedParticipant.joinedAt,
+            isOwner: Boolean(normalizedInitialState),
           });
 
-          // Immediately announce self as participant
           this.notifyParticipants([
             {
-              id: participant.id,
-              name: participant.name,
-              joinedAt: participant.joinedAt,
-              isOwner: Boolean(participant.isOwner),
-              isSelf: true,
+              ...verifiedParticipant,
+              isOwner: Boolean(normalizedInitialState),
             },
           ]);
 
           this.notifyActivity({
             id: `self-join-${Date.now()}`,
-            userName: participant.name,
+            userName: verifiedParticipant.name,
             actionText: 'entered the room',
             timestamp: Date.now(),
           });
 
-          // Creator / Room Owner: resolves immediately with authoritative current state
-          if (participant.isOwner && this.currentState) {
+          if (normalizedInitialState && this.currentState) {
             resolveConnection(this.currentState);
             return;
           }
 
-          // Guest / Joining Participant:
-          // ALWAYS send REQUEST_ROOM_STATE to the active Host, even if this.currentState was loaded from DB!
           this.channel?.send({
             type: 'broadcast',
             event: 'REQUEST_ROOM_STATE',
-            payload: { requesterId: participant.id },
+            payload: { requesterId: verifiedUid },
           });
 
-          // Fast retries at 250ms and 650ms for instant handshake with Host
           setTimeout(() => {
             if (!isConnectResolved && this.channel) {
               this.channel.send({
                 type: 'broadcast',
                 event: 'REQUEST_ROOM_STATE',
-                payload: { requesterId: participant.id },
+                payload: { requesterId: verifiedUid },
               });
             }
-          }, 250);
+          }, 300);
 
-          setTimeout(() => {
-            if (!isConnectResolved && this.channel) {
-              this.channel.send({
-                type: 'broadcast',
-                event: 'REQUEST_ROOM_STATE',
-                payload: { requesterId: participant.id },
-              });
-            }
-          }, 650);
-
-          // Grace period timeout: If after 1200ms no active host responded
           setTimeout(() => {
             if (!isConnectResolved) {
               if (this.currentState) {
-                // If database snapshot exists but host is not active, resolve with snapshot without extrapolating stale time
                 resolveConnection(this.currentState);
               } else {
                 const presenceState = this.channel?.presenceState() || {};
-                const otherKeys = Object.keys(presenceState).filter((k) => k !== participant.id);
+                const otherKeys = Object.keys(presenceState).filter((k) => k !== verifiedUid);
                 if (otherKeys.length > 0) {
-                  // Other users are in the room! Room is definitely open!
-                  const fallbackRoomState: SharedRoomState = {
+                  resolveConnection({
                     roomId: this.roomId || cleanRoom,
                     roomName: 'Shared Listening Room',
                     ownerId: otherKeys[0],
@@ -416,10 +472,8 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
                     playbackRate: 1,
                     updatedAt: Date.now(),
                     version: 1,
-                  };
-                  resolveConnection(fallbackRoomState);
+                  });
                 } else {
-                  // Truly empty room with no active host
                   resolveConnection(null);
                 }
               }
@@ -443,6 +497,13 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
   }
 
   public disconnect(): void {
+    const cleanRoom = this.roomId;
+    const uid = this.currentParticipant?.id;
+    if (this.client && cleanRoom && uid) {
+      Promise.resolve(
+        this.client.from('aura_room_members').delete().eq('room_id', cleanRoom).eq('participant_id', uid)
+      ).catch(() => {});
+    }
     if (this.channel) {
       this.channel.untrack();
       this.channel.unsubscribe();
@@ -455,25 +516,32 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
   }
 
   public async sendAction(action: RoomActionPayload): Promise<boolean> {
-    if (!this.channel) return false;
+    if (!this.channel || !this.currentParticipant) return false;
 
     try {
       await this.channel.send({
         type: 'broadcast',
         event: 'PLAYBACK_ACTION',
-        payload: action,
+        payload: {
+          ...action,
+          userId: this.currentParticipant.id,
+          userName: this.currentParticipant.name,
+        },
       });
       return true;
-    } catch (err) {
-      console.error('Failed to send broadcast action:', err);
+    } catch {
       return false;
     }
   }
 
   public async updateRoomState(state: SharedRoomState): Promise<boolean> {
-    if (!this.channel || !this.roomId) return false;
+    if (!this.channel || !this.roomId || !this.currentParticipant) return false;
 
-    // Bump version and timestamp
+    // Host-authoritative write check
+    if (this.currentParticipant.id !== state.ownerId) {
+      return false;
+    }
+
     const updatedState: SharedRoomState = {
       ...state,
       version: (this.currentState?.version || 0) + 1,
@@ -493,14 +561,12 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
     }
 
     try {
-      // 1. Broadcast to all participants via realtime channel
       await this.channel.send({
         type: 'broadcast',
         event: 'ROOM_STATE_UPDATED',
         payload: updatedState,
       });
 
-      // 2. Asynchronously persist to database table if connected
       if (this.client) {
         Promise.resolve(
           this.client.from('aura_room_state').upsert({
@@ -521,8 +587,37 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
       }
 
       return true;
-    } catch (err) {
-      console.error('Failed to update room state in Supabase:', err);
+    } catch {
+      return false;
+    }
+  }
+
+  public async kickParticipant(targetUserId: string): Promise<boolean> {
+    if (!this.client || !this.channel || !this.roomId || !this.currentParticipant || !this.currentState) {
+      return false;
+    }
+    if (this.currentParticipant.id !== this.currentState.ownerId || targetUserId === this.currentParticipant.id) {
+      return false;
+    }
+
+    try {
+      await this.client.from('aura_room_bans').upsert({
+        room_id: this.roomId,
+        participant_id: targetUserId,
+        banned_at: Date.now(),
+      });
+      await this.client
+        .from('aura_room_members')
+        .delete()
+        .eq('room_id', this.roomId)
+        .eq('participant_id', targetUserId);
+      await this.channel.send({
+        type: 'broadcast',
+        event: 'PARTICIPANT_KICKED',
+        payload: { targetUserId },
+      });
+      return true;
+    } catch {
       return false;
     }
   }
@@ -553,17 +648,30 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
     return () => this.chatListeners.delete(listener);
   }
 
+  public onAction(listener: (action: RoomActionPayload) => void): () => void {
+    this.actionListeners.add(listener);
+    return () => this.actionListeners.delete(listener);
+  }
+
+  public onError(listener: (error: RoomErrorPayload) => void): () => void {
+    this.errorListeners.add(listener);
+    return () => this.errorListeners.delete(listener);
+  }
+
   public async sendChatMessage(message: RoomChatMessage): Promise<boolean> {
-    if (!this.channel) return false;
+    if (!this.channel || !this.currentParticipant) return false;
     try {
       await this.channel.send({
         type: 'broadcast',
         event: 'CHAT_MESSAGE',
-        payload: message,
+        payload: {
+          ...message,
+          senderId: this.currentParticipant.id,
+          senderName: this.currentParticipant.name,
+        },
       });
       return true;
-    } catch (err) {
-      console.warn('Failed to broadcast chat message via Supabase:', err);
+    } catch {
       return false;
     }
   }
@@ -586,6 +694,10 @@ export class SupabaseRealtimeAdapter implements IRoomRealtimeAdapter {
 
   private notifyChatMessage(message: RoomChatMessage) {
     this.chatListeners.forEach((fn) => fn(message));
+  }
+
+  private notifyError(error: RoomErrorPayload) {
+    this.errorListeners.forEach((fn) => fn(error));
   }
 
   private formatActionDescription(action: RoomActionPayload): string {

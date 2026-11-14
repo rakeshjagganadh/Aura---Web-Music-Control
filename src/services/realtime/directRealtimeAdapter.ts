@@ -6,16 +6,28 @@ import {
   RoomActivityItem,
   RoomChatMessage,
   RoomConnectionStatus,
+  RoomErrorPayload,
   RoomParticipant,
   SharedRoomState,
 } from './types';
 
 interface SocketMessage {
-  type: 'JOIN' | 'STATE_UPDATE' | 'ACTION' | 'SYNC_REQUEST' | 'PING' | 'PARTICIPANTS' | 'CHAT_MESSAGE';
+  type:
+    | 'JOIN'
+    | 'STATE_UPDATE'
+    | 'ACTION'
+    | 'SYNC_REQUEST'
+    | 'PING'
+    | 'PARTICIPANTS'
+    | 'CHAT_MESSAGE'
+    | 'MODERATE_KICK'
+    | 'ERROR';
   roomId: string;
   senderId: string;
   payload?: any;
 }
+
+const SESSION_TOKEN_PREFIX = 'aura_room_ws_token_';
 
 export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
   public backendType: RealtimeBackendType = 'websocket';
@@ -27,20 +39,31 @@ export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
   private currentState: SharedRoomState | null = null;
   private participants: Map<string, RoomParticipant> = new Map();
   private livePositionProvider: LivePlaybackPositionProvider | null = null;
+  private sessionToken: string | null = null;
+  private shouldReconnect = true;
+  private wsFallbackActive = false;
 
   private stateListeners = new Set<(state: SharedRoomState) => void>();
   private participantsListeners = new Set<(participants: RoomParticipant[]) => void>();
   private activityListeners = new Set<(activity: RoomActivityItem) => void>();
   private statusListeners = new Set<(status: RoomConnectionStatus) => void>();
   private chatListeners = new Set<(message: RoomChatMessage) => void>();
+  private errorListeners = new Set<(error: RoomErrorPayload) => void>();
+
+  private pingInterval: ReturnType<typeof setInterval> | null = null;
+  private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
 
   public setLivePositionProvider(provider: LivePlaybackPositionProvider | null): void {
     this.livePositionProvider = provider;
   }
 
-  private getAuthoritativeHostState(): SharedRoomState {
-    if (!this.currentState) return this.currentState as any;
-    let liveState = { ...this.currentState };
+  public getVerifiedParticipantId(): string | null {
+    return this.currentParticipant?.id || null;
+  }
+
+  private getAuthoritativeHostState(): SharedRoomState | null {
+    if (!this.currentState) return null;
+    const liveState = { ...this.currentState };
 
     if (this.livePositionProvider) {
       try {
@@ -57,8 +80,8 @@ export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
           this.currentState = liveState;
           return liveState;
         }
-      } catch (err) {
-        console.warn('Error querying live playback position in direct adapter:', err);
+      } catch {
+        // Ignore live provider read failure
       }
     }
 
@@ -73,35 +96,101 @@ export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
     return liveState;
   }
 
-  private pingInterval: any = null;
-  private reconnectTimeout: any = null;
+  private getStoredToken(roomId: string): string {
+    if (typeof window === 'undefined') return '';
+    try {
+      return window.sessionStorage.getItem(`${SESSION_TOKEN_PREFIX}${roomId}`) || '';
+    } catch {
+      return '';
+    }
+  }
+
+  private storeToken(roomId: string, token: string): void {
+    if (typeof window === 'undefined') return;
+    try {
+      window.sessionStorage.setItem(`${SESSION_TOKEN_PREFIX}${roomId}`, token);
+    } catch {
+      // Ignore storage quota errors
+    }
+  }
 
   public async connect(
     roomId: string,
     participant: RoomParticipant,
     initialState?: SharedRoomState
   ): Promise<SharedRoomState | null> {
-    this.roomId = roomId;
-    this.currentParticipant = participant;
+    const cleanRoom = roomId.trim().toLowerCase();
+    this.roomId = cleanRoom;
+    this.currentParticipant = { ...participant };
+    this.shouldReconnect = true;
+    this.wsFallbackActive = false;
     this.notifyStatus('CONNECTING');
 
     if (initialState) {
-      this.currentState = initialState;
+      this.currentState = { ...initialState };
     }
 
-    // Always initialize multi-tab BroadcastChannel for zero-latency local tab synchronization
-    try {
-      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-        this.broadcastChannel = new BroadcastChannel(`aura-room-${roomId}`);
-        this.broadcastChannel.onmessage = (event) => {
-          this.handleIncomingMessage(event.data);
-        };
+    // Acquire server-signed HMAC session/host token before WS handshake
+    let tokenAcquired = false;
+    if (typeof window !== 'undefined') {
+      try {
+        const res = await fetch('/api/room-auth/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            roomId: cleanRoom,
+            mode: initialState ? 'create' : 'join',
+            displayName: participant.name,
+            previousToken: this.getStoredToken(cleanRoom),
+          }),
+        });
+
+        const data = await res.json().catch(() => null);
+        if (!res.ok) {
+          const message = data?.error || 'Unable to authenticate with room server.';
+          this.shouldReconnect = false;
+          this.notifyError({
+            code: res.status === 403 ? 'KICKED' : 'AUTH_REJECTED',
+            message,
+          });
+          this.notifyStatus(res.status === 403 ? 'ROOM_CLOSED' : 'ROOM_NOT_FOUND');
+          return null;
+        }
+
+        if (data?.token && data?.userId) {
+          this.sessionToken = String(data.token);
+          this.storeToken(cleanRoom, this.sessionToken);
+          this.currentParticipant = {
+            ...participant,
+            id: String(data.userId),
+            name: String(data.userName || participant.name),
+            isOwner: data.role === 'host',
+          };
+          if (this.currentState && data.role === 'host') {
+            this.currentState = {
+              ...this.currentState,
+              ownerId: String(data.userId),
+              ownerName: String(data.userName || participant.name),
+            };
+          }
+          tokenAcquired = true;
+        }
+      } catch {
+        // Server endpoint unreachable (offline/static preview): allow BroadcastChannel fallback
+        this.wsFallbackActive = true;
       }
-    } catch (e) {
-      console.warn('BroadcastChannel not supported:', e);
     }
 
-    // Connect to native WebSocket endpoint on current origin
+    if (this.wsFallbackActive || !tokenAcquired) {
+      this.backendType = 'broadcast';
+      this.initBroadcastChannel(cleanRoom);
+      if (this.currentState) {
+        this.notifyStatus('CONNECTED');
+        return this.currentState;
+      }
+      return this.waitForBroadcastFallbackState();
+    }
+
     return new Promise((resolve) => {
       let resolved = false;
       const safeResolve = (st: SharedRoomState | null) => {
@@ -114,63 +203,94 @@ export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
 
       this.initWebSocket(safeResolve);
 
-      // Resolve immediately if initial state exists (e.g. Creator)
       if (this.currentState) {
         safeResolve(this.currentState);
         return;
       }
 
-      // Guest: send sync request to peers
       setTimeout(() => {
-        if (!resolved) {
-          const syncMsg: SocketMessage = {
-            type: 'SYNC_REQUEST',
-            roomId: this.roomId!,
-            senderId: this.currentParticipant!.id,
-          };
-          this.broadcastLocally(syncMsg);
-          if (this.socket?.readyState === WebSocket.OPEN) {
-            this.socket.send(JSON.stringify(syncMsg));
-          }
+        if (!resolved && this.socket?.readyState === WebSocket.OPEN) {
+          this.socket.send(
+            JSON.stringify({
+              type: 'SYNC_REQUEST',
+              roomId: this.roomId!,
+              senderId: this.currentParticipant!.id,
+            })
+          );
         }
       }, 300);
 
-      // Timeout after 3.5 seconds: if peers exist or state received, resolve; else null
       setTimeout(() => {
         if (!resolved) {
-          if (this.currentState) {
-            safeResolve(this.currentState);
-          } else if (this.participants.size > 0) {
-            const firstPeer = Array.from(this.participants.values())[0];
-            const fallback: SharedRoomState = {
-              roomId: this.roomId!,
-              roomName: `${firstPeer?.name || 'AURA'}'s Room`,
-              ownerId: firstPeer?.id || 'host',
-              ownerName: firstPeer?.name || 'Host',
-              currentTrack: null,
-              queue: [],
-              isPlaying: false,
-              position: 0,
-              playbackRate: 1,
-              updatedAt: Date.now(),
-              version: 1,
-            };
-            safeResolve(fallback);
-          } else {
-            safeResolve(null);
-          }
+          safeResolve(this.currentState || null);
         }
       }, 3500);
     });
   }
 
+  private initBroadcastChannel(cleanRoom: string) {
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        this.broadcastChannel = new BroadcastChannel(`aura-room-${cleanRoom}`);
+        this.broadcastChannel.onmessage = (event) => {
+          this.handleIncomingMessage(event.data);
+        };
+        if (this.currentParticipant) {
+          this.broadcastLocally({
+            type: 'JOIN',
+            roomId: cleanRoom,
+            senderId: this.currentParticipant.id,
+            payload: { participant: this.currentParticipant },
+          });
+        }
+      }
+    } catch {
+      // BroadcastChannel unavailable
+    }
+  }
+
+  private waitForBroadcastFallbackState(): Promise<SharedRoomState | null> {
+    return new Promise((resolve) => {
+      let resolved = false;
+      const unsub = this.onStateUpdate((st) => {
+        if (!resolved) {
+          resolved = true;
+          unsub();
+          resolve(st);
+        }
+      });
+
+      if (this.currentParticipant && this.roomId) {
+        this.broadcastLocally({
+          type: 'SYNC_REQUEST',
+          roomId: this.roomId,
+          senderId: this.currentParticipant.id,
+        });
+      }
+
+      setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          unsub();
+          if (this.currentState) {
+            this.notifyStatus('CONNECTED');
+            resolve(this.currentState);
+          } else {
+            this.notifyStatus('ROOM_NOT_FOUND');
+            resolve(null);
+          }
+        }
+      }, 1500);
+    });
+  }
+
   private initWebSocket(resolveInitialPromise?: (state: SharedRoomState | null) => void) {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || !this.sessionToken || !this.roomId) return;
 
     try {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.host;
-      const wsUrl = `${protocol}//${host}/api/room-ws?room=${this.roomId}&user=${this.currentParticipant?.id}&name=${encodeURIComponent(this.currentParticipant?.name || 'Listener')}`;
+      const wsUrl = `${protocol}//${host}/api/room-ws?room=${encodeURIComponent(this.roomId)}&token=${encodeURIComponent(this.sessionToken)}`;
 
       this.socket = new WebSocket(wsUrl);
 
@@ -178,22 +298,26 @@ export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
         this.notifyStatus('CONNECTED');
         this.backendType = 'websocket';
 
-        // Send JOIN message
         const joinMsg: SocketMessage = {
           type: 'JOIN',
           roomId: this.roomId!,
           senderId: this.currentParticipant!.id,
           payload: {
-            participant: this.currentParticipant,
-            initialState: this.currentState,
+            initialState: this.currentParticipant?.isOwner ? this.currentState : undefined,
           },
         };
         this.socket?.send(JSON.stringify(joinMsg));
 
-        // Start ping heartbeat
+        if (this.pingInterval) clearInterval(this.pingInterval);
         this.pingInterval = setInterval(() => {
           if (this.socket?.readyState === WebSocket.OPEN) {
-            this.socket.send(JSON.stringify({ type: 'PING', roomId: this.roomId, senderId: this.currentParticipant?.id }));
+            this.socket.send(
+              JSON.stringify({
+                type: 'PING',
+                roomId: this.roomId,
+                senderId: this.currentParticipant?.id,
+              })
+            );
           }
         }, 15000);
 
@@ -209,34 +333,52 @@ export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
           if (resolveInitialPromise && msg.type === 'STATE_UPDATE' && msg.payload) {
             resolveInitialPromise(msg.payload);
           }
-        } catch (err) {
-          console.error('Error parsing room message:', err);
+        } catch {
+          // Ignore malformed frame
         }
       };
 
       this.socket.onerror = () => {
-        // Fallback to broadcast channel if websocket connection is not available
-        this.backendType = 'broadcast';
-        this.notifyStatus('CONNECTED');
-        if (resolveInitialPromise) {
-          resolveInitialPromise(this.currentState);
+        if (resolveInitialPromise && !this.currentState) {
+          resolveInitialPromise(null);
         }
       };
 
-      this.socket.onclose = () => {
-        if (this.pingInterval) clearInterval(this.pingInterval);
-        this.notifyStatus('RECONNECTING');
+      this.socket.onclose = (ev) => {
+        if (this.pingInterval) {
+          clearInterval(this.pingInterval);
+          this.pingInterval = null;
+        }
 
-        // Schedule reconnection
+        // Non-retryable close codes: 4003 (kicked/banned), 4004 (room missing), 1008 (policy/auth)
+        if (!this.shouldReconnect || ev.code === 4003 || ev.code === 4004 || ev.code === 1008) {
+          this.shouldReconnect = false;
+          if (ev.code === 4003) {
+            this.notifyError({
+              code: 'KICKED',
+              message: 'You were removed from the room by the host.',
+            });
+            this.notifyStatus('ROOM_CLOSED');
+          } else if (ev.code === 4004) {
+            this.notifyStatus('ROOM_NOT_FOUND');
+          } else {
+            this.notifyStatus('DISCONNECTED');
+          }
+          if (resolveInitialPromise) {
+            resolveInitialPromise(null);
+          }
+          return;
+        }
+
+        this.notifyStatus('RECONNECTING');
         this.reconnectTimeout = setTimeout(() => {
-          if (this.roomId && this.currentParticipant) {
+          if (this.roomId && this.currentParticipant && this.shouldReconnect) {
             this.initWebSocket();
           }
         }, 3000);
       };
     } catch {
-      this.backendType = 'broadcast';
-      this.notifyStatus('CONNECTED');
+      this.notifyStatus('DISCONNECTED');
       if (resolveInitialPromise) {
         resolveInitialPromise(this.currentState);
       }
@@ -246,10 +388,20 @@ export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
   private handleIncomingMessage(msg: SocketMessage) {
     if (!msg || msg.roomId !== this.roomId) return;
 
+    if (msg.type === 'ERROR' && msg.payload) {
+      const code = String(msg.payload.code || 'ROOM_ERROR');
+      const message = String(msg.payload.message || 'Room error occurred.');
+      this.notifyError({ code, message });
+      if (code === 'KICKED') {
+        this.shouldReconnect = false;
+        this.notifyStatus('ROOM_CLOSED');
+      }
+      return;
+    }
+
     if (msg.type === 'STATE_UPDATE' && msg.payload) {
       const incomingState = msg.payload as SharedRoomState;
-      // Version monotonic guard
-      if (this.currentState && incomingState.version <= this.currentState.version) {
+      if (this.currentState && incomingState.version < this.currentState.version) {
         return;
       }
 
@@ -275,8 +427,15 @@ export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
     } else if (msg.type === 'CHAT_MESSAGE' && msg.payload) {
       this.notifyChatMessage(msg.payload as RoomChatMessage);
     } else if (msg.type === 'PARTICIPANTS' && Array.isArray(msg.payload)) {
-      this.notifyParticipants(msg.payload);
-    } else if (msg.type === 'JOIN' && msg.payload?.participant) {
+      const myId = this.currentParticipant?.id;
+      const normalized = msg.payload.map((p: RoomParticipant) => ({
+        ...p,
+        isSelf: p.id === myId,
+      }));
+      this.participants.clear();
+      normalized.forEach((p) => this.participants.set(p.id, p));
+      this.notifyParticipants(normalized);
+    } else if (msg.type === 'JOIN' && msg.payload?.participant && this.wsFallbackActive) {
       const p = msg.payload.participant as RoomParticipant;
       if (p.id !== this.currentParticipant?.id) {
         this.participants.set(p.id, p);
@@ -287,15 +446,15 @@ export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
           actionText: 'joined the room',
           timestamp: Date.now(),
         });
-
-        // ONLY the host / room owner should respond with state sync to avoid multi-peer state broadcast collisions
-        const isOwner =
-          this.currentParticipant &&
-          this.currentState &&
-          this.currentState.ownerId === this.currentParticipant.id;
-
-        if (isOwner && this.currentState) {
-          const liveState = this.getAuthoritativeHostState();
+      }
+    } else if (msg.type === 'SYNC_REQUEST' && this.wsFallbackActive) {
+      const isOwner =
+        this.currentParticipant &&
+        this.currentState &&
+        this.currentState.ownerId === this.currentParticipant.id;
+      if (isOwner && this.currentState) {
+        const liveState = this.getAuthoritativeHostState();
+        if (liveState) {
           this.broadcastLocally({
             type: 'STATE_UPDATE',
             roomId: this.roomId!,
@@ -304,38 +463,19 @@ export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
           });
         }
       }
-    } else if (msg.type === 'SYNC_REQUEST') {
-      const isOwner =
-        this.currentParticipant &&
-        this.currentState &&
-        this.currentState.ownerId === this.currentParticipant.id;
-
-      // Only host or standalone peer in BroadcastChannel should reply with live state
-      if (this.currentState && (isOwner || !this.socket || this.socket.readyState !== WebSocket.OPEN)) {
-        const liveState = this.getAuthoritativeHostState();
-        this.broadcastLocally({
-          type: 'STATE_UPDATE',
-          roomId: this.roomId!,
-          senderId: this.currentParticipant!.id,
-          payload: liveState,
-        });
-        if (this.socket?.readyState === WebSocket.OPEN) {
-          this.socket.send(
-            JSON.stringify({
-              type: 'STATE_UPDATE',
-              roomId: this.roomId,
-              senderId: this.currentParticipant?.id,
-              payload: liveState,
-            })
-          );
-        }
-      }
     }
   }
 
   public disconnect(): void {
-    if (this.pingInterval) clearInterval(this.pingInterval);
-    if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout);
+    this.shouldReconnect = false;
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
+    }
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
 
     if (this.socket) {
       this.socket.onclose = null;
@@ -351,23 +491,25 @@ export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
     this.roomId = null;
     this.currentParticipant = null;
     this.currentState = null;
+    this.sessionToken = null;
+    this.participants.clear();
     this.notifyStatus('DISCONNECTED');
   }
 
   public async sendAction(action: RoomActionPayload): Promise<boolean> {
+    if (!this.roomId || !this.currentParticipant) return false;
     const msg: SocketMessage = {
       type: 'ACTION',
-      roomId: this.roomId!,
-      senderId: this.currentParticipant!.id,
+      roomId: this.roomId,
+      senderId: this.currentParticipant.id,
       payload: action,
     };
 
-    this.broadcastMessage(msg);
-    return true;
+    return this.sendTransportMessage(msg);
   }
 
   public async updateRoomState(state: SharedRoomState): Promise<boolean> {
-    if (!this.roomId) return false;
+    if (!this.roomId || !this.currentParticipant) return false;
 
     const updatedState: SharedRoomState = {
       ...state,
@@ -390,34 +532,46 @@ export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
     const msg: SocketMessage = {
       type: 'STATE_UPDATE',
       roomId: this.roomId,
-      senderId: this.currentParticipant?.id || 'unknown',
+      senderId: this.currentParticipant.id,
       payload: updatedState,
     };
 
-    this.broadcastMessage(msg);
-    return true;
+    return this.sendTransportMessage(msg);
   }
 
-  private broadcastMessage(msg: SocketMessage) {
-    // 1. Send via WebSocket if open
+  public async kickParticipant(targetUserId: string): Promise<boolean> {
+    if (!this.roomId || !this.currentParticipant || !targetUserId) return false;
+    const msg: SocketMessage = {
+      type: 'MODERATE_KICK',
+      roomId: this.roomId,
+      senderId: this.currentParticipant.id,
+      payload: { targetUserId },
+    };
+    return this.sendTransportMessage(msg);
+  }
+
+  private sendTransportMessage(msg: SocketMessage): boolean {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       try {
         this.socket.send(JSON.stringify(msg));
-      } catch (err) {
-        console.warn('Failed to send WebSocket message:', err);
+        return true;
+      } catch {
+        return false;
       }
     }
-
-    // 2. Broadcast via BroadcastChannel across local tabs
-    this.broadcastLocally(msg);
+    if (this.wsFallbackActive && this.broadcastChannel) {
+      this.broadcastLocally(msg);
+      return true;
+    }
+    return false;
   }
 
   private broadcastLocally(msg: SocketMessage) {
     if (this.broadcastChannel) {
       try {
         this.broadcastChannel.postMessage(msg);
-      } catch (err) {
-        console.warn('Failed to post to BroadcastChannel:', err);
+      } catch {
+        // Ignore BroadcastChannel error
       }
     }
   }
@@ -448,19 +602,20 @@ export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
     return () => this.chatListeners.delete(listener);
   }
 
+  public onError(listener: (error: RoomErrorPayload) => void): () => void {
+    this.errorListeners.add(listener);
+    return () => this.errorListeners.delete(listener);
+  }
+
   public async sendChatMessage(message: RoomChatMessage): Promise<boolean> {
+    if (!this.roomId || !this.currentParticipant) return false;
     const socketMsg: SocketMessage = {
       type: 'CHAT_MESSAGE',
-      roomId: this.roomId!,
-      senderId: this.currentParticipant!.id,
+      roomId: this.roomId,
+      senderId: this.currentParticipant.id,
       payload: message,
     };
-    this.broadcastLocally(socketMsg);
-    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify(socketMsg));
-      return true;
-    }
-    return this.broadcastChannel !== null;
+    return this.sendTransportMessage(socketMsg);
   }
 
   private notifyState(state: SharedRoomState) {
@@ -481,6 +636,10 @@ export class DirectRealtimeAdapter implements IRoomRealtimeAdapter {
 
   private notifyChatMessage(message: RoomChatMessage) {
     this.chatListeners.forEach((fn) => fn(message));
+  }
+
+  private notifyError(error: RoomErrorPayload) {
+    this.errorListeners.forEach((fn) => fn(error));
   }
 
   private formatActionDescription(action: RoomActionPayload): string {

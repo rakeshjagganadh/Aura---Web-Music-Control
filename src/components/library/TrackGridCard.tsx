@@ -82,9 +82,18 @@ export const TrackGridCard: React.FC<TrackGridCardProps> = ({
   return (
     <div
       id={`track-card-${track.id}`}
+      role="button"
+      tabIndex={0}
+      aria-label={`${isActivelyPlaying ? 'Pause' : 'Play'} ${track.title} by ${track.artist}`}
       onClick={handleCardClick}
+      onKeyDown={(e) => {
+        if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          handleCardClick();
+        }
+      }}
       onMouseLeave={() => setIsMenuOpen(false)}
-      className={`group relative flex flex-col p-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-white/[0.12] aura-pressable-subtle transition-[background-color,border-color,box-shadow] duration-200 cursor-pointer select-none shadow-sm hover:shadow-md ${
+      className={`group relative flex flex-col p-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-white/[0.12] aura-pressable-subtle aura-focus-ring transition-[background-color,border-color,box-shadow] duration-200 cursor-pointer select-none shadow-sm hover:shadow-md ${
         isCurrent ? 'bg-white/[0.10] border-sky-400/50 shadow-md' : ''
       } ${className}`}
     >

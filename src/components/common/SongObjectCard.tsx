@@ -98,8 +98,17 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
       >
         {/* Artwork Container as the Core Physical/Digital Music Object */}
         <div
+          role="button"
+          tabIndex={0}
+          aria-label={`${isActivelyPlaying ? 'Pause' : 'Play'} ${track.title} by ${track.artist}`}
           onClick={handleCardClick}
-          className={`relative w-full aspect-square rounded-2xl overflow-hidden bg-[#0c0f17] border border-white/[0.18] transition-[border-color,box-shadow,transform] duration-300 ease-out aura-pressable-subtle ${
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleCardClick();
+            }
+          }}
+          className={`relative w-full aspect-square rounded-2xl overflow-hidden bg-[#0c0f17] border border-white/[0.18] transition-[border-color,box-shadow,transform] duration-300 ease-out aura-pressable-subtle aura-focus-ring ${
             isCurrent
               ? 'ring-2 ring-white/50 shadow-2xl'
               : `shadow-lg ${canHover ? 'group-hover:shadow-2xl group-hover:border-white/40 group-hover:scale-[1.02]' : ''}`
@@ -210,6 +219,7 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
               onClick={() => toggleFavorite(track.id)}
               className="p-1 rounded text-zinc-400 hover:text-rose-400 hover:bg-white/5 aura-pressable aura-focus-ring transition-colors cursor-pointer"
               title={track.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              aria-label={track.isFavorite ? `Remove ${track.title} from favorites` : `Add ${track.title} to favorites`}
             >
               <motion.span
                 className="inline-flex items-center justify-center"
@@ -227,6 +237,8 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="p-1 rounded text-zinc-400 hover:text-zinc-200 hover:bg-white/5 aura-pressable aura-focus-ring transition-colors cursor-pointer"
                 title="More options"
+                aria-label={`More options for ${track.title}`}
+                aria-expanded={isMenuOpen}
               >
                 <MoreHorizontal className="w-3.5 h-3.5" />
               </button>
@@ -330,17 +342,26 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
   return (
     <div
       id={`song-row-${track.id}`}
+      role="button"
+      tabIndex={0}
+      aria-label={`${isActivelyPlaying ? 'Pause' : 'Play'} ${track.title} by ${track.artist}`}
       onMouseEnter={() => { if (canHover) setIsHovered(true); }}
       onMouseLeave={() => {
         setIsHovered(false);
         setIsMenuOpen(false);
       }}
-      className={`group relative flex items-center justify-between p-2.5 sm:px-3.5 rounded-xl transition-colors duration-200 cursor-pointer select-none aura-pressable-subtle ${
+      className={`group relative flex items-center justify-between p-2.5 sm:px-3.5 rounded-xl transition-colors duration-200 cursor-pointer select-none aura-pressable-subtle aura-focus-ring ${
         isCurrent
           ? 'glass-floating border-sky-400/40 text-white font-medium shadow-[0_4px_20px_rgba(56,189,248,0.2)]'
           : 'hover:glass-ambient text-zinc-300 hover:text-white border border-transparent hover:border-white/15'
       } ${className}`}
       onClick={handleCardClick}
+      onKeyDown={(e) => {
+        if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          handleCardClick();
+        }
+      }}
     >
       <div className="flex items-center gap-3.5 min-w-0 flex-1">
         {showIndex !== undefined && (
@@ -418,7 +439,8 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
           type="button"
           onClick={() => toggleFavorite(track.id)}
           className="p-1 text-zinc-500 hover:text-rose-400 aura-pressable aura-focus-ring transition-colors cursor-pointer"
-          title="Favorite"
+          title={track.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+          aria-label={track.isFavorite ? `Remove ${track.title} from favorites` : `Add ${track.title} to favorites`}
         >
           <motion.span
             className="inline-flex items-center justify-center"
@@ -442,6 +464,8 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
               !canHover || isMenuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'
             }`}
             title="Options"
+            aria-label={`More options for ${track.title}`}
+            aria-expanded={isMenuOpen}
           >
             <MoreHorizontal className="w-3.5 h-3.5" />
           </button>

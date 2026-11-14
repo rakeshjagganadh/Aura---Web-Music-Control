@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useMusic } from '../../context/MusicContext';
 import { audioEngine } from '../../services/audioEngine';
 
@@ -11,13 +11,8 @@ export const AuraAtmosphere: React.FC<AuraAtmosphereProps> = ({
   className = '',
 }) => {
   const { currentTrack, isPlaying, currentView } = useMusic();
-  const [audioDynamics, setAudioDynamics] = useState({
-    bassScale: 1.0,
-    energyOpacity: 1.0,
-    shiftX: 0,
-    shiftY: 0,
-  });
 
+  const containerRef = useRef<HTMLDivElement>(null);
   const animFrameRef = useRef<number | null>(null);
   const freqDataRef = useRef<Uint8Array>(new Uint8Array(64));
   const smoothBassRef = useRef(0);
@@ -129,24 +124,48 @@ export const AuraAtmosphere: React.FC<AuraAtmosphereProps> = ({
     };
   }, [currentTrack, currentView]);
 
-  // Audio-reactive dynamics listener loop
+  // Audio-reactive dynamics listener loop via CSS custom properties (zero React re-renders per frame)
   useEffect(() => {
-    if (!isPlaying) {
+    const resetVars = () => {
+      const el = containerRef.current;
+      if (!el) return;
+      el.style.setProperty('--aura-scale', '1');
+      el.style.setProperty('--aura-opacity', isPlaying ? '0.95' : '0.75');
+      el.style.setProperty('--aura-shift-x', '0px');
+      el.style.setProperty('--aura-shift-y', '0px');
+      el.style.setProperty('--aura-shift-x-neg', '0px');
+      el.style.setProperty('--aura-shift-y-pos', '0px');
+    };
+
+    const reducedMotionQuery = typeof window !== 'undefined'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)')
+      : null;
+
+    const stopLoop = () => {
+      if (animFrameRef.current !== null) {
+        cancelAnimationFrame(animFrameRef.current);
+        animFrameRef.current = null;
+      }
+    };
+
+    if (!isPlaying || reducedMotionQuery?.matches || (typeof document !== 'undefined' && document.hidden)) {
       smoothBassRef.current = 0;
       smoothEnergyRef.current = 0;
-      setAudioDynamics({
-        bassScale: 1.0,
-        energyOpacity: 1.0,
-        shiftX: 0,
-        shiftY: 0,
-      });
-      return;
+      resetVars();
+      if (!isPlaying || reducedMotionQuery?.matches) {
+        return;
+      }
     }
 
     let lastTimestamp = performance.now();
     const isYouTube = currentTrack?.source === 'youtube';
 
     const updateReactiveFields = (now: number) => {
+      if (document.hidden || reducedMotionQuery?.matches) {
+        animFrameRef.current = null;
+        return;
+      }
+
       const delta = Math.min((now - lastTimestamp) / 1000, 0.1);
       lastTimestamp = now;
 
@@ -160,18 +179,18 @@ export const AuraAtmosphere: React.FC<AuraAtmosphereProps> = ({
       } else {
         audioEngine.getFrequencyData(freqDataRef.current);
         const freq = freqDataRef.current;
-        
+
         let bassSum = 0;
         for (let i = 0; i < 8; i++) {
           bassSum += freq[i];
         }
-        rawBass = (bassSum / (8 * 255));
+        rawBass = bassSum / (8 * 255);
 
         let totalSum = 0;
         for (let i = 0; i < 32; i++) {
           totalSum += freq[i];
         }
-        rawEnergy = (totalSum / (32 * 255));
+        rawEnergy = totalSum / (32 * 255);
       }
 
       const smoothingFactor = Math.min(1.0, delta * 7);
@@ -188,32 +207,70 @@ export const AuraAtmosphere: React.FC<AuraAtmosphereProps> = ({
       const driftX = Math.sin(time) * 20;
       const driftY = Math.cos(time * 0.8) * 16;
 
-      setAudioDynamics({
-        bassScale: targetScale,
-        energyOpacity: targetOpacityMod,
-        shiftX: driftX,
-        shiftY: driftY,
-      });
+      const el = containerRef.current;
+      if (el) {
+        el.style.setProperty('--aura-scale', targetScale.toFixed(4));
+        el.style.setProperty('--aura-opacity', targetOpacityMod.toFixed(3));
+        el.style.setProperty('--aura-shift-x', `${(driftX * 0.6).toFixed(2)}px`);
+        el.style.setProperty('--aura-shift-y', `${(driftY * 0.6).toFixed(2)}px`);
+        el.style.setProperty('--aura-shift-x-neg', `${(-driftX * 0.5).toFixed(2)}px`);
+        el.style.setProperty('--aura-shift-y-pos', `${(driftY * 0.5).toFixed(2)}px`);
+      }
 
       animFrameRef.current = requestAnimationFrame(updateReactiveFields);
     };
 
-    animFrameRef.current = requestAnimationFrame(updateReactiveFields);
+    const startLoopIfActive = () => {
+      if (!document.hidden && !reducedMotionQuery?.matches && animFrameRef.current === null) {
+        lastTimestamp = performance.now();
+        animFrameRef.current = requestAnimationFrame(updateReactiveFields);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopLoop();
+      } else {
+        startLoopIfActive();
+      }
+    };
+
+    const handleReducedMotionChange = () => {
+      if (reducedMotionQuery?.matches) {
+        stopLoop();
+        resetVars();
+      } else {
+        startLoopIfActive();
+      }
+    };
+
+    startLoopIfActive();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    reducedMotionQuery?.addEventListener?.('change', handleReducedMotionChange);
 
     return () => {
-      if (animFrameRef.current) {
-        cancelAnimationFrame(animFrameRef.current);
-      }
+      stopLoop();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      reducedMotionQuery?.removeEventListener?.('change', handleReducedMotionChange);
     };
   }, [isPlaying, currentTrack]);
 
   return (
     <div
+      ref={containerRef}
       aria-hidden="true"
       className={`pointer-events-none fixed inset-0 z-0 overflow-hidden select-none ${className}`}
+      style={{
+        ['--aura-scale' as string]: '1',
+        ['--aura-opacity' as string]: isPlaying ? '0.95' : '0.75',
+        ['--aura-shift-x' as string]: '0px',
+        ['--aura-shift-y' as string]: '0px',
+        ['--aura-shift-x-neg' as string]: '0px',
+        ['--aura-shift-y-pos' as string]: '0px',
+      }}
     >
       {/* 1. Deep Oceanic-Graphite Foundation Gradient */}
-      <div 
+      <div
         className="absolute inset-0 transition-colors duration-1000 ease-out"
         style={{
           background: 'linear-gradient(175deg, #090c14 0%, #0f1422 35%, #0b0e19 70%, #07090e 100%)',
@@ -222,7 +279,7 @@ export const AuraAtmosphere: React.FC<AuraAtmosphereProps> = ({
 
       {/* Dynamic Full-Canvas Ambient Artwork Wash (Active Track Lighting) */}
       {currentTrack?.coverUrl && (
-        <div 
+        <div
           className="absolute inset-0 pointer-events-none transition-opacity duration-1000 ease-out overflow-hidden"
           style={{ opacity: isPlaying ? 0.22 : 0.12 }}
         >
@@ -238,39 +295,39 @@ export const AuraAtmosphere: React.FC<AuraAtmosphereProps> = ({
 
       {/* 2. Top-Left Luminous Light Field (Provides vivid backlight for floating navigation and header) */}
       <div
-        className="absolute -top-[15%] -left-[10%] w-[55vw] h-[55vh] rounded-full transition-all duration-1000 ease-out"
+        className="absolute -top-[15%] -left-[10%] w-[55vw] h-[55vh] rounded-full will-change-transform"
         style={{
           background: `radial-gradient(circle, ${ambientPalette.primaryGlow} 0%, rgba(99, 102, 241, 0.08) 55%, transparent 80%)`,
           filter: 'blur(90px)',
-          transform: `translate3d(${audioDynamics.shiftX * 0.6}px, ${audioDynamics.shiftY * 0.6}px, 0) scale(${audioDynamics.bassScale})`,
-          opacity: audioDynamics.energyOpacity,
+          transform: 'translate3d(var(--aura-shift-x), var(--aura-shift-y), 0) scale(var(--aura-scale))',
+          opacity: 'var(--aura-opacity)',
         }}
       />
 
       {/* 3. Top-Right Ambient Aperture (Provides depth across main viewport) */}
       <div
-        className="absolute -top-[10%] -right-[10%] w-[50vw] h-[50vh] rounded-full transition-all duration-1200 ease-out"
+        className="absolute -top-[10%] -right-[10%] w-[50vw] h-[50vh] rounded-full will-change-transform"
         style={{
           background: `radial-gradient(circle, ${ambientPalette.meshB} 0%, rgba(6, 182, 212, 0.06) 60%, transparent 85%)`,
           filter: 'blur(100px)',
-          transform: `translate3d(${-audioDynamics.shiftX * 0.5}px, ${audioDynamics.shiftY * 0.5}px, 0)`,
+          transform: 'translate3d(var(--aura-shift-x-neg), var(--aura-shift-y-pos), 0)',
         }}
       />
 
       {/* 4. Center-Stage Ambient Artwork Lighting Wash (Expands when track is loaded) */}
       <div
-        className="absolute top-[20%] left-[25%] w-[50vw] h-[45vh] rounded-full transition-all duration-1000 ease-out"
+        className="absolute top-[20%] left-[25%] w-[50vw] h-[45vh] rounded-full will-change-transform"
         style={{
           background: `radial-gradient(ellipse 65% 50% at 50% 50%, ${ambientPalette.secondaryGlow} 0%, ${ambientPalette.meshA} 50%, transparent 80%)`,
           filter: 'blur(110px)',
-          transform: `scale(${audioDynamics.bassScale * 1.02})`,
-          opacity: isPlaying ? audioDynamics.energyOpacity : 0.75,
+          transform: 'scale(calc(var(--aura-scale) * 1.02))',
+          opacity: 'var(--aura-opacity)',
         }}
       />
 
       {/* 5. Bottom Playback Island Reflection Field (Luminous optical reflection under player) */}
       <div
-        className="absolute -bottom-[8%] left-[10%] right-[10%] h-[32vh] rounded-full transition-all duration-1000 ease-out pointer-events-none"
+        className="absolute -bottom-[8%] left-[10%] right-[10%] h-[32vh] rounded-full transition-opacity duration-1000 ease-out pointer-events-none"
         style={{
           background: currentTrack
             ? `radial-gradient(ellipse 80% 60% at 50% 100%, ${ambientPalette.primaryGlow} 0%, ${ambientPalette.secondaryGlow} 40%, transparent 80%)`
@@ -280,7 +337,7 @@ export const AuraAtmosphere: React.FC<AuraAtmosphereProps> = ({
       />
 
       {/* 6. Subtle Micro-Atmospheric Noise Grain (Continuous acoustic velvety depth, NO visible stippled dots) */}
-      <div 
+      <div
         className="absolute inset-0 opacity-[0.014] mix-blend-screen pointer-events-none"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,

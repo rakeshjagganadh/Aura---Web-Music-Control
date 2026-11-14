@@ -3,6 +3,7 @@ import { AnimatePresence, LayoutGroup } from 'motion/react';
 import { MotionBackdrop, MotionModal, MotionFadeSlide } from '../common/motion/MotionSurface';
 import { SharedIndicator } from '../common/motion/MotionInteractive';
 import { useMusic } from '../../context/MusicContext';
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import { 
   X, 
   UploadCloud, 
@@ -33,6 +34,10 @@ export const UploadModal: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
+  const modalRef = useDialogAccessibility<HTMLDivElement>({
+    isOpen: isUploadModalOpen,
+    onClose: () => setIsUploadModalOpen(false),
+  });
   const [activeTab, setActiveTab] = useState<AddMusicTab>('files');
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -112,7 +117,11 @@ export const UploadModal: React.FC = () => {
           className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
         >
           <MotionModal
+            ref={modalRef}
             variant="center"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Add Music to AURA"
             onClick={(e) => e.stopPropagation()}
             className="relative w-full max-w-xl rounded-3xl bg-[#0c0e15] border border-white/10 shadow-2xl p-6 flex flex-col gap-6 select-none"
           >
@@ -130,8 +139,10 @@ export const UploadModal: React.FC = () => {
           </div>
 
           <button
+            type="button"
+            aria-label="Close add music modal"
             onClick={() => setIsUploadModalOpen(false)}
-            className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer aura-pressable"
+            className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
             <X className="w-5 h-5" />
           </button>
@@ -181,8 +192,17 @@ export const UploadModal: React.FC = () => {
             {activeTab === 'files' && (
               <div className="flex flex-col gap-4">
             <div
+              role="button"
+              tabIndex={0}
+              aria-label="Browse and import local audio files"
               onClick={() => fileInputRef.current?.click()}
-              className="group relative cursor-pointer flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed border-zinc-800 hover:border-indigo-500/60 bg-zinc-900/30 hover:bg-indigo-950/10 transition-all text-center"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  fileInputRef.current?.click();
+                }
+              }}
+              className="group relative cursor-pointer flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed border-zinc-800 hover:border-indigo-500/60 bg-zinc-900/30 hover:bg-indigo-950/10 transition-colors text-center aura-focus-ring"
             >
               <input
                 ref={fileInputRef}
@@ -226,8 +246,17 @@ export const UploadModal: React.FC = () => {
         {activeTab === 'folder' && (
           <div className="flex flex-col gap-4">
             <div
+              role="button"
+              tabIndex={0}
+              aria-label="Select a music folder to import"
               onClick={() => folderInputRef.current?.click()}
-              className="group relative cursor-pointer flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed border-zinc-800 hover:border-indigo-500/60 bg-zinc-900/30 hover:bg-indigo-950/10 transition-all text-center"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  folderInputRef.current?.click();
+                }
+              }}
+              className="group relative cursor-pointer flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed border-zinc-800 hover:border-indigo-500/60 bg-zinc-900/30 hover:bg-indigo-950/10 transition-colors text-center aura-focus-ring"
             >
               <input
                 ref={folderInputRef}

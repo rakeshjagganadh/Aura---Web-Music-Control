@@ -21,8 +21,9 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
   showControls = true,
   accentColor = '#818cf8',
 }) => {
-  const { currentTrack, isPlaying, currentTime, duration } = useMusic();
+  const { currentTrack, isPlaying, currentTime, duration, isDirectStreamActive } = useMusic();
   const isYouTubeTrack = currentTrack?.source === 'youtube';
+  const usesSyntheticVisualizer = isYouTubeTrack || isDirectStreamActive;
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameId = useRef<number | null>(null);
@@ -73,9 +74,9 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
       ctx.scale(dpr, dpr);
       ctx.clearRect(0, 0, width, h);
 
-      if (isYouTubeTrack) {
-        // --- SOURCE-AWARE PLAYBACK VISUALIZATION (YouTube) ---
-        // Generates organic, fluid waveforms and rhythmic motion based on playback progress & time
+      if (usesSyntheticVisualizer) {
+        // --- SOURCE-AWARE PLAYBACK VISUALIZATION (YouTube & Direct CORS-fallback Streams) ---
+        // Generates organic, fluid waveforms and rhythmic motion without raw PCM FFT access
         const progress = duration > 0 ? currentTime / duration : 0;
         const timeFactor = isPlaying ? frameCount * 0.03 : 0;
 
@@ -101,8 +102,8 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
 
             const grad = ctx.createLinearGradient(x, h, x, y);
             if (isPassed) {
-              grad.addColorStop(0, 'rgba(239, 68, 68, 0.2)');
-              grad.addColorStop(0.7, '#f87171');
+              grad.addColorStop(0, isYouTubeTrack ? 'rgba(239, 68, 68, 0.2)' : 'rgba(56, 189, 248, 0.2)');
+              grad.addColorStop(0.7, isYouTubeTrack ? '#f87171' : '#38bdf8');
               grad.addColorStop(1, '#ffffff');
             } else {
               grad.addColorStop(0, 'rgba(129, 140, 248, 0.1)');
@@ -317,7 +318,7 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
         cancelAnimationFrame(animationFrameId.current);
       }
     };
-  }, [currentMode, accentColor, isYouTubeTrack, isPlaying, currentTime, duration]);
+  }, [currentMode, accentColor, usesSyntheticVisualizer, isYouTubeTrack, isPlaying, currentTime, duration]);
 
   return (
     <div className={`relative w-full overflow-hidden rounded-xl bg-zinc-950/40 border border-white/5 ${className}`}>
@@ -335,6 +336,11 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
             <Youtube className="w-3 h-3 text-red-400" />
             <span>PLAYBACK VISUALIZATION</span>
           </div>
+        ) : isDirectStreamActive ? (
+          <div className="flex items-center gap-1 text-[10px] font-mono text-sky-300">
+            <Activity className="w-3 h-3 text-sky-400" />
+            <span>AMBIENT VISUAL (NO WEB AUDIO FFT)</span>
+          </div>
         ) : (
           <div className="flex items-center gap-1 text-[10px] font-mono text-indigo-300">
             <Activity className="w-3 h-3 text-indigo-400" />
@@ -347,9 +353,11 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
       {showControls && (
         <div className="absolute top-2.5 right-2.5 flex items-center gap-1 p-0.5 rounded-lg bg-zinc-900/80 border border-white/10 backdrop-blur-md z-10">
           <button
+            type="button"
             onClick={() => handleModeSelect('spectrum')}
             title="Spectrum Wave"
-            className={`p-1.5 rounded-md transition-colors ${
+            aria-label="Spectrum Wave mode"
+            className={`p-1.5 rounded-md transition-colors cursor-pointer aura-focus-ring ${
               currentMode === 'spectrum'
                 ? 'bg-indigo-600/30 text-indigo-300 shadow-sm'
                 : 'text-zinc-400 hover:text-zinc-200'
@@ -358,9 +366,11 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
             <BarChart3 className="w-3.5 h-3.5" />
           </button>
           <button
+            type="button"
             onClick={() => handleModeSelect('waveform')}
             title="Oscilloscope Waveform"
-            className={`p-1.5 rounded-md transition-colors ${
+            aria-label="Oscilloscope Waveform mode"
+            className={`p-1.5 rounded-md transition-colors cursor-pointer aura-focus-ring ${
               currentMode === 'waveform'
                 ? 'bg-indigo-600/30 text-indigo-300 shadow-sm'
                 : 'text-zinc-400 hover:text-zinc-200'
@@ -369,9 +379,11 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
             <Activity className="w-3.5 h-3.5" />
           </button>
           <button
+            type="button"
             onClick={() => handleModeSelect('circular')}
             title="Circular Orbit"
-            className={`p-1.5 rounded-md transition-colors ${
+            aria-label="Circular Orbit mode"
+            className={`p-1.5 rounded-md transition-colors cursor-pointer aura-focus-ring ${
               currentMode === 'circular'
                 ? 'bg-indigo-600/30 text-indigo-300 shadow-sm'
                 : 'text-zinc-400 hover:text-zinc-200'
@@ -380,9 +392,11 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
             <Disc3 className="w-3.5 h-3.5" />
           </button>
           <button
+            type="button"
             onClick={() => handleModeSelect('minimal')}
             title="Minimal Pulse"
-            className={`p-1.5 rounded-md transition-colors ${
+            aria-label="Minimal Pulse mode"
+            className={`p-1.5 rounded-md transition-colors cursor-pointer aura-focus-ring ${
               currentMode === 'minimal'
                 ? 'bg-indigo-600/30 text-indigo-300 shadow-sm'
                 : 'text-zinc-400 hover:text-zinc-200'

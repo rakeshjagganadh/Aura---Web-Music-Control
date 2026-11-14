@@ -4,14 +4,13 @@
    - Strictly Bypasses all user audio, IndexedDB, Audius, YouTube, and Supabase
    ========================================================================== */
 
-const CACHE_NAME = 'aura-shell-v1';
+const CACHE_NAME = 'aura-shell-v2';
 
 // Static Shell Assets for Instant App Shell Boot
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/site.webmanifest',
-  '/manifest.json',
   '/favicon.svg',
   '/icon-192.png',
   '/icon-512.png',

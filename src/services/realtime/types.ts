@@ -109,6 +109,11 @@ export type LivePlaybackPositionProvider = () => {
   source?: string;
 } | null;
 
+export interface RoomErrorPayload {
+  code: string;
+  message: string;
+}
+
 export interface IRoomRealtimeAdapter {
   backendType: RealtimeBackendType;
   connect(
@@ -120,11 +125,15 @@ export interface IRoomRealtimeAdapter {
   sendAction(action: RoomActionPayload): Promise<boolean>;
   updateRoomState(state: SharedRoomState): Promise<boolean>;
   sendChatMessage?(message: RoomChatMessage): Promise<boolean>;
+  kickParticipant?(targetUserId: string): Promise<boolean>;
+  getVerifiedParticipantId?(): string | null;
   onStateUpdate(listener: (state: SharedRoomState) => void): () => void;
   onParticipantsUpdate(listener: (participants: RoomParticipant[]) => void): () => void;
   onActivity(listener: (activity: RoomActivityItem) => void): () => void;
   onStatusChange(listener: (status: RoomConnectionStatus) => void): () => void;
   onChatMessage?(listener: (message: RoomChatMessage) => void): () => void;
+  onAction?(listener: (action: RoomActionPayload) => void): () => void;
+  onError?(listener: (error: RoomErrorPayload) => void): () => void;
   setLivePositionProvider?(provider: LivePlaybackPositionProvider | null): void;
 }
 

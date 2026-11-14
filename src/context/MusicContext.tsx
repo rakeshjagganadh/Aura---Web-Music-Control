@@ -78,6 +78,10 @@ export interface MusicContextType {
   setActiveSearchIndex: (idx: number) => void;
   nextSearchResult: () => void;
   prevSearchResult: () => void;
+  isUniversalSearchOpen: boolean;
+  setIsUniversalSearchOpen: (open: boolean) => void;
+  universalSearchInitialQuery: string;
+  openUniversalSearch: (initialQuery?: string) => void;
 
   // Library & Data
   tracks: Track[];
@@ -162,7 +166,14 @@ export interface MusicContextType {
   // Presets & Profiles System
   userPresets: UserPreset[];
   saveCurrentAsPreset: (name: string, category?: 'custom' | 'device') => Promise<void>;
-  applyPresetSnapshot: (snapshot: AudioDspSnapshot, presetName?: string) => void;
+  importUserPresets: (presets: UserPreset[]) => Promise<number>;
+  importStudioBackup: (backupData: any) => Promise<{
+    playlistsCount: number;
+    presetsCount: number;
+    markersCount: number;
+    momentsCount: number;
+  }>;
+  applyPresetSnapshot: (snapshot: Partial<AudioDspSnapshot>, presetName?: string) => void;
   deleteUserPreset: (presetId: string) => Promise<void>;
   
   // Per-Song Profiles
@@ -564,6 +575,13 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
   const [searchQuery, setSearchQueryState] = useState<string>('');
   const [activeSearchIndex, setActiveSearchIndex] = useState<number>(0);
+  const [isUniversalSearchOpen, setIsUniversalSearchOpen] = useState<boolean>(false);
+  const [universalSearchInitialQuery, setUniversalSearchInitialQuery] = useState<string>('');
+
+  const openUniversalSearch = useCallback((initialQuery = '') => {
+    setUniversalSearchInitialQuery(initialQuery);
+    setIsUniversalSearchOpen(true);
+  }, []);
 
   // Library
   const [tracks, setTracks] = useState<Track[]>([]);
@@ -660,8 +678,15 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       } catch (e) {
         console.warn('Failed to save queue to localStorage:', e);
       }
+    } else {
+      try {
+        localStorage.removeItem('aura_v2_queue');
+      } catch {}
     }
   }, [queue, queueIndex]);
+
+  const volumeRef = useRef<number>(volume);
+  volumeRef.current = volume;
 
   const isShuffleRef = useRef<boolean>(false);
   isShuffleRef.current = isShuffle;
@@ -796,12 +821,18 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   }, [eqGains, eqPreset, bass, treble, balance, compressor, limiter, loudness, spatial, immersive, channel, effects, pitchTempo]);
 
-  // Apply Full DSP Snapshot
-  const applyPresetSnapshot = useCallback((snapshot: AudioDspSnapshot, presetName?: string) => {
+  // Apply Full or Partial DSP Snapshot
+  const applyPresetSnapshot = useCallback((snapshot: Partial<AudioDspSnapshot>, presetName?: string) => {
     // 1. EQ
-    setEqGains(snapshot.eqGains || [0,0,0,0,0,0,0,0,0,0]);
-    setEqPresetState(snapshot.eqPreset || 'custom');
-    snapshot.eqGains?.forEach((g, idx) => audioEngine.setEQBandGain(idx, g));
+    if (snapshot.eqGains) {
+      setEqGains(snapshot.eqGains);
+      snapshot.eqGains.forEach((g, idx) => audioEngine.setEQBandGain(idx, g));
+    }
+    if (snapshot.eqPreset) {
+      setEqPresetState(snapshot.eqPreset);
+    } else if (snapshot.eqGains) {
+      setEqPresetState('custom');
+    }
 
     // 2. Tone
     const b = snapshot.bass ?? 0;
@@ -973,6 +1004,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     });
 
+    const unsubDirectStream = audioEngine.onDirectStreamChange((isDirect) => {
+      setIsDirectStreamActive(isDirect);
+    });
+
     // Hook YouTube player bridge subscriptions (YouTube Streams)
     const unsubYTTime = youtubePlayerBridge.onTimeUpdate((time, dur) => {
       if (activeSourceRef.current === 'youtube') {
@@ -1006,6 +1041,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       unsubAudioTime();
       unsubAudioState();
       unsubAudioEnded();
+      unsubDirectStream();
       unsubYTTime();
       unsubYTState();
       unsubYTEnded();
@@ -1272,11 +1308,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     } else {
       if (isPlaying) {
-        console.log('[AURA BG DEBUG] EXPLICIT PAUSE FROM AURA: togglePlay pausing audio', {
-          visibilityState: typeof document !== 'undefined' ? document.visibilityState : 'unknown',
-          documentHidden: typeof document !== 'undefined' ? document.hidden : false,
-          activeSource: activeSourceRef.current,
-        });
         backgroundAudioKeepAlive.stopKeepAlive();
         audioEngine.pause();
       } else {
@@ -1322,11 +1353,14 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     // 1. Sleep timer reached
     if (sleepTimerMinutesRef.current === -1) {
+      backgroundAudioKeepAlive.stopKeepAlive();
       if (activeSourceRef.current === 'youtube') {
         youtubePlayerBridge.pause();
       } else {
         audioEngine.pause();
       }
+      audioEngine.setVolume(volumeRef.current);
+      youtubePlayerBridge.setVolume(Math.round(volumeRef.current * 100));
       setIsPlaying(false);
       setSleepTimerMinutes(null);
       setSleepTimerRemainingSecs(null);
@@ -1587,7 +1621,11 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setSleepTimerRemainingSecs((prev) => {
         if (prev === null) return null;
         if (prev <= 1) {
+          backgroundAudioKeepAlive.stopKeepAlive();
           audioEngine.pause();
+          youtubePlayerBridge.pause();
+          audioEngine.setVolume(volumeRef.current);
+          youtubePlayerBridge.setVolume(Math.round(volumeRef.current * 100));
           setIsPlaying(false);
           setSleepTimerMinutes(null);
           showToast('Sleep timer finished. Playback paused.', 'info');
@@ -1595,14 +1633,16 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
         if (prev <= 3) {
           const fadeRatio = (prev - 1) / 3;
-          audioEngine.setVolume(Math.max(0, volume * fadeRatio));
+          const faded = Math.max(0, volumeRef.current * fadeRatio);
+          audioEngine.setVolume(faded);
+          youtubePlayerBridge.setVolume(Math.round(faded * 100));
         }
         return prev - 1;
       });
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [sleepTimerMinutes, sleepTimerRemainingSecs, volume, showToast]);
+  }, [sleepTimerMinutes, sleepTimerRemainingSecs !== null, showToast]);
 
   const startSleepTimer = (minutes: number) => {
     setSleepTimerMinutes(minutes);
@@ -1619,7 +1659,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const cancelSleepTimer = () => {
     setSleepTimerMinutes(null);
     setSleepTimerRemainingSecs(null);
-    audioEngine.setVolume(volume);
+    audioEngine.setVolume(volumeRef.current);
+    youtubePlayerBridge.setVolume(Math.round(volumeRef.current * 100));
     showToast('Sleep timer cancelled', 'info');
   };
 
@@ -1735,16 +1776,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const updatePitchTempo = (newSettings: Partial<PlaybackPitchTempo>) => {
     setPitchTempoState((prev) => {
       const merged = { ...prev, ...newSettings };
-      if (merged.playbackRate !== undefined) {
-        audioEngine.setPlaybackRate(merged.playbackRate);
-        setPlaybackRateState(merged.playbackRate);
-      }
-      if (merged.preservePitch !== undefined) {
-        audioEngine.setPreservePitch(merged.preservePitch);
-      }
-      if (merged.pitchSemitones !== undefined) {
-        audioEngine.setPitchSemitones(merged.pitchSemitones, merged.preservePitch);
-      }
+      setPlaybackRateState(merged.playbackRate);
+      audioEngine.setPreservePitch(merged.preservePitch);
+      audioEngine.setPlaybackRate(merged.playbackRate);
+      audioEngine.setPitchSemitones(merged.pitchSemitones, merged.preservePitch);
       return merged;
     });
   };
@@ -1830,6 +1865,108 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     await storageService.deleteUserPreset(presetId);
     setUserPresets((prev) => prev.filter((p) => p.id !== presetId));
     showToast('Preset deleted', 'info');
+  };
+
+  const importUserPresets = async (presets: UserPreset[]): Promise<number> => {
+    let importedCount = 0;
+    const imported: UserPreset[] = [];
+    for (const item of presets) {
+      if (!item || typeof item.name !== 'string' || !item.settings) continue;
+      const presetObj: UserPreset = {
+        id: item.id || `preset-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        name: item.name,
+        category: item.category === 'device' || item.category === 'song' ? item.category : 'custom',
+        createdAt: item.createdAt || Date.now(),
+        updatedAt: Date.now(),
+        settings: item.settings,
+      };
+      await storageService.saveUserPreset(presetObj);
+      imported.push(presetObj);
+      importedCount++;
+    }
+    if (imported.length > 0) {
+      setUserPresets((prev) => {
+        const byId = new Map(prev.map((p) => [p.id, p]));
+        imported.forEach((p) => byId.set(p.id, p));
+        return Array.from(byId.values()).sort((a, b) => b.createdAt - a.createdAt);
+      });
+    }
+    return importedCount;
+  };
+
+  const importStudioBackup = async (backupData: any) => {
+    let playlistsCount = 0;
+    let presetsCount = 0;
+    let markersCount = 0;
+    let momentsCount = 0;
+
+    if (!backupData || typeof backupData !== 'object') {
+      throw new Error('Invalid backup payload');
+    }
+
+    if (backupData.account && typeof backupData.account === 'object') {
+      try {
+        localStorage.setItem('aura_user_account', JSON.stringify(backupData.account));
+      } catch {}
+    }
+
+    if (Array.isArray(backupData.playlists)) {
+      const savedPlaylists: Playlist[] = [];
+      for (const pl of backupData.playlists) {
+        if (pl && typeof pl.id === 'string' && typeof pl.title === 'string') {
+          const normalized: Playlist = {
+            ...pl,
+            trackIds: Array.isArray(pl.trackIds) ? pl.trackIds : [],
+            createdAt: pl.createdAt || Date.now(),
+            updatedAt: Date.now(),
+          };
+          await storageService.savePlaylist(normalized);
+          savedPlaylists.push(normalized);
+          playlistsCount++;
+        }
+      }
+      if (savedPlaylists.length > 0) {
+        setPlaylists((prev) => {
+          const map = new Map(prev.map((p) => [p.id, p]));
+          savedPlaylists.forEach((p) => map.set(p.id, p));
+          return Array.from(map.values());
+        });
+      }
+    }
+
+    if (Array.isArray(backupData.userPresets)) {
+      presetsCount = await importUserPresets(backupData.userPresets);
+    }
+
+    if (Array.isArray(backupData.markers)) {
+      for (const m of backupData.markers) {
+        if (m && typeof m.id === 'string' && typeof m.trackId === 'string') {
+          await storageService.saveMarker(m);
+          markersCount++;
+        }
+      }
+      if (currentTrackRef.current) {
+        const refreshed = await storageService.getMarkersForTrack(currentTrackRef.current.id);
+        setMarkers(refreshed);
+      }
+    }
+
+    if (Array.isArray(backupData.moments)) {
+      const savedMoments: AuraMoment[] = [];
+      for (const mom of backupData.moments) {
+        if (mom && typeof mom.id === 'string' && typeof mom.trackTitle === 'string') {
+          await storageService.saveMoment(mom);
+          savedMoments.push(mom);
+          momentsCount++;
+        }
+      }
+      if (savedMoments.length > 0) {
+        const allMoments = await storageService.getAllMoments();
+        setMoments(allMoments);
+      }
+    }
+
+    return { playlistsCount, presetsCount, markersCount, momentsCount };
   };
 
   // Per-Song Profile Overrides
@@ -2580,18 +2717,26 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         next.delete(trackId);
         return next;
       });
+      setFavoriteItems((prev) => prev.filter((fi) => fi.trackId !== trackId));
+      setRecentlyPlayed((prev) => prev.filter((rp) => rp.id !== trackId));
 
-      setPlaylists((prev) =>
-        prev.map((pl) => ({
-          ...pl,
-          trackIds: pl.trackIds.filter((id) => id !== trackId),
-        }))
-      );
+      const affectedPlaylists = playlists.filter((pl) => pl.trackIds.includes(trackId));
+      if (affectedPlaylists.length > 0) {
+        const updatedPlaylists = playlists.map((pl) =>
+          pl.trackIds.includes(trackId)
+            ? { ...pl, trackIds: pl.trackIds.filter((id) => id !== trackId), updatedAt: Date.now() }
+            : pl
+        );
+        setPlaylists(updatedPlaylists);
+        await Promise.all(
+          updatedPlaylists
+            .filter((pl) => affectedPlaylists.some((ap) => ap.id === pl.id))
+            .map((pl) => storageService.savePlaylist(pl))
+        );
+      }
 
       if (currentTrack?.id === trackId) {
-        audioEngine.pause();
-        setCurrentTrack(null);
-        setIsPlaying(false);
+        await switchToTrack(null);
       }
 
       await refreshStorageStats();
@@ -2614,12 +2759,12 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
 
       const demoTracks = demoItems.map((i) => i.track);
-      
-      demoTracks.forEach(t => {
-        if (t.isFavorite) {
-          storageService.setFavorite(t.id, true);
-        }
-      });
+
+      await Promise.all(
+        demoTracks
+          .filter((t) => t.isFavorite)
+          .map((t) => storageService.setFavorite(t.id, true, t))
+      );
 
       setTracks((prev) => {
         const existingIds = new Set(prev.map((p) => p.id));
@@ -2629,9 +2774,12 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       setFavoriteIds((prev) => {
         const next = new Set(prev);
-        demoTracks.filter(d => d.isFavorite).forEach(d => next.add(d.id));
+        demoTracks.filter((d) => d.isFavorite).forEach((d) => next.add(d.id));
         return next;
       });
+
+      const refreshedFavItems = await storageService.getFavoriteItems();
+      setFavoriteItems(refreshedFavItems);
 
       await refreshStorageStats();
       showToast('Demo pack loaded! Enjoy studio quality synthwave & lo-fi.', 'success');
@@ -2647,12 +2795,20 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const clearLibrary = async () => {
     try {
-      audioEngine.pause();
+      await switchToTrack(null);
+      backgroundAudioKeepAlive.stopKeepAlive();
       await storageService.clearAllData();
+      try {
+        localStorage.removeItem('aura_v2_queue');
+      } catch {}
       audioBlobCache.current.clear();
       setTracks([]);
       setPlaylists([]);
       setFavoriteIds(new Set());
+      setFavoriteItems([]);
+      setRecentlyPlayed([]);
+      setMarkers([]);
+      setMoments([]);
       setCurrentTrack(null);
       setQueue([]);
       setQueueIndex(-1);
@@ -2750,6 +2906,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setActiveSearchIndex,
         nextSearchResult,
         prevSearchResult,
+        isUniversalSearchOpen,
+        setIsUniversalSearchOpen,
+        universalSearchInitialQuery,
+        openUniversalSearch,
         tracks,
         playlists,
         favoriteIds,
@@ -2801,6 +2961,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         channel,
         updateChannels,
         pitchTempo,
+        pitchSemitones: pitchTempo.pitchSemitones,
         updatePitchTempo,
         resetPitchTempo,
         effects,
@@ -2865,6 +3026,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         userPresets,
         saveCurrentAsPreset,
+        importUserPresets,
+        importStudioBackup,
         applyPresetSnapshot,
         deleteUserPreset,
         useSongProfiles,

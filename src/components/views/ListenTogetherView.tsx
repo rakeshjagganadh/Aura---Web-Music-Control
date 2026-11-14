@@ -50,9 +50,11 @@ import { SolidCard } from '../common/primitives/SolidCard';
 import { TactileButton } from '../common/primitives/TactileButton';
 import { TelemetryBadge } from '../common/primitives/TelemetryBadge';
 import { roomService } from '../../services/realtime/roomService';
+import { sharedTrackToTrack } from '../../services/realtime/types';
 import { MotionFadeSlide, MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
 import { MotionIconSwap, SharedIndicator } from '../common/motion/MotionInteractive';
 import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 
 function formatRelativeTime(timestamp: number): string {
   const diffSec = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
@@ -100,6 +102,7 @@ export const ListenTogetherView: React.FC = () => {
     roomRemoveTrack,
     roomReorderQueue,
     roomPlayTrack,
+    roomKickParticipant,
   } = useListenTogether();
 
   const { currentTime, duration, showToast, setCurrentView } = useMusic();
@@ -110,6 +113,22 @@ export const ListenTogetherView: React.FC = () => {
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(Boolean(pendingJoinRoomId));
   const [isAddMusicModalOpen, setIsAddMusicModalOpen] = useState(false);
   const [isDiagnosticsModalOpen, setIsDiagnosticsModalOpen] = useState(false);
+
+  const createModalRef = useDialogAccessibility<HTMLDivElement>({
+    isOpen: isCreateModalOpen,
+    onClose: () => setIsCreateModalOpen(false),
+  });
+  const joinModalRef = useDialogAccessibility<HTMLDivElement>({
+    isOpen: isJoinModalOpen,
+    onClose: () => {
+      setIsJoinModalOpen(false);
+      setJoinError(null);
+    },
+  });
+  const diagnosticsModalRef = useDialogAccessibility<HTMLDivElement>({
+    isOpen: isDiagnosticsModalOpen,
+    onClose: () => setIsDiagnosticsModalOpen(false),
+  });
 
   // Social Hub state (Chat, Participants, Activity)
   const [activeSocialTab, setActiveSocialTab] = useState<'chat' | 'participants' | 'activity'>('chat');
@@ -175,16 +194,19 @@ export const ListenTogetherView: React.FC = () => {
 
   const handleCopyRoomCode = async () => {
     if (!activeRoom) return;
+    const code = activeRoom.roomId.toUpperCase();
     try {
       if (navigator?.clipboard?.writeText) {
-        await navigator.clipboard.writeText(activeRoom.roomId.toUpperCase());
+        await navigator.clipboard.writeText(code);
         setCopiedCode(true);
-        showToast(`Copied room code #${activeRoom.roomId.toUpperCase()}`, 'success');
+        showToast(`Copied room code #${code}`, 'success');
         setTimeout(() => setCopiedCode(false), 2000);
+        return;
       }
     } catch {
-      prompt('Copy room code:', activeRoom.roomId.toUpperCase());
+      // Clipboard blocked
     }
+    showToast(`Room code: #${code}`, 'info');
   };
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
@@ -550,7 +572,11 @@ export const ListenTogetherView: React.FC = () => {
               className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
             >
               <MotionModal
+                ref={createModalRef}
                 variant="center"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Create Listening Room"
                 onClick={(e) => e.stopPropagation()}
                 className="w-full max-w-md"
               >
@@ -649,7 +675,11 @@ export const ListenTogetherView: React.FC = () => {
               className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
             >
               <MotionModal
+                ref={joinModalRef}
                 variant="center"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Join Listening Room"
                 onClick={(e) => e.stopPropagation()}
                 className="w-full max-w-md"
               >
@@ -1173,49 +1203,57 @@ export const ListenTogetherView: React.FC = () => {
                           {formatSeconds(track.duration)}
                         </span>
 
-                        {/* Move Up / Move Down Reordering Buttons (Operating on upcomingTracks) */}
-                        <div className="flex items-center border border-white/10 rounded-lg bg-white/[0.03] overflow-hidden">
-                          <button
-                            type="button"
-                            disabled={idx === 0}
-                            onClick={() => handleMoveUpcomingTrack(idx, 'up')}
-                            className="p-1 hover:bg-white/10 text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed cursor-pointer aura-pressable aura-focus-ring transition-colors"
-                            title="Move track up in Up Next"
-                          >
-                            <ChevronUp className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            disabled={idx === upcomingTracks.length - 1}
-                            onClick={() => handleMoveUpcomingTrack(idx, 'down')}
-                            className="p-1 hover:bg-white/10 text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed cursor-pointer border-l border-white/10 aura-pressable aura-focus-ring transition-colors"
-                            title="Move track down in Up Next"
-                          >
-                            <ChevronDown className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                        {/* Move Up / Move Down Reordering Buttons (Host-only) */}
+                        {isOwner && (
+                          <div className="flex items-center border border-white/10 rounded-lg bg-white/[0.03] overflow-hidden">
+                            <button
+                              type="button"
+                              disabled={idx === 0}
+                              onClick={() => handleMoveUpcomingTrack(idx, 'up')}
+                              aria-label="Move track up"
+                              className="p-1 hover:bg-white/10 text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed cursor-pointer aura-pressable aura-focus-ring transition-colors"
+                              title="Move track up in Up Next"
+                            >
+                              <ChevronUp className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={idx === upcomingTracks.length - 1}
+                              onClick={() => handleMoveUpcomingTrack(idx, 'down')}
+                              aria-label="Move track down"
+                              className="p-1 hover:bg-white/10 text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed cursor-pointer border-l border-white/10 aura-pressable aura-focus-ring transition-colors"
+                              title="Move track down in Up Next"
+                            >
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
 
                         {/* Play Now for Room */}
                         <TactileButton
                           variant="ghost"
                           size="icon"
-                          onClick={() => roomPlayTrack(track)}
+                          onClick={() => roomPlayTrack(sharedTrackToTrack(track))}
+                          aria-label={`Play ${track.title} now`}
                           title="Play this track now for all listeners"
                           className="p-1.5"
                         >
                           <Play className="w-3.5 h-3.5 fill-current text-indigo-400" />
                         </TactileButton>
 
-                        {/* Remove Track */}
-                        <TactileButton
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => roomRemoveTrack(track.id)}
-                          title="Remove from room queue"
-                          className="p-1.5 hover:text-rose-400"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </TactileButton>
+                        {/* Remove Track (Host-only) */}
+                        {isOwner && (
+                          <TactileButton
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => roomRemoveTrack(track.id)}
+                            aria-label={`Remove ${track.title} from queue`}
+                            title="Remove from room queue"
+                            className="p-1.5 hover:text-rose-400"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </TactileButton>
+                        )}
                       </div>
                     </SolidCard>
                   );
@@ -1504,6 +1542,19 @@ export const ListenTogetherView: React.FC = () => {
                           {p.isOwner && (
                             <TelemetryBadge variant="cyan" size="sm">Host</TelemetryBadge>
                           )}
+                          {isOwner && !isSelf && !p.isOwner && (
+                            <TactileButton
+                              variant="danger"
+                              size="sm"
+                              onClick={() => roomKickParticipant(p.id)}
+                              aria-label={`Remove ${p.name} from room`}
+                              title={`Remove ${p.name} from room`}
+                              className="px-2 py-1 text-[11px]"
+                            >
+                              <ShieldAlert className="w-3 h-3" />
+                              <span>Remove</span>
+                            </TactileButton>
+                          )}
                         </div>
                       </SolidCard>
                     );
@@ -1517,7 +1568,7 @@ export const ListenTogetherView: React.FC = () => {
                     <span>Host Moderation & Roles</span>
                   </div>
                   <p className="text-[10px] leading-relaxed text-zinc-500">
-                    Host <strong className="text-zinc-300 font-medium">{activeRoom.ownerName}</strong> holds authoritative track-seek control. Server-authoritative participant removal is planned for Phase 3.5B.3 authorization execution.
+                    Host <strong className="text-zinc-300 font-medium">{activeRoom.ownerName}</strong> holds authoritative track-seek, queue-removal, reordering, and participant moderation control enforced server-side.
                   </p>
                 </SolidCard>
               </div>
@@ -1583,7 +1634,11 @@ export const ListenTogetherView: React.FC = () => {
             className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
           >
             <MotionModal
+              ref={diagnosticsModalRef}
               variant="center"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Room Connection Diagnostics"
               onClick={(e) => e.stopPropagation()}
               className="w-full max-w-md"
             >

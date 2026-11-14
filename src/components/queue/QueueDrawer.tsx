@@ -5,6 +5,7 @@ import { SharedIndicator } from '../common/motion/MotionInteractive';
 import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
 import { useMusic } from '../../context/MusicContext';
 import { useListenTogether } from '../../context/ListenTogetherContext';
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import { Track, MusicSourceType } from '../../types';
 import { 
   X, 
@@ -118,6 +119,10 @@ export const QueueDrawer: React.FC = () => {
 
   const { isInRoom, isOwner, activeRoom } = useListenTogether();
   const { canHover } = useMotionCapabilities();
+  const drawerRef = useDialogAccessibility<HTMLDivElement>({
+    isOpen: isQueueDrawerOpen,
+    onClose: () => setIsQueueDrawerOpen(false),
+  });
 
   const [activeTab, setActiveTab] = useState<'queue' | 'history'>('queue');
 
@@ -194,6 +199,10 @@ export const QueueDrawer: React.FC = () => {
         >
           {/* Drawer Surface */}
           <MotionModal
+            ref={drawerRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Play Queue"
             variant="drawer-right"
             onClick={(e) => e.stopPropagation()}
             className="relative w-full max-w-full sm:max-w-md h-full glass-immersive border-l border-white/[0.14] flex flex-col shadow-[0_0_80px_rgba(0,0,0,0.9)] pb-safe"
@@ -226,8 +235,10 @@ export const QueueDrawer: React.FC = () => {
           <div className="flex items-center gap-1">
             {/* Sleep Timer button */}
             <button
+              type="button"
               onClick={() => setIsSleepTimerModalOpen(true)}
-              className={`p-1.5 rounded-lg transition-colors cursor-pointer aura-pressable ${
+              aria-label="Sleep Timer"
+              className={`p-1.5 rounded-lg transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                 isSleepTimerActive 
                   ? 'text-indigo-400 bg-indigo-500/20' 
                   : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
@@ -240,9 +251,11 @@ export const QueueDrawer: React.FC = () => {
             {/* Shuffle Up Next button */}
             {upNextTracks.length > 1 && activeTab === 'queue' && (
               <button
+                type="button"
                 onClick={handleShuffleUpNext}
                 disabled={isQueueControlRestricted}
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-indigo-300 hover:bg-white/5 disabled:opacity-40 disabled:hover:text-zinc-400 transition-colors cursor-pointer aura-pressable"
+                aria-label="Shuffle Up Next"
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-indigo-300 hover:bg-white/5 disabled:opacity-40 disabled:hover:text-zinc-400 transition-colors cursor-pointer aura-pressable aura-focus-ring"
                 title={isQueueControlRestricted ? 'Queue ordering managed by host' : 'Shuffle Up Next'}
               >
                 <Shuffle className="w-4 h-4" />
@@ -252,9 +265,11 @@ export const QueueDrawer: React.FC = () => {
             {/* Clear Upcoming button */}
             {upNextTracks.length > 0 && activeTab === 'queue' && (
               <button
+                type="button"
                 onClick={handleClearUpcoming}
                 disabled={isQueueControlRestricted}
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-white/5 disabled:opacity-40 disabled:hover:text-zinc-400 transition-colors cursor-pointer aura-pressable"
+                aria-label="Clear Up Next"
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-white/5 disabled:opacity-40 disabled:hover:text-zinc-400 transition-colors cursor-pointer aura-pressable aura-focus-ring"
                 title={isQueueControlRestricted ? 'Queue ordering managed by host' : 'Clear Up Next'}
               >
                 <Trash2 className="w-4 h-4" />
@@ -263,8 +278,10 @@ export const QueueDrawer: React.FC = () => {
 
             {/* Close Button */}
             <button
+              type="button"
               onClick={() => setIsQueueDrawerOpen(false)}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer aura-pressable"
+              aria-label="Close Play Queue"
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
               title="Close Drawer"
             >
               <X className="w-5 h-5" />
@@ -277,7 +294,7 @@ export const QueueDrawer: React.FC = () => {
           <div className="flex items-center gap-2 px-4 py-2 bg-indigo-950/40 border-b border-indigo-500/20 text-indigo-300 text-[11px]">
             <Users className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
             <span className="truncate flex-1">
-              {activeRoom?.name ? `Room: ${activeRoom.name}` : 'Listen Together Room'}
+              {activeRoom?.roomName ? `Room: ${activeRoom.roomName}` : 'Listen Together Room'}
               {isOwner ? ' (Host)' : ' (Participant — Host controls queue)'}
             </span>
           </div>
@@ -454,8 +471,17 @@ export const QueueDrawer: React.FC = () => {
 
                           {/* Info */}
                           <div 
-                            className="min-w-0 flex-1 cursor-pointer" 
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Play ${track.title} by ${track.artist}`}
+                            className="min-w-0 flex-1 cursor-pointer aura-focus-ring rounded" 
                             onClick={() => playTrack(track, queue)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                playTrack(track, queue);
+                              }
+                            }}
                           >
                             <h5 className="text-xs font-medium text-zinc-200 truncate group-hover:text-indigo-300 transition-colors">
                               {track.title}
@@ -481,6 +507,7 @@ export const QueueDrawer: React.FC = () => {
                               }}
                               className="p-1 text-zinc-400 hover:text-white rounded hover:bg-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
                               title="Track Info"
+                              aria-label={`Track info for ${track.title}`}
                             >
                               <Info className="w-3 h-3" />
                             </button>
@@ -497,6 +524,7 @@ export const QueueDrawer: React.FC = () => {
                               disabled={relativeIdx === 0 || isQueueControlRestricted}
                               className="p-1 text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:text-zinc-400 rounded hover:bg-white/10 transition-colors cursor-pointer disabled:cursor-not-allowed aura-pressable aura-focus-ring"
                               title={relativeIdx === 0 ? 'Cannot move above current track' : 'Move Up'}
+                              aria-label={`Move ${track.title} up in queue`}
                             >
                               <ChevronUp className="w-3.5 h-3.5" />
                             </button>
@@ -513,6 +541,7 @@ export const QueueDrawer: React.FC = () => {
                               disabled={relativeIdx === upNextTracks.length - 1 || isQueueControlRestricted}
                               className="p-1 text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:text-zinc-400 rounded hover:bg-white/10 transition-colors cursor-pointer disabled:cursor-not-allowed aura-pressable aura-focus-ring"
                               title={relativeIdx === upNextTracks.length - 1 ? 'End of queue' : 'Move Down'}
+                              aria-label={`Move ${track.title} down in queue`}
                             >
                               <ChevronDown className="w-3.5 h-3.5" />
                             </button>
@@ -529,6 +558,7 @@ export const QueueDrawer: React.FC = () => {
                               disabled={isQueueControlRestricted}
                               className="p-1 text-zinc-400 hover:text-rose-400 disabled:opacity-30 rounded hover:bg-white/10 transition-colors cursor-pointer disabled:cursor-not-allowed aura-pressable aura-focus-ring"
                               title="Remove from queue"
+                              aria-label={`Remove ${track.title} from queue`}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -561,8 +591,17 @@ export const QueueDrawer: React.FC = () => {
                   return (
                     <div
                       key={track.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Play ${track.title} by ${track.artist}`}
                       onClick={() => playTrack(track)}
-                      className="group flex items-center gap-2.5 p-2 rounded-xl bg-[#0b0d13]/60 hover:bg-[#121520]/80 border border-white/[0.04] hover:border-white/[0.08] transition-colors cursor-pointer aura-pressable-subtle"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          playTrack(track);
+                        }
+                      }}
+                      className="group flex items-center gap-2.5 p-2 rounded-xl bg-[#0b0d13]/60 hover:bg-[#121520]/80 border border-white/[0.04] hover:border-white/[0.08] transition-colors cursor-pointer aura-pressable-subtle aura-focus-ring"
                     >
                       <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-[#0e1017] border border-white/10">
                         {track.coverUrl ? (

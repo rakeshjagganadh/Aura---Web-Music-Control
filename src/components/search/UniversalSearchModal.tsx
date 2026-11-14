@@ -6,6 +6,7 @@ import { MotionBackdrop, MotionFadeSlide, MotionModal } from '../common/motion/M
 import { SharedIndicator } from '../common/motion/MotionInteractive';
 import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
 import { MOTION_TRANSITION } from '../../motion/tokens';
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import { 
   Search, 
   X, 
@@ -18,7 +19,6 @@ import {
   Youtube, 
   HardDrive,
   Plus, 
-  Key,
   Sparkles,
   History,
   ListMusic,
@@ -97,8 +97,6 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
   });
   const [isSearchingExternal, setIsSearchingExternal] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
-  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
-  const [customApiKey, setCustomApiKey] = useState(youtubeService.getApiKey());
 
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     try {
@@ -139,15 +137,20 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
   }, []);
 
   const inputRef = useRef<HTMLInputElement>(null);
-  const debounceTimerRef = useRef<any>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const modalRef = useDialogAccessibility<HTMLDivElement>({
+    isOpen,
+    onClose,
+    initialFocusRef: inputRef,
+  });
 
-  // Focus input automatically on open & sync initialQuery
+  // Reset filters and sync initialQuery when opened
   useEffect(() => {
     if (isOpen) {
-      if (initialQuery !== undefined) {
-        setQuery(initialQuery);
-      }
-      setTimeout(() => inputRef.current?.focus(), 50);
+      setQuery(initialQuery || '');
+      setActiveTab('all');
+      setActiveSourceFilter('all');
+      setSelectedIndex(0);
     }
   }, [isOpen, initialQuery]);
 
@@ -214,13 +217,6 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     };
   }, [query, executeSearch]);
-
-  const handleSaveApiKey = (e: React.FormEvent) => {
-    e.preventDefault();
-    youtubeService.setCustomApiKey(customApiKey.trim());
-    setShowApiKeyInput(false);
-    executeSearch(query);
-  };
 
   // Filter songs by source
   const songsFilteredBySource = useMemo(() => {
@@ -367,7 +363,11 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
           className="fixed inset-0 z-50 bg-black/75 backdrop-blur-2xl flex items-start justify-center p-3 sm:p-6 sm:pt-14 select-none"
         >
           <MotionModal
+            ref={modalRef}
             variant="center"
+            role="dialog"
+            aria-modal="true"
+            aria-label={title || 'Universal Search'}
             onClick={(e) => e.stopPropagation()}
             className="relative w-full max-w-3xl max-h-[88vh] rounded-2xl sm:rounded-3xl bg-[#0a0d18]/90 backdrop-blur-3xl flex flex-col overflow-hidden border border-white/[0.10] shadow-[0_32px_90px_rgba(0,0,0,0.95)]"
           >
@@ -735,19 +735,22 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                     {recentSearches.map((term) => (
                       <div
                         key={term}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.07] text-xs text-zinc-300 transition-colors group cursor-pointer"
-                        onClick={() => setQuery(term)}
+                        className="flex items-center gap-1 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.07] text-xs text-zinc-300 transition-colors group pr-1.5"
                       >
-                        <Search className="w-3 h-3 text-zinc-500 group-hover:text-zinc-300" />
-                        <span>{term}</span>
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeRecentSearch(term);
-                          }}
-                          className="text-zinc-500 hover:text-rose-400 transition-colors p-0.5 rounded ml-0.5"
-                          title="Remove search"
+                          onClick={() => setQuery(term)}
+                          className="flex items-center gap-1.5 pl-3 pr-1 py-1.5 cursor-pointer aura-focus-ring rounded-l-xl"
+                        >
+                          <Search className="w-3 h-3 text-zinc-500 group-hover:text-zinc-300" />
+                          <span>{term}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeRecentSearch(term)}
+                          className="text-zinc-500 hover:text-rose-400 transition-colors p-0.5 rounded aura-focus-ring cursor-pointer"
+                          title={`Remove search ${term}`}
+                          aria-label={`Remove search ${term}`}
                         >
                           <X className="w-3 h-3" />
                         </button>
@@ -868,7 +871,8 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   <button
                     type="button"
                     onClick={() => {
-                      setShowApiKeyInput(true);
+                      setActiveSourceFilter('youtube');
+                      inputRef.current?.focus();
                     }}
                     className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-red-500/30 text-left transition-colors cursor-pointer group col-span-2 sm:col-span-1 aura-pressable-subtle aura-focus-ring"
                   >
@@ -883,42 +887,6 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 </div>
               </div>
 
-              {/* API Key Configuration Dropdown */}
-              <AnimatePresence>
-                {showApiKeyInput && (
-                  <MotionFadeSlide direction="down" distance={6} duration="micro">
-                    <form onSubmit={handleSaveApiKey} className="p-4 rounded-2xl bg-[#0c0e17] border border-white/10 flex flex-col gap-3">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold text-white">Custom YouTube Data API Key</label>
-                        <span className="text-[10px] font-mono text-zinc-400">Optional</span>
-                      </div>
-                      <input
-                        type="password"
-                        value={customApiKey}
-                        onChange={(e) => setCustomApiKey(e.target.value)}
-                        placeholder="AIzaSy..."
-                        className="p-2.5 rounded-xl bg-zinc-950 border border-white/10 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-sky-500 font-mono"
-                      />
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setShowApiKeyInput(false)}
-                          className="px-3 py-1.5 rounded-xl text-xs text-zinc-400 hover:text-white aura-pressable cursor-pointer"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="submit"
-                          className="px-4 py-1.5 rounded-xl bg-white text-zinc-950 text-xs font-semibold hover:bg-zinc-200 aura-pressable cursor-pointer"
-                        >
-                          Save Key
-                        </button>
-                      </div>
-                    </form>
-                  </MotionFadeSlide>
-                )}
-              </AnimatePresence>
-
             </div>
           )}
 
@@ -931,9 +899,21 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 Best Match
               </span>
 
-              <div 
-                onClick={() => handlePlayTrack(topMatch)}
-                className="group p-4 rounded-2xl bg-[#0e111a] hover:bg-[#141824] border border-white/[0.08] hover:border-white/20 transition-colors cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg aura-pressable-subtle"
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  if ((e.target as HTMLElement).closest('button')) return;
+                  handlePlayTrack(topMatch);
+                }}
+                onKeyDown={(e) => {
+                  if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    handlePlayTrack(topMatch);
+                  }
+                }}
+                aria-label={`Play best match ${topMatch.title} by ${topMatch.artist}`}
+                className="group p-4 rounded-2xl bg-[#0e111a] hover:bg-[#141824] border border-white/[0.08] hover:border-white/20 transition-colors cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg aura-pressable-subtle aura-focus-ring"
               >
                 <div className="flex items-center gap-3.5 min-w-0">
                   <div className="w-16 h-16 rounded-xl overflow-hidden bg-zinc-900 border border-white/12 shrink-0 relative shadow-sm">
@@ -1011,8 +991,20 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   return (
                     <div
                       key={song.id}
-                      onClick={() => handlePlayTrack(song)}
-                      className={`group cursor-pointer flex items-center justify-between p-2.5 rounded-2xl border transition-colors ${
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        if ((e.target as HTMLElement).closest('button')) return;
+                        handlePlayTrack(song);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+                          e.preventDefault();
+                          handlePlayTrack(song);
+                        }
+                      }}
+                      aria-label={`Play ${song.title} by ${song.artist}`}
+                      className={`group cursor-pointer flex items-center justify-between p-2.5 rounded-2xl border transition-colors aura-focus-ring ${
                         isSelected
                           ? 'bg-[#121624] border-sky-500/40 shadow-sm ring-1 ring-sky-500/20'
                           : 'hover:bg-white/[0.03] border-transparent hover:border-white/[0.06]'
@@ -1109,8 +1101,16 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 {searchResults.artists.map((artist) => (
                   <div
                     key={artist.name}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => handleSelectArtist(artist.name)}
-                    className="p-3 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-white/20 transition-colors cursor-pointer flex items-center gap-3 group aura-pressable-subtle"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleSelectArtist(artist.name);
+                      }
+                    }}
+                    className="p-3 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-white/20 transition-colors cursor-pointer flex items-center gap-3 group aura-pressable-subtle aura-focus-ring"
                   >
                     <div className={`w-10 h-10 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center text-zinc-400 shrink-0 transition-transform duration-200 ${canHover ? 'group-hover:scale-105' : ''}`}>
                       <User className="w-4 h-4" />
@@ -1141,8 +1141,16 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 {searchResults.albums.map((album) => (
                   <div
                     key={`${album.name}-${album.artist}`}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => handleSelectAlbum(album.name)}
-                    className="p-3 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-white/20 transition-colors cursor-pointer flex items-center gap-3 group aura-pressable-subtle"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleSelectAlbum(album.name);
+                      }
+                    }}
+                    className="p-3 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-white/20 transition-colors cursor-pointer flex items-center gap-3 group aura-pressable-subtle aura-focus-ring"
                   >
                     <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-white/10 flex items-center justify-center text-zinc-400 shrink-0 overflow-hidden">
                       {album.coverUrl ? (
@@ -1177,8 +1185,16 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 {searchResults.playlists.map((pl) => (
                   <div
                     key={pl.id}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => handleSelectPlaylist(pl.id)}
-                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-white/20 transition-colors cursor-pointer flex items-center gap-3.5 group aura-pressable-subtle"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleSelectPlaylist(pl.id);
+                      }
+                    }}
+                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-white/20 transition-colors cursor-pointer flex items-center gap-3.5 group aura-pressable-subtle aura-focus-ring"
                   >
                     <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${pl.coverGradient || 'from-sky-500 to-indigo-600'} flex items-center justify-center text-white shrink-0 shadow-sm`}>
                       <ListMusic className="w-4 h-4" />

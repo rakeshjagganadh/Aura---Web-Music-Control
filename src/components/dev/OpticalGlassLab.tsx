@@ -14,7 +14,7 @@ import {
   Cpu,
 } from 'lucide-react';
 import { useMusic } from '../../context/MusicContext';
-import defaultArtworkImg from '../../assets/images/aura_og_preview_1789554278437.jpg';
+const defaultArtworkImg = '/og-image.jpg';
 
 interface RectBox {
   x: number;

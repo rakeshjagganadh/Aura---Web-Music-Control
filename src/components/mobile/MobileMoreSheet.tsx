@@ -2,6 +2,7 @@ import React from 'react';
 import { AnimatePresence } from 'motion/react';
 import { MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
 import { useMusic } from '../../context/MusicContext';
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import { NavView } from '../../types';
 import { 
   X, 
@@ -46,6 +47,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
   } = useMusic();
 
   const { isInRoom, participants } = useListenTogether();
+  const sheetRef = useDialogAccessibility<HTMLDivElement>({ isOpen, onClose });
 
   const navigateTo = (view: NavView) => {
     setSelectedPlaylistId(null);
@@ -70,7 +72,11 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
         >
           {/* Sheet Modal Container */}
           <MotionModal
+            ref={sheetRef}
             variant="bottom-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="AURA Destinations"
             onClick={(e) => e.stopPropagation()}
             className="relative w-full max-h-[85vh] bg-[#080a10] border-t border-white/[0.1] rounded-t-[28px] shadow-[0_-20px_50px_rgba(0,0,0,0.95)] flex flex-col overflow-hidden pb-safe"
           >

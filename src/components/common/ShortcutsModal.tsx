@@ -2,7 +2,8 @@ import React from 'react';
 import { AnimatePresence } from 'motion/react';
 import { MotionBackdrop, MotionModal } from './motion/MotionSurface';
 import { useMusic } from '../../context/MusicContext';
-import { X, Keyboard, Command } from 'lucide-react';
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
+import { X, Keyboard } from 'lucide-react';
 
 const SHORTCUTS = [
   { key: 'Space', desc: 'Play / Pause audio' },
@@ -24,6 +25,10 @@ const SHORTCUTS = [
 
 export const ShortcutsModal: React.FC = () => {
   const { isShortcutsModalOpen, setIsShortcutsModalOpen } = useMusic();
+  const modalRef = useDialogAccessibility<HTMLDivElement>({
+    isOpen: isShortcutsModalOpen,
+    onClose: () => setIsShortcutsModalOpen(false),
+  });
 
   return (
     <AnimatePresence>
@@ -34,7 +39,11 @@ export const ShortcutsModal: React.FC = () => {
           className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
         >
           <MotionModal
+            ref={modalRef}
             variant="center"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Keyboard Shortcuts"
             onClick={(e) => e.stopPropagation()}
             className="relative w-full max-w-md rounded-2xl bg-zinc-950 border border-white/10 shadow-2xl p-6 flex flex-col gap-5"
           >
@@ -45,8 +54,10 @@ export const ShortcutsModal: React.FC = () => {
               </div>
 
               <button
+                type="button"
+                aria-label="Close keyboard shortcuts"
                 onClick={() => setIsShortcutsModalOpen(false)}
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors cursor-pointer aura-pressable"
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors cursor-pointer aura-pressable aura-focus-ring"
               >
                 <X className="w-4 h-4" />
               </button>

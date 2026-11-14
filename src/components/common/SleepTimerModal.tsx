@@ -3,6 +3,7 @@ import { AnimatePresence } from 'motion/react';
 import { MotionBackdrop, MotionModal } from './motion/MotionSurface';
 import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
 import { useMusic } from '../../context/MusicContext';
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import { 
   X, 
   Moon, 
@@ -30,6 +31,7 @@ export const SleepTimerModal: React.FC<SleepTimerModalProps> = ({ isOpen, onClos
 
   const [customMinutes, setCustomMinutes] = useState<string>('20');
   const { prefersReducedMotion } = useMotionCapabilities();
+  const modalRef = useDialogAccessibility<HTMLDivElement>({ isOpen, onClose });
 
   const presets = [
     { label: '5 Minutes', value: 5 },
@@ -63,7 +65,11 @@ export const SleepTimerModal: React.FC<SleepTimerModalProps> = ({ isOpen, onClos
           className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
         >
           <MotionModal
+            ref={modalRef}
             variant="center"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Sleep Timer"
             onClick={(e) => e.stopPropagation()}
             className="relative w-full max-w-md rounded-3xl bg-[#0e1017] border border-white/10 shadow-2xl p-6 flex flex-col gap-5"
           >

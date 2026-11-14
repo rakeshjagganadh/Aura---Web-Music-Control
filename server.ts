@@ -3,7 +3,7 @@ import http from 'http';
 import path from 'path';
 import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
-import { attachRoomWebSocketServer } from './src/server/roomWsServer';
+import { attachRoomWebSocketServer, roomAuthRouter } from './src/server/roomWsServer';
 import { youtubeRouter } from './src/server/youtubeRouter';
 
 async function startServer() {
@@ -20,7 +20,10 @@ async function startServer() {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
-  // YouTube stream resolution & search router (Phase 1)
+  // Listen Together HMAC token authentication
+  app.use('/api/room-auth', roomAuthRouter);
+
+  // Official YouTube Data API v3 search proxy
   app.use('/api/yt', youtubeRouter);
 
   // Determine production mode: when running built bundle (dist/server.cjs), NODE_ENV=production, or when dist/index.html is served

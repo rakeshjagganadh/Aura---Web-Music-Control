@@ -115,14 +115,20 @@ export class AudioEngine {
   private exciterWetGain: GainNode | null = null;
 
   private noiseGateGain: GainNode | null = null;
+  private noiseGateTimer: ReturnType<typeof setInterval> | null = null;
+  private noiseGateBuffer = new Float32Array(256);
 
-  // 4. Spatial Audio (Panner, Stereo Width, Room Depth)
+  // 4. Spatial Audio (Panner, M/S Stereo Width, 3D HRTF)
   private pannerNode: StereoPannerNode | null = null;
   private spatialPanner3D: PannerNode | null = null;
-  private widthDelayL: DelayNode | null = null;
-  private widthDelayR: DelayNode | null = null;
-  private widthCrossGain: GainNode | null = null;
-  private spatialWetGain: GainNode | null = null;
+  private widthSplitter: ChannelSplitterNode | null = null;
+  private widthMerger: ChannelMergerNode | null = null;
+  private widthGainLL: GainNode | null = null;
+  private widthGainLR: GainNode | null = null;
+  private widthGainRL: GainNode | null = null;
+  private widthGainRR: GainNode | null = null;
+  private spatialDryGain: GainNode | null = null;
+  private spatial3DWetGain: GainNode | null = null;
 
   // 5. Limiter & Loudness Normalization
   private normalizerGain: GainNode | null = null;
@@ -171,10 +177,22 @@ export class AudioEngine {
   };
   private onLoopCountChangeCallback: ((count: number) => void) | null = null;
 
+  // DSP coordination states
+  private baseBassDb = 0;
+  private baseTrebleDb = 0;
+  private immersiveBassDb = 0;
+  private immersiveClarityDb = 0;
+  private fxReverbWet = 0;
+  private spatialRoomWet = 0;
+  private basePlaybackRate = 1.0;
+  private pitchSemitones = 0;
+  private preservePitch = true;
+
   // Callbacks
   private onTimeUpdateCallback: ((time: number, duration: number) => void) | null = null;
   private onEndedCallback: (() => void) | null = null;
   private onStateChangeCallback: ((isPlaying: boolean) => void) | null = null;
+  private onDirectStreamChangeCallback: ((isDirect: boolean) => void) | null = null;
   private isUserPlaying: boolean = false;
   private isExplicitUserPause: boolean = false;
   private lastLifecycleTransitionTime: number = 0;
@@ -218,10 +236,10 @@ export class AudioEngine {
     if (typeof document !== 'undefined') {
       const mountNodes = () => {
         if (document.body) {
-          if (!document.getElementById('aura-engine-audio-webaudio')) {
+          if (this.audioEl && !document.getElementById('aura-engine-audio-webaudio')) {
             document.body.appendChild(this.audioEl);
           }
-          if (!document.getElementById('aura-engine-audio-direct')) {
+          if (this.directAudioEl && !document.getElementById('aura-engine-audio-direct')) {
             document.body.appendChild(this.directAudioEl);
           }
         }
@@ -244,31 +262,13 @@ export class AudioEngine {
       document.addEventListener('visibilitychange', () => {
         this.lastLifecycleTransitionTime = Date.now();
         const activeEl = this.getActiveAudioEl();
-        console.log('[AURA BG DEBUG] visibilitychange event:', {
-          visibilityState: document.visibilityState,
-          documentHidden: document.hidden,
-          currentSource: this.isDirectStreaming ? 'audius/direct' : 'local/webaudio',
-          trackId: this.currentTrack ? this.currentTrack.id : null,
-          audioPaused: activeEl ? activeEl.paused : true,
-          audioCurrentTime: activeEl ? activeEl.currentTime : 0,
-          isUserPlaying: this.isUserPlaying,
-          isExplicitUserPause: this.isExplicitUserPause,
-          isPlaying: this.isPlaying(),
-          audioContextState: this.ctx ? this.ctx.state : 'none',
-          mediaSessionPlaybackState:
-            typeof navigator !== 'undefined' && 'mediaSession' in navigator
-              ? navigator.mediaSession.playbackState
-              : 'unsupported',
-        });
 
         if (document.visibilityState === 'visible') {
           if (this.ctx && this.ctx.state === 'suspended' && this.isUserPlaying) {
             this.ctx.resume().catch(() => {});
           }
           if (this.isUserPlaying && activeEl && activeEl.paused && !this.isExplicitUserPause) {
-            activeEl.play().catch((err) => {
-              console.warn('[AURA BG DEBUG] Foreground auto-restore failed:', err);
-            });
+            activeEl.play().catch(() => {});
           }
         }
       });
@@ -276,13 +276,6 @@ export class AudioEngine {
 
       if (this.ctx) {
         this.ctx.onstatechange = () => {
-          console.log('[AURA BG DEBUG] AUDIO CONTEXT STATE changed to:', this.ctx?.state, {
-            visibilityState: typeof document !== 'undefined' ? document.visibilityState : 'unknown',
-            documentHidden: typeof document !== 'undefined' ? document.hidden : false,
-            isUserPlaying: this.isUserPlaying,
-            source: this.isDirectStreaming ? 'audius/direct' : 'local/webaudio',
-            trackId: this.currentTrack ? this.currentTrack.id : null,
-          });
           if (
             typeof document !== 'undefined' &&
             document.visibilityState === 'visible' &&
@@ -350,43 +343,13 @@ export class AudioEngine {
 
       el.addEventListener('pause', () => {
         if (this.isDirectStreaming === isDirect) {
-          const isDocHidden = typeof document !== 'undefined' && (document.hidden || document.visibilityState === 'hidden');
-          const recentLifecycleTransition = (Date.now() - this.lastLifecycleTransitionTime) < 3000;
           const isLifecyclePause = this.isUserPlaying && !this.isExplicitUserPause;
 
-          console.log('[AURA BG DEBUG] native pause event:', {
-            source: isDirect ? 'audius/direct' : 'local/webaudio',
-            trackId: this.currentTrack ? this.currentTrack.id : null,
-            isUserPlaying: this.isUserPlaying,
-            isExplicitUserPause: this.isExplicitUserPause,
-            visibilityState: typeof document !== 'undefined' ? document.visibilityState : 'unknown',
-            documentHidden: typeof document !== 'undefined' ? document.hidden : false,
-            currentTime: el.currentTime,
-            audioContextState: this.ctx ? this.ctx.state : 'none',
-            mediaSessionPlaybackState:
-              typeof navigator !== 'undefined' && 'mediaSession' in navigator
-                ? navigator.mediaSession.playbackState
-                : 'unsupported',
-          });
-
-          // FIX 1, 2, 7: Distinguish between intentional user pause and transient browser/OS lifecycle pause.
+          // Distinguish between intentional user pause and transient browser/OS lifecycle pause.
           if (isLifecyclePause) {
-            console.log('[AURA BG DEBUG] pause classification: LIFECYCLE', {
-              isDocHidden,
-              recentLifecycleTransition,
-              reason: 'Pause fired by browser/OS during background/lifecycle transition while user play intent is active',
-            });
-            // USER PLAY INTENT MUST WIN:
-            // - Do NOT broadcast false to UI or MusicContext.
-            // - Do NOT change intended playback state to paused.
-            // - Do NOT force el.play() or ctx.resume() while hidden.
             return;
           }
 
-          console.log('[AURA BG DEBUG] pause classification: USER', {
-            isExplicitUserPause: this.isExplicitUserPause,
-            isUserPlaying: this.isUserPlaying,
-          });
           this.isUserPlaying = false;
           this.onStateChangeCallback?.(false);
         }
@@ -552,11 +515,38 @@ export class AudioEngine {
 
     fxCombinedGain.connect(this.noiseGateGain);
 
-    // 5. Spatial Audio Stage (Width, Position, 3D Panning)
+    // 5. Spatial Audio Stage (Pan, M/S Stereo Width, 3D HRTF)
     if (this.ctx.createStereoPanner) {
       this.pannerNode = this.ctx.createStereoPanner();
       this.pannerNode.pan.value = 0;
     }
+
+    this.widthSplitter = this.ctx.createChannelSplitter(2);
+    this.widthMerger = this.ctx.createChannelMerger(2);
+    this.widthGainLL = this.ctx.createGain();
+    this.widthGainLR = this.ctx.createGain();
+    this.widthGainRL = this.ctx.createGain();
+    this.widthGainRR = this.ctx.createGain();
+    this.widthGainLL.gain.value = 1.0;
+    this.widthGainLR.gain.value = 0.0;
+    this.widthGainRL.gain.value = 0.0;
+    this.widthGainRR.gain.value = 1.0;
+
+    let spatialNodeIn: AudioNode = this.noiseGateGain;
+    if (this.pannerNode) {
+      spatialNodeIn.connect(this.pannerNode);
+      spatialNodeIn = this.pannerNode;
+    }
+
+    spatialNodeIn.connect(this.widthSplitter);
+    this.widthSplitter.connect(this.widthGainLL, 0);
+    this.widthSplitter.connect(this.widthGainLR, 0);
+    this.widthSplitter.connect(this.widthGainRL, 1);
+    this.widthSplitter.connect(this.widthGainRR, 1);
+    this.widthGainLL.connect(this.widthMerger, 0, 0);
+    this.widthGainRL.connect(this.widthMerger, 0, 0);
+    this.widthGainLR.connect(this.widthMerger, 0, 1);
+    this.widthGainRR.connect(this.widthMerger, 0, 1);
 
     this.spatialPanner3D = this.ctx.createPanner();
     this.spatialPanner3D.panningModel = 'HRTF';
@@ -565,21 +555,17 @@ export class AudioEngine {
     this.spatialPanner3D.positionY.value = 0;
     this.spatialPanner3D.positionZ.value = 1.0;
 
-    // Stereo Width Haas delays
-    this.widthDelayL = this.ctx.createDelay(0.05);
-    this.widthDelayL.delayTime.value = 0.0005;
-    this.widthCrossGain = this.ctx.createGain();
-    this.widthCrossGain.gain.value = 0;
+    this.spatialDryGain = this.ctx.createGain();
+    this.spatialDryGain.gain.value = 1.0;
+    this.spatial3DWetGain = this.ctx.createGain();
+    this.spatial3DWetGain.gain.value = 0.0;
 
-    this.spatialWetGain = this.ctx.createGain();
-    this.spatialWetGain.gain.value = 1.0;
-
-    let spatialNodeIn: AudioNode = this.noiseGateGain;
-    if (this.pannerNode) {
-      spatialNodeIn.connect(this.pannerNode);
-      spatialNodeIn = this.pannerNode;
-    }
-    spatialNodeIn.connect(this.spatialWetGain);
+    const spatialSumGain = this.ctx.createGain();
+    this.widthMerger.connect(this.spatialDryGain);
+    this.spatialDryGain.connect(spatialSumGain);
+    this.widthMerger.connect(this.spatial3DWetGain);
+    this.spatial3DWetGain.connect(this.spatialPanner3D);
+    this.spatialPanner3D.connect(spatialSumGain);
 
     // 6. Channel Routing Matrix (Stereo / Mono / Swap / Phase Invert)
     this.channelSplitter = this.ctx.createChannelSplitter(2);
@@ -595,7 +581,7 @@ export class AudioEngine {
     this.channelGainRL.gain.value = 0.0; // Right to Left
     this.channelGainRR.gain.value = 1.0; // Right to Right
 
-    this.spatialWetGain.connect(this.channelSplitter);
+    spatialSumGain.connect(this.channelSplitter);
     this.channelSplitter.connect(this.channelGainLL, 0);
     this.channelSplitter.connect(this.channelGainLR, 0);
     this.channelSplitter.connect(this.channelGainRL, 1);
@@ -743,10 +729,11 @@ export class AudioEngine {
 
     this.currentTrack = track;
 
-    // Jamendo, Curated Streams, and standard audio files support open CORS Web Audio API processing
+    // Jamendo, Curated Streams, and standard audio files attempt CORS Web Audio API processing first
     const isExternalStream =
       track.source === 'audius' ||
       track.source === 'radio' ||
+      track.source === 'radiobrowser' ||
       (typeof audioSource === 'string' &&
         track.source !== 'jamendo' &&
         track.source !== 'curated_stream' &&
@@ -755,6 +742,7 @@ export class AudioEngine {
           audioSource.includes('cidstream')));
 
     this.isDirectStreaming = isExternalStream;
+    this.onDirectStreamChangeCallback?.(this.isDirectStreaming);
     this.isUserPlaying = autoPlay;
     this.isExplicitUserPause = !autoPlay;
 
@@ -842,6 +830,7 @@ export class AudioEngine {
               if (typeof audioSource === 'string' && audioSource.startsWith('http')) {
                 try {
                   this.isDirectStreaming = true;
+                  this.onDirectStreamChangeCallback?.(true);
                   if (this.audioEl) this.audioEl.pause();
                   if (this.directAudioEl) {
                     this.directAudioEl.src = url;
@@ -885,20 +874,6 @@ export class AudioEngine {
   }
 
   public pause(): void {
-    console.log('[AURA BG DEBUG] EXPLICIT PAUSE FROM AURA', {
-      service: 'audioEngine.pause()',
-      visibilityState: typeof document !== 'undefined' ? document.visibilityState : 'unknown',
-      documentHidden: typeof document !== 'undefined' ? document.hidden : false,
-      isUserPlaying: this.isUserPlaying,
-      trackId: this.currentTrack ? this.currentTrack.id : null,
-      source: this.isDirectStreaming ? 'audius/direct' : 'local/webaudio',
-      audioContextState: this.ctx ? this.ctx.state : 'none',
-      mediaSessionPlaybackState:
-        typeof navigator !== 'undefined' && 'mediaSession' in navigator
-          ? navigator.mediaSession.playbackState
-          : 'unsupported',
-      stack: new Error().stack,
-    });
     this.isUserPlaying = false;
     this.isExplicitUserPause = true;
     if (this.audioEl) {
@@ -953,32 +928,39 @@ export class AudioEngine {
     }
   }
 
-  public setPlaybackRate(rate: number): void {
-    const clampedRate = Math.max(0.25, Math.min(3.0, rate));
+  private applyPlaybackRateAndPitch(): void {
+    const effectiveRate = this.preservePitch
+      ? this.basePlaybackRate
+      : Math.max(0.25, Math.min(3.0, this.basePlaybackRate * Math.pow(2, this.pitchSemitones / 12)));
+
     if (this.audioEl) {
-      this.audioEl.playbackRate = clampedRate;
+      if ('preservesPitch' in this.audioEl) {
+        (this.audioEl as unknown as { preservesPitch: boolean }).preservesPitch = this.preservePitch;
+      }
+      this.audioEl.playbackRate = effectiveRate;
     }
     if (this.directAudioEl) {
-      this.directAudioEl.playbackRate = clampedRate;
+      if ('preservesPitch' in this.directAudioEl) {
+        (this.directAudioEl as unknown as { preservesPitch: boolean }).preservesPitch = this.preservePitch;
+      }
+      this.directAudioEl.playbackRate = effectiveRate;
     }
+  }
+
+  public setPlaybackRate(rate: number): void {
+    this.basePlaybackRate = Math.max(0.25, Math.min(3.0, rate));
+    this.applyPlaybackRateAndPitch();
   }
 
   public setPreservePitch(preserve: boolean): void {
-    if (this.audioEl && 'preservesPitch' in this.audioEl) {
-      (this.audioEl as unknown as { preservesPitch: boolean }).preservesPitch = preserve;
-    }
-    if (this.directAudioEl && 'preservesPitch' in this.directAudioEl) {
-      (this.directAudioEl as unknown as { preservesPitch: boolean }).preservesPitch = preserve;
-    }
+    this.preservePitch = preserve;
+    this.applyPlaybackRateAndPitch();
   }
 
   public setPitchSemitones(semitones: number, preservePitch = true): void {
-    if (!this.audioEl) return;
-    if (!preservePitch) {
-      // Direct varispeed pitch shift
-      const rate = Math.pow(2, semitones / 12);
-      this.setPlaybackRate(rate);
-    }
+    this.pitchSemitones = Math.max(-12, Math.min(12, semitones));
+    this.preservePitch = preservePitch;
+    this.applyPlaybackRateAndPitch();
   }
 
   // --- A/B Processing Matrix ---
@@ -1027,15 +1009,32 @@ export class AudioEngine {
     return [...gains];
   }
 
-  public setToneBassTreble(bassDb: number, trebleDb: number): void {
+  private applyEffectiveTone(): void {
     if (!this.ctx) return;
     const now = this.ctx.currentTime;
     if (this.bassToneFilter) {
-      this.bassToneFilter.gain.setValueAtTime(Math.max(-12, Math.min(12, bassDb)), now);
+      const totalBass = Math.max(-15, Math.min(15, this.baseBassDb + this.immersiveBassDb));
+      this.bassToneFilter.gain.setValueAtTime(totalBass, now);
     }
     if (this.trebleToneFilter) {
-      this.trebleToneFilter.gain.setValueAtTime(Math.max(-12, Math.min(12, trebleDb)), now);
+      const totalTreble = Math.max(-15, Math.min(15, this.baseTrebleDb + this.immersiveClarityDb));
+      this.trebleToneFilter.gain.setValueAtTime(totalTreble, now);
     }
+  }
+
+  private applyEffectiveReverb(): void {
+    if (!this.ctx || !this.reverbWetGain) return;
+    const effectiveWet = Math.max(0, Math.min(1, Math.max(this.fxReverbWet, this.spatialRoomWet)));
+    this.reverbWetGain.gain.setValueAtTime(effectiveWet, this.ctx.currentTime);
+    if (effectiveWet > 0 && this.reverbConvolver && !this.reverbConvolver.buffer) {
+      this.updateReverbImpulse(1.5, 0.5);
+    }
+  }
+
+  public setToneBassTreble(bassDb: number, trebleDb: number): void {
+    this.baseBassDb = Math.max(-12, Math.min(12, bassDb));
+    this.baseTrebleDb = Math.max(-12, Math.min(12, trebleDb));
+    this.applyEffectiveTone();
   }
 
   // --- Dynamics & Compressor Controls ---
@@ -1118,45 +1117,52 @@ export class AudioEngine {
     if (!this.ctx) return;
     const now = this.ctx.currentTime;
 
-    // Stereo Width
-    const width = settings.enabled ? settings.width : 1.0;
+    // M/S Stereo Width Matrix
+    const w = settings.enabled ? Math.max(0, Math.min(2.0, settings.width)) : 1.0;
+    if (this.widthGainLL && this.widthGainLR && this.widthGainRL && this.widthGainRR) {
+      this.widthGainLL.gain.setValueAtTime(0.5 * (1 + w), now);
+      this.widthGainLR.gain.setValueAtTime(0.5 * (1 - w), now);
+      this.widthGainRL.gain.setValueAtTime(0.5 * (1 - w), now);
+      this.widthGainRR.gain.setValueAtTime(0.5 * (1 + w), now);
+    }
+
     if (this.pannerNode) {
-      const pan = Math.max(-1, Math.min(1, settings.positionX || 0));
+      const pan = settings.enabled ? Math.max(-1, Math.min(1, settings.positionX || 0)) : 0;
       this.pannerNode.pan.setValueAtTime(pan, now);
     }
 
-    // 3D sound positioning
-    if (this.spatialPanner3D) {
-      if (settings.enabled && (settings.mode === '3d' || settings.mode === 'spatial' || settings.mode === 'cinema')) {
-        const rad = (settings.angle * Math.PI) / 180;
-        const x = Math.sin(rad) * (settings.depth || 0.5);
-        const y = Math.cos(rad) * (settings.depth || 0.5);
+    // 3D HRTF sound positioning & parallel dry/wet blend
+    const is3DActive = settings.enabled && (settings.mode === '3d' || settings.mode === 'spatial' || settings.mode === 'cinema');
+    if (this.spatialPanner3D && this.spatialDryGain && this.spatial3DWetGain) {
+      if (is3DActive) {
+        const rad = ((settings.angle || 0) * Math.PI) / 180;
+        const depth = settings.depth || 0.5;
+        const x = Math.sin(rad) * depth;
+        const y = Math.cos(rad) * depth;
         this.spatialPanner3D.positionX.setValueAtTime(x * 2, now);
-        this.spatialPanner3D.positionY.setValueAtTime(0, now);
+        this.spatialPanner3D.positionY.setValueAtTime((settings.positionY || 0) * 1.5, now);
         this.spatialPanner3D.positionZ.setValueAtTime(y * 2 + 0.5, now);
+        this.spatialDryGain.gain.setValueAtTime(0.55, now);
+        this.spatial3DWetGain.gain.setValueAtTime(0.45, now);
       } else {
         this.spatialPanner3D.positionX.setValueAtTime(0, now);
         this.spatialPanner3D.positionY.setValueAtTime(0, now);
         this.spatialPanner3D.positionZ.setValueAtTime(1, now);
+        this.spatialDryGain.gain.setValueAtTime(1.0, now);
+        this.spatial3DWetGain.gain.setValueAtTime(0.0, now);
       }
     }
 
-    // Room reverb enhancement for spatial mode
-    if (settings.enabled && settings.room > 0 && this.reverbWetGain) {
-      const roomWet = (settings.room / 100) * 0.45;
-      this.reverbWetGain.gain.setValueAtTime(roomWet, now);
-    }
+    // Room reverb enhancement for spatial mode (accepts either 0..1 or 0..100 scale)
+    const roomPct = settings.room > 1 ? settings.room : settings.room * 100;
+    this.spatialRoomWet = settings.enabled && roomPct > 0 ? Math.min(0.45, (roomPct / 100) * 0.45) : 0;
+    this.applyEffectiveReverb();
 
-    // Immersive Enhancements
+    // Immersive Enhancements (additive on top of base tone controls)
     if (immersive) {
-      if (this.bassToneFilter && immersive.bassEnhancement > 0) {
-        const extraBass = (immersive.bassEnhancement / 100) * 4;
-        this.bassToneFilter.gain.setValueAtTime(extraBass, now);
-      }
-      if (this.trebleToneFilter && immersive.clarity > 0) {
-        const extraClarity = (immersive.clarity / 100) * 4.5;
-        this.trebleToneFilter.gain.setValueAtTime(extraClarity, now);
-      }
+      this.immersiveBassDb = immersive.bassEnhancement > 0 ? (immersive.bassEnhancement / 100) * 4 : 0;
+      this.immersiveClarityDb = immersive.clarity > 0 ? (immersive.clarity / 100) * 4.5 : 0;
+      this.applyEffectiveTone();
     }
   }
 
@@ -1226,13 +1232,11 @@ export class AudioEngine {
     this.setToneBassTreble(effects.bassBoost || 0, effects.trebleBoost || 0);
 
     // Reverb
-    if (this.reverbWetGain) {
-      const wet = effects.reverb.enabled ? effects.reverb.wet : 0;
-      this.reverbWetGain.gain.setValueAtTime(wet * 0.85, now);
-      if (effects.reverb.enabled) {
-        this.updateReverbImpulse(effects.reverb.decay, effects.reverb.roomSize);
-      }
+    this.fxReverbWet = effects.reverb.enabled ? effects.reverb.wet * 0.85 : 0;
+    if (effects.reverb.enabled) {
+      this.updateReverbImpulse(effects.reverb.decay, effects.reverb.roomSize);
     }
+    this.applyEffectiveReverb();
 
     // Delay / Echo
     if (this.delayNode && this.delayFeedbackGain && this.echoWetGain) {
@@ -1271,16 +1275,40 @@ export class AudioEngine {
       this.exciterHighpass.frequency.setValueAtTime(effects.exciter.frequency || 4500, now);
     }
 
-    // Noise Gate
-    if (this.noiseGateGain) {
-      // Noise gate is active
-      this.noiseGateGain.gain.setValueAtTime(1.0, now);
-    }
+    // Noise Gate (RMS-driven attenuation)
+    this.updateNoiseGate(effects.noiseGate.enabled, effects.noiseGate.threshold ?? -60);
 
     // Balance
     if (this.pannerNode) {
       this.pannerNode.pan.setValueAtTime(effects.balance || 0, now);
     }
+  }
+
+  private updateNoiseGate(enabled: boolean, thresholdDb: number): void {
+    if (this.noiseGateTimer) {
+      clearInterval(this.noiseGateTimer);
+      this.noiseGateTimer = null;
+    }
+    if (!this.noiseGateGain || !this.ctx) return;
+
+    if (!enabled) {
+      this.noiseGateGain.gain.setTargetAtTime(1.0, this.ctx.currentTime, 0.02);
+      return;
+    }
+
+    this.noiseGateTimer = setInterval(() => {
+      if (!this.mainAnalyser || !this.noiseGateGain || !this.ctx || !this.isPlaying()) return;
+      this.mainAnalyser.getFloatTimeDomainData(this.noiseGateBuffer);
+      let sumSq = 0;
+      for (let i = 0; i < this.noiseGateBuffer.length; i++) {
+        const s = this.noiseGateBuffer[i];
+        sumSq += s * s;
+      }
+      const rms = Math.sqrt(sumSq / this.noiseGateBuffer.length);
+      const db = rms > 1e-5 ? 20 * Math.log10(rms) : -100;
+      const targetGain = db < thresholdDb ? 0.05 : 1.0;
+      this.noiseGateGain.gain.setTargetAtTime(targetGain, this.ctx.currentTime, db < thresholdDb ? 0.03 : 0.015);
+    }, 40);
   }
 
   // --- Real-time Metering & Analytics ---
@@ -1414,14 +1442,8 @@ export class AudioEngine {
 
       return peaks.map(p => Math.max(0.08, Math.min(1.0, p / maxPeak)));
     } catch (err) {
-      console.warn('Procedural fallback waveform generated:', err);
-      const fallback: number[] = [];
-      for (let i = 0; i < numBars; i++) {
-        const t = i / numBars;
-        const v = 0.25 + 0.5 * Math.sin(t * Math.PI) * (0.6 + 0.4 * Math.sin(t * 18));
-        fallback.push(Math.max(0.1, Math.min(0.95, v + (Math.random() * 0.15 - 0.075))));
-      }
-      return fallback;
+      console.warn('Unable to decode waveform peaks:', err);
+      return [];
     }
   }
 
@@ -1731,6 +1753,11 @@ export class AudioEngine {
   public onStateChange(cb: (isPlaying: boolean) => void): () => void {
     this.onStateChangeCallback = cb;
     return () => { this.onStateChangeCallback = null; };
+  }
+
+  public onDirectStreamChange(cb: (isDirect: boolean) => void): () => void {
+    this.onDirectStreamChangeCallback = cb;
+    return () => { this.onDirectStreamChangeCallback = null; };
   }
 }
 

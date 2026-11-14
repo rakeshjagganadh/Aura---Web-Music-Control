@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AnimatePresence } from 'motion/react';
 import { MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
 import { useMusic } from '../../context/MusicContext';
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import { formatSeconds, formatPreciseSeconds } from '../../utils/formatTime';
 import { 
   Scissors, 
@@ -35,6 +36,11 @@ export const TrimExportModal: React.FC = () => {
     setIsTrimExportModalOpen,
     showToast,
   } = useMusic();
+
+  const modalRef = useDialogAccessibility<HTMLDivElement>({
+    isOpen: isTrimExportModalOpen,
+    onClose: () => setIsTrimExportModalOpen(false),
+  });
 
   const [isExporting, setIsExporting] = useState(false);
   const [isSavingClip, setIsSavingClip] = useState(false);
@@ -109,7 +115,11 @@ export const TrimExportModal: React.FC = () => {
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
         >
           <MotionModal
+            ref={modalRef}
             variant="center"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Audio Trimmer and Lossless Master Export"
             onClick={(e) => e.stopPropagation()}
             className="relative w-full max-w-2xl bg-zinc-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
           >
@@ -127,8 +137,10 @@ export const TrimExportModal: React.FC = () => {
             </div>
           </div>
           <button
+            type="button"
+            aria-label="Close trim and export modal"
             onClick={() => setIsTrimExportModalOpen(false)}
-            className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer aura-pressable"
+            className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
             <X className="w-5 h-5" />
           </button>

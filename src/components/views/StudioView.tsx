@@ -204,9 +204,9 @@ export const StudioView: React.FC = () => {
           {/* Active Track Identity */}
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-white/10 overflow-hidden shrink-0 flex items-center justify-center">
-              {currentTrack?.artwork ? (
+              {currentTrack?.coverUrl ? (
                 <img 
-                  src={currentTrack.artwork} 
+                  src={currentTrack.coverUrl} 
                   alt={currentTrack.title} 
                   referrerPolicy="no-referrer"
                   onError={(e) => {

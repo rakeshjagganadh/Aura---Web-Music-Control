@@ -44,12 +44,6 @@ export function usePWAInstall() {
         window.matchMedia('(display-mode: standalone)').matches ||
         (window.navigator as unknown as { standalone?: boolean }).standalone === true ||
         document.referrer.includes('android-app://');
-      console.log('[AURA BG DEBUG] display mode:', {
-        mode: isStandalone ? 'standalone' : 'browser',
-        matchesStandaloneQuery: window.matchMedia('(display-mode: standalone)').matches,
-        navigatorStandalone: (window.navigator as unknown as { standalone?: boolean }).standalone,
-        referrer: document.referrer,
-      });
       setIsInstalled(isStandalone);
     };
 
@@ -57,7 +51,6 @@ export function usePWAInstall() {
 
     const mediaQuery = window.matchMedia('(display-mode: standalone)');
     const handleMediaChange = (e: MediaQueryListEvent) => {
-      console.log('[AURA BG DEBUG] display mode changed:', e.matches ? 'standalone' : 'browser');
       setIsInstalled(e.matches);
     };
     if (typeof mediaQuery.addEventListener === 'function') {

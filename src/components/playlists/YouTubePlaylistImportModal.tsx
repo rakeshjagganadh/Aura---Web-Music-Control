@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AnimatePresence } from 'motion/react';
 import { MotionBackdrop, MotionModal, MotionFadeSlide } from '../common/motion/MotionSurface';
 import { useMusic } from '../../context/MusicContext';
 import { youtubeService } from '../../services/youtubeService';
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import { 
   X, 
   Play, 
@@ -31,6 +32,12 @@ export const YouTubePlaylistImportModal: React.FC<YouTubePlaylistImportModalProp
   const [isValidating, setIsValidating] = useState(false);
   const [oembedInfo, setOembedInfo] = useState<{ title: string; author: string; thumbnail: string } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const modalRef = useDialogAccessibility<HTMLDivElement>({
+    isOpen,
+    onClose,
+    initialFocusRef: inputRef,
+  });
 
   useEffect(() => {
     if (!isOpen) {
@@ -74,7 +81,7 @@ export const YouTubePlaylistImportModal: React.FC<YouTubePlaylistImportModalProp
           setOembedInfo({
             title: `YouTube Playlist (${playlistId.slice(0, 12)}...)`,
             author: 'YouTube Public Playlist',
-            thumbnail: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80',
+            thumbnail: '',
           });
         }
       })
@@ -83,7 +90,7 @@ export const YouTubePlaylistImportModal: React.FC<YouTubePlaylistImportModalProp
         setOembedInfo({
           title: `YouTube Playlist (${playlistId.slice(0, 12)}...)`,
           author: 'YouTube Public Playlist',
-          thumbnail: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80',
+          thumbnail: '',
         });
       })
       .finally(() => {
@@ -141,7 +148,11 @@ export const YouTubePlaylistImportModal: React.FC<YouTubePlaylistImportModalProp
           onClick={onClose}
         >
           <MotionModal
+            ref={modalRef}
             variant="center"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Import YouTube Playlist"
             className="relative w-full max-w-lg rounded-3xl bg-[#090b11] border border-white/10 shadow-2xl p-6 sm:p-7 flex flex-col gap-5 aura-focus-ring overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
@@ -166,8 +177,9 @@ export const YouTubePlaylistImportModal: React.FC<YouTubePlaylistImportModalProp
 
           <button
             type="button"
+            aria-label="Close YouTube playlist import modal"
             onClick={onClose}
-            className="p-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-zinc-400 hover:text-white transition-colors cursor-pointer aura-pressable"
+            className="p-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-zinc-400 hover:text-white transition-colors cursor-pointer aura-pressable aura-focus-ring"
             title="Close modal"
           >
             <X className="w-4 h-4" />
@@ -181,13 +193,13 @@ export const YouTubePlaylistImportModal: React.FC<YouTubePlaylistImportModalProp
           </label>
           <div className="relative">
             <input
+              ref={inputRef}
               id="yt-playlist-input"
               type="text"
               value={inputUrl}
               onChange={(e) => setInputUrl(e.target.value)}
               placeholder="e.g. https://www.youtube.com/playlist?list=PL... or PL..."
               className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-white/20 focus:border-red-400/60 focus:outline-none text-xs sm:text-sm text-white placeholder-zinc-500 transition-colors"
-              autoFocus
             />
             {isValidating && (
               <div className="absolute right-3.5 top-1/2 -translate-y-1/2">

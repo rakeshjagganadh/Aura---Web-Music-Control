@@ -390,6 +390,8 @@ class YouTubePlayerBridge {
         this.setPlaybackRate(req.playbackRate);
       }
 
+      this.updateState({ videoId: `playlist:${req.playlistId}`, error: null });
+
       if (req.autoplay) {
         if (typeof this.playerInstance.loadPlaylist === 'function') {
           this.playerInstance.loadPlaylist({
@@ -454,12 +456,6 @@ class YouTubePlayerBridge {
   }
 
   public pause() {
-    console.log('[AURA BG DEBUG] EXPLICIT PAUSE FROM AURA', {
-      service: 'youtubePlayerBridge.pause()',
-      visibilityState: typeof document !== 'undefined' ? document.visibilityState : 'unknown',
-      documentHidden: typeof document !== 'undefined' ? document.hidden : false,
-      stack: new Error().stack,
-    });
     this.userExplicitPause = true;
     if (this.playerInstance && typeof this.playerInstance.pauseVideo === 'function') {
       try {
@@ -472,21 +468,15 @@ class YouTubePlayerBridge {
   }
 
   public stop() {
-    console.log('[AURA BG DEBUG] EXPLICIT PAUSE FROM AURA', {
-      service: 'youtubePlayerBridge.stop()',
-      visibilityState: typeof document !== 'undefined' ? document.visibilityState : 'unknown',
-      documentHidden: typeof document !== 'undefined' ? document.hidden : false,
-      stack: new Error().stack,
-    });
     this.userExplicitPause = true;
     if (this.playerInstance && typeof this.playerInstance.stopVideo === 'function') {
       try {
         this.playerInstance.stopVideo();
-      } catch (err) {
+      } catch {
         // ignore
       }
     }
-    this.updateState({ isPlaying: false, currentTime: 0 });
+    this.updateState({ isPlaying: false, currentTime: 0, videoId: null, error: null });
   }
 
   public seekTo(seconds: number) {

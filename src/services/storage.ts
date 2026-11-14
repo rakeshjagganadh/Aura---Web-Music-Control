@@ -137,10 +137,22 @@ class StorageService {
   async deleteTrack(trackId: string): Promise<void> {
     const db = await this.getDB();
     return new Promise((resolve, reject) => {
-      const tx = db.transaction([STORES.TRACKS, STORES.AUDIO_BLOBS, STORES.FAVORITES, STORES.SONG_PROFILES], 'readwrite');
+      const tx = db.transaction(
+        [
+          STORES.TRACKS,
+          STORES.AUDIO_BLOBS,
+          STORES.FAVORITES,
+          STORES.FAVORITE_ITEMS,
+          STORES.RECENTLY_PLAYED,
+          STORES.SONG_PROFILES,
+        ],
+        'readwrite'
+      );
       tx.objectStore(STORES.TRACKS).delete(trackId);
       tx.objectStore(STORES.AUDIO_BLOBS).delete(trackId);
       tx.objectStore(STORES.FAVORITES).delete(trackId);
+      tx.objectStore(STORES.FAVORITE_ITEMS).delete(trackId);
+      tx.objectStore(STORES.RECENTLY_PLAYED).delete(trackId);
       tx.objectStore(STORES.SONG_PROFILES).delete(trackId);
 
       tx.oncomplete = () => resolve();

@@ -3,6 +3,7 @@ import { AnimatePresence } from 'motion/react';
 import { MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
 import { X, Share, PlusSquare, Smartphone, CheckCircle, ExternalLink } from 'lucide-react';
 import { AuraBrandMark } from '../common/AuraBrandMark';
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 
 interface PWAInstallModalProps {
   isOpen: boolean;
@@ -15,6 +16,8 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
   onClose,
   isIOS,
 }) => {
+  const modalRef = useDialogAccessibility<HTMLDivElement>({ isOpen, onClose });
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -25,7 +28,11 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
           onClick={onClose}
         >
           <MotionModal
+            ref={modalRef}
             variant="center"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Install AURA Studio"
             className="w-full max-w-md bg-[#0d0f15] border border-white/12 rounded-3xl shadow-2xl p-6 relative overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >

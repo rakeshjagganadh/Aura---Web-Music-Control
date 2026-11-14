@@ -3,6 +3,7 @@ import { AnimatePresence, LayoutGroup } from 'motion/react';
 import { MotionBackdrop, MotionModal, MotionFadeSlide } from '../common/motion/MotionSurface';
 import { MotionIconSwap, SharedIndicator } from '../common/motion/MotionInteractive';
 import { useMusic, AudioControlTab } from '../../context/MusicContext';
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import { Equalizer10Band } from './Equalizer10Band';
 import { DynamicsPanel } from './DynamicsPanel';
 import { SpatialAudioPanel } from './SpatialAudioPanel';
@@ -52,8 +53,14 @@ export const AudioControlCenter: React.FC = () => {
     setTreble,
     balance,
     setBalance,
-    applyPresetSnapshot
+    applyPresetSnapshot,
+    isDirectStreamActive,
   } = useMusic();
+
+  const drawerRef = useDialogAccessibility<HTMLDivElement>({
+    isOpen: isAudioControlsOpen,
+    onClose: () => setIsAudioControlsOpen(false),
+  });
 
   const TABS: { id: AudioControlTab; label: string; icon: React.ReactNode; proOnly?: boolean }[] = [
     { id: 'overview', label: 'Quick Tone', icon: <Layers className="w-3.5 h-3.5" /> },
@@ -81,6 +88,10 @@ export const AudioControlCenter: React.FC = () => {
           >
             {/* Main Drawer Container */}
             <MotionModal
+              ref={drawerRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Audio Control Studio"
               variant="drawer-right"
               onClick={(e) => e.stopPropagation()}
               className="relative w-full max-w-4xl h-full glass-immersive border-l border-white/[0.14] shadow-[0_0_80px_rgba(0,0,0,0.95)] flex flex-col z-10 overflow-hidden"
@@ -210,14 +221,16 @@ export const AudioControlCenter: React.FC = () => {
 
         {/* Scrollable Main Content Body */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 select-none">
-          {currentTrack?.source === 'youtube' && (
-            <div className="mb-4 p-3 rounded-2xl bg-zinc-900/80 border border-red-500/20 flex items-center justify-between gap-3 text-xs">
+          {(currentTrack?.source === 'youtube' || isDirectStreamActive) && (
+            <div className="mb-4 p-3 rounded-2xl bg-zinc-900/80 border border-amber-500/25 flex items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2">
-                <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 font-mono text-[10px] border border-red-500/30 font-semibold">
-                  YOUTUBE SOURCE
+                <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono text-[10px] border border-amber-500/30 font-semibold shrink-0">
+                  {currentTrack?.source === 'youtube' ? 'YOUTUBE EMBED' : 'DIRECT STREAM (BYPASSED)'}
                 </span>
                 <span className="text-zinc-300 text-xs">
-                  Basic playback (Speed, Volume, Seek, Queue) is fully integrated. Web Audio DSP & EQ filters apply to local files.
+                  {currentTrack?.source === 'youtube'
+                    ? 'Transport controls (Speed, Volume, Seek, Queue) are active. Web Audio DSP & EQ apply to local files and CORS-enabled streams.'
+                    : 'Direct stream fallback active due to station CORS policy. Volume and playback controls work; Web Audio EQ and DSP filters are bypassed for this stream.'}
                 </span>
               </div>
             </div>

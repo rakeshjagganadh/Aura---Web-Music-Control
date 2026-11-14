@@ -80,7 +80,7 @@ export const HomeView: React.FC = () => {
     favoriteItems,
     playlists,
     setCurrentView,
-    setSearchQuery,
+    openUniversalSearch,
     setIsUploadModalOpen,
     loadDemoPack,
     setIsExpandedPlayerOpen,
@@ -194,13 +194,11 @@ export const HomeView: React.FC = () => {
   };
 
   const handleSelectMood = (moodQuery: string) => {
-    setSearchQuery(moodQuery);
-    setCurrentView('songs');
+    openUniversalSearch(moodQuery);
   };
 
   const handleSelectGenre = (genreQuery: string) => {
-    setSearchQuery(genreQuery);
-    setCurrentView('songs');
+    openUniversalSearch(genreQuery);
   };
 
   const GreetingIcon = greeting.icon;
@@ -290,7 +288,16 @@ export const HomeView: React.FC = () => {
               return (
                 <div
                   key={`quick-pick-${track.id}`}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Play ${track.title} by ${track.artist}`}
                   onClick={() => playTrack(track, quickPicks)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      playTrack(track, quickPicks);
+                    }
+                  }}
                   className={`group relative flex items-center gap-3.5 p-2.5 rounded-2xl aura-hover-scale aura-pressable-subtle transition-colors duration-200 cursor-pointer aura-focus-ring ${
                     currentTrack?.id === track.id
                       ? 'bg-white/[0.10] border border-sky-400/50 shadow-md'
@@ -488,8 +495,17 @@ export const HomeView: React.FC = () => {
 
           {/* Quick-Launcher Card for YouTube Playlist Import */}
           <div
+            role="button"
+            tabIndex={0}
+            aria-label="Import YouTube Playlist"
             onClick={() => setIsYouTubeImportModalOpen(true)}
-            className="group relative overflow-hidden rounded-2xl border border-red-500/20 hover:border-red-500/40 aura-glass-ambient aura-hover-scale aura-pressable-subtle flex flex-col justify-between transition-colors duration-300 shadow-lg cursor-pointer min-h-[160px]"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setIsYouTubeImportModalOpen(true);
+              }
+            }}
+            className="group relative overflow-hidden rounded-2xl border border-red-500/20 hover:border-red-500/40 aura-glass-ambient aura-hover-scale aura-pressable-subtle flex flex-col justify-between transition-colors duration-300 shadow-lg cursor-pointer min-h-[160px] aura-focus-ring"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-red-950/40 via-zinc-900/60 to-black/80 opacity-80 group-hover:opacity-100 transition-opacity" />
             
@@ -514,13 +530,12 @@ export const HomeView: React.FC = () => {
               <span className="text-[11px] font-mono text-zinc-400">
                 Official YouTube IFrame Player API
               </span>
-              <button
-                type="button"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-400 text-white font-semibold text-xs transition-transform active:scale-95 cursor-pointer shadow"
+              <span
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500 group-hover:bg-red-400 text-white font-semibold text-xs transition-colors shadow"
               >
                 <Plus className="w-3 h-3 stroke-[2.5]" />
                 <span>Import</span>
-              </button>
+              </span>
             </div>
           </div>
         </div>
@@ -542,8 +557,17 @@ export const HomeView: React.FC = () => {
           {MOOD_CARDS.map((mood) => (
             <div
               key={mood.id}
+              role="button"
+              tabIndex={0}
+              aria-label={`Search ${mood.name} mood`}
               onClick={() => handleSelectMood(mood.query)}
-              className={`group relative overflow-hidden rounded-3xl aspect-[16/9] p-4 flex flex-col justify-between border ${mood.border} transition-colors duration-300 cursor-pointer glass-ambient hover:glass-reflective aura-hover-scale aura-pressable-subtle shadow-lg hover:shadow-2xl`}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSelectMood(mood.query);
+                }
+              }}
+              className={`group relative overflow-hidden rounded-3xl aspect-[16/9] p-4 flex flex-col justify-between border ${mood.border} transition-colors duration-300 cursor-pointer glass-ambient hover:glass-reflective aura-hover-scale aura-pressable-subtle shadow-lg hover:shadow-2xl aura-focus-ring`}
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${mood.gradient} opacity-75 group-hover:opacity-95 transition-opacity`} />
               
@@ -583,8 +607,17 @@ export const HomeView: React.FC = () => {
           {GENUINE_GENRES.map((g) => (
             <div
               key={g.id}
+              role="button"
+              tabIndex={0}
+              aria-label={`Search ${g.name} genre`}
               onClick={() => handleSelectGenre(g.query)}
-              className={`group relative overflow-hidden rounded-xl aspect-[4/3] p-3 flex flex-col justify-between border ${g.border} transition-colors duration-200 cursor-pointer aura-glass-ambient aura-hover-scale aura-pressable-subtle shadow-sm`}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSelectGenre(g.query);
+                }
+              }}
+              className={`group relative overflow-hidden rounded-xl aspect-[4/3] p-3 flex flex-col justify-between border ${g.border} transition-colors duration-200 cursor-pointer aura-glass-ambient aura-hover-scale aura-pressable-subtle shadow-sm aura-focus-ring`}
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${g.color} opacity-70 group-hover:opacity-95 transition-opacity`} />
               
@@ -621,8 +654,17 @@ export const HomeView: React.FC = () => {
           {SONIC_ENVIRONMENTS.map((env) => (
             <div
               key={env.id}
+              role="button"
+              tabIndex={0}
+              aria-label={`Play ${env.name} soundscape`}
               onClick={() => playTrack(env.featuredTrack, [env.featuredTrack])}
-              className="group relative overflow-hidden rounded-xl aspect-[16/10] p-3 flex flex-col justify-between border border-white/[0.08] hover:border-white/20 transition-colors cursor-pointer aura-glass-ambient aura-hover-scale aura-pressable-subtle shadow-sm"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  playTrack(env.featuredTrack, [env.featuredTrack]);
+                }
+              }}
+              className="group relative overflow-hidden rounded-xl aspect-[16/10] p-3 flex flex-col justify-between border border-white/[0.08] hover:border-white/20 transition-colors cursor-pointer aura-glass-ambient aura-hover-scale aura-pressable-subtle shadow-sm aura-focus-ring"
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${env.coverGradient} opacity-60 group-hover:opacity-85 transition-opacity`} />
               
@@ -742,8 +784,17 @@ export const HomeView: React.FC = () => {
             {topRadioStations.map((station) => (
               <div
                 key={`radio-${station.id}`}
+                role="button"
+                tabIndex={0}
+                aria-label={`Play radio station ${station.title}`}
                 onClick={() => playTrack(station, topRadioStations)}
-                className="group relative flex flex-col p-2.5 rounded-xl aura-glass-ambient aura-hover-lift aura-pressable-subtle transition-colors cursor-pointer"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    playTrack(station, topRadioStations);
+                  }
+                }}
+                className="group relative flex flex-col p-2.5 rounded-xl aura-glass-ambient aura-hover-lift aura-pressable-subtle transition-colors cursor-pointer aura-focus-ring"
               >
                 <div className="relative aspect-square rounded-lg overflow-hidden bg-zinc-900 border border-white/10 mb-2 flex items-center justify-center">
                   {station.coverUrl ? (
@@ -802,8 +853,17 @@ export const HomeView: React.FC = () => {
           {CURATED_COLLECTIONS.slice(0, 4).map((col) => (
             <div
               key={col.id}
+              role="button"
+              tabIndex={0}
+              aria-label={`Play ${col.name} collection`}
               onClick={() => playTrack(col.tracks[0], col.tracks)}
-              className="group relative flex flex-col justify-between p-4 rounded-2xl aura-glass-ambient aura-hover-lift aura-pressable-subtle transition-colors duration-300 cursor-pointer min-h-[145px]"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  playTrack(col.tracks[0], col.tracks);
+                }
+              }}
+              className="group relative flex flex-col justify-between p-4 rounded-2xl aura-glass-ambient aura-hover-lift aura-pressable-subtle transition-colors duration-300 cursor-pointer min-h-[145px] aura-focus-ring"
             >
               <div className="flex items-start justify-between">
                 <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${col.coverGradient} flex items-center justify-center text-white shadow-lg group-hover:scale-105 transition-transform`}>

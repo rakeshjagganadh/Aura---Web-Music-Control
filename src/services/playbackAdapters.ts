@@ -26,7 +26,7 @@ export function getTrackCapabilities(track: Track | null): TrackCapabilities {
       canEqualize: true,
       canSpatialAudio: true,
       canApplyEffects: true,
-      canStemSeparate: true,
+      canStemSeparate: false,
       canExportAudio: true,
       hasRealTimeSpectrum: true,
       hasAudioAnalysis: true,

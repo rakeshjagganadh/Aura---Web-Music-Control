@@ -3,9 +3,9 @@ import { AnimatePresence, LayoutGroup } from 'motion/react';
 import { useMusic } from '../../context/MusicContext';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 import { PWAInstallModal } from '../pwa/PWAInstallModal';
-import { YouTubeStreamTesterModal } from '../dev/YouTubeStreamTesterModal';
 import { MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
 import { SharedIndicator } from '../common/motion/MotionInteractive';
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import { 
   Settings, 
   HardDrive, 
@@ -24,8 +24,7 @@ import {
   Zap,
   Gauge,
   Smartphone,
-  Download,
-  Cpu
+  Download
 } from 'lucide-react';
 
 export const SettingsView: React.FC = () => {
@@ -51,17 +50,12 @@ export const SettingsView: React.FC = () => {
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
-  const [isStreamTesterOpen, setIsStreamTesterOpen] = useState(false);
-
-  // Check URL query param or hash for instant diagnostic launch (?dev_yt_test=true or #yt-stream-test)
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('dev_yt_test') === 'true' || window.location.hash === '#yt-stream-test') {
-        setIsStreamTesterOpen(true);
-      }
-    }
-  }, []);
+  const confirmModalRef = useDialogAccessibility<HTMLDivElement>({
+    isOpen: isConfirmOpen,
+    onClose: () => {
+      if (!isClearing) setIsConfirmOpen(false);
+    },
+  });
 
   const formatStorageMB = (bytes: number) => {
     if (!bytes) return '0 MB';
@@ -392,7 +386,11 @@ export const SettingsView: React.FC = () => {
             className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
           >
             <MotionModal
+              ref={confirmModalRef}
               variant="center"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Clear All Stored Library Data"
               onClick={(e) => e.stopPropagation()}
               className="relative w-full max-w-md rounded-2xl bg-zinc-950 border border-rose-500/30 shadow-2xl p-6 flex flex-col gap-4"
             >
@@ -407,8 +405,10 @@ export const SettingsView: React.FC = () => {
                   </p>
                 </div>
                 <button
-                  onClick={() => setIsConfirmOpen(false)}
-                  className="p-1 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 cursor-pointer aura-pressable"
+                  type="button"
+                  aria-label="Close confirmation dialog"
+                  onClick={() => !isClearing && setIsConfirmOpen(false)}
+                  className="p-1 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 cursor-pointer aura-pressable aura-focus-ring"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -500,61 +500,35 @@ export const SettingsView: React.FC = () => {
         </button>
       </div>
 
-      {/* Stream Architecture Diagnostic Lab (Phase 1) */}
-      <div className="flex items-center justify-between p-6 rounded-3xl bg-zinc-900/40 border border-emerald-500/20">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <Cpu className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold text-zinc-100">YouTube Stream Lab (Phase 1)</h3>
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/20 text-emerald-300">
-                HTMLAudioElement Tester
-              </span>
+      {/* Optical Glass Lab (Dev only) */}
+      {import.meta.env.DEV && (
+        <div className="flex items-center justify-between p-6 rounded-3xl bg-zinc-900/40 border border-indigo-500/20">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              <Sparkles className="w-5 h-5" />
             </div>
-            <p className="text-xs text-zinc-400">
-              Inspect backend stream resolution (/api/yt/audio), HTTP Range 206 headers, and native audio element playback
-            </p>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setIsStreamTesterOpen(true)}
-          className="px-3.5 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-medium border border-emerald-500/30 transition-colors cursor-pointer aura-pressable aura-focus-ring"
-        >
-          Open Stream Lab
-        </button>
-      </div>
-
-      {/* Optical Glass Lab (Iteration 2) */}
-      <div className="flex items-center justify-between p-6 rounded-3xl bg-zinc-900/40 border border-indigo-500/20">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-            <Sparkles className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold text-zinc-100">Optical Glass Lab (Iteration 2)</h3>
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-indigo-500/20 text-indigo-300">
-                CSS vs Canvas vs SVG vs WebGL
-              </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-zinc-100">Optical Glass Lab (Dev)</h3>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-indigo-500/20 text-indigo-300">
+                  CSS vs Canvas vs SVG vs WebGL
+                </span>
+              </div>
+              <p className="text-xs text-zinc-400">
+                Isolated 4-way optical material comparison over a shared pixel-aligned backdrop
+              </p>
             </div>
-            <p className="text-xs text-zinc-400">
-              Isolated 4-way optical material comparison over a shared pixel-aligned backdrop (?lab=optical)
-            </p>
           </div>
-        </div>
 
-        <button
-          type="button"
-          onClick={() => setCurrentView('optical-lab')}
-          className="px-3.5 py-1.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-xs font-medium border border-indigo-500/30 transition-colors cursor-pointer shrink-0 aura-pressable aura-focus-ring"
-        >
-          Open Optical Lab
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => setCurrentView('optical-lab')}
+            className="px-3.5 py-1.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-xs font-medium border border-indigo-500/30 transition-colors cursor-pointer shrink-0 aura-pressable aura-focus-ring"
+          >
+            Open Optical Lab
+          </button>
+        </div>
+      )}
 
       {/* PWA Application & Install Status */}
       <div className="flex flex-col gap-4 p-6 rounded-3xl bg-zinc-900/40 border border-white/5">
@@ -593,7 +567,7 @@ export const SettingsView: React.FC = () => {
         <div className="flex flex-col gap-2 text-xs text-zinc-300 pt-2 border-t border-white/5">
           <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/60">
             <span>App Shell Cache & Service Worker</span>
-            <span className="font-mono text-emerald-400">Active (v1 shell precached)</span>
+            <span className="font-mono text-emerald-400">Active (v2 shell precached)</span>
           </div>
           <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/60">
             <span>Local Music Storage</span>
@@ -613,12 +587,6 @@ export const SettingsView: React.FC = () => {
         isOpen={isInstructionsOpen}
         onClose={() => setIsInstructionsOpen(false)}
         isIOS={isIOS}
-      />
-
-      {/* Phase 1 YouTube Stream Architecture Diagnostics Modal */}
-      <YouTubeStreamTesterModal
-        isOpen={isStreamTesterOpen}
-        onClose={() => setIsStreamTesterOpen(false)}
       />
 
     </div>

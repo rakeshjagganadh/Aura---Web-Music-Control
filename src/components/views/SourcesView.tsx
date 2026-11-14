@@ -25,6 +25,7 @@ import { providerRegistry } from '../../services/providers/providerRegistry';
 import { MotionFadeSlide, MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
 import { MotionIconSwap, SharedIndicator } from '../common/motion/MotionInteractive';
 import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 
 export const SourcesView: React.FC = () => {
   const {
@@ -53,6 +54,10 @@ export const SourcesView: React.FC = () => {
   const [radioActiveFilter, setRadioActiveFilter] = useState<'top' | 'jazz' | 'electronic' | 'ambient' | 'classical' | 'rock' | 'news'>('top');
   const [radioStationsList, setRadioStationsList] = useState<any[]>([]);
   const [isLoadingExplorer, setIsLoadingExplorer] = useState(false);
+  const radioDialogRef = useDialogAccessibility<HTMLDivElement>({
+    isOpen: showRadioExplorer,
+    onClose: () => setShowRadioExplorer(false),
+  });
 
   React.useEffect(() => {
     let isMounted = true;
@@ -227,7 +232,7 @@ export const SourcesView: React.FC = () => {
             <div className="flex items-center gap-4 text-xs font-mono text-zinc-400 pt-2 border-t border-white/5">
               <span>{localTrackCount} tracks stored</span>
               <span>•</span>
-              <span>{formatStorageMB(storageUsage.bytesUsed)} used</span>
+              <span>{formatStorageMB(storageUsage.approxBytes)} used</span>
             </div>
           </div>
 
@@ -518,6 +523,10 @@ export const SourcesView: React.FC = () => {
             className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
           >
             <MotionModal
+              ref={radioDialogRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Global Radio Explorer"
               variant="center"
               onClick={(e) => e.stopPropagation()}
               className="bg-[#0e1017] border border-white/10 rounded-3xl p-6 w-full max-w-2xl shadow-2xl flex flex-col gap-4 max-h-[85vh]"
@@ -708,7 +717,7 @@ export const SourcesView: React.FC = () => {
               <tr>
                 <td className="py-2.5 font-bold text-amber-300">Jamendo (Creative Commons)</td>
                 <td className="py-2.5 text-emerald-400">✓ Full</td>
-                <td className="py-2.5 text-emerald-400">✓ Unlocked (Open CORS)</td>
+                <td className="py-2.5 text-emerald-400">✓ When CORS Allowed (Direct Fallback)</td>
                 <td className="py-2.5 text-emerald-400">✓ Supported</td>
                 <td className="py-2.5 text-emerald-400">✓ Direct MP3 Stream</td>
                 <td className="py-2.5 text-zinc-500">— Stream Only</td>
@@ -716,7 +725,7 @@ export const SourcesView: React.FC = () => {
               <tr>
                 <td className="py-2.5 font-bold text-cyan-300">Radio Browser (Live Radio)</td>
                 <td className="py-2.5 text-amber-400">✓ Live Stream (No Seek)</td>
-                <td className="py-2.5 text-emerald-400">✓ Unlocked (AudioContext)</td>
+                <td className="py-2.5 text-emerald-400">✓ When CORS Allowed (Direct Fallback)</td>
                 <td className="py-2.5 text-emerald-400">✓ Supported</td>
                 <td className="py-2.5 text-emerald-400">✓ Live ICY/AAC Stream</td>
                 <td className="py-2.5 text-zinc-500">— Stream Only</td>
@@ -724,7 +733,7 @@ export const SourcesView: React.FC = () => {
               <tr>
                 <td className="py-2.5 font-bold text-purple-300">Audius Decentralized</td>
                 <td className="py-2.5 text-emerald-400">✓ Full HTTP Range</td>
-                <td className="py-2.5 text-emerald-400">✓ Unlocked (AudioContext)</td>
+                <td className="py-2.5 text-emerald-400">✓ When CORS Allowed (Direct Fallback)</td>
                 <td className="py-2.5 text-emerald-400">✓ Supported</td>
                 <td className="py-2.5 text-emerald-400">✓ Public Direct Stream</td>
                 <td className="py-2.5 text-zinc-500">— Stream Only</td>

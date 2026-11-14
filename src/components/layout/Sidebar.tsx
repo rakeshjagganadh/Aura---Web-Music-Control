@@ -126,8 +126,17 @@ export const Sidebar: React.FC = () => {
         {!isCollapsed ? (
           <>
             <div 
+              role="button"
+              tabIndex={0}
+              aria-label="AURA Home"
               onClick={() => handleNav('home')}
-              className="flex items-center gap-3 cursor-pointer group flex-1 min-w-0"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleNav('home');
+                }
+              }}
+              className="flex items-center gap-3 cursor-pointer group flex-1 min-w-0 aura-focus-ring rounded-lg"
               title="AURA Home"
             >
               <AuraBrandMark isPlaying={isPlaying} size={26} />
@@ -329,7 +338,7 @@ export const Sidebar: React.FC = () => {
                           />
                         )}
                         <div className={`w-2 h-2 rounded-full bg-gradient-to-br ${pl.coverGradient || 'from-sky-400 to-indigo-500'} shrink-0 relative z-10`} />
-                        <span className="truncate flex-1 text-left font-ui-body text-[11px] relative z-10">{pl.name}</span>
+                        <span className="truncate flex-1 text-left font-ui-body text-[11px] relative z-10">{pl.title}</span>
                         <span className="text-[10px] font-mono text-zinc-600 group-hover:text-zinc-400 tabular-nums relative z-10">
                           {pl.trackIds.length}
                         </span>

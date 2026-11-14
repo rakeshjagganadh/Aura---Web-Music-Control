@@ -3,6 +3,7 @@ import { AnimatePresence } from 'motion/react';
 import { MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
 import { MotionIconSwap } from '../common/motion/MotionInteractive';
 import { useMusic } from '../../context/MusicContext';
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import { Track } from '../../types';
 import { X, Plus, Check } from 'lucide-react';
 
@@ -28,6 +29,10 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
   }, [track, tracks]);
 
   const isBulk = targetTracks.length > 1;
+  const modalRef = useDialogAccessibility<HTMLDivElement>({
+    isOpen: isOpen && targetTracks.length > 0,
+    onClose,
+  });
 
   const handlePlaylistClick = (playlistId: string, inPlaylist: boolean) => {
     if (inPlaylist) {
@@ -46,7 +51,11 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
           className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 select-none"
         >
           <MotionModal
+            ref={modalRef}
             variant="center"
+            role="dialog"
+            aria-modal="true"
+            aria-label={isBulk ? `Add ${targetTracks.length} Tracks to Space` : 'Add to Space'}
             onClick={(e) => e.stopPropagation()}
             className="relative w-full max-w-sm rounded-2xl bg-[#0e1017] border border-white/10 shadow-2xl p-5 flex flex-col gap-4"
           >
@@ -62,8 +71,10 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
             </p>
           </div>
           <button
+            type="button"
+            aria-label="Close add to space modal"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer aura-pressable"
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
             <X className="w-4 h-4" />
           </button>

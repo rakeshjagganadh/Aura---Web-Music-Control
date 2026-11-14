@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { AnimatePresence, MotionConfig } from 'motion/react';
 import { MusicProvider, useMusic } from './context/MusicContext';
 import { MotionPage } from './components/common/motion/MotionSurface';
@@ -15,9 +15,7 @@ import { SleepTimerModal } from './components/common/SleepTimerModal';
 import { TrackInfoModal } from './components/common/TrackInfoModal';
 import { ToastContainer } from './components/common/ToastContainer';
 import { DropzoneOverlay } from './components/upload/DropzoneOverlay';
-import { AudioControlCenter } from './components/audio-controls/AudioControlCenter';
 import { AuraAtmosphere } from './components/common/AuraAtmosphere';
-import { TrimExportModal } from './components/sound-lab/TrimExportModal';
 import { UniversalSearchModal } from './components/search/UniversalSearchModal';
 import { AuraAccountModal } from './components/account/AuraAccountModal';
 import { PWAInstallBanner } from './components/pwa/PWAInstallBanner';
@@ -41,12 +39,32 @@ import { PlaylistsView } from './components/views/PlaylistsView';
 import { PlaylistDetailView } from './components/views/PlaylistDetailView';
 import { FavoritesView } from './components/views/FavoritesView';
 import { AuraMomentsPanel } from './components/sound-lab/AuraMomentsPanel';
-import { StudioView } from './components/views/StudioView';
 import { SettingsView } from './components/views/SettingsView';
-import { ListenTogetherView } from './components/views/ListenTogetherView';
-import { OpticalGlassLab } from './components/dev/OpticalGlassLab';
 import { ListenTogetherProvider } from './context/ListenTogetherContext';
 import { Analytics } from '@vercel/analytics/react';
+
+// Lazy-loaded heavy studio, social, and audio control bundles
+const StudioView = lazy(() =>
+  import('./components/views/StudioView').then((m) => ({ default: m.StudioView }))
+);
+const ListenTogetherView = lazy(() =>
+  import('./components/views/ListenTogetherView').then((m) => ({ default: m.ListenTogetherView }))
+);
+const AudioControlCenter = lazy(() =>
+  import('./components/audio-controls/AudioControlCenter').then((m) => ({ default: m.AudioControlCenter }))
+);
+const TrimExportModal = lazy(() =>
+  import('./components/sound-lab/TrimExportModal').then((m) => ({ default: m.TrimExportModal }))
+);
+let OpticalGlassLab: React.LazyExoticComponent<React.FC> | null = null;
+if (import.meta.env.DEV) {
+  const devLabModule = './components/dev/' + 'OpticalGlassLab';
+  OpticalGlassLab = lazy(() =>
+    import(/* @vite-ignore */ devLabModule).then((m: { OpticalGlassLab: React.FC }) => ({
+      default: m.OpticalGlassLab,
+    }))
+  );
+}
 
 const MainLayout: React.FC = () => {
   const {
@@ -72,11 +90,16 @@ const MainLayout: React.FC = () => {
     setIsQueueDrawerOpen,
     isQueueDrawerOpen,
     selectedPlaylistId,
+    isUniversalSearchOpen,
+    setIsUniversalSearchOpen,
+    universalSearchInitialQuery,
+    openUniversalSearch,
+    isSleepTimerModalOpen,
+    setIsSleepTimerModalOpen,
   } = useMusic();
 
   const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
-  const [isUniversalSearchOpen, setIsUniversalSearchOpen] = useState(false);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
 
   // Progressive Web App installability & standalone detection
@@ -88,14 +111,19 @@ const MainLayout: React.FC = () => {
       // ⌘K or Ctrl+K for Universal Search
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        setIsUniversalSearchOpen((prev) => !prev);
+        if (isUniversalSearchOpen) {
+          setIsUniversalSearchOpen(false);
+        } else {
+          openUniversalSearch('');
+        }
         return;
       }
 
       // Don't trigger if typing in an input or textarea
       if (
         document.activeElement?.tagName === 'INPUT' ||
-        document.activeElement?.tagName === 'TEXTAREA'
+        document.activeElement?.tagName === 'TEXTAREA' ||
+        document.activeElement?.tagName === 'SELECT'
       ) {
         return;
       }
@@ -166,12 +194,7 @@ const MainLayout: React.FC = () => {
           setIsAudioControlsOpen(!isAudioControlsOpen);
           break;
         case 'Escape':
-          if (isUniversalSearchOpen) setIsUniversalSearchOpen(false);
-          if (isAccountModalOpen) setIsAccountModalOpen(false);
           if (isExpandedPlayerOpen) setIsExpandedPlayerOpen(false);
-          if (isShortcutsModalOpen) setIsShortcutsModalOpen(false);
-          if (isQueueDrawerOpen) setIsQueueDrawerOpen(false);
-          if (isAudioControlsOpen) setIsAudioControlsOpen(false);
           break;
         case 'Slash':
           if (e.shiftKey) {
@@ -181,7 +204,7 @@ const MainLayout: React.FC = () => {
           } else {
             // '/' key: Universal Search
             e.preventDefault();
-            setIsUniversalSearchOpen(true);
+            openUniversalSearch('');
           }
           break;
         default:
@@ -213,7 +236,8 @@ const MainLayout: React.FC = () => {
     setIsQueueDrawerOpen,
     isQueueDrawerOpen,
     isUniversalSearchOpen,
-    isAccountModalOpen,
+    setIsUniversalSearchOpen,
+    openUniversalSearch,
   ]);
 
   return (
@@ -232,60 +256,68 @@ const MainLayout: React.FC = () => {
           {/* Header (Detached Floating Command Surface on Desktop, Compact Bar on Mobile) */}
           <Header 
             onOpenMobileSearch={() => setIsMobileSearchOpen(true)}
-            onOpenUniversalSearch={() => setIsUniversalSearchOpen(true)}
+            onOpenUniversalSearch={() => openUniversalSearch('')}
             onOpenAccount={() => setIsAccountModalOpen(true)}
             canInstall={pwa.canInstall}
             isInstalled={pwa.isInstalled}
             onInstall={pwa.promptInstall}
           />
 
-          {/* Dynamic Main Viewport (with calculated safe-area clearance for floating player on desktop & mobile) */}
-          <main className="flex-1 overflow-y-auto pb-[calc(210px+env(safe-area-inset-bottom,0px))] sm:pb-56 lg:pb-52 scroll-smooth focus:outline-none">
-            <AnimatePresence mode="wait" initial={false}>
-              <MotionPage
-                viewKey={
-                  selectedPlaylistId && currentView === 'playlist-detail'
-                    ? `playlist-detail:${selectedPlaylistId}`
-                    : currentView
-                }
-                className="w-full"
-              >
-                {selectedPlaylistId && currentView === 'playlist-detail' ? (
-                  <PlaylistDetailView />
-                ) : currentView === 'home' ? (
-                  <HomeView />
-                ) : currentView === 'sources' ? (
-                  <SourcesView />
-                ) : currentView === 'listen-together' ? (
-                  <ListenTogetherView />
-                ) : currentView === 'library' ? (
-                  <LibraryOverviewView />
-                ) : currentView === 'songs' ? (
-                  <SongsView />
-                ) : currentView === 'albums' ? (
-                  <AlbumsView />
-                ) : currentView === 'artists' ? (
-                  <ArtistsView />
-                ) : currentView === 'playlists' ? (
-                  <PlaylistsView />
-                ) : currentView === 'favorites' ? (
-                  <FavoritesView />
-                ) : currentView === 'moments' ? (
-                  <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
-                    <AuraMomentsPanel />
-                  </div>
-                ) : currentView === 'studio' ? (
-                  <StudioView />
-                ) : currentView === 'settings' ? (
-                  <SettingsView />
-                ) : currentView === 'optical-lab' ? (
-                  <OpticalGlassLab />
-                ) : (
-                  <HomeView />
-                )}
-              </MotionPage>
-            </AnimatePresence>
-          </main>
+          {/* Workspace Body: Main Scroll Viewport + Integrated In-Flow YouTube Companion Stage */}
+          <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden relative">
+            {/* Dynamic Main Viewport (with calculated safe-area clearance for floating player on desktop & mobile) */}
+            <main className="flex-1 min-w-0 overflow-y-auto pb-[calc(210px+env(safe-area-inset-bottom,0px))] sm:pb-56 lg:pb-52 scroll-smooth focus:outline-none">
+              <Suspense fallback={null}>
+                <AnimatePresence mode="wait" initial={false}>
+                  <MotionPage
+                    viewKey={
+                      selectedPlaylistId && currentView === 'playlist-detail'
+                        ? `playlist-detail:${selectedPlaylistId}`
+                        : currentView
+                    }
+                    className="w-full"
+                  >
+                    {selectedPlaylistId && currentView === 'playlist-detail' ? (
+                      <PlaylistDetailView />
+                    ) : currentView === 'home' ? (
+                      <HomeView />
+                    ) : currentView === 'sources' ? (
+                      <SourcesView />
+                    ) : currentView === 'listen-together' ? (
+                      <ListenTogetherView />
+                    ) : currentView === 'library' ? (
+                      <LibraryOverviewView />
+                    ) : currentView === 'songs' ? (
+                      <SongsView />
+                    ) : currentView === 'albums' ? (
+                      <AlbumsView />
+                    ) : currentView === 'artists' ? (
+                      <ArtistsView />
+                    ) : currentView === 'playlists' ? (
+                      <PlaylistsView />
+                    ) : currentView === 'favorites' ? (
+                      <FavoritesView />
+                    ) : currentView === 'moments' ? (
+                      <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+                        <AuraMomentsPanel />
+                      </div>
+                    ) : currentView === 'studio' ? (
+                      <StudioView />
+                    ) : currentView === 'settings' ? (
+                      <SettingsView />
+                    ) : import.meta.env.DEV && currentView === 'optical-lab' && OpticalGlassLab ? (
+                      <OpticalGlassLab />
+                    ) : (
+                      <HomeView />
+                    )}
+                  </MotionPage>
+                </AnimatePresence>
+              </Suspense>
+            </main>
+
+            {/* Official YouTube Embed Integration (in-flow dock when active, zero floating overlay over cards) */}
+            <YouTubeEmbedPlayer />
+          </div>
 
           {/* Desktop Floating Playback Island (Centered horizontally in available content area) */}
           <BottomPlayer />
@@ -302,19 +334,21 @@ const MainLayout: React.FC = () => {
       {/* Full-screen / Expanded Studio Player Modal */}
       <ExpandedPlayer />
 
-      {/* Official YouTube Embed Audio Integration */}
-      <YouTubeEmbedPlayer />
-
       {/* Queue & History Drawer */}
       <QueueDrawer />
 
       {/* Modals & Overlays */}
-      <AudioControlCenter />
-      <TrimExportModal />
+      <Suspense fallback={null}>
+        <AudioControlCenter />
+        <TrimExportModal />
+      </Suspense>
       <UploadModal />
       <PlaylistModal />
       <ShortcutsModal />
-      <SleepTimerModal />
+      <SleepTimerModal
+        isOpen={isSleepTimerModalOpen}
+        onClose={() => setIsSleepTimerModalOpen(false)}
+      />
       <TrackInfoModal />
       <ToastContainer />
       <DropzoneOverlay />
@@ -323,9 +357,10 @@ const MainLayout: React.FC = () => {
       <UniversalSearchModal
         isOpen={isUniversalSearchOpen}
         onClose={() => setIsUniversalSearchOpen(false)}
+        initialQuery={universalSearchInitialQuery}
       />
 
-      {/* Account & Cloud Sync Modal */}
+      {/* Account & Local Backup Modal */}
       <AuraAccountModal
         isOpen={isAccountModalOpen}
         onClose={() => setIsAccountModalOpen(false)}

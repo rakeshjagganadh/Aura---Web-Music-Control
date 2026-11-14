@@ -18,6 +18,9 @@ function roomWebSocketVitePlugin() {
 export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss(), roomWebSocketVitePlugin()],
+    define: {
+      'import.meta.env.VITE_YOUTUBE_DATA_API_KEY': 'undefined',
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

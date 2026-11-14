@@ -7,6 +7,7 @@ import {
   RoomActivityItem,
   RoomChatMessage,
   RoomConnectionStatus,
+  RoomErrorPayload,
   RoomParticipant,
   SharedRoomState,
   SharedRoomTrack,
@@ -22,6 +23,7 @@ class RoomService {
   private adapter: IRoomRealtimeAdapter | null = null;
   private currentRoomId: string | null = null;
   private currentParticipant: RoomParticipant | null = null;
+  private latestState: SharedRoomState | null = null;
   private processedActionIds = new Set<string>();
   private livePositionProvider: LivePlaybackPositionProvider | null = null;
 
@@ -31,6 +33,7 @@ class RoomService {
   private activityListeners = new Set<(activity: RoomActivityItem) => void>();
   private statusListeners = new Set<(status: RoomConnectionStatus) => void>();
   private chatListeners = new Set<(message: RoomChatMessage) => void>();
+  private errorListeners = new Set<(error: RoomErrorPayload) => void>();
   private adapterUnsubscribers: (() => void)[] = [];
 
   // Local clock-skew anchor: tracks local arrival time to prevent cross-device NTP clock differences (e.g. 33s fast jump)
@@ -193,8 +196,8 @@ class RoomService {
       },
     };
 
-    await this.joinRoom(roomId, participant, initialState);
-    return { roomId, state: initialState };
+    const connectedState = await this.joinRoom(roomId, participant, initialState);
+    return { roomId, state: connectedState || initialState };
   }
 
   /**
@@ -238,7 +241,7 @@ class RoomService {
 
     this.adapterUnsubscribers.push(
       this.adapter.onStateUpdate((state) => {
-        // Record local arrival time with accurate elapsed compensation to prevent cross-device NTP clock skew
+        this.latestState = state;
         this.updateSyncAnchor(state);
         if (this.currentParticipant && state.ownerId === this.currentParticipant.id) {
           this.currentParticipant.isOwner = true;
@@ -264,8 +267,44 @@ class RoomService {
       );
     }
 
+    if (this.adapter.onError) {
+      this.adapterUnsubscribers.push(
+        this.adapter.onError((err) => {
+          this.errorListeners.forEach((fn) => fn(err));
+        })
+      );
+    }
+
+    if (this.adapter.onAction) {
+      this.adapterUnsubscribers.push(
+        this.adapter.onAction((incomingAction) => {
+          // Host authoritatively reduces collaborative guest actions in serverless Supabase mode
+          if (
+            this.latestState &&
+            this.currentParticipant &&
+            this.latestState.ownerId === this.currentParticipant.id &&
+            this.adapter
+          ) {
+            const hostOnlyTypes = new Set<RoomActionType>(['SEEK', 'REMOVE_TRACK', 'REORDER_QUEUE']);
+            if (hostOnlyTypes.has(incomingAction.type) && incomingAction.userId !== this.latestState.ownerId) {
+              return;
+            }
+            const nextState = this.reduceStateWithAction(this.latestState, incomingAction);
+            this.latestState = nextState;
+            this.updateSyncAnchor(nextState);
+            this.adapter.updateRoomState(nextState);
+          }
+        })
+      );
+    }
+
     const state = await this.adapter.connect(cleanRoomId, participant, initialState);
+    const verifiedId = this.adapter.getVerifiedParticipantId?.();
+    if (verifiedId && this.currentParticipant) {
+      this.currentParticipant.id = verifiedId;
+    }
     if (state) {
+      this.latestState = state;
       if (this.currentParticipant && state.ownerId === this.currentParticipant.id) {
         this.currentParticipant.isOwner = true;
       }
@@ -333,6 +372,7 @@ class RoomService {
     }
     this.currentRoomId = null;
     this.currentParticipant = null;
+    this.latestState = null;
     this.processedActionIds.clear();
     this.localSyncAnchor = null;
 
@@ -385,13 +425,12 @@ class RoomService {
       return false;
     }
 
-    // SEEK RESTRICTION: Only the room host can seek position for the room
-    if (type === 'SEEK' && currentState) {
-      const isHost = currentState.ownerId === this.currentParticipant.id;
-      if (!isHost) {
-        console.warn('Seek ignored: Only room host can seek playback position.');
-        return false;
-      }
+    const isHost = Boolean(currentState && currentState.ownerId === this.currentParticipant.id);
+
+    // Host-authoritative action guard: only host may seek, remove, or reorder queue
+    const hostOnlyTypes = new Set<RoomActionType>(['SEEK', 'REMOVE_TRACK', 'REORDER_QUEUE']);
+    if (hostOnlyTypes.has(type) && !isHost) {
+      return false;
     }
 
     const actionId = `act_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -406,10 +445,14 @@ class RoomService {
       data,
     };
 
-    // Calculate new authoritative room state based on action
-    if (currentState) {
+    // In WebSocket mode, server reducer is always authoritative; in Supabase mode, Host reduces & updates state
+    if (this.adapter.backendType === 'websocket') {
+      return this.adapter.sendAction(action);
+    }
+
+    if (currentState && isHost) {
       const nextState = this.reduceStateWithAction(currentState, action);
-      // Immediately update our own anchor for zero-latency local prediction
+      this.latestState = nextState;
       this.localSyncAnchor = {
         trackId: nextState.currentTrack?.id || null,
         version: nextState.version,
@@ -417,12 +460,17 @@ class RoomService {
         isPlaying: nextState.isPlaying,
         localAnchorTime: Date.now(),
       };
-      await this.adapter.updateRoomState(nextState);
-    } else {
-      await this.adapter.sendAction(action);
+      return this.adapter.updateRoomState(nextState);
     }
 
-    return true;
+    return this.adapter.sendAction(action);
+  }
+
+  public async kickParticipant(targetUserId: string): Promise<boolean> {
+    if (!this.adapter?.kickParticipant || !this.currentParticipant?.isOwner) {
+      return false;
+    }
+    return this.adapter.kickParticipant(targetUserId);
   }
 
   /**
@@ -654,6 +702,11 @@ class RoomService {
   public onChatMessage(listener: (message: RoomChatMessage) => void): () => void {
     this.chatListeners.add(listener);
     return () => this.chatListeners.delete(listener);
+  }
+
+  public onError(listener: (error: RoomErrorPayload) => void): () => void {
+    this.errorListeners.add(listener);
+    return () => this.errorListeners.delete(listener);
   }
 
   public async sendChatMessage(text: string): Promise<boolean> {

@@ -1,10 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { AnimatePresence, LayoutGroup } from 'motion/react';
 import { MotionBackdrop, MotionModal, MotionFadeSlide } from '../common/motion/MotionSurface';
 import { MotionIconSwap, SharedIndicator } from '../common/motion/MotionInteractive';
 import { useMusic } from '../../context/MusicContext';
-import { EQ_10_BANDS } from '../../services/audioEngine';
-import { EqualizerPreset } from '../../types';
+import { EQ_10_BANDS, audioEngine } from '../../services/audioEngine';
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
+import { EqualizerPreset, RealtimeMeterData, ChannelMode } from '../../types';
 import { 
   X, 
   RotateCcw, 
@@ -35,9 +36,9 @@ export const MobileAudioControlSheet: React.FC = () => {
     balance,
     setBalance,
     eqPreset,
-    setEqPreset,
+    setEQPreset,
     eqGains,
-    setEqGain,
+    setEQGain,
     effects,
     updateEffects,
     spatial,
@@ -46,12 +47,41 @@ export const MobileAudioControlSheet: React.FC = () => {
     updateCompressor,
     limiter,
     updateLimiter,
+    loudness,
+    updateLoudness,
+    channel,
+    updateChannels,
+    isDirectStreamActive,
     currentTrack,
-    realtimeMeters,
   } = useMusic();
 
   const [activeTab, setActiveTab] = useState<MobileAudioTab>('basic');
   const spatialCanvasRef = useRef<HTMLCanvasElement>(null);
+  const sheetRef = useDialogAccessibility<HTMLDivElement>({
+    isOpen: isAudioControlsOpen,
+    onClose: () => setIsAudioControlsOpen(false),
+  });
+
+  const [meterLevels, setMeterLevels] = useState<RealtimeMeterData>({
+    peakL: -60,
+    peakR: -60,
+    peakLNorm: 0,
+    peakRNorm: 0,
+    vuL: -20,
+    vuR: -20,
+    approxLufs: -24,
+    dynamicRangeDb: 8,
+    isClipping: false,
+    gainReductionDb: 0,
+  });
+
+  useEffect(() => {
+    if (!isAudioControlsOpen || activeTab !== 'analysis') return;
+    const poll = () => setMeterLevels(audioEngine.getRealtimeMeterData());
+    poll();
+    const id = window.setInterval(poll, 100);
+    return () => window.clearInterval(id);
+  }, [isAudioControlsOpen, activeTab]);
 
   const tabs: { id: MobileAudioTab; label: string; icon: React.ElementType }[] = [
     { id: 'basic', label: 'Tone', icon: Layers },
@@ -67,15 +97,24 @@ export const MobileAudioControlSheet: React.FC = () => {
     { id: 'flat', label: 'Flat / Studio Direct', desc: 'Neutral, unaltered studio mastering curve' },
     { id: 'bass_boost', label: 'Bass Boost', desc: 'Rich sub punch and low-end warmth' },
     { id: 'deep_bass', label: 'Deep Bass Sub', desc: 'Heavy sub-bass emphasis for electronic and trap' },
+    { id: 'treble_boost', label: 'Treble Boost', desc: 'Crisp presence and high-frequency sparkle' },
     { id: 'vocal', label: 'Vocal Clarity', desc: 'Lifted mids and intelligibility for speech & singing' },
+    { id: 'podcast', label: 'Speech & Podcast', desc: 'High speech intelligibility and low-end cut' },
+    { id: 'acoustic', label: 'Acoustic / Warm', desc: 'Natural woody resonance and organic mid tones' },
     { id: 'rock', label: 'Rock & Metal', desc: 'Punchy kick, crisp electric guitars, elevated highs' },
     { id: 'pop', label: 'Modern Pop', desc: 'Bright presence, polished vocals, dynamic low-end' },
+    { id: 'classical', label: 'Classical', desc: 'Natural orchestral dynamic headroom' },
+    { id: 'electronic', label: 'Electronic', desc: 'Deep sub-bass and bright hi-hat sizzle' },
     { id: 'hip_hop', label: 'Hip-Hop & R&B', desc: 'Sub-bass dominance with crisp hi-hat shimmer' },
-    { id: 'acoustic', label: 'Acoustic / Warm', desc: 'Natural woody resonance and organic mid tones' },
     { id: 'cinematic', label: 'Cinematic Wide', desc: 'Grand scale, cinematic score depth and rumble' },
     { id: 'night', label: 'Night Listening', desc: 'Tamed dynamic peaks for low-volume comfort' },
+    { id: 'focus', label: 'Focus & Study', desc: 'Balanced non-distracting background curve' },
     { id: 'workout', label: 'Workout Energy', desc: 'High impact energetic kick and driving highs' },
     { id: 'chill', label: 'Chill & Relax', desc: 'Smooth, relaxed high-end and gentle warmth' },
+    { id: 'party', label: 'Party & Club', desc: 'Energetic low-end thump and vibrant clarity' },
+    { id: 'gaming', label: 'Gaming', desc: 'Enhanced positional cues and midrange detail' },
+    { id: 'study', label: 'Study Session', desc: 'Warm, fatigue-free background tonal balance' },
+    { id: 'travel', label: 'Travel / Commute', desc: 'Ambient rumble compensation for noisy transit' },
   ];
 
   // Interactive Spatial 2D Touch Field
@@ -123,6 +162,10 @@ export const MobileAudioControlSheet: React.FC = () => {
         >
           {/* Sheet Content Container */}
           <MotionModal
+            ref={sheetRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Audio Studio"
             variant="bottom-sheet"
             onClick={(e) => e.stopPropagation()}
             className="relative w-full max-h-[92vh] glass-immersive border-t border-white/[0.16] rounded-t-3xl shadow-[0_-16px_60px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden pb-safe"
@@ -172,7 +215,8 @@ export const MobileAudioControlSheet: React.FC = () => {
             <button
               type="button"
               onClick={resetAllAudioProcessing}
-              className="p-2 text-zinc-400 hover:text-zinc-200 active:bg-zinc-800 rounded-xl transition-colors cursor-pointer aura-pressable"
+              aria-label="Reset audio processing"
+              className="p-2 text-zinc-400 hover:text-zinc-200 active:bg-zinc-800 rounded-xl transition-colors cursor-pointer aura-pressable aura-focus-ring"
               title="Reset Audio Processing"
             >
               <RotateCcw className="w-4 h-4" />
@@ -182,7 +226,8 @@ export const MobileAudioControlSheet: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsAudioControlsOpen(false)}
-              className="p-2 text-zinc-400 hover:text-white active:bg-zinc-800 rounded-xl transition-colors cursor-pointer aura-pressable"
+              aria-label="Close Audio Studio"
+              className="p-2 text-zinc-400 hover:text-white active:bg-zinc-800 rounded-xl transition-colors cursor-pointer aura-pressable aura-focus-ring"
               title="Close"
             >
               <X className="w-5 h-5" />
@@ -225,6 +270,16 @@ export const MobileAudioControlSheet: React.FC = () => {
 
         {/* Scrollable Tab Body */}
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
+          {(currentTrack?.source === 'youtube' || isDirectStreamActive) && (
+            <div className="p-3 rounded-2xl bg-zinc-900/80 border border-amber-500/25 text-[11px] text-zinc-300 leading-relaxed">
+              <span className="inline-block px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono text-[9px] border border-amber-500/30 font-semibold mr-2">
+                {currentTrack?.source === 'youtube' ? 'YOUTUBE EMBED' : 'DIRECT STREAM (BYPASSED)'}
+              </span>
+              {currentTrack?.source === 'youtube'
+                ? 'Playback controls work normally. Web Audio EQ & DSP apply to local files and CORS-enabled streams.'
+                : 'Direct stream fallback active due to station CORS policy. Web Audio EQ & DSP are bypassed for this stream.'}
+            </div>
+          )}
           <AnimatePresence mode="wait" initial={false}>
             <MotionFadeSlide key={activeTab} direction="up" distance={6} duration="micro">
               {/* TAB 1: BASIC TONE */}
@@ -288,6 +343,36 @@ export const MobileAudioControlSheet: React.FC = () => {
                 />
               </div>
 
+              {/* Channel Mode Selector */}
+              <div className="p-4 rounded-2xl bg-zinc-900/60 border border-white/5 flex flex-col gap-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider">Channel Routing</span>
+                  <span className="text-[10px] font-mono text-indigo-400 uppercase">{channel.mode}</span>
+                </div>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {([
+                    { id: 'stereo', label: 'Stereo' },
+                    { id: 'mono', label: 'Mono' },
+                    { id: 'swap', label: 'Swap' },
+                    { id: 'invertL', label: 'Ø L' },
+                    { id: 'invertR', label: 'Ø R' },
+                  ] as { id: ChannelMode; label: string }[]).map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => updateChannels({ mode: m.id })}
+                      className={`py-2 px-1 rounded-xl text-[11px] font-semibold border transition-colors cursor-pointer aura-pressable aura-focus-ring ${
+                        channel.mode === m.id
+                          ? 'bg-indigo-600/30 border-indigo-500/50 text-white'
+                          : 'bg-zinc-950/60 border-white/5 text-zinc-400 hover:text-zinc-200'
+                      }`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Quick Presets Pills */}
               <div className="flex flex-col gap-2">
                 <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500">
@@ -298,7 +383,7 @@ export const MobileAudioControlSheet: React.FC = () => {
                     <button
                       key={p}
                       type="button"
-                      onClick={() => setEqPreset(p as EqualizerPreset)}
+                      onClick={() => setEQPreset(p as EqualizerPreset)}
                       className={`px-3 py-2 rounded-xl text-xs font-semibold capitalize transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                         eqPreset === p
                           ? 'bg-indigo-600 text-white shadow-md'
@@ -323,7 +408,7 @@ export const MobileAudioControlSheet: React.FC = () => {
                 </span>
                 <button
                   type="button"
-                  onClick={() => setEqPreset('flat')}
+                  onClick={() => setEQPreset('flat')}
                   className="text-xs text-indigo-400 hover:text-indigo-300 font-medium cursor-pointer"
                 >
                   Reset Flat
@@ -347,7 +432,8 @@ export const MobileAudioControlSheet: React.FC = () => {
                             max="12"
                             step="0.5"
                             value={gainVal}
-                            onChange={(e) => setEqGain(idx, parseFloat(e.target.value))}
+                            aria-label={`${band.label} EQ gain`}
+                            onChange={(e) => setEQGain(idx, parseFloat(e.target.value))}
                             className="slider-vertical"
                           />
                         </div>
@@ -370,7 +456,7 @@ export const MobileAudioControlSheet: React.FC = () => {
                     <button
                       key={preset.id}
                       type="button"
-                      onClick={() => setEqPreset(preset.id)}
+                      onClick={() => setEQPreset(preset.id)}
                       className={`flex flex-col text-left p-2.5 rounded-xl border transition-colors cursor-pointer aura-pressable-subtle aura-focus-ring ${
                         eqPreset === preset.id
                           ? 'bg-indigo-950/40 text-indigo-200 border-indigo-500/50 ring-1 ring-indigo-500/30'
@@ -615,14 +701,15 @@ export const MobileAudioControlSheet: React.FC = () => {
                 <div className="p-3 rounded-2xl bg-zinc-900/60 border border-white/5 flex flex-col gap-2">
                   <div className="flex justify-between text-xs font-medium text-zinc-300">
                     <span>Virtual Room Scale</span>
-                    <span className="font-mono text-indigo-400">{Math.round((spatial?.room ?? 0.3) * 100)}%</span>
+                    <span className="font-mono text-indigo-400">{Math.round(spatial?.room ?? 0)}%</span>
                   </div>
                   <input
                     type="range"
                     min="0"
-                    max="1"
-                    step="0.05"
-                    value={spatial?.room ?? 0.3}
+                    max="100"
+                    step="1"
+                    value={Math.round(spatial?.room ?? 0)}
+                    aria-label="Virtual Room Scale"
                     onChange={(e) => updateSpatial({ room: parseFloat(e.target.value) })}
                     className="w-full"
                   />
@@ -726,6 +813,43 @@ export const MobileAudioControlSheet: React.FC = () => {
                 </AnimatePresence>
               </div>
 
+              {/* Loudness Normalization Module */}
+              <div className="p-4 rounded-2xl bg-zinc-900/60 border border-white/5 flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-zinc-100 block">Loudness Normalization</span>
+                    <span className="text-[10px] text-zinc-400">ReplayGain target leveling</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => updateLoudness({ enabled: !loudness?.enabled })}
+                    className={`px-3 py-1 rounded-xl text-xs font-bold font-mono transition-colors cursor-pointer aura-pressable aura-focus-ring ${
+                      loudness?.enabled ? 'bg-emerald-600 text-white' : 'bg-zinc-800 text-zinc-400'
+                    }`}
+                  >
+                    {loudness?.enabled ? 'ON' : 'OFF'}
+                  </button>
+                </div>
+                {loudness?.enabled && (
+                  <div className="flex flex-col gap-1.5 pt-2 border-t border-white/5">
+                    <div className="flex justify-between text-[11px] text-zinc-400">
+                      <span>Target Level</span>
+                      <span className="font-mono text-emerald-300">{loudness.targetLufs} LUFS</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="-23"
+                      max="-9"
+                      step="1"
+                      value={loudness.targetLufs}
+                      aria-label="Target Loudness LUFS"
+                      onChange={(e) => updateLoudness({ targetLufs: parseFloat(e.target.value) })}
+                      className="w-full"
+                    />
+                  </div>
+                )}
+              </div>
+
             </div>
           )}
 
@@ -743,11 +867,11 @@ export const MobileAudioControlSheet: React.FC = () => {
                   <div className="flex-1 h-3 rounded-full bg-zinc-800 overflow-hidden relative">
                     <div 
                       className="h-full bg-gradient-to-r from-emerald-500 via-yellow-400 to-rose-500 transition-[width] duration-75"
-                      style={{ width: `${Math.min(100, Math.max(0, ((realtimeMeters?.peakL ?? -60) + 60) * 1.66))}%` }}
+                      style={{ width: `${Math.min(100, Math.max(0, (meterLevels.peakL + 60) * 1.66))}%` }}
                     />
                   </div>
                   <span className="text-[11px] font-mono text-zinc-400 w-12 text-right">
-                    {(realtimeMeters?.peakL ?? -60).toFixed(1)} dB
+                    {meterLevels.peakL.toFixed(1)} dB
                   </span>
                 </div>
 
@@ -757,11 +881,11 @@ export const MobileAudioControlSheet: React.FC = () => {
                   <div className="flex-1 h-3 rounded-full bg-zinc-800 overflow-hidden relative">
                     <div 
                       className="h-full bg-gradient-to-r from-emerald-500 via-yellow-400 to-rose-500 transition-[width] duration-75"
-                      style={{ width: `${Math.min(100, Math.max(0, ((realtimeMeters?.peakR ?? -60) + 60) * 1.66))}%` }}
+                      style={{ width: `${Math.min(100, Math.max(0, (meterLevels.peakR + 60) * 1.66))}%` }}
                     />
                   </div>
                   <span className="text-[11px] font-mono text-zinc-400 w-12 text-right">
-                    {(realtimeMeters?.peakR ?? -60).toFixed(1)} dB
+                    {meterLevels.peakR.toFixed(1)} dB
                   </span>
                 </div>
               </div>
@@ -769,12 +893,12 @@ export const MobileAudioControlSheet: React.FC = () => {
               {/* Integrated Loudness LUFS */}
               <div className="p-4 rounded-2xl bg-zinc-900/60 border border-white/5 flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-bold text-zinc-200">Integrated Loudness</span>
+                  <span className="text-xs font-bold text-zinc-200">Estimated Loudness</span>
                   <p className="text-[10px] text-zinc-400">Standard Streaming Target: -14.0 LUFS</p>
                 </div>
                 <div className="text-right">
                   <span className="text-lg font-mono font-bold text-indigo-300">
-                    {(realtimeMeters?.lufs ?? -14).toFixed(1)}
+                    {meterLevels.approxLufs.toFixed(1)}
                   </span>
                   <span className="text-xs font-mono text-zinc-500 ml-1">LUFS</span>
                 </div>
@@ -800,7 +924,7 @@ export const MobileAudioControlSheet: React.FC = () => {
           {activeTab === 'presets' && (
             <div className="flex flex-col gap-3">
               <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500">
-                Master DSP Presets
+                Master DSP Presets ({PRESET_LIST.length})
               </span>
               <div className="flex flex-col gap-2">
                 {PRESET_LIST.map((p) => {
@@ -809,7 +933,7 @@ export const MobileAudioControlSheet: React.FC = () => {
                     <button
                       key={p.id}
                       type="button"
-                      onClick={() => setEqPreset(p.id)}
+                      onClick={() => setEQPreset(p.id)}
                       className={`flex items-center justify-between p-3 rounded-2xl border transition-colors cursor-pointer aura-pressable-subtle aura-focus-ring ${
                         isSelected
                           ? 'bg-indigo-950/40 text-indigo-200 border-indigo-500/50 shadow-sm'

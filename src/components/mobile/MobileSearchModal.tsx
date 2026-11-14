@@ -5,6 +5,7 @@ import { Track } from '../../types';
 import { MotionFadeSlide, MotionModal } from '../common/motion/MotionSurface';
 import { SharedIndicator } from '../common/motion/MotionInteractive';
 import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import { 
   Search, 
   X, 
@@ -135,14 +136,11 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
 
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceTimerRef = useRef<any>(null);
-
-  useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 90);
-    }
-  }, [isOpen]);
+  const modalRef = useDialogAccessibility<HTMLDivElement>({
+    isOpen,
+    onClose,
+    initialFocusRef: inputRef,
+  });
 
   const executeSearch = useCallback(async (searchQuery: string) => {
     const q = searchQuery.trim();
@@ -260,8 +258,12 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
     <AnimatePresence>
       {isOpen && (
         <MotionModal
+          ref={modalRef}
           id="mobile-search-modal"
           key="mobile-search-sheet"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Search Audio"
           variant="bottom-sheet"
           style={{ pointerEvents: isOpen ? 'auto' : 'none' }}
           className="lg:hidden fixed inset-0 z-50 bg-[#07080e]/98 backdrop-blur-3xl text-zinc-100 flex flex-col pt-safe pb-safe select-none"
@@ -485,18 +487,20 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
                   {recentSearches.map((term) => (
                     <div
                       key={term}
-                      onClick={() => setQuery(term)}
-                      className="flex items-center gap-2 pl-3 pr-2 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] text-xs text-zinc-300 cursor-pointer min-h-[38px]"
+                      className="flex items-center rounded-xl bg-white/[0.04] border border-white/[0.08] overflow-hidden min-h-[38px]"
                     >
-                      <Search className="w-3 h-3 text-sky-400 shrink-0" />
-                      <span className="truncate max-w-[160px] font-ui-body">{term}</span>
                       <button
                         type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeRecentSearch(term);
-                        }}
-                        className="text-zinc-500 hover:text-rose-400 p-1 rounded-md"
+                        onClick={() => setQuery(term)}
+                        className="flex items-center gap-2 pl-3 pr-1.5 py-2 hover:bg-white/[0.06] text-xs text-zinc-300 cursor-pointer aura-focus-ring"
+                      >
+                        <Search className="w-3 h-3 text-sky-400 shrink-0" />
+                        <span className="truncate max-w-[160px] font-ui-body">{term}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeRecentSearch(term)}
+                        className="text-zinc-500 hover:text-rose-400 p-2 rounded-r-xl cursor-pointer aura-focus-ring"
                         aria-label={`Remove ${term}`}
                       >
                         <X className="w-3 h-3" />
@@ -601,8 +605,17 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
                   {tracks.slice(0, 5).map((track) => (
                     <div
                       key={track.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Play ${track.title} by ${track.artist}`}
                       onClick={() => handlePlayTrack(track)}
-                      className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.06] active:bg-white/[0.1] cursor-pointer min-h-[48px]"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handlePlayTrack(track);
+                        }
+                      }}
+                      className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.06] active:bg-white/[0.1] cursor-pointer min-h-[48px] aura-focus-ring"
                     >
                       <div className="w-10 h-10 rounded-lg overflow-hidden bg-zinc-900 shrink-0 border border-white/10 relative">
                         {track.coverUrl ? (
@@ -684,8 +697,17 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
                 return (
                   <div
                     key={song.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Play ${song.title} by ${song.artist}`}
                     onClick={() => handlePlayTrack(song)}
-                    className="flex items-center justify-between p-2.5 rounded-2xl bg-white/[0.02] border border-white/[0.05] active:bg-white/[0.08] transition-colors cursor-pointer min-h-[56px]"
+                    onKeyDown={(e) => {
+                      if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+                        e.preventDefault();
+                        handlePlayTrack(song);
+                      }
+                    }}
+                    className="flex items-center justify-between p-2.5 rounded-2xl bg-white/[0.02] border border-white/[0.05] active:bg-white/[0.08] transition-colors cursor-pointer min-h-[56px] aura-focus-ring"
                   >
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <div className="w-11 h-11 rounded-xl overflow-hidden bg-zinc-900 shrink-0 border border-white/10 relative">
@@ -749,8 +771,17 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
               {searchResults.artists.map((artist) => (
                 <div
                   key={artist.name}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Filter by artist ${artist.name}`}
                   onClick={() => handleSelectArtist(artist.name)}
-                  className="p-2.5 rounded-2xl bg-white/[0.02] border border-white/[0.05] active:bg-white/[0.08] flex items-center gap-3 cursor-pointer min-h-[48px]"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleSelectArtist(artist.name);
+                    }
+                  }}
+                  className="p-2.5 rounded-2xl bg-white/[0.02] border border-white/[0.05] active:bg-white/[0.08] flex items-center gap-3 cursor-pointer min-h-[48px] aura-focus-ring"
                 >
                   <div className="w-10 h-10 rounded-full bg-indigo-950 text-indigo-300 flex items-center justify-center shrink-0 border border-indigo-500/20 overflow-hidden">
                     {artist.sampleCover ? (
@@ -782,8 +813,17 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
               {searchResults.albums.map((album) => (
                 <div
                   key={`${album.name}-${album.artist}`}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Filter by album ${album.name}`}
                   onClick={() => handleSelectAlbum(album.name)}
-                  className="p-2.5 rounded-2xl bg-white/[0.02] border border-white/[0.05] active:bg-white/[0.08] flex items-center gap-3 cursor-pointer min-h-[48px]"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleSelectAlbum(album.name);
+                    }
+                  }}
+                  className="p-2.5 rounded-2xl bg-white/[0.02] border border-white/[0.05] active:bg-white/[0.08] flex items-center gap-3 cursor-pointer min-h-[48px] aura-focus-ring"
                 >
                   <div className="w-10 h-10 rounded-xl bg-zinc-800 text-zinc-300 flex items-center justify-center shrink-0 border border-white/10 overflow-hidden">
                     {album.coverUrl ? (
@@ -815,19 +855,24 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
               {searchResults.playlists.map((pl) => (
                 <div
                   key={pl.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Open space ${pl.title}`}
                   onClick={() => handleSelectPlaylist(pl.id)}
-                  className="p-2.5 rounded-2xl bg-white/[0.02] border border-white/[0.05] active:bg-white/[0.08] flex items-center gap-3 cursor-pointer min-h-[48px]"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleSelectPlaylist(pl.id);
+                    }
+                  }}
+                  className="p-2.5 rounded-2xl bg-white/[0.02] border border-white/[0.05] active:bg-white/[0.08] flex items-center gap-3 cursor-pointer min-h-[48px] aura-focus-ring"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-zinc-800 text-zinc-300 flex items-center justify-center shrink-0 border border-white/10 overflow-hidden">
-                    {pl.coverUrl ? (
-                      <img src={pl.coverUrl} alt={pl.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <Music className="w-4 h-4 text-sky-400" />
-                    )}
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${pl.coverGradient || 'from-sky-600 to-indigo-800'} flex items-center justify-center shrink-0 border border-white/10 overflow-hidden`}>
+                    <Music className="w-4 h-4 text-white" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-bold text-zinc-100 truncate font-ui-title">
-                      <HighlightText text={pl.name} query={query} />
+                      <HighlightText text={pl.title} query={query} />
                     </p>
                     <p className="text-[10px] text-zinc-500 font-mono truncate">{pl.trackCount} tracks</p>
                   </div>

@@ -2,6 +2,7 @@ import React from 'react';
 import { AnimatePresence } from 'motion/react';
 import { MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
 import { Playlist } from '../../types';
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import { X, Trash2, AlertTriangle } from 'lucide-react';
 
 interface DeletePlaylistModalProps {
@@ -18,6 +19,10 @@ export const DeletePlaylistModal: React.FC<DeletePlaylistModalProps> = ({
   onConfirmDelete,
 }) => {
   const trackCount = playlist?.trackIds?.length || 0;
+  const modalRef = useDialogAccessibility<HTMLDivElement>({
+    isOpen: isOpen && Boolean(playlist),
+    onClose,
+  });
 
   return (
     <AnimatePresence>
@@ -28,7 +33,11 @@ export const DeletePlaylistModal: React.FC<DeletePlaylistModalProps> = ({
           className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 select-none"
         >
           <MotionModal
+            ref={modalRef}
             variant="center"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Delete Space Confirmation"
             onClick={(e) => e.stopPropagation()}
             className="relative w-full max-w-md rounded-2xl bg-[#0e1017] border border-white/10 shadow-2xl p-6 flex flex-col gap-5"
           >
@@ -45,8 +54,10 @@ export const DeletePlaylistModal: React.FC<DeletePlaylistModalProps> = ({
               </div>
 
               <button
+                type="button"
+                aria-label="Close delete space modal"
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer aura-pressable"
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
               >
                 <X className="w-4 h-4" />
               </button>

@@ -53,7 +53,7 @@ class AudiusService {
   private isResolvingHost = false;
 
   constructor() {
-    const envAppName = (import.meta as any).env?.VITE_AUDIUS_APP_NAME;
+    const envAppName = import.meta.env.VITE_AUDIUS_APP_NAME;
     if (envAppName) {
       this.appName = envAppName;
     }

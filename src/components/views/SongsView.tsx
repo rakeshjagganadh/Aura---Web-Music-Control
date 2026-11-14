@@ -8,6 +8,7 @@ import { TrackGridCard } from '../library/TrackGridCard';
 import { AddToPlaylistModal } from '../playlists/AddToPlaylistModal';
 import { MotionFadeSlide, MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
 import { SharedIndicator } from '../common/motion/MotionInteractive';
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import { 
   Music, 
   Search, 
@@ -53,6 +54,10 @@ export const SongsView: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [playlistModalTrack, setPlaylistModalTrack] = useState<Track | null>(null);
   const [playlistModalBulkTracks, setPlaylistModalBulkTracks] = useState<Track[] | null>(null);
+  const deleteModalRef = useDialogAccessibility<HTMLDivElement>({
+    isOpen: isDeleteModalOpen,
+    onClose: () => setIsDeleteModalOpen(false),
+  });
 
   // Synchronize local search with global search query
   useEffect(() => {
@@ -276,6 +281,7 @@ export const SongsView: React.FC = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortField)}
+                aria-label="Sort tracks by"
                 className="bg-transparent text-xs text-white focus:outline-none cursor-pointer pr-1"
               >
                 <option value="dateAdded" className="bg-[#12141c] text-white">Recently Added</option>
@@ -288,8 +294,9 @@ export const SongsView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="hover:text-white px-1 text-[10px] font-mono font-bold uppercase tracking-wider text-sky-400 cursor-pointer"
+                className="hover:text-white px-1 text-[10px] font-mono font-bold uppercase tracking-wider text-sky-400 cursor-pointer aura-focus-ring rounded"
                 title="Toggle sort direction"
+                aria-label={`Sort order ${sortOrder === 'asc' ? 'ascending' : 'descending'}`}
               >
                 {sortOrder}
               </button>
@@ -301,7 +308,9 @@ export const SongsView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setViewMode('row')}
-                  className={`relative p-1.5 rounded-lg transition-colors cursor-pointer aura-pressable ${
+                  aria-label="List view"
+                  aria-pressed={viewMode === 'row'}
+                  className={`relative p-1.5 rounded-lg transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                     viewMode === 'row' ? 'text-white' : 'text-zinc-400 hover:text-white'
                   }`}
                   title="List View"
@@ -317,7 +326,9 @@ export const SongsView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setViewMode('grid')}
-                  className={`relative p-1.5 rounded-lg transition-colors cursor-pointer aura-pressable ${
+                  aria-label="Grid view"
+                  aria-pressed={viewMode === 'grid'}
+                  className={`relative p-1.5 rounded-lg transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                     viewMode === 'grid' ? 'text-white' : 'text-zinc-400 hover:text-white'
                   }`}
                   title="Grid View"
@@ -722,7 +733,11 @@ export const SongsView: React.FC = () => {
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
           >
             <MotionModal
+              ref={deleteModalRef}
               variant="center"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Delete Selected Tracks Confirmation"
               onClick={(e) => e.stopPropagation()}
               className="relative w-full max-w-md p-6 rounded-3xl aura-glass-island border border-white/15 shadow-2xl flex flex-col gap-4"
             >

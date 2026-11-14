@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { youtubePlayerBridge } from '../../services/youtubePlayerBridge';
 import { youtubeService } from '../../services/youtubeService';
-import { backgroundAudioKeepAlive } from '../../services/backgroundAudioKeepAlive';
 
 declare global {
   interface Window {
@@ -30,8 +29,8 @@ export const YouTubeEmbedPlayer: React.FC = () => {
 
       try {
         playerRef.current = new window.YT.Player('aura-yt-iframe-slot', {
-          height: '180',
-          width: '320',
+          height: '200',
+          width: '220',
           playerVars: {
             autoplay: 1,
             controls: 1,
@@ -184,9 +183,10 @@ export const YouTubeEmbedPlayer: React.FC = () => {
   return (
     <div
       id="aura-youtube-engine"
-      className="fixed bottom-0 right-0 w-[1px] h-[1px] opacity-0 pointer-events-none select-none overflow-hidden"
+      aria-hidden="true"
+      className="fixed bottom-0 right-0 w-[220px] h-[200px] opacity-0 pointer-events-none select-none overflow-hidden -z-50"
     >
-      {/* Official YouTube IFrame Mounting Point */}
+      {/* Hidden Official YouTube IFrame Mounting Point (audio-first presentation) */}
       <div id="aura-yt-iframe-slot" className="w-full h-full" />
     </div>
   );

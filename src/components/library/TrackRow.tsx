@@ -146,13 +146,22 @@ export const TrackRow: React.FC<TrackRowProps> = ({
   return (
     <div
       id={`track-row-${track.id}`}
+      role="button"
+      tabIndex={0}
+      aria-label={`${isActivelyPlaying ? 'Pause' : 'Play'} ${track.title} by ${track.artist}`}
       onMouseEnter={() => { if (canHover) setIsHovered(true); }}
       onMouseLeave={() => {
         setIsHovered(false);
         setIsMenuOpen(false);
       }}
       onClick={handleRowClick}
-      className={`group relative flex items-center justify-between gap-3 px-3 py-2 sm:py-2.5 rounded-xl transition-colors duration-150 cursor-pointer select-none ${
+      onKeyDown={(e) => {
+        if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          handleRowClick();
+        }
+      }}
+      className={`group relative flex items-center justify-between gap-3 px-3 py-2 sm:py-2.5 rounded-xl transition-colors duration-150 cursor-pointer select-none aura-focus-ring ${
         isCurrent
           ? 'bg-white/[0.08] text-white shadow-sm border border-white/10'
           : isSelected

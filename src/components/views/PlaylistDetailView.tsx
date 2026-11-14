@@ -292,10 +292,11 @@ export const PlaylistDetailView: React.FC = () => {
                       if (targetIndex < 0) return;
                       const [moved] = newTrackIds.splice(i, 1);
                       newTrackIds.splice(targetIndex, 0, moved);
-                      updatePlaylist(playlist.id, { trackIds: newTrackIds });
+                      updatePlaylist({ ...playlist, trackIds: newTrackIds });
                     }}
                     className={`p-0.5 rounded text-zinc-400 hover:text-white transition-colors aura-focus-ring ${i === 0 ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer aura-pressable'}`}
                     title="Move up"
+                    aria-label={`Move ${track.title} up`}
                   >
                     <ChevronUp className="w-3 h-3" />
                   </button>
@@ -309,10 +310,11 @@ export const PlaylistDetailView: React.FC = () => {
                       if (targetIndex >= newTrackIds.length) return;
                       const [moved] = newTrackIds.splice(i, 1);
                       newTrackIds.splice(targetIndex, 0, moved);
-                      updatePlaylist(playlist.id, { trackIds: newTrackIds });
+                      updatePlaylist({ ...playlist, trackIds: newTrackIds });
                     }}
                     className={`p-0.5 rounded text-zinc-400 hover:text-white transition-colors aura-focus-ring ${i === playlistTracks.length - 1 ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer aura-pressable'}`}
                     title="Move down"
+                    aria-label={`Move ${track.title} down`}
                   >
                     <ChevronDown className="w-3 h-3" />
                   </button>

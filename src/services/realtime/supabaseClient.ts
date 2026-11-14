@@ -26,9 +26,8 @@ export function normalizeSupabaseUrl(rawUrl: string): string {
 }
 
 export function getSupabaseConfig(): { url: string; anonKey: string } | null {
-  const metaEnv = (import.meta as any).env || {};
-  const rawUrl = metaEnv.VITE_SUPABASE_URL || metaEnv.SUPABASE_URL;
-  const rawAnonKey = metaEnv.VITE_SUPABASE_ANON_KEY || metaEnv.SUPABASE_ANON_KEY;
+  const rawUrl = import.meta.env.VITE_SUPABASE_URL;
+  const rawAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
   if (rawUrl && rawAnonKey && typeof rawUrl === 'string' && typeof rawAnonKey === 'string' && rawUrl.trim().length > 0 && rawAnonKey.trim().length > 0) {
     const normalizedUrl = normalizeSupabaseUrl(rawUrl);

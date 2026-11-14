@@ -37,6 +37,7 @@ export const PresetsProfilesPanel: React.FC<{ className?: string }> = ({ classNa
   const {
     userPresets,
     saveCurrentAsPreset,
+    importUserPresets,
     applyPresetSnapshot,
     deleteUserPreset,
     useSongProfiles,
@@ -81,18 +82,21 @@ export const PresetsProfilesPanel: React.FC<{ className?: string }> = ({ classNa
       try {
         const parsed = JSON.parse(event.target?.result as string);
         if (Array.isArray(parsed)) {
-          for (const item of parsed) {
-            if (item.name && item.settings) {
-              await saveCurrentAsPreset(item.name, item.category || 'custom');
-            }
+          const count = await importUserPresets(parsed as UserPreset[]);
+          if (count > 0) {
+            showToast(`Successfully imported ${count} ${count === 1 ? 'preset' : 'presets'}!`, 'success');
+          } else {
+            showToast('No valid presets found in JSON file.', 'warning');
           }
-          showToast(`Successfully imported presets!`, 'success');
+        } else {
+          showToast('Invalid JSON preset file format.', 'error');
         }
       } catch {
         showToast('Invalid JSON preset file.', 'error');
       }
     };
     reader.readAsText(file);
+    e.target.value = '';
   };
 
   return (

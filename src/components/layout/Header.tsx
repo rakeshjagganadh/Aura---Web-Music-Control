@@ -47,7 +47,7 @@ export const Header: React.FC<{
 
   const getBreadcrumbContext = () => {
     if (selectedPlaylistId && currentView === 'playlist-detail') {
-      return { section: 'Spaces', title: selectedPlaylist?.name || 'Space' };
+      return { section: 'Spaces', title: selectedPlaylist?.title || 'Space' };
     }
     switch (currentView) {
       case 'home': return { section: 'Discover', title: 'Home' };
@@ -77,11 +77,21 @@ export const Header: React.FC<{
       <header className="lg:hidden h-13 border-b border-white/[0.08] glass-floating px-4 flex items-center justify-between gap-3 sticky top-0 z-20 select-none shadow-md">
         {/* Mobile Brand */}
         <div 
+          role="button"
+          tabIndex={0}
+          aria-label="AURA Home"
           onClick={() => {
             setSelectedPlaylistId(null);
             setCurrentView('home');
           }}
-          className="flex items-center gap-2 cursor-pointer group"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setSelectedPlaylistId(null);
+              setCurrentView('home');
+            }
+          }}
+          className="flex items-center gap-2 cursor-pointer group aura-focus-ring rounded-lg"
           id="mobile-header-brand"
         >
           <AuraBrandMark isPlaying={isPlaying} size={26} />
@@ -130,8 +140,8 @@ export const Header: React.FC<{
               type="button"
               onClick={onOpenAccount}
               className="p-2 rounded-xl text-zinc-400 hover:text-white active:bg-white/5 aura-pressable transition-colors cursor-pointer aura-focus-ring"
-              title="AURA Profile & Studio Sync"
-              aria-label="Profile and Cloud Sync"
+              title="AURA Profile & Local Backup"
+              aria-label="Profile and Local Backup"
             >
               <User className="w-4 h-4" />
             </button>
@@ -276,8 +286,8 @@ export const Header: React.FC<{
                 type="button"
                 onClick={onOpenAccount}
                 className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.05] aura-pressable transition-colors cursor-pointer aura-focus-ring"
-                title="AURA Profile & Studio Sync"
-                aria-label="Profile and Cloud Sync"
+                title="AURA Profile & Local Backup"
+                aria-label="Profile and Local Backup"
               >
                 <User className="w-4 h-4" />
               </button>

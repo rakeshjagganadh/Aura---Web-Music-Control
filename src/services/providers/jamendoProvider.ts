@@ -79,7 +79,7 @@ export class JamendoProvider implements IMusicProvider {
   };
 
   private getClientIdsToTry(): string[] {
-    const envKey = (import.meta as any).env?.VITE_JAMENDO_CLIENT_ID;
+    const envKey = import.meta.env.VITE_JAMENDO_CLIENT_ID;
     if (envKey && envKey.trim()) {
       return [envKey.trim(), ...this.fallbackClientIds];
     }
