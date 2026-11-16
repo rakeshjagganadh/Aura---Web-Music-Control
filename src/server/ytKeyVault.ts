@@ -165,26 +165,28 @@ export function validateAuraSearchAccess(
     return { allowed: false };
   }
 
-  // Validate Origin when present
-  let corsOrigin: string | undefined;
-  if (origin) {
-    if (!isUrlAllowedOrigin(origin, headers)) {
-      return { allowed: false };
-    }
-    corsOrigin = origin;
-  }
-
-  // Validate Referer when present
-  if (referer && !isUrlAllowedOrigin(referer, headers)) {
-    return { allowed: false };
-  }
-
   // Reject cross-site fetches unless explicitly authorized by ALLOWED_ORIGINS
   if (secFetchSite === 'cross-site') {
     const configured = getConfiguredOrigins();
     if (!origin || !configured.includes(origin)) {
       return { allowed: false };
     }
+  }
+
+  const isBrowserSameOrigin = secFetchSite === 'same-origin';
+
+  // Validate Origin when present (skip strict host mismatch when browser guarantees same-origin)
+  let corsOrigin: string | undefined;
+  if (origin) {
+    if (!isBrowserSameOrigin && !isUrlAllowedOrigin(origin, headers)) {
+      return { allowed: false };
+    }
+    corsOrigin = origin;
+  }
+
+  // Validate Referer when present (skip strict host mismatch when browser guarantees same-origin)
+  if (referer && !isBrowserSameOrigin && !isUrlAllowedOrigin(referer, headers)) {
+    return { allowed: false };
   }
 
   // For GET search requests, require the AURA web client header
