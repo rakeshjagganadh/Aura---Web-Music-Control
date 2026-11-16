@@ -21,11 +21,11 @@ export class ProviderRegistry {
   }
 
   private registerDefaults() {
+    this.register(youtubeEmbedProvider);
     this.register(localProvider);
     this.register(audiusProvider);
     this.register(jamendoProvider);
     this.register(radioBrowserProvider);
-    this.register(youtubeEmbedProvider);
   }
 
   public register(provider: IMusicProvider): void {

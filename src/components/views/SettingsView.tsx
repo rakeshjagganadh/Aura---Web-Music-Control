@@ -46,6 +46,7 @@ export const SettingsView: React.FC = () => {
     limiter,
     updateLimiter,
     setCurrentView,
+    showToast,
   } = useMusic();
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);

@@ -214,7 +214,7 @@ export class YouTubeSourceAdapter implements ISourceSearchAdapter {
       };
     }
 
-    const result = await youtubeService.search(q, 10);
+    const result = await youtubeService.search(q, 15);
     return {
       songs: result.items,
       status: result.error ? 'error' : 'ready',
@@ -502,19 +502,27 @@ export class UniversalSearchCoordinator {
       radioStatus = 'ready';
     }
 
-    // Deduplicate songs by ID
+    // Track YouTube native API relevance order (0 = top hit)
+    const ytIndexMap = new Map<string, number>();
+    ytSongs.forEach((s, idx) => {
+      ytIndexMap.set(s.id, idx);
+    });
+
+    // Deduplicate songs by ID with YouTube prioritized first
     const songMap = new Map<string, Track>();
-    localResult.songs.forEach((s) => songMap.set(s.id, s));
-    jamendoSongs.forEach((s) => {
+    ytSongs.forEach((s) => {
+      if (!songMap.has(s.id)) songMap.set(s.id, s);
+    });
+    localResult.songs.forEach((s) => {
       if (!songMap.has(s.id)) songMap.set(s.id, s);
     });
     audiusSongs.forEach((s) => {
       if (!songMap.has(s.id)) songMap.set(s.id, s);
     });
-    radioSongs.forEach((s) => {
+    jamendoSongs.forEach((s) => {
       if (!songMap.has(s.id)) songMap.set(s.id, s);
     });
-    ytSongs.forEach((s) => {
+    radioSongs.forEach((s) => {
       if (!songMap.has(s.id)) songMap.set(s.id, s);
     });
     openCatalogResult.songs.forEach((s) => {
@@ -523,25 +531,45 @@ export class UniversalSearchCoordinator {
 
     const allSongs = Array.from(songMap.values());
 
-    // Provider-aware relevance ranking (Exact Match > Title Prefix > Artist Match > Partial)
+    // Source-priority + relevance ranking: YouTube (AURA's primary music source) always appears on top
     const qLower = cleanQuery.toLowerCase();
+    const getSourcePriorityTier = (track: Track): number => {
+      if (track.source === 'youtube') return 10000;
+      if (!track.source || track.source === 'local') return 500;
+      if (track.source === 'audius') return 300;
+      if (track.source === 'jamendo') return 200;
+      if (track.source === 'curated_stream') return 100;
+      return 50; // radiobrowser / radio
+    };
+
+    const getMatchScore = (t: string, art: string): number => {
+      if (t === qLower) return 100;
+      if (art === qLower) return 90;
+      if (t.startsWith(qLower)) return 80;
+      if (art.startsWith(qLower)) return 70;
+      if (t.includes(qLower)) return 50;
+      if (art.includes(qLower)) return 40;
+      return 10;
+    };
+
     const rankedSongs = allSongs.sort((a, b) => {
-      const titleA = a.title.toLowerCase();
-      const titleB = b.title.toLowerCase();
-      const artistA = a.artist.toLowerCase();
-      const artistB = b.artist.toLowerCase();
+      const tierA = getSourcePriorityTier(a);
+      const tierB = getSourcePriorityTier(b);
+      if (tierB !== tierA) {
+        return tierB - tierA;
+      }
 
-      const getScore = (t: string, art: string) => {
-        if (t === qLower) return 100;
-        if (art === qLower) return 90;
-        if (t.startsWith(qLower)) return 80;
-        if (art.startsWith(qLower)) return 70;
-        if (t.includes(qLower)) return 50;
-        if (art.includes(qLower)) return 40;
-        return 10;
-      };
+      // Within YouTube results, preserve YouTube's official relevance ordering
+      if (a.source === 'youtube' && b.source === 'youtube') {
+        const idxA = ytIndexMap.get(a.id) ?? 999;
+        const idxB = ytIndexMap.get(b.id) ?? 999;
+        return idxA - idxB;
+      }
 
-      return getScore(titleB, artistB) - getScore(titleA, artistA);
+      return (
+        getMatchScore(b.title.toLowerCase(), b.artist.toLowerCase()) -
+        getMatchScore(a.title.toLowerCase(), a.artist.toLowerCase())
+      );
     });
 
     return {

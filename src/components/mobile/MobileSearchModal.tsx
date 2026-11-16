@@ -541,6 +541,18 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
+                  onClick={() => inputRef.current?.focus()}
+                  className="col-span-2 p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-left flex items-center justify-between min-h-[44px]"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Youtube className="w-4 h-4 text-red-400 shrink-0" />
+                    <span className="text-xs font-semibold text-red-200 truncate font-ui-title">YouTube Music (Primary)</span>
+                  </div>
+                  <ArrowRight className="w-3 h-3 text-red-400/70 shrink-0" />
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => {
                     onClose();
                     setCurrentView('library');

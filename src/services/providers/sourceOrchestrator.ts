@@ -110,11 +110,26 @@ export class SourceOrchestrator {
       }
     });
 
-    // Deduplication (if requested, default: true)
+    // Deduplication (if requested, default: true) & YouTube-first source prioritization
     const shouldDeduplicate = options?.deduplicate !== false;
-    const finalTracks = shouldDeduplicate
+    const dedupedTracks = shouldDeduplicate
       ? this.deduplicateTracks(rawTracks)
       : rawTracks;
+
+    const providerOrder: Record<string, number> = {
+      youtube: 5,
+      local: 4,
+      audius: 3,
+      jamendo: 2,
+      radiobrowser: 1,
+      radio: 1,
+    };
+
+    const finalTracks = [...dedupedTracks].sort((a, b) => {
+      const pA = providerOrder[a.providerId] || 0;
+      const pB = providerOrder[b.providerId] || 0;
+      return pB - pA;
+    });
 
     const tookMs = Math.round(performance.now() - start);
 
@@ -130,8 +145,7 @@ export class SourceOrchestrator {
 
   /**
    * Deduplicate tracks based on normalized (title + artist) signature.
-   * If duplicates exist, prioritizes direct streaming lossless/MP3 sources
-   * over embedded iframe sources.
+   * Prioritizes AURA's primary music source (YouTube) on top.
    */
   private deduplicateTracks(tracks: UnifiedTrack[]): UnifiedTrack[] {
     const seen = new Map<string, UnifiedTrack>();
@@ -145,12 +159,11 @@ export class SourceOrchestrator {
       if (!existing) {
         seen.set(key, track);
       } else {
-        // Source priority: local > direct_audio (Jamendo / Audius) > embed_iframe (YouTube)
         const priorityOrder: Record<string, number> = {
+          embed_iframe: 5,
           blob_url: 4,
           direct_audio: 3,
           live_radio: 2,
-          embed_iframe: 1,
         };
 
         const existingPriority = priorityOrder[existing.streamType] || 0;

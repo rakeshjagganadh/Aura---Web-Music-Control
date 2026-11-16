@@ -6,6 +6,16 @@ import { createServer as createViteServer } from 'vite';
 import { attachRoomWebSocketServer, roomAuthRouter } from './src/server/roomWsServer';
 import { youtubeRouter } from './src/server/youtubeRouter';
 
+// Load local .env file if present (native Node.js 20+)
+const envPath = path.join(process.cwd(), '.env');
+if (fs.existsSync(envPath) && typeof process.loadEnvFile === 'function') {
+  try {
+    process.loadEnvFile(envPath);
+  } catch {
+    // Ignore .env syntax warnings
+  }
+}
+
 async function startServer() {
   const app = express();
   const server = http.createServer(app);

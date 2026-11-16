@@ -177,7 +177,7 @@ export const youtubeService = {
    * Search YouTube strictly via AURA's server-side official YouTube Data API v3 proxy (/api/yt/search).
    * Never stores credentials in the browser bundle and never queries unofficial scrapers.
    */
-  async search(query: string, maxResults = 12): Promise<YouTubeSearchResult> {
+  async search(query: string, maxResults = 15): Promise<YouTubeSearchResult> {
     const q = query.trim();
     if (!q) {
       return { items: [], isConfigured: this.isConfigured() };
@@ -193,10 +193,14 @@ export const youtubeService = {
         .replace(/\/+$/, '');
 
       const searchUrl = `${backendBase}/api/yt/search?q=${encodeURIComponent(q)}&limit=${maxResults}`;
-      const backendRes = await fetch(searchUrl);
+      const backendRes = await fetch(searchUrl, {
+        headers: {
+          'X-Aura-Client': 'aura-web-v3',
+        },
+      });
       const contentType = backendRes.headers.get('content-type') || '';
 
-      if (backendRes.ok && contentType.includes('application/json')) {
+      if (contentType.includes('application/json')) {
         const backendData = await backendRes.json();
         if (typeof backendData.configured === 'boolean') {
           serverSearchConfigured = backendData.configured;
@@ -209,6 +213,14 @@ export const youtubeService = {
             error:
               backendData.warning ||
               'YouTube search requires a server-side YOUTUBE_API_KEY. Paste a YouTube URL directly to play.',
+          };
+        }
+
+        if (!backendRes.ok) {
+          return {
+            items: [],
+            isConfigured: this.isConfigured(),
+            error: backendData.error || `YouTube search returned status ${backendRes.status}.`,
           };
         }
 

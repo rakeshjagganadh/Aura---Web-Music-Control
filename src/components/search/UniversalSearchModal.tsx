@@ -574,6 +574,20 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   All Sources
                 </button>
 
+                {sourceCounts.youtube > 0 && (
+                  <button
+                    onClick={() => setActiveSourceFilter('youtube')}
+                    className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
+                      activeSourceFilter === 'youtube'
+                        ? 'bg-red-500/20 text-red-300 font-semibold'
+                        : 'text-zinc-400 hover:text-red-300'
+                    }`}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                    <span>YouTube ({sourceCounts.youtube})</span>
+                  </button>
+                )}
+
                 {sourceCounts.local > 0 && (
                   <button
                     onClick={() => setActiveSourceFilter('local')}
@@ -585,20 +599,6 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                     <span>Local ({sourceCounts.local})</span>
-                  </button>
-                )}
-
-                {sourceCounts.jamendo > 0 && (
-                  <button
-                    onClick={() => setActiveSourceFilter('jamendo')}
-                    className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
-                      activeSourceFilter === 'jamendo'
-                        ? 'bg-amber-500/20 text-amber-300 font-semibold'
-                        : 'text-zinc-400 hover:text-amber-300'
-                    }`}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                    <span>Jamendo ({sourceCounts.jamendo})</span>
                   </button>
                 )}
 
@@ -616,6 +616,20 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   </button>
                 )}
 
+                {sourceCounts.jamendo > 0 && (
+                  <button
+                    onClick={() => setActiveSourceFilter('jamendo')}
+                    className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
+                      activeSourceFilter === 'jamendo'
+                        ? 'bg-amber-500/20 text-amber-300 font-semibold'
+                        : 'text-zinc-400 hover:text-amber-300'
+                    }`}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                    <span>Jamendo ({sourceCounts.jamendo})</span>
+                  </button>
+                )}
+
                 {sourceCounts.radiobrowser > 0 && (
                   <button
                     onClick={() => setActiveSourceFilter('radiobrowser')}
@@ -627,20 +641,6 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
                     <span>Radio ({sourceCounts.radiobrowser})</span>
-                  </button>
-                )}
-
-                {sourceCounts.youtube > 0 && (
-                  <button
-                    onClick={() => setActiveSourceFilter('youtube')}
-                    className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
-                      activeSourceFilter === 'youtube'
-                        ? 'bg-red-500/20 text-red-300 font-semibold'
-                        : 'text-zinc-400 hover:text-red-300'
-                    }`}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                    <span>YouTube ({sourceCounts.youtube})</span>
                   </button>
                 )}
               </div>
@@ -799,6 +799,23 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                   
+                  {/* YouTube (Primary Source) */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveSourceFilter('youtube');
+                      inputRef.current?.focus();
+                    }}
+                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-red-500/30 text-left transition-colors cursor-pointer group col-span-2 sm:col-span-1 aura-pressable-subtle aura-focus-ring"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-mono text-red-400 uppercase font-semibold">PRIMARY SOURCE</span>
+                      <Youtube className="w-3.5 h-3.5 text-red-400" />
+                    </div>
+                    <h5 className="text-xs font-bold text-white mt-1.5 font-ui-title group-hover:text-red-300">YouTube Music</h5>
+                    <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta line-clamp-1">Search songs or paste URL</p>
+                  </button>
+
                   {/* Personal Vault */}
                   <button
                     type="button"
@@ -865,23 +882,6 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                     </div>
                     <h5 className="text-xs font-bold text-white mt-1.5 font-ui-title group-hover:text-cyan-300">Radio Browser</h5>
                     <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta line-clamp-1">30k+ live broadcasts</p>
-                  </button>
-
-                  {/* YouTube */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveSourceFilter('youtube');
-                      inputRef.current?.focus();
-                    }}
-                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-red-500/30 text-left transition-colors cursor-pointer group col-span-2 sm:col-span-1 aura-pressable-subtle aura-focus-ring"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-mono text-red-400 uppercase font-semibold">OFFICIAL IFRAME</span>
-                      <Youtube className="w-3.5 h-3.5 text-red-400" />
-                    </div>
-                    <h5 className="text-xs font-bold text-white mt-1.5 font-ui-title group-hover:text-red-300">YouTube Embed</h5>
-                    <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta line-clamp-1">Paste video URL or search</p>
                   </button>
 
                 </div>
