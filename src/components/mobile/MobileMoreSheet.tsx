@@ -2,23 +2,10 @@ import React from 'react';
 import { AnimatePresence } from 'motion/react';
 import { MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
 import { useMusic } from '../../context/MusicContext';
+import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import { NavView } from '../../types';
-import { 
-  X, 
-  Disc, 
-  User, 
-  Heart, 
-  SlidersHorizontal, 
-  Settings, 
-  Keyboard, 
-  Sparkles, 
-  UploadCloud, 
-  HardDrive,
-  ChevronRight,
-  Users,
-  Download
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 import { useListenTogether } from '../../context/ListenTogetherContext';
 
 interface MobileMoreSheetProps {
@@ -47,6 +34,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
   } = useMusic();
 
   const { isInRoom, participants } = useListenTogether();
+  const { prefersReducedMotion } = useMotionCapabilities();
   const sheetRef = useDialogAccessibility<HTMLDivElement>({ isOpen, onClose });
 
   const navigateTo = (view: NavView) => {
@@ -100,7 +88,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
             className="p-2 text-zinc-400 hover:text-white active:bg-white/[0.06] rounded-xl transition-colors cursor-pointer aura-focus-ring aura-pressable"
             aria-label="Close sheet"
           >
-            <X className="w-5 h-5" />
+            <AuraIcon name="close" size={20} />
           </button>
         </div>
 
@@ -121,14 +109,14 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
             >
               <div className="flex items-center gap-3.5 min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 text-zinc-300 group-hover:text-white transition-colors">
-                  <Users className="w-5 h-5" />
+                  <AuraIcon name="users" size={20} />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold text-white font-ui-title">Listen Together</span>
                     {isInRoom && (
                       <span className="text-[10px] font-mono text-emerald-400 font-medium flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className={`w-1.5 h-1.5 rounded-full bg-emerald-400 ${!prefersReducedMotion ? 'animate-pulse' : ''}`} />
                         <span>{participants.length} online</span>
                       </span>
                     )}
@@ -138,7 +126,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
                   </p>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 shrink-0" />
+              <AuraIcon name="chevronRight" size={16} className="text-zinc-600 group-hover:text-zinc-400 shrink-0" />
             </button>
 
             {/* Audio Studio & DSP */}
@@ -149,7 +137,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
             >
               <div className="flex items-center gap-3.5 min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 text-zinc-300 group-hover:text-white transition-colors">
-                  <SlidersHorizontal className="w-5 h-5" />
+                  <AuraIcon name="sliders" size={20} />
                 </div>
                 <div className="min-w-0">
                   <span className="text-xs font-semibold text-white font-ui-title">Audio Studio & DSP</span>
@@ -158,7 +146,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
                   </p>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 shrink-0" />
+              <AuraIcon name="chevronRight" size={16} className="text-zinc-600 group-hover:text-zinc-400 shrink-0" />
             </button>
           </div>
 
@@ -175,13 +163,13 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
               className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] active:bg-white/[0.07] border border-white/[0.05] transition-colors text-left cursor-pointer group aura-focus-ring aura-pressable-subtle"
             >
               <div className="flex items-center gap-3.5 min-w-0">
-                <Disc className="w-4.5 h-4.5 text-zinc-400 group-hover:text-zinc-200 shrink-0 ml-1" />
+                <AuraIcon name="disc" size={18} className="text-zinc-400 group-hover:text-zinc-200 shrink-0 ml-1" />
                 <div className="min-w-0">
                   <span className="text-xs font-medium text-zinc-200 font-ui-body">Albums Collection</span>
                   <p className="text-[11px] text-zinc-500 font-ui-meta truncate">Browse LP & EP release packages</p>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 shrink-0" />
+              <AuraIcon name="chevronRight" size={16} className="text-zinc-600 group-hover:text-zinc-400 shrink-0" />
             </button>
 
             {/* Artists */}
@@ -191,13 +179,13 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
               className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] active:bg-white/[0.07] border border-white/[0.05] transition-colors text-left cursor-pointer group aura-focus-ring aura-pressable-subtle"
             >
               <div className="flex items-center gap-3.5 min-w-0">
-                <User className="w-4.5 h-4.5 text-zinc-400 group-hover:text-zinc-200 shrink-0 ml-1" />
+                <AuraIcon name="user" size={18} className="text-zinc-400 group-hover:text-zinc-200 shrink-0 ml-1" />
                 <div className="min-w-0">
                   <span className="text-xs font-medium text-zinc-200 font-ui-body">Artists Directory</span>
                   <p className="text-[11px] text-zinc-500 font-ui-meta truncate">Explore track performers & creators</p>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 shrink-0" />
+              <AuraIcon name="chevronRight" size={16} className="text-zinc-600 group-hover:text-zinc-400 shrink-0" />
             </button>
 
             {/* Liked Songs */}
@@ -207,7 +195,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
               className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] active:bg-white/[0.07] border border-white/[0.05] transition-colors text-left cursor-pointer group aura-focus-ring aura-pressable-subtle"
             >
               <div className="flex items-center gap-3.5 min-w-0">
-                <Heart className="w-4.5 h-4.5 text-rose-400 shrink-0 ml-1" />
+                <AuraIcon name="heart" size={18} className="text-rose-400 shrink-0 ml-1" />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-zinc-200 font-ui-body">Liked Songs</span>
@@ -220,7 +208,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
                   <p className="text-[11px] text-zinc-500 font-ui-meta truncate">Your starred listening favorites</p>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 shrink-0" />
+              <AuraIcon name="chevronRight" size={16} className="text-zinc-600 group-hover:text-zinc-400 shrink-0" />
             </button>
           </div>
 
@@ -235,7 +223,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
               }}
               className="flex flex-col gap-2 p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.07] text-left transition-colors cursor-pointer group aura-focus-ring aura-pressable-subtle"
             >
-              <UploadCloud className="w-5 h-5 text-zinc-300 group-hover:text-white" />
+              <AuraIcon name="uploadCloud" size={20} className="text-zinc-300 group-hover:text-white" />
               <div>
                 <span className="text-xs font-semibold text-white block font-ui-title">Import Music</span>
                 <span className="text-[11px] text-zinc-400 font-ui-meta">Add audio files</span>
@@ -251,7 +239,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
               }}
               className="flex flex-col gap-2 p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.07] text-left transition-colors cursor-pointer group aura-focus-ring aura-pressable-subtle"
             >
-              <Sparkles className="w-5 h-5 text-zinc-300 group-hover:text-white" />
+              <AuraIcon name="sparkles" size={20} className="text-zinc-300 group-hover:text-white" />
               <div>
                 <span className="text-xs font-semibold text-white block font-ui-title">Sample Pack</span>
                 <span className="text-[11px] text-zinc-400 font-ui-meta">Load demo music</span>
@@ -271,7 +259,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
             >
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-sky-500/15 border border-sky-500/25 flex items-center justify-center shrink-0">
-                  <Download className="w-4 h-4 text-sky-300" />
+                  <AuraIcon name="download" size={16} className="text-sky-300" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
@@ -283,7 +271,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
                   </span>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-zinc-500 shrink-0" />
+              <AuraIcon name="chevronRight" size={16} className="text-zinc-500 shrink-0" />
             </button>
           )}
 
@@ -297,16 +285,16 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
               className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.05] transition-colors text-left cursor-pointer group aura-focus-ring aura-pressable-subtle"
             >
               <div className="flex items-center gap-3">
-                <Settings className="w-4 h-4 text-zinc-400 group-hover:text-white shrink-0 ml-1" />
+                <AuraIcon name="settings" size={16} className="text-zinc-400 group-hover:text-white shrink-0 ml-1" />
                 <span className="text-xs font-medium text-zinc-300 font-ui-body">Preferences & System Settings</span>
               </div>
-              <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 shrink-0" />
+              <AuraIcon name="chevronRight" size={16} className="text-zinc-600 group-hover:text-zinc-400 shrink-0" />
             </button>
 
             {/* Telemetry and Shortcuts Row */}
             <div className="flex items-center justify-between px-2 pt-1 text-xs text-zinc-500">
               <div className="flex items-center gap-1.5 font-mono text-[11px]">
-                <HardDrive className="w-3.5 h-3.5 text-zinc-400" />
+                <AuraIcon name="hardDrive" size={14} className="text-zinc-400" />
                 <span>Vault: {formatStorageMB(storageUsage.approxBytes)}</span>
               </div>
               
@@ -318,7 +306,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
                 }}
                 className="flex items-center gap-1.5 text-zinc-400 hover:text-white transition-colors cursor-pointer text-xs aura-pressable"
               >
-                <Keyboard className="w-3.5 h-3.5" />
+                <AuraIcon name="keyboard" size={14} />
                 <span className="font-ui-body">Shortcuts</span>
               </button>
             </div>

@@ -1,19 +1,7 @@
 import React from 'react';
 import { MotionIconSwap } from '../common/motion/MotionInteractive';
 import { useMusic } from '../../context/MusicContext';
-import { 
-  Sparkles, 
-  RotateCcw, 
-  Waves, 
-  Disc, 
-  Flame, 
-  Zap, 
-  Radio, 
-  Power,
-  Layers,
-  ArrowRight,
-  Info
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className = '' }) => {
   const { effects, updateEffects, resetEffects } = useMusic();
@@ -38,7 +26,7 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 shrink-0">
-            <Sparkles className="w-4 h-4" />
+            <AuraIcon name="sparkles" size={16} />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -61,7 +49,7 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             title="Bypass and reset all modular DSP effects to flat defaults"
           >
-            <RotateCcw className="w-3 h-3" />
+            <AuraIcon name="reset" size={12} />
             <span>Bypass All FX</span>
           </button>
         </div>
@@ -72,13 +60,13 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-zinc-500 uppercase">Signal Flow:</span>
           <span className="px-2 py-0.5 rounded bg-zinc-900 border border-white/5 text-zinc-300">Input</span>
-          <ArrowRight className="w-3 h-3 text-zinc-600" />
+          <AuraIcon name="arrowRight" size={12} className="text-zinc-600" />
           <span className={`px-2 py-0.5 rounded border transition-colors ${
             effects.saturation?.enabled ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'bg-zinc-900 border-white/5 text-zinc-500'
           }`}>
             Saturation
           </span>
-          <ArrowRight className="w-3 h-3 text-zinc-600" />
+          <AuraIcon name="arrowRight" size={12} className="text-zinc-600" />
           <span className="text-zinc-500">Parallel Send (</span>
           <span className={`px-1.5 py-0.5 rounded border ${
             effects.reverb.enabled ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30' : 'text-zinc-500 border-transparent'
@@ -96,7 +84,7 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
             effects.exciter?.enabled ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : 'text-zinc-500 border-transparent'
           }`}>Exciter</span>
           <span className="text-zinc-500">)</span>
-          <ArrowRight className="w-3 h-3 text-zinc-600" />
+          <AuraIcon name="arrowRight" size={12} className="text-zinc-600" />
           <span className="px-2 py-0.5 rounded bg-zinc-900 border border-white/5 text-zinc-300">Output</span>
         </div>
       </div>
@@ -134,7 +122,7 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
               }`}
             >
               <MotionIconSwap stateKey={Boolean(effects.reverb.enabled)}>
-                <Power className="w-3 h-3" />
+                <AuraIcon name="power" size={12} />
               </MotionIconSwap>
               <span>{effects.reverb.enabled ? 'ACTIVE' : 'BYPASS'}</span>
             </button>
@@ -252,7 +240,7 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
               }`}
             >
               <MotionIconSwap stateKey={Boolean(effects.echo.enabled)}>
-                <Power className="w-3 h-3" />
+                <AuraIcon name="power" size={12} />
               </MotionIconSwap>
               <span>{effects.echo.enabled ? 'ACTIVE' : 'BYPASS'}</span>
             </button>
@@ -387,7 +375,7 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
               }`}
             >
               <MotionIconSwap stateKey={Boolean(effects.chorus?.enabled)}>
-                <Power className="w-3 h-3" />
+                <AuraIcon name="power" size={12} />
               </MotionIconSwap>
               <span>{effects.chorus?.enabled ? 'ACTIVE' : 'BYPASS'}</span>
             </button>
@@ -486,7 +474,7 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
           {/* Header */}
           <div className="flex items-center justify-between pb-3 border-b border-white/5">
             <div className="flex items-center gap-2.5">
-              <Flame className={`w-4 h-4 ${effects.saturation?.enabled ? 'text-amber-400' : 'text-zinc-500'}`} />
+              <AuraIcon name="flame" size={16} className={effects.saturation?.enabled ? 'text-amber-400' : 'text-zinc-500'} />
               <div>
                 <h3 className="text-xs font-bold text-white uppercase tracking-wider">Analog Saturation</h3>
                 <p className="text-[11px] text-zinc-400">2× oversampled nonlinear wave shaping</p>
@@ -503,7 +491,7 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
               }`}
             >
               <MotionIconSwap stateKey={Boolean(effects.saturation?.enabled)}>
-                <Power className="w-3 h-3" />
+                <AuraIcon name="power" size={12} />
               </MotionIconSwap>
               <span>{effects.saturation?.enabled ? 'ACTIVE' : 'BYPASS'}</span>
             </button>
@@ -577,7 +565,7 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
           {/* Header */}
           <div className="flex items-center justify-between pb-3 border-b border-white/5">
             <div className="flex items-center gap-2.5">
-              <Zap className={`w-4 h-4 ${effects.exciter?.enabled ? 'text-emerald-400' : 'text-zinc-500'}`} />
+              <AuraIcon name="zap" size={16} className={effects.exciter?.enabled ? 'text-emerald-400' : 'text-zinc-500'} />
               <div>
                 <h3 className="text-xs font-bold text-white uppercase tracking-wider">HF Air Exciter</h3>
                 <p className="text-[11px] text-zinc-400">Aural harmonic brilliance generator</p>
@@ -594,7 +582,7 @@ export const EffectsRackPanel: React.FC<{ className?: string }> = ({ className =
               }`}
             >
               <MotionIconSwap stateKey={Boolean(effects.exciter?.enabled)}>
-                <Power className="w-3 h-3" />
+                <AuraIcon name="power" size={12} />
               </MotionIconSwap>
               <span>{effects.exciter?.enabled ? 'ACTIVE' : 'BYPASS'}</span>
             </button>

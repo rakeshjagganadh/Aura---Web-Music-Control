@@ -3,18 +3,7 @@ import { LayoutGroup } from 'motion/react';
 import { MotionIconSwap, SharedIndicator } from '../common/motion/MotionInteractive';
 import { useMusic } from '../../context/MusicContext';
 import { formatSeconds, formatPreciseSeconds } from '../../utils/formatTime';
-import { 
-  Repeat, 
-  Play, 
-  Pause, 
-  RotateCcw, 
-  FastForward, 
-  Rewind, 
-  Check, 
-  Pin, 
-  Scissors, 
-  Clock 
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 import { LoopABMode } from '../../types';
 
 export const LoopABController: React.FC = () => {
@@ -65,8 +54,8 @@ export const LoopABController: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-4">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
-            <Repeat className="w-4 h-4" />
+          <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center">
+            <AuraIcon name="repeat" size={16} />
           </div>
           <div>
             <h3 className="text-base font-bold text-white tracking-tight">Precision A/B Loop Studio</h3>
@@ -89,7 +78,7 @@ export const LoopABController: React.FC = () => {
             }`}
           >
             <MotionIconSwap stateKey={loopAB.enabled ? 'on' : 'off'}>
-              <Repeat className="w-3.5 h-3.5" />
+              <AuraIcon name="repeat" size={14} />
             </MotionIconSwap>
             <span>{loopAB.enabled ? 'Looping Active' : 'Loop Off'}</span>
             {loopAB.enabled && <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />}
@@ -101,7 +90,7 @@ export const LoopABController: React.FC = () => {
             onClick={clearLoopAB}
             className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium text-zinc-400 hover:text-white bg-zinc-800/80 hover:bg-zinc-700 border border-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
-            <RotateCcw className="w-3 h-3" />
+            <AuraIcon name="reset" size={12} />
             Clear A/B
           </button>
         </div>
@@ -133,7 +122,7 @@ export const LoopABController: React.FC = () => {
               onClick={() => setLoopPointA()}
               className="flex-1 py-2 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-purple-600/20 cursor-pointer aura-pressable aura-focus-ring"
             >
-              <Pin className="w-3.5 h-3.5" />
+              <AuraIcon name="pin" size={14} />
               Set Point A (Here)
             </button>
             <button
@@ -181,7 +170,7 @@ export const LoopABController: React.FC = () => {
               onClick={() => setLoopPointB()}
               className="flex-1 py-2 px-3 rounded-xl bg-pink-600 hover:bg-pink-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-pink-600/20 cursor-pointer aura-pressable aura-focus-ring"
             >
-              <Pin className="w-3.5 h-3.5" />
+              <AuraIcon name="pin" size={14} />
               Set Point B (Here)
             </button>
             <button
@@ -242,7 +231,7 @@ export const LoopABController: React.FC = () => {
         {/* Section info */}
         <div className="flex items-center gap-4 text-xs font-mono text-zinc-400">
           <div className="flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-zinc-500" />
+            <AuraIcon name="clock" size={14} className="text-zinc-500" />
             <span>Region Span:</span>
             <span className="text-white font-bold">{formatPreciseSeconds(loopLength)}</span>
           </div>

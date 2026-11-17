@@ -4,15 +4,7 @@ import { useMusic } from '../../context/MusicContext';
 import { AuraBrandMark } from '../common/AuraBrandMark';
 import { PWAInstallButton } from '../pwa/PWAInstallButton';
 import { MotionFadeSlide } from '../common/motion/MotionSurface';
-import { 
-  Search, 
-  Sparkles, 
-  Keyboard, 
-  ListMusic, 
-  ChevronLeft, 
-  User, 
-  Plus 
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 export const Header: React.FC<{ 
   onOpenMobileSearch?: () => void;
@@ -108,7 +100,7 @@ export const Header: React.FC<{
               title="Search"
               aria-label="Search"
             >
-              <Search className="w-4 h-4" />
+              <AuraIcon name="search" size={16} />
             </button>
           )}
 
@@ -119,7 +111,7 @@ export const Header: React.FC<{
             title="Add Music"
             aria-label="Add Music"
           >
-            <Plus className="w-4 h-4" />
+            <AuraIcon name="add" size={16} />
           </button>
 
           <button
@@ -129,7 +121,7 @@ export const Header: React.FC<{
             title="Play Queue"
             aria-label="Open Play Queue"
           >
-            <ListMusic className="w-4 h-4" />
+            <AuraIcon name="queue" size={16} />
             {queue.length > 0 && (
               <span className="absolute 1 top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-sky-400 shadow-[0_0_6px_rgba(56,189,248,0.8)]" />
             )}
@@ -143,7 +135,7 @@ export const Header: React.FC<{
               title="AURA Profile & Local Backup"
               aria-label="Profile and Local Backup"
             >
-              <User className="w-4 h-4" />
+              <AuraIcon name="user" size={16} />
             </button>
           )}
         </div>
@@ -177,7 +169,7 @@ export const Header: React.FC<{
                     title="Back to Spaces"
                     aria-label="Back to Spaces"
                   >
-                    <ChevronLeft className="w-4 h-4 shrink-0" />
+                    <AuraIcon name="chevronLeft" size={16} className="shrink-0" />
                     <span className="text-xs text-zinc-400 font-medium hidden sm:inline shrink-0">Spaces</span>
                     <span className="text-zinc-600 text-xs font-mono shrink-0">/</span>
                     <span className="text-xs text-white font-semibold truncate max-w-[100px] sm:max-w-[160px] xl:max-w-[220px] font-display">
@@ -208,7 +200,7 @@ export const Header: React.FC<{
           {/* ZONE 2: UNIVERSAL SEARCH COMMAND BAR (Central Visual Anchor) */}
           <div 
             onClick={() => onOpenUniversalSearch?.()}
-            className="flex-1 min-w-[140px] max-w-xs sm:max-w-sm md:max-w-md xl:max-w-lg items-center justify-between px-3.5 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.14] text-xs text-zinc-300 cursor-pointer aura-pressable transition-all flex group select-none shadow-sm aura-focus-ring"
+            className="flex-1 min-w-[140px] max-w-xs sm:max-w-sm md:max-w-md xl:max-w-lg items-center justify-between px-3.5 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.14] text-xs text-zinc-300 cursor-pointer aura-pressable transition-[background-color,border-color,color] flex group select-none shadow-sm aura-focus-ring"
             title="Universal Search (⌘K or /)"
             role="button"
             tabIndex={0}
@@ -220,7 +212,7 @@ export const Header: React.FC<{
             }}
           >
             <div className="flex items-center gap-2 min-w-0">
-              <Search className="w-3.5 h-3.5 text-zinc-400 group-hover:text-sky-300 transition-colors shrink-0" />
+              <AuraIcon name="search" size={14} className="text-zinc-400 group-hover:text-sky-300 transition-colors shrink-0" />
               <span className="truncate group-hover:text-zinc-200 font-ui-body text-xs">
                 Search tracks, artists, spaces, radio...
               </span>
@@ -241,7 +233,7 @@ export const Header: React.FC<{
               className="hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] text-zinc-300 hover:text-white text-xs font-medium aura-pressable transition-colors cursor-pointer aura-focus-ring"
               title="Load sample music"
             >
-              <Sparkles className="w-3.5 h-3.5 text-zinc-400" />
+              <AuraIcon name="sparkles" size={14} className="text-zinc-400" />
               <span className="font-ui-body">Demo Pack</span>
             </button>
 
@@ -258,9 +250,9 @@ export const Header: React.FC<{
             <button
               type="button"
               onClick={() => setIsUploadModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-zinc-100 active:bg-zinc-200 text-zinc-950 text-xs font-semibold aura-pressable transition-all cursor-pointer shadow-sm aura-focus-ring"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-zinc-100 active:bg-zinc-200 text-zinc-950 text-xs font-semibold aura-pressable transition-colors cursor-pointer shadow-sm aura-focus-ring"
             >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <AuraIcon name="add" size={14} weight={600} />
               <span className="hidden sm:inline font-ui-title">Add Music</span>
             </button>
 
@@ -272,7 +264,7 @@ export const Header: React.FC<{
               title="Play Queue"
               aria-label="Open Play Queue"
             >
-              <ListMusic className="w-4 h-4" />
+              <AuraIcon name="queue" size={16} />
               {queue.length > 0 && (
                 <span className="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-white text-zinc-950 ring-2 ring-[#07090e]">
                   {queue.length}
@@ -289,7 +281,7 @@ export const Header: React.FC<{
                 title="AURA Profile & Local Backup"
                 aria-label="Profile and Local Backup"
               >
-                <User className="w-4 h-4" />
+                <AuraIcon name="user" size={16} />
               </button>
             )}
 
@@ -301,7 +293,7 @@ export const Header: React.FC<{
               title="Keyboard Shortcuts (?)"
               aria-label="Keyboard Shortcuts"
             >
-              <Keyboard className="w-4 h-4" />
+              <AuraIcon name="keyboard" size={16} />
             </button>
           </div>
 

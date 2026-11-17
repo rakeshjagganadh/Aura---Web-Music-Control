@@ -103,7 +103,7 @@ export const MotionIconSwap: React.FC<MotionIconSwapProps> = ({
         transition={
           prefersReducedMotion
             ? REDUCED_FADE_TRANSITION
-            : MOTION_TRANSITION.micro
+            : MOTION_TRANSITION.instant
         }
       >
         {children}

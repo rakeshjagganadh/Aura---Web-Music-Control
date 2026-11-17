@@ -2,16 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { MotionIconSwap } from '../common/motion/MotionInteractive';
 import { useMusic } from '../../context/MusicContext';
 import { audioEngine } from '../../services/audioEngine';
-import { 
-  Activity, 
-  ShieldCheck, 
-  Volume2, 
-  RotateCcw, 
-  Power,
-  Gauge,
-  Sliders,
-  Check
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 export const DynamicsPanel: React.FC<{ className?: string }> = ({ className = '' }) => {
   const {
@@ -77,7 +68,7 @@ export const DynamicsPanel: React.FC<{ className?: string }> = ({ className = ''
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
-            <Activity className="w-4 h-4" />
+            <AuraIcon name="activity" size={16} />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -103,7 +94,7 @@ export const DynamicsPanel: React.FC<{ className?: string }> = ({ className = ''
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             title="Reset Compressor and Limiter to studio defaults"
           >
-            <RotateCcw className="w-3 h-3" />
+            <AuraIcon name="reset" size={12} />
             <span>Reset Dynamics</span>
           </button>
         </div>
@@ -142,7 +133,7 @@ export const DynamicsPanel: React.FC<{ className?: string }> = ({ className = ''
               }`}
             >
               <MotionIconSwap stateKey={compressor.enabled}>
-                <Power className="w-3 h-3" />
+                <AuraIcon name="power" size={12} />
               </MotionIconSwap>
               <span>{compressor.enabled ? 'ACTIVE' : 'BYPASS'}</span>
             </button>
@@ -152,7 +143,7 @@ export const DynamicsPanel: React.FC<{ className?: string }> = ({ className = ''
           <div className="p-3.5 rounded-xl bg-zinc-900/60 border border-white/5 flex flex-col gap-2">
             <div className="flex items-center justify-between text-xs">
               <span className="text-zinc-400 font-medium flex items-center gap-1.5">
-                <Gauge className="w-3.5 h-3.5 text-amber-400" />
+                <AuraIcon name="gauge" size={14} className="text-amber-400" />
                 <span>Gain Reduction (GR)</span>
               </span>
               <span 
@@ -386,7 +377,7 @@ export const DynamicsPanel: React.FC<{ className?: string }> = ({ className = ''
           {/* Limiter Header */}
           <div className="flex items-center justify-between pb-3 border-b border-white/5">
             <div className="flex items-center gap-2">
-              <ShieldCheck className={`w-4 h-4 ${limiter.enabled ? 'text-emerald-400' : 'text-zinc-500'}`} />
+              <AuraIcon name="shieldCheck" size={16} className={limiter.enabled ? 'text-emerald-400' : 'text-zinc-500'} />
               <div>
                 <h3 className="text-xs font-bold text-white uppercase tracking-wider">Master Peak Limiter</h3>
                 <p className="text-[11px] text-zinc-400">Lookahead brickwall DAC protection</p>
@@ -403,7 +394,7 @@ export const DynamicsPanel: React.FC<{ className?: string }> = ({ className = ''
               }`}
             >
               <MotionIconSwap stateKey={limiter.enabled}>
-                <Power className="w-3 h-3" />
+                <AuraIcon name="power" size={12} />
               </MotionIconSwap>
               <span>{limiter.enabled ? 'PROTECT' : 'OFF'}</span>
             </button>
@@ -504,7 +495,7 @@ export const DynamicsPanel: React.FC<{ className?: string }> = ({ className = ''
       }`}>
         <div className="flex items-start gap-3.5">
           <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shrink-0 mt-0.5">
-            <Volume2 className="w-4 h-4" />
+            <AuraIcon name="volumeHigh" size={16} />
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
@@ -563,7 +554,7 @@ export const DynamicsPanel: React.FC<{ className?: string }> = ({ className = ''
               }`}
             >
               <MotionIconSwap stateKey={loudness.enabled}>
-                <Power className="w-3.5 h-3.5" />
+                <AuraIcon name="power" size={14} />
               </MotionIconSwap>
               <span>{loudness.enabled ? 'NORMALIZING' : 'BYPASS'}</span>
             </button>

@@ -1,18 +1,5 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import {
-  ArrowLeft,
-  Eye,
-  Layers,
-  Move,
-  Pause,
-  Play,
-  RotateCcw,
-  Sliders,
-  Sparkles,
-  AlertTriangle,
-  CheckCircle2,
-  Cpu,
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 import { useMusic } from '../../context/MusicContext';
 const defaultArtworkImg = '/og-image.jpg';
 
@@ -884,7 +871,7 @@ export const OpticalGlassLab: React.FC = () => {
             className="mt-0.5 p-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] text-zinc-200 transition-colors cursor-pointer"
             aria-label="Back to Settings"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <AuraIcon name="arrowLeft" size={16} />
           </button>
           <div>
             <div className="flex flex-wrap items-center gap-2">
@@ -907,7 +894,7 @@ export const OpticalGlassLab: React.FC = () => {
             onClick={() => setBackdropMode(backdropMode === 'calibration' ? 'artwork' : 'calibration')}
             className="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.11] border border-white/[0.08] text-xs font-medium text-zinc-200 flex items-center gap-1.5 cursor-pointer"
           >
-            <Layers className="w-3.5 h-3.5 text-sky-400" />
+            <AuraIcon name="layers" size={14} className="text-sky-400" />
             <span>Scene: {backdropMode === 'calibration' ? 'Art + Calibration Grid' : 'Track Art + Grid'}</span>
           </button>
 
@@ -920,7 +907,7 @@ export const OpticalGlassLab: React.FC = () => {
                 : 'bg-white/[0.06] hover:bg-white/[0.11] border-white/[0.08] text-zinc-200'
             }`}
           >
-            <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+            <AuraIcon name="alertTriangle" size={14} className="text-amber-400" />
             <span>{v1BrokenMode ? 'Simulating v1 Over-Blurred Scrim' : 'Simulate v1 Flaw'}</span>
           </button>
 
@@ -929,7 +916,7 @@ export const OpticalGlassLab: React.FC = () => {
             onClick={() => setIsAutoDrifting((v) => !v)}
             className="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.11] border border-white/[0.08] text-xs font-medium text-zinc-200 flex items-center gap-1.5 cursor-pointer"
           >
-            {isAutoDrifting ? <Pause className="w-3.5 h-3.5 text-emerald-400" /> : <Play className="w-3.5 h-3.5 text-emerald-400" />}
+            {isAutoDrifting ? <AuraIcon name="pause" size={14} filled className="text-emerald-400" /> : <AuraIcon name="play" size={14} filled className="text-emerald-400" />}
             <span>{isAutoDrifting ? 'Pause Drift' : 'Auto Drift'}</span>
           </button>
 
@@ -944,7 +931,7 @@ export const OpticalGlassLab: React.FC = () => {
             }}
             className="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.11] border border-white/[0.08] text-xs font-medium text-zinc-300 flex items-center gap-1.5 cursor-pointer"
           >
-            <RotateCcw className="w-3.5 h-3.5" />
+            <AuraIcon name="reset" size={14} />
             <span>Reset</span>
           </button>
         </div>
@@ -955,7 +942,7 @@ export const OpticalGlassLab: React.FC = () => {
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between text-xs">
             <span className="text-zinc-300 font-medium flex items-center gap-1.5">
-              <Sliders className="w-3.5 h-3.5 text-indigo-400" />
+              <AuraIcon name="sliders" size={14} className="text-indigo-400" />
               Refraction / Bevel Scale
             </span>
             <span className="font-mono text-indigo-300">{refractionStrength.toFixed(2)}x</span>
@@ -974,7 +961,7 @@ export const OpticalGlassLab: React.FC = () => {
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between text-xs">
             <span className="text-zinc-300 font-medium flex items-center gap-1.5">
-              <Eye className="w-3.5 h-3.5 text-sky-400" />
+              <AuraIcon name="eye" size={14} className="text-sky-400" />
               Surface Frost (Blur)
             </span>
             <span className="font-mono text-sky-300">{frostAmount.toFixed(1)} px</span>
@@ -992,7 +979,7 @@ export const OpticalGlassLab: React.FC = () => {
 
         <div className="flex items-center justify-between text-xs text-zinc-400 bg-black/30 rounded-xl px-3.5 py-2 border border-white/[0.05]">
           <div className="flex items-center gap-2">
-            <Move className="w-4 h-4 text-emerald-400 shrink-0" />
+            <AuraIcon name="move" size={16} className="text-emerald-400 shrink-0" />
             <span>Drag anywhere on the test stage below to move straight lines &amp; text across all 4 lenses.</span>
           </div>
           <span className="font-mono text-[11px] text-zinc-500 ml-2 shrink-0">
@@ -1267,7 +1254,7 @@ export const OpticalGlassLab: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="p-6 rounded-3xl bg-zinc-900/50 border border-white/[0.08] flex flex-col gap-3">
           <div className="flex items-center gap-2 text-amber-300 text-sm font-semibold">
-            <AlertTriangle className="w-4 h-4" />
+            <AuraIcon name="alertTriangle" size={16} />
             <h3>Why Previous OpticalGlassSurface Looked Like a Dark CSS Panel</h3>
           </div>
           <ul className="text-xs text-zinc-300 space-y-2 leading-relaxed">
@@ -1288,24 +1275,24 @@ export const OpticalGlassLab: React.FC = () => {
 
         <div className="p-6 rounded-3xl bg-zinc-900/50 border border-white/[0.08] flex flex-col gap-3">
           <div className="flex items-center gap-2 text-emerald-300 text-sm font-semibold">
-            <Cpu className="w-4 h-4" />
+            <AuraIcon name="cpu" size={16} />
             <h3>Practical Architecture Findings &amp; Constraints</h3>
           </div>
           <ul className="text-xs text-zinc-300 space-y-2 leading-relaxed">
             <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
+              <AuraIcon name="checkCircle" size={14} className="text-emerald-400 mt-0.5 shrink-0" />
               <span>
                 <strong className="text-white">Best visual realism (Sample D — WebGL):</strong> Produces unmistakable physical meniscus bending, crisp center clarity, and subtle prism dispersion at the rim without muddiness. Requires a texture source (cannot sample arbitrary DOM elements behind it directly) and must share/cap contexts cleanly.
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-sky-400 mt-0.5 shrink-0" />
+              <AuraIcon name="sparkles" size={14} className="text-sky-400 mt-0.5 shrink-0" />
               <span>
                 <strong className="text-white">Best lightweight DOM-native fallback (Sample C — SVG):</strong> A precomputed rounded-rect bevel normal map in <code className="text-sky-300">feImage</code> + <code className="text-sky-300">feDisplacementMap</code> creates real perimeter bending with zero GPU context overhead, provided post-blur stays minimal (&lt; 2px) and source texture is supplied directly.
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0" />
+              <AuraIcon name="alertTriangle" size={14} className="text-amber-400 mt-0.5 shrink-0" />
               <span>
                 <strong className="text-white">Core web platform constraint:</strong> Neither SVG <code className="text-amber-200">backdrop-filter: url()</code> nor WebGL can natively refract live HTML text/lists behind an overlay across Safari/Firefox/Chromium. Both engines work best when backed by AURA&apos;s controlled artwork + atmospheric scene texture.
               </span>

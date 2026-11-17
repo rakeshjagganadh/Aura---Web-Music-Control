@@ -6,18 +6,7 @@ import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
 import { useMusic } from '../../context/MusicContext';
 import { audioEngine } from '../../services/audioEngine';
 import { RealtimeMeterData } from '../../types';
-import { 
-  Activity, 
-  BarChart3, 
-  Sparkles, 
-  Zap, 
-  Music2, 
-  Gauge, 
-  FileAudio,
-  Radio,
-  CheckCircle2,
-  RefreshCw
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 export const AudioAnalysisPanel: React.FC<{ className?: string }> = ({ className = '' }) => {
   const { prefersReducedMotion } = useMotionCapabilities();
@@ -66,7 +55,7 @@ export const AudioAnalysisPanel: React.FC<{ className?: string }> = ({ className
       <div className="flex items-center justify-between pb-3 border-b border-white/5">
         <div className="flex items-center gap-2.5">
           <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-            <BarChart3 className="w-4 h-4" />
+            <AuraIcon name="equalizer" size={16} />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-zinc-100">Audio Analysis & Signal Inspection</h3>
@@ -84,9 +73,9 @@ export const AudioAnalysisPanel: React.FC<{ className?: string }> = ({ className
         >
           <MotionIconSwap stateKey={isAnalyzingTrack ? 'analyzing' : 'idle'}>
             {isAnalyzingTrack ? (
-              <RefreshCw className={`w-3.5 h-3.5 ${!prefersReducedMotion ? 'animate-spin' : ''}`} />
+              <AuraIcon name="refresh" size={14} className={!prefersReducedMotion ? 'animate-spin' : ''} />
             ) : (
-              <Zap className="w-3.5 h-3.5" />
+              <AuraIcon name="zap" size={14} />
             )}
           </MotionIconSwap>
           <span>{isAnalyzingTrack ? 'Analyzing Audio...' : 'Analyze Active Track'}</span>
@@ -97,7 +86,7 @@ export const AudioAnalysisPanel: React.FC<{ className?: string }> = ({ className
       <div className="p-4 rounded-2xl bg-zinc-900/50 border border-white/5 flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold text-zinc-200 uppercase tracking-wide flex items-center gap-2">
-            <Activity className="w-3.5 h-3.5 text-emerald-400" />
+            <AuraIcon name="activity" size={14} className="text-emerald-400" />
             Live Master Output Metering
           </span>
 
@@ -165,7 +154,7 @@ export const AudioAnalysisPanel: React.FC<{ className?: string }> = ({ className
             {/* BPM */}
             <div className="p-3.5 rounded-2xl bg-zinc-900/40 border border-white/5 flex flex-col gap-1">
               <span className="text-[11px] text-zinc-400 flex items-center gap-1">
-                <Gauge className="w-3 h-3 text-indigo-400" />
+                <AuraIcon name="gauge" size={12} className="text-indigo-400" />
                 Tempo / BPM
               </span>
               <span className="text-xl font-bold text-white font-mono tracking-tight">
@@ -176,7 +165,7 @@ export const AudioAnalysisPanel: React.FC<{ className?: string }> = ({ className
             {/* Integrated LUFS */}
             <div className="p-3.5 rounded-2xl bg-zinc-900/40 border border-white/5 flex flex-col gap-1">
               <span className="text-[11px] text-zinc-400 flex items-center gap-1">
-                <Radio className="w-3 h-3 text-cyan-400" />
+                <AuraIcon name="radio" size={12} className="text-cyan-400" />
                 Integrated Loudness
               </span>
               <span className="text-xl font-bold text-white font-mono tracking-tight">
@@ -187,7 +176,7 @@ export const AudioAnalysisPanel: React.FC<{ className?: string }> = ({ className
             {/* True Peak */}
             <div className="p-3.5 rounded-2xl bg-zinc-900/40 border border-white/5 flex flex-col gap-1">
               <span className="text-[11px] text-zinc-400 flex items-center gap-1">
-                <Activity className="w-3 h-3 text-amber-400" />
+                <AuraIcon name="activity" size={12} className="text-amber-400" />
                 Peak Level
               </span>
               <span className="text-xl font-bold text-white font-mono tracking-tight">
@@ -198,7 +187,7 @@ export const AudioAnalysisPanel: React.FC<{ className?: string }> = ({ className
             {/* Dynamic Range */}
             <div className="p-3.5 rounded-2xl bg-zinc-900/40 border border-white/5 flex flex-col gap-1">
               <span className="text-[11px] text-zinc-400 flex items-center gap-1">
-                <BarChart3 className="w-3 h-3 text-emerald-400" />
+                <AuraIcon name="equalizer" size={12} className="text-emerald-400" />
                 Dynamic Range (DR)
               </span>
               <span className="text-xl font-bold text-white font-mono tracking-tight">
@@ -239,7 +228,7 @@ export const AudioAnalysisPanel: React.FC<{ className?: string }> = ({ className
           <MotionFadeSlide key="analysis-empty" direction="up" distance={6} duration="micro">
             <div className="p-6 rounded-2xl bg-zinc-900/20 border border-white/5 flex flex-col items-center justify-center text-center gap-3">
               <div className="p-3 rounded-full bg-zinc-900 border border-white/5 text-zinc-500">
-                <Zap className="w-6 h-6" />
+                <AuraIcon name="zap" size={24} />
               </div>
               <div>
                 <h4 className="text-xs font-semibold text-zinc-300">Run Deep Offline Audio Analysis</h4>

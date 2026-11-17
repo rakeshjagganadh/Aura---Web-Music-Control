@@ -2,7 +2,8 @@ import React from 'react';
 import { AnimatePresence } from 'motion/react';
 import { MotionFadeSlide } from './motion/MotionSurface';
 import { useMusic } from '../../context/MusicContext';
-import { CheckCircle, AlertCircle, Info, AlertTriangle, X } from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
+import { AuraIconName } from '../../icons/iconRegistry';
 
 export const ToastContainer: React.FC = () => {
   const { toasts, dismissToast } = useMusic();
@@ -15,18 +16,18 @@ export const ToastContainer: React.FC = () => {
     >
       <AnimatePresence initial={false}>
         {toasts.map((toast) => {
-          let Icon = Info;
+          let iconName: AuraIconName = 'info';
           let borderClass = 'border-indigo-500/40 text-indigo-200';
           let bgClass = 'bg-[#0f1117]/95';
 
           if (toast.type === 'success') {
-            Icon = CheckCircle;
+            iconName = 'checkCircle';
             borderClass = 'border-emerald-500/40 text-emerald-200';
           } else if (toast.type === 'error') {
-            Icon = AlertCircle;
+            iconName = 'alertCircle';
             borderClass = 'border-rose-500/40 text-rose-200';
           } else if (toast.type === 'warning') {
-            Icon = AlertTriangle;
+            iconName = 'alertTriangle';
             borderClass = 'border-amber-500/40 text-amber-200';
           }
 
@@ -40,7 +41,7 @@ export const ToastContainer: React.FC = () => {
               className={`pointer-events-auto flex items-center justify-between gap-3 p-3.5 rounded-xl border ${borderClass} ${bgClass} shadow-xl backdrop-blur-xl`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <Icon className="w-4 h-4 shrink-0" />
+                <AuraIcon name={iconName} size={16} />
                 <p className="text-xs font-medium text-zinc-200 truncate">{toast.message}</p>
               </div>
               <button
@@ -49,7 +50,7 @@ export const ToastContainer: React.FC = () => {
                 aria-label="Dismiss notification"
                 className="min-h-[28px] min-w-[28px] flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring shrink-0"
               >
-                <X className="w-3.5 h-3.5" />
+                <AuraIcon name="close" size={14} />
               </button>
             </MotionFadeSlide>
           );

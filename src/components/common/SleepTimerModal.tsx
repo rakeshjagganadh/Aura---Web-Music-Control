@@ -4,15 +4,7 @@ import { MotionBackdrop, MotionModal } from './motion/MotionSurface';
 import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
 import { useMusic } from '../../context/MusicContext';
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
-import { 
-  X, 
-  Moon, 
-  Clock, 
-  Check, 
-  Timer, 
-  Sparkles,
-  AlertCircle
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 interface SleepTimerModalProps {
   isOpen: boolean;
@@ -77,7 +69,7 @@ export const SleepTimerModal: React.FC<SleepTimerModalProps> = ({ isOpen, onClos
         <div className="flex items-center justify-between border-b border-white/5 pb-3">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              <Moon className="w-5 h-5" />
+              <AuraIcon name="moon" size={20} />
             </div>
             <div>
               <h3 className="text-sm sm:text-base font-bold text-white">Sleep Timer</h3>
@@ -91,7 +83,7 @@ export const SleepTimerModal: React.FC<SleepTimerModalProps> = ({ isOpen, onClos
             aria-label="Close sleep timer modal"
             className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
-            <X className="w-4 h-4" />
+            <AuraIcon name="close" size={16} />
           </button>
         </div>
 
@@ -99,7 +91,11 @@ export const SleepTimerModal: React.FC<SleepTimerModalProps> = ({ isOpen, onClos
         {isSleepTimerActive && sleepTimerRemainingSecs !== null && (
           <div className="flex items-center justify-between p-3.5 rounded-2xl bg-indigo-950/30 border border-indigo-500/30">
             <div className="flex items-center gap-2.5">
-              <Timer className={`w-4 h-4 text-indigo-400 ${!prefersReducedMotion ? 'animate-pulse' : ''}`} />
+              <AuraIcon
+                name="timer"
+                size={16}
+                className={`text-indigo-400 ${!prefersReducedMotion ? 'animate-pulse' : ''}`}
+              />
               <div>
                 <span className="text-xs font-semibold text-indigo-200">Active Timer Countdown</span>
                 <p className="text-[11px] text-zinc-400 font-mono">
@@ -139,7 +135,7 @@ export const SleepTimerModal: React.FC<SleepTimerModalProps> = ({ isOpen, onClos
                 }`}
               >
                 <span>{p.label}</span>
-                {isSelected && <Check className="w-3.5 h-3.5 text-indigo-400" />}
+                {isSelected && <AuraIcon name="check" size={14} className="text-indigo-400" />}
               </button>
             );
           })}
@@ -158,11 +154,11 @@ export const SleepTimerModal: React.FC<SleepTimerModalProps> = ({ isOpen, onClos
             }`}
           >
             <div className="flex items-center gap-2">
-              <Clock className="w-3.5 h-3.5 text-indigo-400" />
+              <AuraIcon name="clock" size={14} className="text-indigo-400" />
               <span>Stop at End of Current Track</span>
             </div>
             {isSleepTimerActive && sleepTimerMinutes === -1 && (
-              <Check className="w-3.5 h-3.5 text-indigo-400" />
+              <AuraIcon name="check" size={14} className="text-indigo-400" />
             )}
           </button>
         </div>

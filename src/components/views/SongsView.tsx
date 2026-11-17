@@ -9,23 +9,7 @@ import { AddToPlaylistModal } from '../playlists/AddToPlaylistModal';
 import { MotionFadeSlide, MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
 import { SharedIndicator } from '../common/motion/MotionInteractive';
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
-import { 
-  Music, 
-  Search, 
-  X, 
-  List, 
-  LayoutGrid, 
-  ArrowUpDown, 
-  Filter, 
-  Plus, 
-  Play, 
-  ListPlus, 
-  Trash2, 
-  CheckSquare, 
-  Square,
-  AlertTriangle,
-  HardDrive
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 type SourceFilterType = 'all' | 'local' | 'jamendo' | 'audius' | 'youtube' | 'curated_stream';
 type SortField = 'dateAdded' | 'title' | 'artist' | 'album' | 'duration' | 'source';
@@ -213,7 +197,7 @@ export const SongsView: React.FC = () => {
       <section className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-white/[0.06]">
         <div>
           <div className="flex items-center gap-2 mb-1.5 text-xs font-mono text-zinc-400">
-            <Music className="w-3.5 h-3.5 text-sky-400" />
+            <AuraIcon name="musicNote" size={14} className="text-sky-400" />
             <span className="uppercase tracking-wider text-[11px] font-semibold text-sky-400">Music Catalogue</span>
             <span className="text-zinc-600" aria-hidden="true">·</span>
             <span>{tracks.length} tracks total</span>
@@ -234,7 +218,7 @@ export const SongsView: React.FC = () => {
             onClick={() => setIsUploadModalOpen(true)}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
           >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <AuraIcon name="add" size={14} weight={600} />
             <span>Import Audio</span>
           </button>
         </div>
@@ -253,13 +237,13 @@ export const SongsView: React.FC = () => {
           
           {/* Working Search Bar */}
           <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+            <AuraIcon name="search" size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
             <input
               type="text"
               value={localSearch}
               onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Search by title, artist, album, or genre..."
-              className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-white/[0.05] border border-white/10 text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-sky-500/50 transition-all font-ui-title"
+              className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-white/[0.05] border border-white/10 text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-sky-500/50 transition-colors font-ui-title"
             />
             {localSearch && (
               <button
@@ -268,7 +252,7 @@ export const SongsView: React.FC = () => {
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
                 title="Clear search"
               >
-                <X className="w-3.5 h-3.5" />
+                <AuraIcon name="close" size={14} />
               </button>
             )}
           </div>
@@ -277,7 +261,7 @@ export const SongsView: React.FC = () => {
           <div className="flex items-center gap-2 self-end md:self-auto">
             {/* Sort Dropdown */}
             <div className="relative flex items-center gap-1 px-3 py-2 rounded-xl bg-white/[0.05] border border-white/10 text-xs text-zinc-300 font-medium">
-              <ArrowUpDown className="w-3.5 h-3.5 text-zinc-400" />
+              <AuraIcon name="arrowUpDown" size={14} className="text-zinc-400" />
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortField)}
@@ -321,7 +305,7 @@ export const SongsView: React.FC = () => {
                       className="absolute inset-0 rounded-lg bg-white/15 shadow-sm"
                     />
                   )}
-                  <List className="relative z-10 w-4 h-4" />
+                  <AuraIcon name="list" size={16} className="relative z-10" />
                 </button>
                 <button
                   type="button"
@@ -339,7 +323,7 @@ export const SongsView: React.FC = () => {
                       className="absolute inset-0 rounded-lg bg-white/15 shadow-sm"
                     />
                   )}
-                  <LayoutGrid className="relative z-10 w-4 h-4" />
+                  <AuraIcon name="grid" size={16} className="relative z-10" />
                 </button>
               </div>
             </LayoutGroup>
@@ -490,7 +474,7 @@ export const SongsView: React.FC = () => {
                 onClick={toggleSelectAll}
                 className="flex items-center gap-2 text-xs font-semibold text-white hover:text-sky-300 transition-colors cursor-pointer aura-pressable"
               >
-                <CheckSquare className="w-4 h-4 text-sky-400" />
+                <AuraIcon name="checkSquare" size={16} filled className="text-sky-400" />
                 <span>{selectedTrackIds.size} {selectedTrackIds.size === 1 ? 'track' : 'tracks'} selected</span>
               </button>
             </div>
@@ -501,7 +485,7 @@ export const SongsView: React.FC = () => {
                 onClick={handleBulkPlay}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow transition-colors cursor-pointer aura-pressable"
               >
-                <Play className="w-3.5 h-3.5 fill-current text-black translate-x-0.2" />
+                <AuraIcon name="play" size={14} filled className="text-black translate-x-0.2" />
                 <span>Play Selected</span>
               </button>
 
@@ -510,7 +494,7 @@ export const SongsView: React.FC = () => {
                 onClick={handleBulkAddToQueue}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-pressable"
               >
-                <ListPlus className="w-3.5 h-3.5 text-indigo-400" />
+                <AuraIcon name="playlistAdd" size={14} className="text-indigo-400" />
                 <span>Add to Queue</span>
               </button>
 
@@ -519,7 +503,7 @@ export const SongsView: React.FC = () => {
                 onClick={handleBulkAddToPlaylist}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-pressable"
               >
-                <Plus className="w-3.5 h-3.5 text-emerald-400" />
+                <AuraIcon name="add" size={14} className="text-emerald-400" />
                 <span>Add to Playlist...</span>
               </button>
 
@@ -528,7 +512,7 @@ export const SongsView: React.FC = () => {
                 onClick={() => setIsDeleteModalOpen(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-medium border border-rose-500/20 transition-colors cursor-pointer aura-pressable"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <AuraIcon name="trash" size={14} />
                 <span>Delete</span>
               </button>
 
@@ -538,7 +522,7 @@ export const SongsView: React.FC = () => {
                 className="p-1.5 rounded-lg text-zinc-400 hover:text-white transition-colors cursor-pointer ml-1 aura-pressable"
                 title="Clear selection"
               >
-                <X className="w-4 h-4" />
+                <AuraIcon name="close" size={16} />
               </button>
             </div>
           </MotionFadeSlide>
@@ -567,7 +551,7 @@ export const SongsView: React.FC = () => {
                       className="w-5 flex items-center justify-center text-zinc-500 hover:text-white cursor-pointer"
                       title={isAllSelected ? 'Deselect all' : 'Select all'}
                     >
-                      {isAllSelected ? <CheckSquare className="w-3.5 h-3.5 text-sky-400" /> : <Square className="w-3.5 h-3.5" />}
+                      {isAllSelected ? <AuraIcon name="checkSquare" size={14} filled className="text-sky-400" /> : <AuraIcon name="square" size={14} />}
                     </button>
                     <span className="w-6 text-center">#</span>
                     <span className="w-10">Art</span>
@@ -576,7 +560,8 @@ export const SongsView: React.FC = () => {
                       onClick={() => toggleSort('title')}
                       className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
                     >
-                      Title {sortBy === 'title' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      <span>Title</span>
+                      {sortBy === 'title' && <AuraIcon name={sortOrder === 'asc' ? 'chevronUp' : 'chevronDown'} size={12} />}
                     </button>
                   </div>
 
@@ -586,7 +571,8 @@ export const SongsView: React.FC = () => {
                       onClick={() => toggleSort('album')}
                       className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
                     >
-                      Album {sortBy === 'album' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      <span>Album</span>
+                      {sortBy === 'album' && <AuraIcon name={sortOrder === 'asc' ? 'chevronUp' : 'chevronDown'} size={12} />}
                     </button>
                   </div>
 
@@ -596,7 +582,8 @@ export const SongsView: React.FC = () => {
                       onClick={() => toggleSort('dateAdded')}
                       className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
                     >
-                      Added {sortBy === 'dateAdded' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      <span>Added</span>
+                      {sortBy === 'dateAdded' && <AuraIcon name={sortOrder === 'asc' ? 'chevronUp' : 'chevronDown'} size={12} />}
                     </button>
                   </div>
 
@@ -606,7 +593,8 @@ export const SongsView: React.FC = () => {
                       onClick={() => toggleSort('source')}
                       className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
                     >
-                      Source {sortBy === 'source' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      <span>Source</span>
+                      {sortBy === 'source' && <AuraIcon name={sortOrder === 'asc' ? 'chevronUp' : 'chevronDown'} size={12} />}
                     </button>
                   </div>
 
@@ -658,7 +646,7 @@ export const SongsView: React.FC = () => {
             /* Thoughtful Empty State */
             <div className="p-10 sm:p-16 rounded-2xl aura-glass-ambient border border-dashed border-white/10 flex flex-col items-center justify-center text-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-zinc-500">
-                <Music className="w-6 h-6 text-zinc-400" />
+                <AuraIcon name="musicNote" size={24} className="text-zinc-400" />
               </div>
               {localSearch || activeSourceFilter !== 'all' ? (
                 <>
@@ -743,7 +731,7 @@ export const SongsView: React.FC = () => {
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/25 flex items-center justify-center text-rose-400">
-                  <AlertTriangle className="w-5 h-5" />
+                  <AuraIcon name="alertTriangle" size={20} />
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-white font-ui-title">Delete {selectedTracksInOrder.length} Tracks?</h3>

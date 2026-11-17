@@ -4,13 +4,7 @@ import { MotionFadeSlide } from '../common/motion/MotionSurface';
 import { EqualizerPreset } from '../../types';
 import { useMusic } from '../../context/MusicContext';
 import { EQ_10_BANDS } from '../../services/audioEngine';
-import { 
-  SlidersHorizontal, 
-  RotateCcw, 
-  Bookmark, 
-  Check,
-  Zap
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 const PRESET_GROUPS: {
   category: string;
@@ -229,7 +223,7 @@ export const Equalizer10Band: React.FC<{ className?: string }> = ({ className = 
                   : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border-white/5'
               }`}
             >
-              <Zap className="w-3.5 h-3.5" />
+              <AuraIcon name="zap" size={14} />
               <span>{showQControls ? 'Hide Q Filters' : 'Show Q Bandwidth'}</span>
             </button>
           )}
@@ -239,7 +233,7 @@ export const Equalizer10Band: React.FC<{ className?: string }> = ({ className = 
             onClick={() => setIsSavingPreset(!isSavingPreset)}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
-            <Bookmark className="w-3.5 h-3.5 text-indigo-400" />
+            <AuraIcon name="bookmark" size={14} className="text-indigo-400" />
             <span>Save Preset</span>
           </button>
 
@@ -249,7 +243,7 @@ export const Equalizer10Band: React.FC<{ className?: string }> = ({ className = 
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             title="Reset all 10 bands to 0 dB flat"
           >
-            <RotateCcw className="w-3 h-3" />
+            <AuraIcon name="reset" size={12} />
             <span>Reset Flat</span>
           </button>
         </div>
@@ -418,7 +412,7 @@ export const Equalizer10Band: React.FC<{ className?: string }> = ({ className = 
                           : 'bg-zinc-900/60 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border-white/5'
                       }`}
                     >
-                      {isActive && <Check className="w-3 h-3 text-indigo-400" />}
+                      {isActive && <AuraIcon name="check" size={12} className="text-indigo-400" />}
                       <span>{p.label}</span>
                     </button>
                   );
@@ -447,7 +441,7 @@ export const Equalizer10Band: React.FC<{ className?: string }> = ({ className = 
                           : 'bg-zinc-900/60 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border-white/5'
                       }`}
                     >
-                      <Bookmark className="w-3 h-3 text-indigo-400" />
+                      <AuraIcon name="bookmark" size={12} className="text-indigo-400" />
                       <span>{up.name}</span>
                     </button>
                   );

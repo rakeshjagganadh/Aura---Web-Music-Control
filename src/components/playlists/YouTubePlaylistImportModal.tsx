@@ -3,18 +3,9 @@ import { AnimatePresence } from 'motion/react';
 import { MotionBackdrop, MotionModal, MotionFadeSlide } from '../common/motion/MotionSurface';
 import { useMusic } from '../../context/MusicContext';
 import { youtubeService } from '../../services/youtubeService';
+import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
-import { 
-  X, 
-  Play, 
-  ListPlus, 
-  ListMusic, 
-  ExternalLink, 
-  Check, 
-  AlertCircle, 
-  Loader2,
-  Music
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 interface YouTubePlaylistImportModalProps {
   isOpen: boolean;
@@ -26,6 +17,7 @@ export const YouTubePlaylistImportModal: React.FC<YouTubePlaylistImportModalProp
   onClose,
 }) => {
   const { playYouTubePlaylist, addToQueue, showToast } = useMusic();
+  const { prefersReducedMotion } = useMotionCapabilities();
 
   const [inputUrl, setInputUrl] = useState('');
   const [extractedId, setExtractedId] = useState<string | null>(null);
@@ -163,7 +155,7 @@ export const YouTubePlaylistImportModal: React.FC<YouTubePlaylistImportModalProp
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 flex items-center justify-center">
-              <ListMusic className="w-5 h-5" />
+              <AuraIcon name="playlist" size={20} />
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-bold text-white font-display">
@@ -182,7 +174,7 @@ export const YouTubePlaylistImportModal: React.FC<YouTubePlaylistImportModalProp
             className="p-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-zinc-400 hover:text-white transition-colors cursor-pointer aura-pressable aura-focus-ring"
             title="Close modal"
           >
-            <X className="w-4 h-4" />
+            <AuraIcon name="close" size={16} />
           </button>
         </div>
 
@@ -203,14 +195,14 @@ export const YouTubePlaylistImportModal: React.FC<YouTubePlaylistImportModalProp
             />
             {isValidating && (
               <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
-                <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
+                <AuraIcon name="loader" size={16} className={`text-zinc-400 ${!prefersReducedMotion ? 'animate-spin' : ''}`} />
               </div>
             )}
           </div>
 
           {errorMsg && (
             <div className="flex items-center gap-1.5 text-xs text-amber-400 mt-1">
-              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              <AuraIcon name="alertCircle" size={14} className="shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
@@ -236,7 +228,7 @@ export const YouTubePlaylistImportModal: React.FC<YouTubePlaylistImportModalProp
                     }}
                   />
                 ) : (
-                  <Music className="w-6 h-6 text-zinc-600" />
+                  <AuraIcon name="musicNote" size={24} className="text-zinc-600" />
                 )}
               </div>
 
@@ -276,7 +268,7 @@ export const YouTubePlaylistImportModal: React.FC<YouTubePlaylistImportModalProp
             onClick={handleAddToQueue}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] disabled:opacity-40 text-zinc-200 text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-pressable"
           >
-            <ListPlus className="w-3.5 h-3.5" />
+            <AuraIcon name="playlistAdd" size={14} />
             <span>Add to Queue</span>
           </button>
 
@@ -286,7 +278,7 @@ export const YouTubePlaylistImportModal: React.FC<YouTubePlaylistImportModalProp
             onClick={handlePlayNow}
             className="flex items-center gap-2 px-5 py-2 rounded-xl bg-white hover:bg-zinc-100 disabled:opacity-40 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
           >
-            <Play className="w-3.5 h-3.5 fill-current text-black translate-x-0.5" />
+            <AuraIcon name="play" size={14} filled className="text-black translate-x-0.5" />
             <span>Play Now</span>
           </button>
         </div>

@@ -3,15 +3,7 @@ import { AnimatePresence } from 'motion/react';
 import { MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
 import { useMusic } from '../../context/MusicContext';
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
-import { 
-  User, 
-  X, 
-  Download, 
-  Upload, 
-  CheckCircle2, 
-  HardDrive,
-  Lock
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 import { AuraUserAccount } from '../../types';
 
 interface AuraAccountModalProps {
@@ -152,7 +144,7 @@ export const AuraAccountModal: React.FC<AuraAccountModalProps> = ({ isOpen, onCl
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              <User className="w-5 h-5" />
+              <AuraIcon name="user" size={20} />
             </div>
             <div>
               <h3 className="text-base font-bold text-white">AURA Profile & Local Backup</h3>
@@ -166,7 +158,7 @@ export const AuraAccountModal: React.FC<AuraAccountModalProps> = ({ isOpen, onCl
             aria-label="Close profile dialog"
             className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
-            <X className="w-5 h-5" />
+            <AuraIcon name="close" size={20} />
           </button>
         </div>
 
@@ -214,24 +206,24 @@ export const AuraAccountModal: React.FC<AuraAccountModalProps> = ({ isOpen, onCl
         {/* Included in JSON Backup */}
         <div className="flex flex-col gap-2.5 p-4 rounded-2xl bg-zinc-950/80 border border-white/5 text-xs">
           <div className="flex items-center gap-1.5 font-semibold text-zinc-300">
-            <HardDrive className="w-4 h-4 text-indigo-400" />
+            <AuraIcon name="hardDrive" size={16} className="text-indigo-400" />
             <span>Included in Local JSON Studio Backup:</span>
           </div>
           <div className="grid grid-cols-2 gap-2 text-zinc-400 text-[11px]">
             <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <AuraIcon name="checkCircle" size={14} className="text-emerald-400" />
               <span>{playlists.length} Playlists & Spaces</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <AuraIcon name="checkCircle" size={14} className="text-emerald-400" />
               <span>{userPresets.length} EQ & DSP Presets</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <AuraIcon name="checkCircle" size={14} className="text-emerald-400" />
               <span>{markers.length} Waveform Markers</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <AuraIcon name="checkCircle" size={14} className="text-emerald-400" />
               <span>{moments.length} AURA Moments</span>
             </div>
           </div>
@@ -239,7 +231,7 @@ export const AuraAccountModal: React.FC<AuraAccountModalProps> = ({ isOpen, onCl
 
         {/* Local Storage Privacy Guarantee */}
         <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-emerald-950/20 border border-emerald-500/20 text-xs text-zinc-300">
-          <Lock className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+          <AuraIcon name="lock" size={16} className="text-emerald-400 shrink-0 mt-0.5" />
           <p className="text-[11px] leading-relaxed text-zinc-400">
             <strong className="text-emerald-300">100% On-Device Storage:</strong> Your profile, presets, and local audio files are never uploaded to any cloud server. Use JSON export/import to move settings between browsers.
           </p>
@@ -253,7 +245,7 @@ export const AuraAccountModal: React.FC<AuraAccountModalProps> = ({ isOpen, onCl
               onClick={handleExportBackup}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs border border-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             >
-              <Download className="w-3.5 h-3.5 text-indigo-400" />
+              <AuraIcon name="download" size={14} className="text-indigo-400" />
               Export Backup (JSON)
             </button>
             <button
@@ -261,7 +253,7 @@ export const AuraAccountModal: React.FC<AuraAccountModalProps> = ({ isOpen, onCl
               onClick={() => fileInputRef.current?.click()}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs border border-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             >
-              <Upload className="w-3.5 h-3.5 text-emerald-400" />
+              <AuraIcon name="upload" size={14} className="text-emerald-400" />
               Import Backup
             </button>
             <input

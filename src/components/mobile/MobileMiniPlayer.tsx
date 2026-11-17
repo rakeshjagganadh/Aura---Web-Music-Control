@@ -15,13 +15,7 @@ import {
   MotionIconSwap,
   MotionPress,
 } from '../common/motion';
-import {
-  Play,
-  Pause,
-  SkipForward,
-  Heart,
-  Music,
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 function getQuietMobileSource(source?: string): string {
   switch (source) {
@@ -262,7 +256,7 @@ export const MobileMiniPlayer: React.FC = () => {
                       currentTrack.coverColor || 'from-[#141a29] to-[#080b12]'
                     } flex items-center justify-center text-white`}
                   >
-                    <Music className="w-4 h-4 opacity-70" />
+                    <AuraIcon name="musicNote" size={16} className="opacity-70" />
                   </div>
                 )}
               </MotionArtwork>
@@ -317,9 +311,12 @@ export const MobileMiniPlayer: React.FC = () => {
                 }
                 transition={{ duration: MOTION_DURATION.standard, ease: MOTION_EASE.emphasized }}
               >
-                <Heart
-                  className={`w-4 h-4 transition-colors ${
-                    currentTrack.isFavorite ? 'fill-rose-500 text-rose-500' : ''
+                <AuraIcon
+                  name="heart"
+                  size={16}
+                  filled={Boolean(currentTrack.isFavorite)}
+                  className={`transition-colors ${
+                    currentTrack.isFavorite ? 'text-rose-500' : ''
                   }`}
                 />
               </motion.span>
@@ -334,9 +331,9 @@ export const MobileMiniPlayer: React.FC = () => {
             >
               <MotionIconSwap stateKey={isPlaying && !isLocallySilenced ? 'pause' : 'play'}>
                 {isPlaying && !isLocallySilenced ? (
-                  <Pause className="w-4 h-4 fill-current text-zinc-950" />
+                  <AuraIcon name="pause" size={18} filled className="text-zinc-950" />
                 ) : (
-                  <Play className="w-4 h-4 fill-current text-zinc-950 translate-x-[1px]" />
+                  <AuraIcon name="play" size={18} filled className="text-zinc-950" />
                 )}
               </MotionIconSwap>
             </MotionPress>
@@ -348,7 +345,7 @@ export const MobileMiniPlayer: React.FC = () => {
               aria-label="Next Track"
               className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-zinc-300 hover:text-white transition-colors cursor-pointer aura-focus-ring"
             >
-              <SkipForward className="w-4 h-4 fill-current" />
+              <AuraIcon name="skipNext" size={18} filled />
             </MotionPress>
           </div>
         </div>

@@ -46,7 +46,7 @@ export function getTrackCapabilities(track: Track | null): TrackCapabilities {
       canStemSeparate: false,
       canExportAudio: false,
       hasRealTimeSpectrum: true,
-      hasAudioAnalysis: false,
+      hasAudioAnalysis: true,
       sourceType: 'audius',
       sourceDisplayName: 'Audius Stream',
     };

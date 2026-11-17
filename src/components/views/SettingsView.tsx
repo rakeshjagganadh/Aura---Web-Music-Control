@@ -6,26 +6,7 @@ import { PWAInstallModal } from '../pwa/PWAInstallModal';
 import { MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
 import { SharedIndicator } from '../common/motion/MotionInteractive';
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
-import { 
-  Settings, 
-  HardDrive, 
-  Trash2, 
-  Sparkles, 
-  Keyboard, 
-  ShieldCheck, 
-  Volume2, 
-  Sliders,
-  CheckCircle,
-  AlertTriangle,
-  X,
-  PlayCircle,
-  Radio,
-  Moon,
-  Zap,
-  Gauge,
-  Smartphone,
-  Download
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 export const SettingsView: React.FC = () => {
   const {
@@ -101,8 +82,8 @@ export const SettingsView: React.FC = () => {
       {/* Playback Behaviors & Experience Section */}
       <div className="flex flex-col gap-5 p-6 rounded-3xl bg-zinc-900/40 border border-white/5">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-            <PlayCircle className="w-5 h-5" />
+          <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
+            <AuraIcon name="playCircle" size={20} />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-zinc-100">Playback Behaviors</h3>
@@ -128,7 +109,7 @@ export const SettingsView: React.FC = () => {
               }`}
             >
               <div
-                className={`w-4 h-4 rounded-full bg-white transition-transform duration-150 ease-out absolute top-1 left-1 ${
+                className={`w-4 h-4 rounded-full bg-white transition-transform duration-150 ease-[var(--motion-ease-standard)] motion-reduce:transition-none absolute top-1 left-1 ${
                   settings.autoplay ? 'translate-x-5' : 'translate-x-0'
                 }`}
               />
@@ -152,7 +133,7 @@ export const SettingsView: React.FC = () => {
               }`}
             >
               <div
-                className={`w-4 h-4 rounded-full bg-white transition-transform duration-150 ease-out absolute top-1 left-1 ${
+                className={`w-4 h-4 rounded-full bg-white transition-transform duration-150 ease-[var(--motion-ease-standard)] motion-reduce:transition-none absolute top-1 left-1 ${
                   settings.gapless ? 'translate-x-5' : 'translate-x-0'
                 }`}
               />
@@ -196,8 +177,8 @@ export const SettingsView: React.FC = () => {
       {/* Audio Engine & DSP Dynamics Section */}
       <div className="flex flex-col gap-5 p-6 rounded-3xl bg-zinc-900/40 border border-white/5">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-            <Zap className="w-5 h-5" />
+          <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center">
+            <AuraIcon name="zap" size={20} />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-zinc-100">DSP Dynamics & Loudness Engine</h3>
@@ -223,7 +204,7 @@ export const SettingsView: React.FC = () => {
               }`}
             >
               <div
-                className={`w-4 h-4 rounded-full bg-white transition-transform duration-150 ease-out absolute top-1 left-1 ${
+                className={`w-4 h-4 rounded-full bg-white transition-transform duration-150 ease-[var(--motion-ease-standard)] motion-reduce:transition-none absolute top-1 left-1 ${
                   limiter.enabled ? 'translate-x-5' : 'translate-x-0'
                 }`}
               />
@@ -247,7 +228,7 @@ export const SettingsView: React.FC = () => {
               }`}
             >
               <div
-                className={`w-4 h-4 rounded-full bg-white transition-transform duration-150 ease-out absolute top-1 left-1 ${
+                className={`w-4 h-4 rounded-full bg-white transition-transform duration-150 ease-[var(--motion-ease-standard)] motion-reduce:transition-none absolute top-1 left-1 ${
                   settings.autoNormalize ? 'translate-x-5' : 'translate-x-0'
                 }`}
               />
@@ -295,8 +276,8 @@ export const SettingsView: React.FC = () => {
       {/* Sleep Timer Section */}
       <div className="flex items-center justify-between p-6 rounded-3xl bg-zinc-900/40 border border-white/5">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
-            <Moon className="w-5 h-5" />
+          <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center">
+            <AuraIcon name="moon" size={20} />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-zinc-100">Sleep Timer</h3>
@@ -333,8 +314,8 @@ export const SettingsView: React.FC = () => {
       {/* Storage Section */}
       <div className="flex flex-col gap-4 p-6 rounded-3xl bg-zinc-900/40 border border-white/5">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <HardDrive className="w-5 h-5" />
+          <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
+            <AuraIcon name="hardDrive" size={20} />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-zinc-100">Local-First Storage (IndexedDB)</h3>
@@ -363,7 +344,7 @@ export const SettingsView: React.FC = () => {
             onClick={loadDemoPack}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-xs font-medium text-indigo-300 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+            <AuraIcon name="sparkles" size={14} className="text-indigo-400" />
             Reload Demo Tracks
           </button>
 
@@ -372,7 +353,7 @@ export const SettingsView: React.FC = () => {
             onClick={() => setIsConfirmOpen(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-xs font-medium text-rose-300 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <AuraIcon name="trash" size={14} />
             Clear All Stored Library Data
           </button>
         </div>
@@ -396,8 +377,8 @@ export const SettingsView: React.FC = () => {
               className="relative w-full max-w-md rounded-2xl bg-zinc-950 border border-rose-500/30 shadow-2xl p-6 flex flex-col gap-4"
             >
               <div className="flex items-start gap-3">
-                <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 shrink-0">
-                  <AlertTriangle className="w-6 h-6" />
+                <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 shrink-0 flex items-center justify-center">
+                  <AuraIcon name="alertTriangle" size={24} />
                 </div>
                 <div className="flex-1">
                   <h3 className="text-base font-bold text-white">Clear All Stored Library Data?</h3>
@@ -411,7 +392,7 @@ export const SettingsView: React.FC = () => {
                   onClick={() => !isClearing && setIsConfirmOpen(false)}
                   className="p-1 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 cursor-pointer aura-pressable aura-focus-ring"
                 >
-                  <X className="w-4 h-4" />
+                  <AuraIcon name="close" size={16} />
                 </button>
               </div>
 
@@ -443,7 +424,7 @@ export const SettingsView: React.FC = () => {
                   disabled={isClearing}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-semibold text-white shadow-lg shadow-rose-600/20 transition-colors disabled:opacity-50 cursor-pointer aura-pressable"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <AuraIcon name="trash" size={14} />
                   {isClearing ? 'Clearing Storage...' : 'Yes, Delete Everything'}
                 </button>
               </div>
@@ -455,8 +436,8 @@ export const SettingsView: React.FC = () => {
       {/* Audio Engine Specs */}
       <div className="flex flex-col gap-4 p-6 rounded-3xl bg-zinc-900/40 border border-white/5">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-            <Sliders className="w-5 h-5" />
+          <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
+            <AuraIcon name="sliders" size={20} />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-zinc-100">Web Audio API Engine Pipeline</h3>
@@ -483,8 +464,8 @@ export const SettingsView: React.FC = () => {
       {/* Shortcuts Sheet Button */}
       <div className="flex items-center justify-between p-6 rounded-3xl bg-zinc-900/40 border border-white/5">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-            <Keyboard className="w-5 h-5" />
+          <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center">
+            <AuraIcon name="keyboard" size={20} />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-zinc-100">Keyboard Shortcuts</h3>
@@ -505,8 +486,8 @@ export const SettingsView: React.FC = () => {
       {import.meta.env.DEV && (
         <div className="flex items-center justify-between p-6 rounded-3xl bg-zinc-900/40 border border-indigo-500/20">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              <Sparkles className="w-5 h-5" />
+            <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
+              <AuraIcon name="sparkles" size={20} />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -535,8 +516,8 @@ export const SettingsView: React.FC = () => {
       <div className="flex flex-col gap-4 p-6 rounded-3xl bg-zinc-900/40 border border-white/5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <Smartphone className="w-5 h-5" />
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
+              <AuraIcon name="smartphone" size={20} />
             </div>
             <div>
               <h3 className="text-sm font-semibold text-zinc-100">Progressive Web App (PWA)</h3>
@@ -546,7 +527,7 @@ export const SettingsView: React.FC = () => {
 
           {isInstalled ? (
             <span className="flex items-center gap-1.5 text-emerald-400 text-xs font-medium font-mono">
-              <CheckCircle className="w-3.5 h-3.5" />
+              <AuraIcon name="checkCircle" size={14} />
               Standalone Mode
             </span>
           ) : canInstall ? (
@@ -555,7 +536,7 @@ export const SettingsView: React.FC = () => {
               onClick={promptInstall}
               className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold transition-colors cursor-pointer shadow-sm aura-pressable"
             >
-              <Download className="w-3.5 h-3.5" />
+              <AuraIcon name="download" size={14} />
               <span>Install AURA</span>
             </button>
           ) : (

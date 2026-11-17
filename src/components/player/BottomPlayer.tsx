@@ -18,27 +18,7 @@ import {
   MotionPopover,
   MotionPress,
 } from '../common/motion';
-import {
-  Play,
-  Pause,
-  SkipBack,
-  SkipForward,
-  Shuffle,
-  Repeat,
-  Repeat1,
-  Volume2,
-  VolumeX,
-  Volume1,
-  Heart,
-  ListMusic,
-  SlidersHorizontal,
-  Maximize2,
-  Music,
-  Moon,
-  Info,
-  MoreHorizontal,
-  Disc,
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 function getQuietSourceLabel(source?: string, isDirectStream?: boolean): string {
   switch (source) {
@@ -356,7 +336,7 @@ export const BottomPlayer: React.FC = () => {
         {/* Left: Quiescent Identifier */}
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-11 h-11 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-500 shrink-0">
-            <Disc className="w-4.5 h-4.5 opacity-60 animate-spin" style={{ animationDuration: '16s' }} />
+            <AuraIcon name="disc" size={18} className="opacity-60 animate-spin" style={{ animationDuration: '16s' }} />
           </div>
           <div className="min-w-0">
             <h4 className="text-xs sm:text-sm font-semibold text-zinc-300 font-display truncate">
@@ -371,19 +351,19 @@ export const BottomPlayer: React.FC = () => {
         {/* Middle: Inactive Single-Row Transport */}
         <div className="flex items-center justify-center gap-2 opacity-30 pointer-events-none">
           <div className="w-8 h-8 flex items-center justify-center">
-            <Shuffle className="w-3.5 h-3.5 text-zinc-400" />
+            <AuraIcon name="shuffle" size={14} className="text-zinc-400" />
           </div>
           <div className="w-8 h-8 flex items-center justify-center">
-            <SkipBack className="w-4 h-4 text-zinc-400 fill-current" />
+            <AuraIcon name="skipPrevious" size={18} filled className="text-zinc-400" />
           </div>
           <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center text-zinc-300">
-            <Play className="w-4 h-4 fill-current translate-x-0.5" />
+            <AuraIcon name="play" size={18} filled />
           </div>
           <div className="w-8 h-8 flex items-center justify-center">
-            <SkipForward className="w-4 h-4 text-zinc-400 fill-current" />
+            <AuraIcon name="skipNext" size={18} filled className="text-zinc-400" />
           </div>
           <div className="w-8 h-8 flex items-center justify-center">
-            <Repeat className="w-3.5 h-3.5 text-zinc-400" />
+            <AuraIcon name="repeat" size={14} className="text-zinc-400" />
           </div>
         </div>
 
@@ -398,9 +378,9 @@ export const BottomPlayer: React.FC = () => {
               aria-label={isMuted ? 'Unmute' : 'Mute'}
             >
               {isMuted || volume === 0 ? (
-                <VolumeX className="w-4 h-4 text-rose-400" />
+                <AuraIcon name="volumeMute" size={16} className="text-rose-400" />
               ) : (
-                <Volume2 className="w-4 h-4" />
+                <AuraIcon name="volumeHigh" size={16} />
               )}
             </button>
             <div className="w-16 xl:w-20 flex items-center">
@@ -429,7 +409,7 @@ export const BottomPlayer: React.FC = () => {
             title="Queue"
             aria-label="Toggle Queue"
           >
-            <ListMusic className="w-4 h-4" />
+            <AuraIcon name="queue" size={16} />
           </button>
         </div>
       </div>
@@ -507,14 +487,14 @@ export const BottomPlayer: React.FC = () => {
                         currentTrack.coverColor || 'from-[#141a29] to-[#080b12]'
                       } flex items-center justify-center`}
                     >
-                      <Music className="w-4.5 h-4.5 text-white/70" />
+                      <AuraIcon name="musicNote" size={18} className="text-white/70" />
                     </div>
                   )}
                 </MotionArtwork>
               </AnimatePresence>
 
               <div className="absolute inset-0 z-10 bg-black/45 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                <Maximize2 className="w-3.5 h-3.5 text-white" />
+                <AuraIcon name="expand" size={14} className="text-white" />
               </div>
             </MotionPress>
 
@@ -569,7 +549,7 @@ export const BottomPlayer: React.FC = () => {
                 }
                 transition={{ duration: MOTION_DURATION.micro, ease: MOTION_EASE.standard }}
               >
-                <Shuffle className="w-3.5 h-3.5" />
+                <AuraIcon name="shuffle" size={14} />
               </motion.span>
               <AnimatePresence>
                 {isShuffle && (
@@ -593,7 +573,7 @@ export const BottomPlayer: React.FC = () => {
               title="Previous Track (P)"
               className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-300 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer aura-focus-ring"
             >
-              <SkipBack className="w-4 h-4 fill-current" />
+              <AuraIcon name="skipPrevious" size={18} filled />
             </MotionPress>
 
             <MotionPress
@@ -606,9 +586,9 @@ export const BottomPlayer: React.FC = () => {
             >
               <MotionIconSwap stateKey={isPlaying && !isLocallySilenced ? 'pause' : 'play'}>
                 {isPlaying && !isLocallySilenced ? (
-                  <Pause className="w-4 h-4 fill-current text-zinc-950" />
+                  <AuraIcon name="pause" size={20} filled className="text-zinc-950" />
                 ) : (
-                  <Play className="w-4 h-4 fill-current text-zinc-950 translate-x-[1px]" />
+                  <AuraIcon name="play" size={20} filled className="text-zinc-950" />
                 )}
               </MotionIconSwap>
             </MotionPress>
@@ -621,7 +601,7 @@ export const BottomPlayer: React.FC = () => {
               title="Next Track (N)"
               className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-300 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer aura-focus-ring"
             >
-              <SkipForward className="w-4 h-4 fill-current" />
+              <AuraIcon name="skipNext" size={18} filled />
             </MotionPress>
 
             <MotionPress
@@ -639,9 +619,9 @@ export const BottomPlayer: React.FC = () => {
             >
               <MotionIconSwap stateKey={repeatMode}>
                 {repeatMode === 'one' ? (
-                  <Repeat1 className="w-3.5 h-3.5" />
+                  <AuraIcon name="repeatOne" size={15} />
                 ) : (
-                  <Repeat className="w-3.5 h-3.5" />
+                  <AuraIcon name="repeat" size={15} />
                 )}
               </MotionIconSwap>
               <AnimatePresence>
@@ -688,9 +668,12 @@ export const BottomPlayer: React.FC = () => {
                 }
                 transition={{ duration: MOTION_DURATION.standard, ease: MOTION_EASE.emphasized }}
               >
-                <Heart
-                  className={`w-4 h-4 transition-colors ${
-                    currentTrack.isFavorite ? 'fill-rose-500 text-rose-500' : ''
+                <AuraIcon
+                  name="heart"
+                  size={16}
+                  filled={Boolean(currentTrack.isFavorite)}
+                  className={`transition-colors ${
+                    currentTrack.isFavorite ? 'text-rose-500' : ''
                   }`}
                 />
               </motion.span>
@@ -712,11 +695,11 @@ export const BottomPlayer: React.FC = () => {
                   }
                 >
                   {isMuted || volume === 0 ? (
-                    <VolumeX className="w-4 h-4 text-rose-400" />
+                    <AuraIcon name="volumeMute" size={16} className="text-rose-400" />
                   ) : volume < 0.5 ? (
-                    <Volume1 className="w-4 h-4" />
+                    <AuraIcon name="volumeLow" size={16} />
                   ) : (
-                    <Volume2 className="w-4 h-4" />
+                    <AuraIcon name="volumeHigh" size={16} />
                   )}
                 </MotionIconSwap>
               </MotionPress>
@@ -754,7 +737,7 @@ export const BottomPlayer: React.FC = () => {
                   : 'text-zinc-400 hover:text-white hover:bg-white/[0.06]'
               }`}
             >
-              <SlidersHorizontal className="w-4 h-4" />
+              <AuraIcon name="sliders" size={16} />
               <AnimatePresence>
                 {isAudioEffectActive && (
                   <motion.span
@@ -783,7 +766,7 @@ export const BottomPlayer: React.FC = () => {
                   : 'text-zinc-400 hover:text-white hover:bg-white/[0.06]'
               }`}
             >
-              <ListMusic className="w-4 h-4" />
+              <AuraIcon name="queue" size={16} />
               <AnimatePresence initial={false}>
                 {upcomingCount > 0 && (
                   <motion.span
@@ -821,7 +804,7 @@ export const BottomPlayer: React.FC = () => {
                     : 'text-zinc-400 hover:text-white hover:bg-white/[0.06]'
                 }`}
               >
-                <MoreHorizontal className="w-4 h-4" />
+                <AuraIcon name="more" size={16} />
               </MotionPress>
             </div>
           </div>
@@ -952,7 +935,7 @@ export const BottomPlayer: React.FC = () => {
                     }}
                     className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-zinc-200 hover:text-white hover:bg-white/[0.08] transition-colors text-left cursor-pointer aura-pressable"
                   >
-                    <SlidersHorizontal className="w-4 h-4 text-sky-400 shrink-0" />
+                    <AuraIcon name="sliders" size={16} className="text-sky-400 shrink-0" />
                     <span className="flex-1 truncate">Audio Studio &amp; DSP</span>
                   </button>
 
@@ -965,7 +948,7 @@ export const BottomPlayer: React.FC = () => {
                     }}
                     className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-zinc-200 hover:text-white hover:bg-white/[0.08] transition-colors text-left cursor-pointer aura-pressable"
                   >
-                    <Moon className="w-4 h-4 text-purple-400 shrink-0" />
+                    <AuraIcon name="moon" size={16} className="text-purple-400 shrink-0" />
                     <span className="flex-1 truncate font-ui-body">Sleep Timer</span>
                     {isSleepTimerActive && sleepTimerRemainingSecs ? (
                       <span className="text-[10px] font-mono text-purple-300 tabular-nums">
@@ -983,7 +966,7 @@ export const BottomPlayer: React.FC = () => {
                     }}
                     className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-zinc-200 hover:text-white hover:bg-white/[0.08] transition-colors text-left cursor-pointer aura-pressable"
                   >
-                    <Info className="w-4 h-4 text-amber-400 shrink-0" />
+                    <AuraIcon name="info" size={16} className="text-amber-400 shrink-0" />
                     <span className="flex-1 truncate font-ui-body">Track Metadata Info</span>
                   </button>
 
@@ -998,7 +981,7 @@ export const BottomPlayer: React.FC = () => {
                     }}
                     className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-zinc-200 hover:text-white hover:bg-white/[0.08] transition-colors text-left cursor-pointer aura-pressable"
                   >
-                    <Maximize2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <AuraIcon name="expand" size={16} className="text-emerald-400 shrink-0" />
                     <span className="flex-1 truncate font-ui-body">Expand Studio Canvas</span>
                   </button>
                 </div>

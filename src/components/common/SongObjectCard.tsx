@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Track } from '../../types';
 import { useMusic } from '../../context/MusicContext';
@@ -7,21 +7,7 @@ import { MotionPopover } from './motion/MotionSurface';
 import { MotionIconSwap } from './motion/MotionInteractive';
 import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
 import { MOTION_TRANSITION } from '../../motion/tokens';
-import { 
-  Play, 
-  Pause, 
-  Heart, 
-  MoreHorizontal, 
-  ListPlus, 
-  ListMusic, 
-  Trash2, 
-  Music,
-  Disc,
-  Clock,
-  Sparkles,
-  Info,
-  Users
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 interface SongObjectCardProps {
   track: Track;
@@ -62,7 +48,31 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const { canHover, prefersReducedMotion } = useMotionCapabilities();
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        setIsMenuOpen(false);
+        menuTriggerRef.current?.focus();
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMenuOpen]);
 
   const isCurrent = currentTrack?.id === track.id;
   const isActivelyPlaying = isCurrent && isPlaying;
@@ -90,10 +100,7 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
       <div
         id={`song-object-${track.id}`}
         onMouseEnter={() => { if (canHover) setIsHovered(true); }}
-        onMouseLeave={() => {
-          setIsHovered(false);
-          setIsMenuOpen(false);
-        }}
+        onMouseLeave={() => setIsHovered(false)}
         className={`group relative flex flex-col cursor-pointer transition-colors duration-200 select-none ${className}`}
       >
         {/* Artwork Container as the Core Physical/Digital Music Object */}
@@ -128,7 +135,7 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
             />
           ) : (
             <div className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-[#141a29] via-[#0d121c] to-[#080b12]'} flex flex-col items-center justify-center p-4 text-white/80`}>
-              <Disc className={`w-9 h-9 opacity-35 mb-2 stroke-1 transition-transform duration-500 text-slate-300 ${canHover ? 'group-hover:rotate-12' : ''}`} />
+              <AuraIcon name="disc" size={36} weight={200} className={`opacity-35 mb-2 transition-transform duration-500 text-slate-300 ${canHover ? 'group-hover:rotate-12' : ''}`} />
               <span className="text-[10px] font-mono tracking-widest uppercase opacity-40 font-medium truncate max-w-full px-2 text-center">
                 {track.artist || track.source || 'AURA'}
               </span>
@@ -152,9 +159,9 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
             >
               <MotionIconSwap stateKey={isActivelyPlaying ? 'pause' : 'play'}>
                 {isActivelyPlaying ? (
-                  <Pause className="w-4 h-4 fill-current text-black" />
+                  <AuraIcon name="pause" size={16} filled className="text-black" />
                 ) : (
-                  <Play className="w-4 h-4 fill-current text-black translate-x-0.5" />
+                  <AuraIcon name="play" size={16} filled className="text-black translate-x-0.5" />
                 )}
               </MotionIconSwap>
             </div>
@@ -217,75 +224,85 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
             <button
               type="button"
               onClick={() => toggleFavorite(track.id)}
+              aria-pressed={Boolean(track.isFavorite)}
               className="p-1 rounded text-zinc-400 hover:text-rose-400 hover:bg-white/5 aura-pressable aura-focus-ring transition-colors cursor-pointer"
               title={track.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               aria-label={track.isFavorite ? `Remove ${track.title} from favorites` : `Add ${track.title} to favorites`}
             >
               <motion.span
                 className="inline-flex items-center justify-center"
+                initial={false}
                 animate={!prefersReducedMotion && track.isFavorite ? { scale: [1, 1.24, 1] } : { scale: 1 }}
                 transition={MOTION_TRANSITION.micro}
               >
-                <Heart className={`w-3.5 h-3.5 ${track.isFavorite ? 'fill-rose-500 text-rose-500' : ''}`} />
+                <AuraIcon name="heart" size={14} filled={Boolean(track.isFavorite)} className={track.isFavorite ? 'text-rose-500' : ''} />
               </motion.span>
             </button>
 
             {/* Context Dropdown Menu */}
-            <div className="relative">
+            <div className="relative" ref={menuRef}>
               <button
+                ref={menuTriggerRef}
                 type="button"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="p-1 rounded text-zinc-400 hover:text-zinc-200 hover:bg-white/5 aura-pressable aura-focus-ring transition-colors cursor-pointer"
                 title="More options"
                 aria-label={`More options for ${track.title}`}
+                aria-haspopup="menu"
                 aria-expanded={isMenuOpen}
               >
-                <MoreHorizontal className="w-3.5 h-3.5" />
+                <AuraIcon name="more" size={14} />
               </button>
 
               <AnimatePresence>
                 {isMenuOpen && (
                   <MotionPopover
                     placement="top"
+                    role="menu"
+                    aria-label={`Options for ${track.title}`}
                     style={{ pointerEvents: 'auto' }}
                     className="absolute right-0 bottom-full mb-1.5 w-44 rounded-xl bg-[#161922] border border-white/[0.08] shadow-2xl p-1.5 z-50 flex flex-col gap-1 backdrop-blur-2xl"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <button
                       type="button"
+                      role="menuitem"
                       onClick={() => {
                         openTrackInfo(track);
                         setIsMenuOpen(false);
                       }}
-                      className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left aura-pressable cursor-pointer"
+                      className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left aura-pressable aura-focus-ring cursor-pointer"
                     >
-                      <Info className="w-3.5 h-3.5 text-zinc-400" />
+                      <AuraIcon name="info" size={14} className="text-zinc-400" />
                       Track Info & Metadata
                     </button>
                     <button
                       type="button"
+                      role="menuitem"
                       onClick={() => {
                         playNext(track);
                         setIsMenuOpen(false);
                       }}
-                      className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left aura-pressable cursor-pointer"
+                      className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left aura-pressable aura-focus-ring cursor-pointer"
                     >
-                      <ListMusic className="w-3.5 h-3.5 text-zinc-400" />
+                      <AuraIcon name="playlist" size={14} className="text-zinc-400" />
                       Play Next
                     </button>
                     <button
                       type="button"
+                      role="menuitem"
                       onClick={() => {
                         addToQueue(track);
                         setIsMenuOpen(false);
                       }}
-                      className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left aura-pressable cursor-pointer"
+                      className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left aura-pressable aura-focus-ring cursor-pointer"
                     >
-                      <ListPlus className="w-3.5 h-3.5 text-zinc-400" />
+                      <AuraIcon name="playlistAdd" size={14} className="text-zinc-400" />
                       Add to Queue
                     </button>
                     <button
                       type="button"
+                      role="menuitem"
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsMenuOpen(false);
@@ -297,33 +314,35 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
                           });
                         }
                       }}
-                      className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left aura-pressable cursor-pointer"
+                      className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left aura-pressable aura-focus-ring cursor-pointer"
                     >
-                      <Users className="w-3.5 h-3.5 text-indigo-400" />
+                      <AuraIcon name="users" size={14} className="text-indigo-400" />
                       {isInRoom ? 'Add to Shared Room' : 'Play in Listen Together'}
                     </button>
                     {onOpenPlaylistModal && (
                       <button
                         type="button"
+                        role="menuitem"
                         onClick={() => {
                           onOpenPlaylistModal(track);
                           setIsMenuOpen(false);
                         }}
-                        className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left aura-pressable cursor-pointer"
+                        className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left aura-pressable aura-focus-ring cursor-pointer"
                       >
-                        <ListPlus className="w-3.5 h-3.5 text-amber-400" />
+                        <AuraIcon name="playlistAdd" size={14} className="text-amber-400" />
                         Add to Playlist...
                       </button>
                     )}
                     <button
                       type="button"
+                      role="menuitem"
                       onClick={() => {
                         deleteTrack(track.id);
                         setIsMenuOpen(false);
                       }}
-                      className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-rose-400 hover:bg-rose-500/10 rounded-lg text-left aura-pressable cursor-pointer"
+                      className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-rose-400 hover:bg-rose-500/10 rounded-lg text-left aura-pressable aura-focus-ring cursor-pointer"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <AuraIcon name="trash" size={14} />
                       Delete Track
                     </button>
                   </MotionPopover>
@@ -346,10 +365,7 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
       tabIndex={0}
       aria-label={`${isActivelyPlaying ? 'Pause' : 'Play'} ${track.title} by ${track.artist}`}
       onMouseEnter={() => { if (canHover) setIsHovered(true); }}
-      onMouseLeave={() => {
-        setIsHovered(false);
-        setIsMenuOpen(false);
-      }}
+      onMouseLeave={() => setIsHovered(false)}
       className={`group relative flex items-center justify-between p-2.5 sm:px-3.5 rounded-xl transition-colors duration-200 cursor-pointer select-none aura-pressable-subtle aura-focus-ring ${
         isCurrent
           ? 'glass-floating border-sky-400/40 text-white font-medium shadow-[0_4px_20px_rgba(56,189,248,0.2)]'
@@ -387,7 +403,7 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
             />
           ) : (
             <div className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-[#141a29] to-[#080b12]'} flex items-center justify-center`}>
-              <Music className="w-4 h-4 text-white/60" />
+              <AuraIcon name="musicNote" size={16} className="text-white/60" />
             </div>
           )}
 
@@ -398,9 +414,9 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
           >
             <MotionIconSwap stateKey={isActivelyPlaying ? 'pause' : 'play'}>
               {isActivelyPlaying ? (
-                <Pause className="w-3.5 h-3.5 text-white fill-current" />
+                <AuraIcon name="pause" size={14} filled className="text-white" />
               ) : (
-                <Play className="w-3.5 h-3.5 text-white fill-current translate-x-0.5" />
+                <AuraIcon name="play" size={14} filled className="text-white translate-x-0.5" />
               )}
             </MotionIconSwap>
           </div>
@@ -438,16 +454,18 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
         <button
           type="button"
           onClick={() => toggleFavorite(track.id)}
+          aria-pressed={Boolean(track.isFavorite)}
           className="p-1 text-zinc-500 hover:text-rose-400 aura-pressable aura-focus-ring transition-colors cursor-pointer"
           title={track.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
           aria-label={track.isFavorite ? `Remove ${track.title} from favorites` : `Add ${track.title} to favorites`}
         >
           <motion.span
             className="inline-flex items-center justify-center"
+            initial={false}
             animate={!prefersReducedMotion && track.isFavorite ? { scale: [1, 1.24, 1] } : { scale: 1 }}
             transition={MOTION_TRANSITION.micro}
           >
-            <Heart className={`w-3.5 h-3.5 ${track.isFavorite ? 'fill-rose-500 text-rose-500' : ''}`} />
+            <AuraIcon name="heart" size={14} filled={Boolean(track.isFavorite)} className={track.isFavorite ? 'text-rose-500' : ''} />
           </motion.span>
         </button>
 
@@ -456,8 +474,9 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
         </span>
 
         {/* Row Context Menu */}
-        <div className="relative">
+        <div className="relative" ref={menuRef}>
           <button
+            ref={menuTriggerRef}
             type="button"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className={`p-1 rounded text-zinc-500 hover:text-zinc-200 hover:bg-white/5 aura-pressable aura-focus-ring transition-opacity cursor-pointer ${
@@ -465,54 +484,61 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
             }`}
             title="Options"
             aria-label={`More options for ${track.title}`}
+            aria-haspopup="menu"
             aria-expanded={isMenuOpen}
           >
-            <MoreHorizontal className="w-3.5 h-3.5" />
+            <AuraIcon name="more" size={14} />
           </button>
 
           <AnimatePresence>
             {isMenuOpen && (
               <MotionPopover
                 placement="bottom"
+                role="menu"
+                aria-label={`Options for ${track.title}`}
                 style={{ pointerEvents: 'auto' }}
                 className="absolute right-0 top-full mt-1 w-44 rounded-xl bg-[#12141c] border border-white/10 shadow-2xl p-1.5 z-50 flex flex-col gap-1 backdrop-blur-2xl"
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
                   type="button"
+                  role="menuitem"
                   onClick={() => {
                     openTrackInfo(track);
                     setIsMenuOpen(false);
                   }}
-                  className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left aura-pressable cursor-pointer"
+                  className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left aura-pressable aura-focus-ring cursor-pointer"
                 >
-                  <Info className="w-3.5 h-3.5 text-indigo-400" />
+                  <AuraIcon name="info" size={14} className="text-indigo-400" />
                   Track Info & Metadata
                 </button>
                 <button
                   type="button"
+                  role="menuitem"
                   onClick={() => {
                     playNext(track);
                     setIsMenuOpen(false);
                   }}
-                  className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left aura-pressable cursor-pointer"
+                  className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left aura-pressable aura-focus-ring cursor-pointer"
                 >
-                  <ListMusic className="w-3.5 h-3.5 text-indigo-400" />
+                  <AuraIcon name="playlist" size={14} className="text-indigo-400" />
                   Play Next
                 </button>
                 <button
                   type="button"
+                  role="menuitem"
                   onClick={() => {
                     addToQueue(track);
                     setIsMenuOpen(false);
                   }}
-                  className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left aura-pressable cursor-pointer"
+                  className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left aura-pressable aura-focus-ring cursor-pointer"
                 >
-                  <ListPlus className="w-3.5 h-3.5 text-cyan-400" />
+                  <AuraIcon name="playlistAdd" size={14} className="text-cyan-400" />
                   Add to Queue
                 </button>
                 <button
                   type="button"
+                  role="menuitem"
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsMenuOpen(false);
@@ -524,33 +550,35 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
                       });
                     }
                   }}
-                  className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left aura-pressable cursor-pointer"
+                  className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left aura-pressable aura-focus-ring cursor-pointer"
                 >
-                  <Users className="w-3.5 h-3.5 text-indigo-400" />
+                  <AuraIcon name="users" size={14} className="text-indigo-400" />
                   {isInRoom ? 'Add to Shared Room' : 'Play in Listen Together'}
                 </button>
                 {onOpenPlaylistModal && (
                   <button
                     type="button"
+                    role="menuitem"
                     onClick={() => {
                       onOpenPlaylistModal(track);
                       setIsMenuOpen(false);
                     }}
-                    className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left aura-pressable cursor-pointer"
+                    className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/5 rounded-lg text-left aura-pressable aura-focus-ring cursor-pointer"
                   >
-                    <ListPlus className="w-3.5 h-3.5 text-amber-400" />
+                    <AuraIcon name="playlistAdd" size={14} className="text-amber-400" />
                     Add to Playlist...
                   </button>
                 )}
                 <button
                   type="button"
+                  role="menuitem"
                   onClick={() => {
                     deleteTrack(track.id);
                     setIsMenuOpen(false);
                   }}
-                  className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-rose-400 hover:bg-rose-500/10 rounded-lg text-left aura-pressable cursor-pointer"
+                  className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-rose-400 hover:bg-rose-500/10 rounded-lg text-left aura-pressable aura-focus-ring cursor-pointer"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <AuraIcon name="trash" size={14} />
                   Delete Track
                 </button>
               </MotionPopover>

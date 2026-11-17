@@ -1,5 +1,6 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { WaveformMarker } from '../../types';
+import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
 
 interface WaveformScrubberProps {
   peaks?: number[];
@@ -48,6 +49,7 @@ export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
   onMarkerClick,
   loopRegion,
 }) => {
+  const { prefersReducedMotion } = useMotionCapabilities();
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isHovering, setIsHovering] = useState(false);
@@ -427,7 +429,7 @@ export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
       {/* Subtle loading pulse overlay when duration is genuinely pending */}
       {!isRadio && isLoadingDuration && !hasValidDuration && (
         <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 h-1 rounded-full overflow-hidden bg-white/[0.08]">
-          <div className="h-full w-1/3 bg-white/25 rounded-full animate-pulse" />
+          <div className={`h-full w-1/3 bg-white/25 rounded-full ${!prefersReducedMotion ? 'animate-pulse' : ''}`} />
         </div>
       )}
 

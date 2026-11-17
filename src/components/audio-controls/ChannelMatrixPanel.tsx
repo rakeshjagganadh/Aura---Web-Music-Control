@@ -2,18 +2,7 @@ import React from 'react';
 import { MotionIconSwap } from '../common/motion/MotionInteractive';
 import { useMusic } from '../../context/MusicContext';
 import { ChannelMode } from '../../types';
-import { 
-  Split, 
-  RotateCcw, 
-  Disc3, 
-  Check,
-  Radio,
-  Sliders,
-  Volume2,
-  Lock,
-  Unlock,
-  ArrowRightLeft
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 interface ChannelModeConfig {
   id: ChannelMode;
@@ -100,7 +89,7 @@ export const ChannelMatrixPanel: React.FC<{ className?: string }> = ({ className
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 shrink-0">
-            <Split className="w-4 h-4" />
+            <AuraIcon name="split" size={16} />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -123,7 +112,7 @@ export const ChannelMatrixPanel: React.FC<{ className?: string }> = ({ className
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             title="Reset Channel Matrix, Balance Pan, and Pitch/Tempo to studio defaults"
           >
-            <RotateCcw className="w-3 h-3" />
+            <AuraIcon name="reset" size={12} />
             <span>Reset Matrix</span>
           </button>
         </div>
@@ -175,7 +164,7 @@ export const ChannelMatrixPanel: React.FC<{ className?: string }> = ({ className
                     <div className="shrink-0 flex items-center">
                       {isSelected ? (
                         <div className="w-5 h-5 rounded-full bg-blue-500/20 border border-blue-500/40 flex items-center justify-center">
-                          <Check className="w-3.5 h-3.5 text-blue-400" />
+                          <AuraIcon name="check" size={14} className="text-blue-400" />
                         </div>
                       ) : (
                         <span className="text-[10px] font-mono text-zinc-600 uppercase">{m.useCase}</span>
@@ -191,7 +180,7 @@ export const ChannelMatrixPanel: React.FC<{ className?: string }> = ({ className
           <div className="flex flex-col gap-2.5 pt-4 border-t border-white/5">
             <div className="flex items-center justify-between text-xs">
               <span className="text-zinc-300 font-semibold flex items-center gap-1.5">
-                <ArrowRightLeft className="w-3.5 h-3.5 text-blue-400" />
+                <AuraIcon name="arrowRightLeft" size={14} className="text-blue-400" />
                 <span>Stereo Balance (Pan)</span>
               </span>
               <div className="flex items-center gap-2">
@@ -242,7 +231,7 @@ export const ChannelMatrixPanel: React.FC<{ className?: string }> = ({ className
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
               <div className="flex items-center gap-2">
-                <Disc3 className="w-4 h-4 text-amber-400" />
+                <AuraIcon name="disc" size={16} className="text-amber-400" />
                 <div>
                   <h3 className="text-xs font-bold text-white uppercase tracking-wider">Pitch & Master Tempo Studio</h3>
                   <p className="text-[11px] text-zinc-400">Independent musical pitch shifting and variable speed playback</p>
@@ -378,9 +367,9 @@ export const ChannelMatrixPanel: React.FC<{ className?: string }> = ({ className
             <div className="flex items-center gap-2.5">
               <MotionIconSwap stateKey={pitchTempo.preservePitch} className="inline-flex items-center justify-center shrink-0">
                 {pitchTempo.preservePitch ? (
-                  <Lock className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <AuraIcon name="lock" size={16} className="text-emerald-400 shrink-0" />
                 ) : (
-                  <Unlock className="w-4 h-4 text-amber-400 shrink-0" />
+                  <AuraIcon name="unlock" size={16} className="text-amber-400 shrink-0" />
                 )}
               </MotionIconSwap>
               <div>

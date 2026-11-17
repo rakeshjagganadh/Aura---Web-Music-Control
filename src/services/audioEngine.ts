@@ -162,6 +162,7 @@ export class AudioEngine {
   private leftAnalyser: AnalyserNode | null = null;
   private rightAnalyser: AnalyserNode | null = null;
   private mainAnalyser: AnalyserNode | null = null;
+  private visualizerAnalyser: AnalyserNode | null = null;
 
   // Meter buffers
   private meterLeftData: Float32Array = new Float32Array(512);
@@ -175,6 +176,9 @@ export class AudioEngine {
   private currentTrack: Track | null = null;
   private currentObjectUrl: string | null = null;
   private currentLufsOffset = 0; // dB correction for auto loudness
+  private loadGeneration = 0;
+  private activeLoadErrorCleanup: (() => void) | null = null;
+  private corsBlockedUrls = new Set<string>();
 
   // Dynamic Connection & Auto-Bypass Tracking (eliminates idle DSP CPU & audio glitches)
   private isDspPathConnected = false;
@@ -662,6 +666,15 @@ export class AudioEngine {
     this.mainAnalyser.fftSize = 512;
     this.mainAnalyser.smoothingTimeConstant = 0.82;
 
+    // High-resolution passive analyser branched off masterSum (post-DSP, pre-masterGain)
+    // so speaker volume changes do not crush waveform resolution or frequency detail.
+    this.visualizerAnalyser = this.ctx.createAnalyser();
+    this.visualizerAnalyser.fftSize = 2048;
+    this.visualizerAnalyser.minDecibels = -92;
+    this.visualizerAnalyser.maxDecibels = -12;
+    this.visualizerAnalyser.smoothingTimeConstant = 0.72;
+    masterSum.connect(this.visualizerAnalyser);
+
     const meterSplitter = this.ctx.createChannelSplitter(2);
     this.leftAnalyser = this.ctx.createAnalyser();
     this.leftAnalyser.fftSize = 256;
@@ -748,6 +761,12 @@ export class AudioEngine {
     this.init();
     await this.resumeContext();
 
+    const myLoadGen = ++this.loadGeneration;
+    if (this.activeLoadErrorCleanup) {
+      this.activeLoadErrorCleanup();
+      this.activeLoadErrorCleanup = null;
+    }
+
     // Stop active playback and release old src BEFORE revoking old Object URL
     if (this.audioEl) {
       this.audioEl.pause();
@@ -771,28 +790,41 @@ export class AudioEngine {
 
     this.currentTrack = track;
 
-    // Jamendo, Curated Streams, and standard audio files attempt CORS Web Audio API processing first
-    const isExternalStream =
-      track.source === 'audius' ||
-      track.source === 'radio' ||
-      track.source === 'radiobrowser' ||
-      (typeof audioSource === 'string' &&
-        track.source !== 'jamendo' &&
-        track.source !== 'curated_stream' &&
-        (audioSource.includes('audius.co') ||
-          audioSource.includes('monophonic.digital') ||
-          audioSource.includes('cidstream')));
+    const isRemoteHttp = typeof audioSource === 'string' && (url.startsWith('http://') || url.startsWith('https://'));
+    // Attempt CORS Web Audio first for all HTTP streams (Local, Audius, Jamendo, Curated, Radio Browser).
+    // Only skip directly to directAudioEl if this exact URL already failed CORS in this session.
+    const shouldStartDirect = isRemoteHttp && this.corsBlockedUrls.has(url);
 
-    this.isDirectStreaming = isExternalStream;
+    this.isDirectStreaming = shouldStartDirect;
     this.onDirectStreamChangeCallback?.(this.isDirectStreaming);
     this.isUserPlaying = autoPlay;
     this.isExplicitUserPause = !autoPlay;
 
-    if (isExternalStream) {
-      // Clear WebAudio element to avoid conflicts
-      if (this.audioEl && this.audioEl.hasAttribute('src')) {
-        this.audioEl.removeAttribute('src');
+    const startDirectPlayback = async (reason?: string): Promise<void> => {
+      if (myLoadGen !== this.loadGeneration) return;
+      if (reason && isRemoteHttp) {
+        if (this.corsBlockedUrls.size > 120) {
+          const oldest = this.corsBlockedUrls.values().next().value;
+          if (oldest) this.corsBlockedUrls.delete(oldest);
+        }
+        this.corsBlockedUrls.add(url);
       }
+
+      if (this.activeLoadErrorCleanup) {
+        this.activeLoadErrorCleanup();
+        this.activeLoadErrorCleanup = null;
+      }
+
+      this.isDirectStreaming = true;
+      this.onDirectStreamChangeCallback?.(true);
+
+      if (this.audioEl) {
+        this.audioEl.pause();
+        if (this.audioEl.hasAttribute('src')) {
+          this.audioEl.removeAttribute('src');
+        }
+      }
+
       if (this.directAudioEl) {
         this.directAudioEl.src = url;
 
@@ -801,6 +833,7 @@ export class AudioEngine {
             this.directAudioEl.currentTime = startTime;
           } catch {}
           const onMeta = () => {
+            if (myLoadGen !== this.loadGeneration) return;
             try {
               if (this.directAudioEl) this.directAudioEl.currentTime = startTime;
             } catch {}
@@ -808,80 +841,104 @@ export class AudioEngine {
           this.directAudioEl.addEventListener('loadedmetadata', onMeta, { once: true });
         }
 
-        if (autoPlay) {
+        if (autoPlay && this.isUserPlaying) {
           try {
             await this.directAudioEl.play();
-            if (startTime > 0) {
+            if (startTime > 0 && myLoadGen === this.loadGeneration) {
               try {
                 this.directAudioEl.currentTime = startTime;
               } catch {}
             }
-          } catch (e: any) {
-            if (e?.name === 'AbortError' || e?.message?.includes('interrupted')) {
-              console.debug('[AudioEngine] Direct stream play interrupted:', e);
+          } catch (fallbackErr: any) {
+            if (fallbackErr?.name === 'AbortError' || fallbackErr?.message?.includes('interrupted')) {
+              console.debug('[AudioEngine] Direct fallback play interrupted:', fallbackErr);
             } else {
-              console.warn('Direct stream autoplay waiting for gesture:', e);
+              console.warn('[AudioEngine] Direct audio fallback waiting for gesture or failed:', fallbackErr);
             }
           }
         }
       }
-    } else {
-      // Clear direct element
-      if (this.directAudioEl && this.directAudioEl.hasAttribute('src')) {
-        this.directAudioEl.removeAttribute('src');
+    };
+
+    if (shouldStartDirect) {
+      await startDirectPlayback();
+      return;
+    }
+
+    // Clear direct element when using primary Web Audio element
+    if (this.directAudioEl && this.directAudioEl.hasAttribute('src')) {
+      this.directAudioEl.removeAttribute('src');
+    }
+
+    if (this.audioEl) {
+      // Strip crossOrigin for local blobs to prevent browser CORS sandbox bugs
+      if (isRemoteHttp) {
+        this.audioEl.crossOrigin = 'anonymous';
+      } else {
+        this.audioEl.removeAttribute('crossOrigin');
       }
-      if (this.audioEl) {
-        // Strip crossOrigin for local blobs to prevent browser CORS sandbox bugs
-        if (typeof audioSource === 'string' && (audioSource.startsWith('http://') || audioSource.startsWith('https://'))) {
-          this.audioEl.crossOrigin = 'anonymous';
-        } else {
-          this.audioEl.removeAttribute('crossOrigin');
-        }
-        this.audioEl.src = url;
 
-        if (startTime > 0) {
+      let hasFallenBack = false;
+      const triggerFallback = (reason: string) => {
+        if (hasFallenBack || myLoadGen !== this.loadGeneration || !isRemoteHttp) return;
+        hasFallenBack = true;
+        void startDirectPlayback(reason);
+      };
+
+      const onAudioError = () => {
+        if (myLoadGen !== this.loadGeneration || !isRemoteHttp) return;
+        triggerFallback('media-error-or-cors-blocked');
+      };
+
+      const onAudioPlaying = () => {
+        if (this.activeLoadErrorCleanup) {
+          this.activeLoadErrorCleanup();
+          this.activeLoadErrorCleanup = null;
+        }
+      };
+
+      if (isRemoteHttp) {
+        this.audioEl.addEventListener('error', onAudioError, { once: true });
+        this.audioEl.addEventListener('playing', onAudioPlaying, { once: true });
+        this.activeLoadErrorCleanup = () => {
+          this.audioEl?.removeEventListener('error', onAudioError);
+          this.audioEl?.removeEventListener('playing', onAudioPlaying);
+        };
+      }
+
+      this.audioEl.src = url;
+
+      if (startTime > 0) {
+        try {
+          this.audioEl.currentTime = startTime;
+        } catch {}
+        const onMeta = () => {
+          if (myLoadGen !== this.loadGeneration) return;
           try {
-            this.audioEl.currentTime = startTime;
+            if (this.audioEl) this.audioEl.currentTime = startTime;
           } catch {}
-          const onMeta = () => {
-            try {
-              if (this.audioEl) this.audioEl.currentTime = startTime;
-            } catch {}
-          };
-          this.audioEl.addEventListener('loadedmetadata', onMeta, { once: true });
-        }
+        };
+        this.audioEl.addEventListener('loadedmetadata', onMeta, { once: true });
+      }
 
-        if (autoPlay) {
-          try {
-            await this.audioEl.play();
-            if (startTime > 0) {
-              try {
-                this.audioEl.currentTime = startTime;
-              } catch {}
-            }
-          } catch (e: any) {
-            if (e?.name === 'AbortError' || e?.message?.includes('interrupted')) {
-              console.debug('[AudioEngine] WebAudio play interrupted:', e);
-            } else {
-              console.warn('WebAudio play attempt:', e);
-              // Fallback to directAudioEl if WebAudio CORS or decode fails
-              if (typeof audioSource === 'string' && audioSource.startsWith('http')) {
-                try {
-                  this.isDirectStreaming = true;
-                  this.onDirectStreamChangeCallback?.(true);
-                  if (this.audioEl) this.audioEl.pause();
-                  if (this.directAudioEl) {
-                    this.directAudioEl.src = url;
-                    await this.directAudioEl.play();
-                  }
-                } catch (fallbackErr: any) {
-                  if (fallbackErr?.name === 'AbortError' || fallbackErr?.message?.includes('interrupted')) {
-                    console.debug('[AudioEngine] Direct fallback play interrupted:', fallbackErr);
-                  } else {
-                    console.warn('Direct audio fallback also waiting for gesture:', fallbackErr);
-                  }
-                }
-              }
+      if (autoPlay) {
+        try {
+          await this.audioEl.play();
+          if (startTime > 0 && myLoadGen === this.loadGeneration) {
+            try {
+              this.audioEl.currentTime = startTime;
+            } catch {}
+          }
+        } catch (e: any) {
+          if (myLoadGen !== this.loadGeneration) return;
+          if (e?.name === 'AbortError' || e?.message?.includes('interrupted')) {
+            console.debug('[AudioEngine] WebAudio play interrupted:', e);
+          } else if (e?.name === 'NotAllowedError') {
+            console.warn('[AudioEngine] WebAudio autoplay waiting for user gesture:', e);
+          } else {
+            console.warn('[AudioEngine] WebAudio CORS/decode fallback to direct stream:', e?.message || e);
+            if (isRemoteHttp) {
+              triggerFallback(e?.name || 'play-rejected');
             }
           }
         }
@@ -1633,7 +1690,7 @@ export class AudioEngine {
   // --- Visualizer Data ---
 
   public getFrequencyData(array: Uint8Array): void {
-    if (this.mainAnalyser) {
+    if (this.mainAnalyser && !this.isDirectStreaming) {
       this.mainAnalyser.getByteFrequencyData(array);
     } else {
       array.fill(0);
@@ -1641,11 +1698,54 @@ export class AudioEngine {
   }
 
   public getTimeDomainData(array: Uint8Array): void {
-    if (this.mainAnalyser) {
+    if (this.mainAnalyser && !this.isDirectStreaming) {
       this.mainAnalyser.getByteTimeDomainData(array);
     } else {
       array.fill(128);
     }
+  }
+
+  public getVisualizerFrequencyData(array: Uint8Array): boolean {
+    if (!this.visualizerAnalyser || this.isDirectStreaming || !this.isPlaying()) {
+      array.fill(0);
+      return false;
+    }
+    this.visualizerAnalyser.getByteFrequencyData(array);
+    return true;
+  }
+
+  public getVisualizerFloatTimeDomainData(array: Float32Array): boolean {
+    if (!this.visualizerAnalyser || this.isDirectStreaming || !this.isPlaying()) {
+      array.fill(0);
+      return false;
+    }
+    this.visualizerAnalyser.getFloatTimeDomainData(array);
+    return true;
+  }
+
+  public getAnalysisSourceState(): {
+    sampleRate: number;
+    fftSize: number;
+    binCount: number;
+    contextState: AudioContextState | 'uninitialized';
+    isDirectStreaming: boolean;
+    isAudioMuted: boolean;
+    isEnginePlaying: boolean;
+    activeTrackId: string | null;
+    activeTrackSource: string | null;
+  } {
+    const activeEl = this.getActiveAudioEl();
+    return {
+      sampleRate: this.ctx?.sampleRate || 44100,
+      fftSize: this.visualizerAnalyser?.fftSize || 2048,
+      binCount: this.visualizerAnalyser?.frequencyBinCount || 1024,
+      contextState: this.ctx ? this.ctx.state : 'uninitialized',
+      isDirectStreaming: this.isDirectStreaming,
+      isAudioMuted: Boolean(activeEl?.muted),
+      isEnginePlaying: this.isPlaying(),
+      activeTrackId: this.currentTrack?.id || null,
+      activeTrackSource: this.currentTrack?.source || null,
+    };
   }
 
   public getAnalyserFrequencyBinCount(): number {

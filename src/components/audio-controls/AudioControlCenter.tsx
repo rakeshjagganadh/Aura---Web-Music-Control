@@ -11,24 +11,7 @@ import { EffectsRackPanel } from './EffectsRackPanel';
 import { ChannelMatrixPanel } from './ChannelMatrixPanel';
 import { AudioAnalysisPanel } from './AudioAnalysisPanel';
 import { PresetsProfilesPanel } from './PresetsProfilesPanel';
-import { 
-  SlidersHorizontal, 
-  Activity, 
-  Compass, 
-  Sparkles, 
-  Split, 
-  BarChart3, 
-  Bookmark, 
-  Layers, 
-  RotateCcw, 
-  X, 
-  Copy, 
-  Check, 
-  Radio, 
-  Zap,
-  Volume2,
-  Maximize2
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 import { MobileAudioControlSheet } from '../mobile/MobileAudioControlSheet';
 
 export const AudioControlCenter: React.FC = () => {
@@ -63,14 +46,14 @@ export const AudioControlCenter: React.FC = () => {
   });
 
   const TABS: { id: AudioControlTab; label: string; icon: React.ReactNode; proOnly?: boolean }[] = [
-    { id: 'overview', label: 'Quick Tone', icon: <Layers className="w-3.5 h-3.5" /> },
-    { id: 'eq', label: '10-Band EQ', icon: <SlidersHorizontal className="w-3.5 h-3.5" /> },
-    { id: 'dynamics', label: 'Dynamics & Limiter', icon: <Activity className="w-3.5 h-3.5" /> },
-    { id: 'spatial', label: 'Spatial 3D', icon: <Compass className="w-3.5 h-3.5" /> },
-    { id: 'effects', label: 'Effects Rack', icon: <Sparkles className="w-3.5 h-3.5" /> },
-    { id: 'channels', label: 'Channels & Pitch', icon: <Split className="w-3.5 h-3.5" /> },
-    { id: 'analysis', label: 'Analysis & Meters', icon: <BarChart3 className="w-3.5 h-3.5" /> },
-    { id: 'presets', label: 'Presets & Hardware', icon: <Bookmark className="w-3.5 h-3.5" /> },
+    { id: 'overview', label: 'Quick Tone', icon: <AuraIcon name="layers" size={14} /> },
+    { id: 'eq', label: '10-Band EQ', icon: <AuraIcon name="sliders" size={14} /> },
+    { id: 'dynamics', label: 'Dynamics & Limiter', icon: <AuraIcon name="activity" size={14} /> },
+    { id: 'spatial', label: 'Spatial 3D', icon: <AuraIcon name="compass" size={14} /> },
+    { id: 'effects', label: 'Effects Rack', icon: <AuraIcon name="sparkles" size={14} /> },
+    { id: 'channels', label: 'Channels & Pitch', icon: <AuraIcon name="split" size={14} /> },
+    { id: 'analysis', label: 'Analysis & Meters', icon: <AuraIcon name="equalizer" size={14} /> },
+    { id: 'presets', label: 'Presets & Hardware', icon: <AuraIcon name="bookmark" size={14} /> },
   ];
 
   return (
@@ -104,7 +87,7 @@ export const AudioControlCenter: React.FC = () => {
             {/* Title & Status */}
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
-                <SlidersHorizontal className="w-5 h-5" />
+                <AuraIcon name="sliders" size={20} />
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -147,7 +130,7 @@ export const AudioControlCenter: React.FC = () => {
                 }`}
               >
                 <MotionIconSwap stateKey={isABBypassed ? 'raw' : 'dsp'}>
-                  <Radio className={`w-3.5 h-3.5 ${!isABBypassed ? 'text-emerald-400' : 'text-zinc-500'}`} />
+                  <AuraIcon name="radio" size={14} className={!isABBypassed ? 'text-emerald-400' : 'text-zinc-500'} />
                 </MotionIconSwap>
                 <span>{isABBypassed ? 'A: ORIGINAL' : 'B: STUDIO DSP'}</span>
               </button>
@@ -159,7 +142,7 @@ export const AudioControlCenter: React.FC = () => {
                 title="Toggle between Simple Controls and Professional Audio Engineering Modules"
                 className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
               >
-                <Zap className="w-3.5 h-3.5 text-amber-400" />
+                <AuraIcon name="zap" size={14} className="text-amber-400" />
                 {isAdvancedMode ? 'Simple Mode' : 'Pro Studio'}
               </button>
 
@@ -171,7 +154,7 @@ export const AudioControlCenter: React.FC = () => {
                 aria-label="Reset all audio processing"
                 className="p-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 rounded-xl transition-colors cursor-pointer aura-pressable aura-focus-ring"
               >
-                <RotateCcw className="w-4 h-4" />
+                <AuraIcon name="reset" size={16} />
               </button>
 
               {/* Close Button */}
@@ -181,7 +164,7 @@ export const AudioControlCenter: React.FC = () => {
                 aria-label="Close Audio Control Studio"
                 className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-xl transition-colors cursor-pointer aura-pressable aura-focus-ring"
               >
-                <X className="w-5 h-5" />
+                <AuraIcon name="close" size={20} />
               </button>
             </div>
           </div>

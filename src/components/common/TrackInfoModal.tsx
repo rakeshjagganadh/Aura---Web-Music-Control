@@ -3,21 +3,7 @@ import { AnimatePresence } from 'motion/react';
 import { MotionBackdrop, MotionModal } from './motion/MotionSurface';
 import { useMusic } from '../../context/MusicContext';
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
-import { 
-  X, 
-  Info, 
-  Music, 
-  Disc, 
-  Clock, 
-  HardDrive, 
-  Activity, 
-  Sparkles, 
-  Play, 
-  Heart,
-  Sliders,
-  Cpu,
-  Layers
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 import { WaveformScrubber } from '../waveform/WaveformScrubber';
 
 export const TrackInfoModal: React.FC = () => {
@@ -87,7 +73,7 @@ export const TrackInfoModal: React.FC = () => {
         <div className="p-5 sm:p-6 border-b border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              <Info className="w-4 h-4" />
+              <AuraIcon name="info" size={16} />
             </div>
             <div>
               <h3 className="text-sm sm:text-base font-bold text-white">Track Metadata & Acoustic Profile</h3>
@@ -101,7 +87,7 @@ export const TrackInfoModal: React.FC = () => {
             onClick={closeTrackInfo}
             className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer aura-focus-ring"
           >
-            <X className="w-5 h-5" />
+            <AuraIcon name="close" size={20} />
           </button>
         </div>
 
@@ -129,7 +115,7 @@ export const TrackInfoModal: React.FC = () => {
                 style={{ display: track.coverUrl ? 'none' : 'flex' }}
                 className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-indigo-600 to-zinc-900'} items-center justify-center`}
               >
-                <Music className="w-8 h-8 text-white/80" />
+                <AuraIcon name="musicNote" size={32} className="text-white/80" />
               </div>
             </div>
 
@@ -157,7 +143,7 @@ export const TrackInfoModal: React.FC = () => {
                 onClick={() => playTrack(track)}
                 className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/25 transition-colors cursor-pointer aura-pressable aura-focus-ring"
               >
-                <Play className="w-3.5 h-3.5 fill-current" />
+                <AuraIcon name="play" size={14} filled />
                 Play Track
               </button>
               <button
@@ -167,7 +153,12 @@ export const TrackInfoModal: React.FC = () => {
                 title={track.isFavorite ? 'Remove favorite' : 'Add favorite'}
                 aria-label={track.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               >
-                <Heart className={`w-4 h-4 ${track.isFavorite ? 'fill-rose-500 text-rose-500' : ''}`} />
+                <AuraIcon
+                  name="heart"
+                  size={16}
+                  filled={Boolean(track.isFavorite)}
+                  className={track.isFavorite ? 'text-rose-500' : ''}
+                />
               </button>
             </div>
           </div>
@@ -237,7 +228,7 @@ export const TrackInfoModal: React.FC = () => {
                 disabled={isAnalyzingTrack}
                 className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-indigo-300 hover:text-indigo-200 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
               >
-                <Sparkles className="w-3 h-3 text-indigo-400" />
+                <AuraIcon name="sparkles" size={12} className="text-indigo-400" />
                 {isAnalyzingTrack ? 'Analyzing...' : 'Run Deep Analysis'}
               </button>
             </div>

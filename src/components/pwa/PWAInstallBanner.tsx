@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence } from 'motion/react';
 import { MotionFadeSlide } from '../common/motion/MotionSurface';
-import { X, Download, Smartphone } from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 import { AuraBrandMark } from '../common/AuraBrandMark';
 
 interface PWAInstallBannerProps {
@@ -73,7 +73,7 @@ export const PWAInstallBanner: React.FC<PWAInstallBannerProps> = ({
                 onClick={onInstall}
                 className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-semibold transition-colors cursor-pointer shadow-sm aura-pressable"
               >
-                <Download className="w-3.5 h-3.5" />
+                <AuraIcon name="download" size={14} />
                 <span>Install</span>
               </button>
 
@@ -86,7 +86,7 @@ export const PWAInstallBanner: React.FC<PWAInstallBannerProps> = ({
                 className="p-1.5 rounded-full text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer aura-pressable"
                 aria-label="Dismiss banner"
               >
-                <X className="w-4 h-4" />
+                <AuraIcon name="close" size={16} />
               </button>
             </div>
 

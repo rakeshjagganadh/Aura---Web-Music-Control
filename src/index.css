@@ -42,7 +42,6 @@
     --aura-signal-purple: #a855f7;
 
     /* -----------------------------------------------------------------
-    /* -----------------------------------------------------------------
        6-TIER LIQUID GLASS MATERIAL FOUNDATION
        True optical translucency, multi-stop specular highlights & prism depth
        ----------------------------------------------------------------- */
@@ -54,12 +53,12 @@
     --glass-solid-bg: #141722;
 
     /* Global Motion System Tokens (Durations & Cubic-Bezier Easings) */
-    --motion-duration-instant: 120ms;
-    --motion-duration-micro: 160ms;
-    --motion-duration-standard: 240ms;
-    --motion-duration-surface: 300ms;
-    --motion-duration-page: 340ms;
-    --motion-duration-shared: 420ms;
+    --motion-duration-instant: 100ms;
+    --motion-duration-micro: 150ms;
+    --motion-duration-standard: 220ms;
+    --motion-duration-surface: 280ms;
+    --motion-duration-page: 200ms;
+    --motion-duration-shared: 360ms;
 
     --motion-ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
     --motion-ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
@@ -365,12 +364,14 @@ input[type="range"]:disabled::-webkit-slider-thumb {
   input[type="range"]:not(:disabled):hover::-webkit-slider-thumb {
     transform: scale(1.25);
     background: #ffffff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.85), 0 0 0 2px rgba(255, 255, 255, 0.28);
   }
 }
 
 input[type="range"]:not(:disabled):active::-webkit-slider-thumb {
   transform: scale(1.35);
   background: #ffffff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.9), 0 0 0 3px rgba(255, 255, 255, 0.36);
 }
 
 /* Vertical slider for EQ */
@@ -430,18 +431,10 @@ input[type="range"].slider-vertical::-webkit-slider-thumb {
     opacity var(--motion-duration-instant) var(--motion-ease-standard);
 }
 
-.aura-pressable:active:not(:disabled) {
-  transform: scale(0.96);
-}
-
 .aura-pressable-subtle {
   transition:
     transform var(--motion-duration-instant) var(--motion-ease-standard),
     opacity var(--motion-duration-instant) var(--motion-ease-standard);
-}
-
-.aura-pressable-subtle:active:not(:disabled) {
-  transform: scale(0.985);
 }
 
 .aura-icon-transition {
@@ -451,26 +444,30 @@ input[type="range"].slider-vertical::-webkit-slider-thumb {
     color var(--motion-duration-micro) var(--motion-ease-standard);
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .aura-hover-lift {
-    transition: transform var(--motion-duration-micro) var(--motion-ease-standard);
-  }
+.aura-hover-lift,
+.aura-hover-scale {
+  transition: transform var(--motion-duration-micro) var(--motion-ease-standard);
+}
 
+@media (hover: hover) and (pointer: fine) {
   .aura-hover-lift:hover {
     transform: translateY(-2px);
-  }
-
-  .aura-hover-scale {
-    transition: transform var(--motion-duration-micro) var(--motion-ease-standard);
   }
 
   .aura-hover-scale:hover {
     transform: scale(1.015);
   }
+}
 
-  .aura-hover-scale:active:not(:disabled) {
-    transform: scale(0.985);
-  }
+/* Declared after pointer hover rules so tactile press always overrides hover */
+.aura-pressable:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.aura-pressable-subtle:active:not(:disabled),
+.aura-hover-lift:active:not(:disabled),
+.aura-hover-scale:active:not(:disabled) {
+  transform: scale(0.985);
 }
 
 /* Calm GPU-composited dark loading skeleton shimmer */
@@ -517,3 +514,35 @@ input[type="range"].slider-vertical::-webkit-slider-thumb {
     scroll-behavior: auto !important;
   }
 }
+
+/* -----------------------------------------------------------------
+   MATERIAL SYMBOLS ROUNDED — CENTRAL ICON SYSTEM
+   ----------------------------------------------------------------- */
+.aura-material-symbol {
+  font-family: 'Material Symbols Rounded';
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'liga';
+  user-select: none;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+/* Prevent raw ligature ASCII strings from leaking if font fails or is unavailable */
+html[data-aura-icons="fallback"] .aura-material-symbol {
+  font-size: 0 !important;
+  color: transparent !important;
+}
+

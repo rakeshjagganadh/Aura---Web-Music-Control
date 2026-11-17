@@ -1,22 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { AnimatePresence } from 'motion/react';
 import { useMusic } from '../../context/MusicContext';
-import { 
-  ArrowLeft, 
-  Play, 
-  Shuffle, 
-  ListPlus, 
-  Trash2, 
-  Edit3, 
-  Music, 
-  ChevronUp, 
-  ChevronDown, 
-  Plus,
-  Clock,
-  Calendar,
-  Layers,
-  Sparkles
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 import { TrackRow } from '../library/TrackRow';
 import { AddToPlaylistModal } from '../playlists/AddToPlaylistModal';
 import { PlaylistModal } from '../playlists/PlaylistModal';
@@ -134,7 +119,7 @@ export const PlaylistDetailView: React.FC = () => {
             className="flex flex-col items-center justify-center py-20 text-center select-none"
           >
             <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-3">
-              <Music className="w-7 h-7 text-zinc-500" />
+              <AuraIcon name="musicNote" size={28} className="text-zinc-500" />
             </div>
             <h3 className="text-sm font-semibold text-zinc-200">Playlist Not Found</h3>
             <p className="text-xs text-zinc-500 max-w-sm mt-1 mb-4">
@@ -163,7 +148,7 @@ export const PlaylistDetailView: React.FC = () => {
                 onClick={() => setCurrentView('playlists')}
                 className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 hover:text-white text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
+                <AuraIcon name="arrowLeft" size={14} />
                 <span>Back to Playlists</span>
               </button>
             </div>
@@ -218,7 +203,7 @@ export const PlaylistDetailView: React.FC = () => {
                   }}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
                 >
-                  <Play className="w-4 h-4 fill-current text-black translate-x-0.2" />
+                  <AuraIcon name="play" size={16} filled className="text-black translate-x-0.2" />
                   <span>Play All</span>
                 </button>
 
@@ -231,7 +216,7 @@ export const PlaylistDetailView: React.FC = () => {
                   }}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
                 >
-                  <Shuffle className="w-3.5 h-3.5 text-sky-400" />
+                  <AuraIcon name="shuffle" size={14} className="text-sky-400" />
                   <span>Shuffle</span>
                 </button>
 
@@ -240,7 +225,7 @@ export const PlaylistDetailView: React.FC = () => {
                   onClick={() => playlistTracks.forEach((t) => addToQueue(t))}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
                 >
-                  <ListPlus className="w-3.5 h-3.5 text-indigo-400" />
+                  <AuraIcon name="playlistAdd" size={14} className="text-indigo-400" />
                   <span>Add to Queue</span>
                 </button>
               </>
@@ -251,7 +236,7 @@ export const PlaylistDetailView: React.FC = () => {
               onClick={() => setIsEditModalOpen(true)}
               className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 hover:text-white text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             >
-              <Edit3 className="w-3.5 h-3.5" />
+              <AuraIcon name="edit" size={14} />
               <span>Edit Details</span>
             </button>
 
@@ -260,7 +245,7 @@ export const PlaylistDetailView: React.FC = () => {
               onClick={() => setIsDeleteModalOpen(true)}
               className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-medium border border-rose-500/20 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <AuraIcon name="trash" size={14} />
               <span>Delete</span>
             </button>
           </div>
@@ -298,7 +283,7 @@ export const PlaylistDetailView: React.FC = () => {
                     title="Move up"
                     aria-label={`Move ${track.title} up`}
                   >
-                    <ChevronUp className="w-3 h-3" />
+                    <AuraIcon name="chevronUp" size={12} />
                   </button>
                   <button
                     type="button"
@@ -316,7 +301,7 @@ export const PlaylistDetailView: React.FC = () => {
                     title="Move down"
                     aria-label={`Move ${track.title} down`}
                   >
-                    <ChevronDown className="w-3 h-3" />
+                    <AuraIcon name="chevronDown" size={12} />
                   </button>
                 </div>
 
@@ -337,7 +322,7 @@ export const PlaylistDetailView: React.FC = () => {
       ) : (
         <div className="p-12 sm:p-20 rounded-3xl aura-glass-ambient border border-dashed border-white/10 flex flex-col items-center justify-center text-center gap-3">
           <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400 mb-1">
-            <Music className="w-7 h-7 stroke-1" />
+            <AuraIcon name="musicNote" size={28} weight={300} />
           </div>
           <h3 className="text-base font-bold text-white font-ui-title">This playlist is empty</h3>
           <p className="text-xs text-zinc-400 max-w-sm font-ui-meta leading-relaxed">
@@ -348,7 +333,7 @@ export const PlaylistDetailView: React.FC = () => {
             onClick={() => setCurrentView('songs')}
             className="flex items-center gap-2 px-4 py-2 mt-2 rounded-xl bg-white text-zinc-950 text-xs font-bold shadow-md cursor-pointer aura-focus-ring aura-pressable"
           >
-            <Plus className="w-3.5 h-3.5 text-zinc-950" />
+            <AuraIcon name="add" size={14} className="text-zinc-950" />
             <span>Browse All Tracks</span>
           </button>
         </div>

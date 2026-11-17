@@ -19,38 +19,7 @@ import {
   MotionIconSwap,
   MotionPress,
 } from '../common/motion';
-import { 
-  X, 
-  Play, 
-  Pause, 
-  SkipBack, 
-  SkipForward, 
-  Shuffle, 
-  Repeat, 
-  Repeat1, 
-  Heart, 
-  Volume2, 
-  VolumeX, 
-  RotateCcw, 
-  RotateCw, 
-  SlidersHorizontal, 
-  Sparkles, 
-  Activity, 
-  Music, 
-  Info, 
-  Moon,
-  ListMusic,
-  ChevronUp,
-  ChevronDown,
-  Trash2,
-  PanelRightClose,
-  PanelRightOpen,
-  BarChart3,
-  Disc3,
-  Radio,
-  Youtube,
-  HardDrive
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 import { MobileExpandedPlayer } from '../mobile/MobileExpandedPlayer';
 import { useListenTogether } from '../../context/ListenTogetherContext';
 import { VisualizerMode } from '../../types';
@@ -298,7 +267,7 @@ export const ExpandedPlayer: React.FC = () => {
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white border border-white/[0.06] text-xs font-medium transition-colors cursor-pointer"
                   title="Open Audio Studio (10-Band EQ, Effects & Dynamics)"
                 >
-                  <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-400" />
+                  <AuraIcon name="sliders" size={14} className="text-indigo-400" />
                   <span>Audio Studio</span>
                 </MotionPress>
 
@@ -312,9 +281,9 @@ export const ExpandedPlayer: React.FC = () => {
                 >
                   <MotionIconSwap stateKey={isQueueCollapsed ? 'open' : 'close'}>
                     {isQueueCollapsed ? (
-                      <PanelRightOpen className="w-3.5 h-3.5 text-zinc-400" />
+                      <AuraIcon name="panelRightOpen" size={14} className="text-zinc-400" />
                     ) : (
-                      <PanelRightClose className="w-3.5 h-3.5 text-zinc-400" />
+                      <AuraIcon name="panelRightClose" size={14} className="text-zinc-400" />
                     )}
                   </MotionIconSwap>
                   <span>{isQueueCollapsed ? 'Show Queue' : 'Hide Queue'}</span>
@@ -332,7 +301,7 @@ export const ExpandedPlayer: React.FC = () => {
                   }`}
                   title={isSleepTimerActive ? `Sleep Timer Active (${sleepTimerRemainingSecs ? Math.ceil(sleepTimerRemainingSecs / 60) + 'm left' : 'End of track'})` : 'Set Sleep Timer'}
                 >
-                  <Moon className="w-4 h-4" />
+                  <AuraIcon name="moon" size={16} />
                 </MotionPress>
 
                 {/* Close / Minimize Button */}
@@ -343,7 +312,7 @@ export const ExpandedPlayer: React.FC = () => {
                   className="p-2 rounded-xl text-zinc-400 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] transition-colors cursor-pointer"
                   title="Minimize Player (Esc)"
                 >
-                  <X className="w-4 h-4" />
+                  <AuraIcon name="close" size={16} />
                 </MotionPress>
               </div>
             </div>
@@ -406,7 +375,7 @@ export const ExpandedPlayer: React.FC = () => {
                       />
                     ) : (
                       <div className={`w-full h-full bg-gradient-to-br ${currentTrack.coverColor || 'from-[#141a29] to-[#080b12]'} flex flex-col items-center justify-center p-6 text-white`}>
-                        <Music className="w-16 h-16 opacity-30 mb-3" />
+                        <AuraIcon name="musicNote" size={56} className="opacity-30 mb-3" />
                         <span className="text-xs font-mono tracking-widest opacity-40 uppercase font-semibold">
                           AURA AUDIO
                         </span>
@@ -473,7 +442,7 @@ export const ExpandedPlayer: React.FC = () => {
                     }
                     transition={{ duration: MOTION_DURATION.standard, ease: MOTION_EASE.emphasized }}
                   >
-                    <Heart className={`w-4 h-4 ${currentTrack.isFavorite ? 'fill-current' : ''}`} />
+                    <AuraIcon name="heart" size={16} filled={Boolean(currentTrack.isFavorite)} />
                   </motion.span>
                 </MotionPress>
 
@@ -484,7 +453,7 @@ export const ExpandedPlayer: React.FC = () => {
                   className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-400 hover:text-white border border-white/[0.06] transition-colors cursor-pointer"
                   title="Track Details & Metadata (I)"
                 >
-                  <Info className="w-4 h-4" />
+                  <AuraIcon name="info" size={16} />
                 </MotionPress>
 
                 {currentTrack.genre && (
@@ -503,7 +472,7 @@ export const ExpandedPlayer: React.FC = () => {
             <div className="flex flex-col gap-2 p-3.5 rounded-2xl bg-[rgba(10,13,20,0.55)] border border-white/[0.06] backdrop-blur-xl shadow-lg">
               <div className="flex items-center justify-between text-xs font-mono px-0.5">
                 <span className="text-zinc-300 uppercase tracking-wider text-[10px] font-semibold flex items-center gap-1.5">
-                  <Activity className="w-3.5 h-3.5 text-sky-400" />
+                  <AuraIcon name="waveform" size={14} className="text-sky-400" />
                   Acoustic Analyzer
                 </span>
                 
@@ -610,7 +579,7 @@ export const ExpandedPlayer: React.FC = () => {
                   }`}
                   title={`Shuffle: ${isShuffle ? 'On' : 'Off'}`}
                 >
-                  <Shuffle className="w-4 h-4" />
+                  <AuraIcon name="shuffle" size={16} />
                 </MotionPress>
 
                 <MotionPress
@@ -622,7 +591,7 @@ export const ExpandedPlayer: React.FC = () => {
                   }`}
                   title={isInRoom && !isOwner ? 'Only room host can seek' : 'Rewind 10s'}
                 >
-                  <RotateCcw className="w-4 h-4" />
+                  <AuraIcon name="replay10" size={18} />
                 </MotionPress>
 
                 <MotionPress
@@ -632,7 +601,7 @@ export const ExpandedPlayer: React.FC = () => {
                   className="p-2.5 text-zinc-300 hover:text-white rounded-full transition-colors cursor-pointer"
                   title="Previous Track"
                 >
-                  <SkipBack className="w-5 h-5 fill-current" />
+                  <AuraIcon name="skipPrevious" size={22} filled />
                 </MotionPress>
 
                 {/* Prominent 64px Circular Play/Pause */}
@@ -645,9 +614,9 @@ export const ExpandedPlayer: React.FC = () => {
                 >
                   <MotionIconSwap stateKey={isPlaying && !isLocallySilenced ? 'pause' : 'play'}>
                     {isPlaying && !isLocallySilenced ? (
-                      <Pause className="w-7 h-7 fill-current" />
+                      <AuraIcon name="pause" size={30} filled />
                     ) : (
-                      <Play className="w-7 h-7 fill-current translate-x-0.5" />
+                      <AuraIcon name="play" size={30} filled />
                     )}
                   </MotionIconSwap>
                 </MotionPress>
@@ -659,7 +628,7 @@ export const ExpandedPlayer: React.FC = () => {
                   className="p-2.5 text-zinc-300 hover:text-white rounded-full transition-colors cursor-pointer"
                   title="Next Track"
                 >
-                  <SkipForward className="w-5 h-5 fill-current" />
+                  <AuraIcon name="skipNext" size={22} filled />
                 </MotionPress>
 
                 <MotionPress
@@ -671,7 +640,7 @@ export const ExpandedPlayer: React.FC = () => {
                   }`}
                   title={isInRoom && !isOwner ? 'Only room host can seek' : 'Forward 10s'}
                 >
-                  <RotateCw className="w-4 h-4" />
+                  <AuraIcon name="forward10" size={18} />
                 </MotionPress>
 
                 <MotionPress
@@ -685,7 +654,7 @@ export const ExpandedPlayer: React.FC = () => {
                   title={`Repeat: ${repeatMode}`}
                 >
                   <MotionIconSwap stateKey={repeatMode}>
-                    {repeatMode === 'one' ? <Repeat1 className="w-4 h-4" /> : <Repeat className="w-4 h-4" />}
+                    {repeatMode === 'one' ? <AuraIcon name="repeatOne" size={16} /> : <AuraIcon name="repeat" size={16} />}
                   </MotionIconSwap>
                 </MotionPress>
               </div>
@@ -723,9 +692,9 @@ export const ExpandedPlayer: React.FC = () => {
                 >
                   <MotionIconSwap stateKey={isMuted || volume === 0 ? 'muted' : 'audible'}>
                     {isMuted || volume === 0 ? (
-                      <VolumeX className="w-4 h-4 text-rose-400" />
+                      <AuraIcon name="volumeMute" size={16} className="text-rose-400" />
                     ) : (
-                      <Volume2 className="w-4 h-4" />
+                      <AuraIcon name="volumeHigh" size={16} />
                     )}
                   </MotionIconSwap>
                 </MotionPress>
@@ -761,7 +730,7 @@ export const ExpandedPlayer: React.FC = () => {
               {/* Queue Header */}
               <div className="flex items-center justify-between pb-3 border-b border-white/[0.06] shrink-0">
                 <div className="flex items-center gap-2">
-                  <ListMusic className="w-4 h-4 text-sky-400" />
+                  <AuraIcon name="queue" size={16} className="text-sky-400" />
                   <h3 className="text-xs font-mono font-medium uppercase tracking-wider text-zinc-300">
                     Up Next
                   </h3>
@@ -777,7 +746,7 @@ export const ExpandedPlayer: React.FC = () => {
                       className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
                       title="Shuffle upcoming tracks"
                     >
-                      <Shuffle className="w-3.5 h-3.5" />
+                      <AuraIcon name="shuffle" size={14} />
                     </button>
                   )}
 
@@ -787,7 +756,7 @@ export const ExpandedPlayer: React.FC = () => {
                       className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-white/5 transition-colors cursor-pointer"
                       title="Clear upcoming queue"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <AuraIcon name="trash" size={14} />
                     </button>
                   )}
                 </div>
@@ -806,7 +775,7 @@ export const ExpandedPlayer: React.FC = () => {
                         <img src={currentTrack.coverUrl} alt={currentTrack.title} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-400">
-                          <Music className="w-4 h-4" />
+                          <AuraIcon name="musicNote" size={16} />
                         </div>
                       )}
                     </MotionArtwork>
@@ -847,11 +816,11 @@ export const ExpandedPlayer: React.FC = () => {
                             <img src={track.coverUrl} alt={track.title} className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-500">
-                              <Music className="w-3.5 h-3.5" />
+                              <AuraIcon name="musicNote" size={14} />
                             </div>
                           )}
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                            <Play className="w-3 h-3 fill-white" />
+                            <AuraIcon name="play" size={12} filled className="text-white" />
                           </div>
                         </div>
 
@@ -873,7 +842,7 @@ export const ExpandedPlayer: React.FC = () => {
                             className="p-1 rounded text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
                             title="Move Up"
                           >
-                            <ChevronUp className="w-3 h-3" />
+                            <AuraIcon name="chevronUp" size={12} />
                           </button>
                         )}
 
@@ -883,7 +852,7 @@ export const ExpandedPlayer: React.FC = () => {
                             className="p-1 rounded text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
                             title="Move Down"
                           >
-                            <ChevronDown className="w-3 h-3" />
+                            <AuraIcon name="chevronDown" size={12} />
                           </button>
                         )}
 
@@ -892,14 +861,14 @@ export const ExpandedPlayer: React.FC = () => {
                           className="p-1 rounded text-zinc-500 hover:text-rose-400 hover:bg-white/10 transition-colors"
                           title="Remove from queue"
                         >
-                          <X className="w-3 h-3" />
+                          <AuraIcon name="close" size={12} />
                         </button>
                       </div>
                     </div>
                   ))
                 ) : (
                   <div className="my-auto py-8 text-center flex flex-col items-center justify-center gap-2 text-zinc-500">
-                    <ListMusic className="w-8 h-8 opacity-40 mb-1" />
+                    <AuraIcon name="queue" size={32} className="opacity-40 mb-1" />
                     <p className="text-xs font-medium text-zinc-400">Queue is empty</p>
                     <p className="text-[11px] text-zinc-600 max-w-[180px]">
                       Add songs from your library, search, or open sources.

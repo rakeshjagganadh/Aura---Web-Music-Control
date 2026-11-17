@@ -3,7 +3,7 @@ import { AnimatePresence } from 'motion/react';
 import { MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
 import { Playlist } from '../../types';
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
-import { X, Trash2, AlertTriangle } from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 interface DeletePlaylistModalProps {
   playlist: Playlist | null;
@@ -45,7 +45,7 @@ export const DeletePlaylistModal: React.FC<DeletePlaylistModalProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                  <Trash2 className="w-5 h-5" />
+                  <AuraIcon name="trash" size={20} />
                 </div>
                 <div>
                   <h3 className="text-base font-semibold text-zinc-100">Delete Space</h3>
@@ -59,7 +59,7 @@ export const DeletePlaylistModal: React.FC<DeletePlaylistModalProps> = ({
                 onClick={onClose}
                 className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
               >
-                <X className="w-4 h-4" />
+                <AuraIcon name="close" size={16} />
               </button>
             </div>
 
@@ -78,7 +78,7 @@ export const DeletePlaylistModal: React.FC<DeletePlaylistModalProps> = ({
 
             {/* Non-Destructive Explanation Warning */}
             <div className="flex items-start gap-3 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs">
-              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <AuraIcon name="alertTriangle" size={16} className="text-amber-400 shrink-0 mt-0.5" />
               <div className="leading-relaxed">
                 Deleting <span className="font-semibold text-white">"{playlist.title}"</span> will remove this space from your collection.
                 The <span className="font-semibold text-white">{trackCount} {trackCount === 1 ? 'track' : 'tracks'}</span> and underlying audio files in your library will <span className="font-semibold text-white">remain completely untouched</span>.

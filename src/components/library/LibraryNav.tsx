@@ -3,15 +3,8 @@ import { LayoutGroup } from 'motion/react';
 import { useMusic } from '../../context/MusicContext';
 import { NavView } from '../../types';
 import { SharedIndicator } from '../common/motion/MotionInteractive';
-import { 
-  Library, 
-  Music, 
-  Disc, 
-  User, 
-  ListMusic, 
-  Heart, 
-  HardDrive 
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
+import { AuraIconName } from '../../icons/iconRegistry';
 
 interface LibraryNavProps {
   activeView?: NavView | 'vault';
@@ -42,53 +35,59 @@ export const LibraryNav: React.FC<LibraryNavProps> = ({
   const likedCount = favoriteItems.length;
   const localCount = React.useMemo(() => tracks.filter((t) => !t.source || t.source === 'local').length, [tracks]);
 
-  const navItems = [
+  const navItems: {
+    id: 'library' | 'songs' | 'albums' | 'artists' | 'playlists' | 'favorites' | 'vault';
+    label: string;
+    icon: AuraIconName;
+    count: number | undefined;
+    onClick: () => void;
+  }[] = [
     {
       id: 'library' as const,
       label: 'Overview',
-      icon: Library,
+      icon: 'library',
       count: undefined,
       onClick: () => setCurrentView('library'),
     },
     {
       id: 'songs' as const,
       label: 'All Tracks',
-      icon: Music,
+      icon: 'musicNote',
       count: totalTracks,
       onClick: () => setCurrentView('songs'),
     },
     {
       id: 'albums' as const,
       label: 'Albums',
-      icon: Disc,
+      icon: 'disc',
       count: albumCount,
       onClick: () => setCurrentView('albums'),
     },
     {
       id: 'artists' as const,
       label: 'Artists',
-      icon: User,
+      icon: 'user',
       count: artistCount,
       onClick: () => setCurrentView('artists'),
     },
     {
       id: 'playlists' as const,
       label: 'Playlists',
-      icon: ListMusic,
+      icon: 'playlist',
       count: playlistCount,
       onClick: () => setCurrentView('playlists'),
     },
     {
       id: 'favorites' as const,
       label: 'Liked Songs',
-      icon: Heart,
+      icon: 'heart',
       count: likedCount,
       onClick: () => setCurrentView('favorites'),
     },
     {
       id: 'vault' as const,
       label: 'Local Vault',
-      icon: HardDrive,
+      icon: 'hardDrive',
       count: localCount,
       onClick: () => {
         if (onSelectVault) {
@@ -108,7 +107,6 @@ export const LibraryNav: React.FC<LibraryNavProps> = ({
       >
         {navItems.map((item) => {
           const isActive = current === item.id;
-          const Icon = item.icon;
 
           return (
             <button
@@ -133,7 +131,12 @@ export const LibraryNav: React.FC<LibraryNavProps> = ({
                   />
                 </>
               )}
-              <Icon className={`w-3.5 h-3.5 relative z-10 aura-icon-transition ${isActive ? 'text-sky-300' : 'text-zinc-400 group-hover:text-zinc-200'}`} />
+              <AuraIcon
+                name={item.icon}
+                size={14}
+                filled={isActive}
+                className={`relative z-10 aura-icon-transition ${isActive ? 'text-sky-300' : 'text-zinc-400 group-hover:text-zinc-200'}`}
+              />
               <span className="font-medium relative z-10">{item.label}</span>
               {item.count !== undefined && (
                 <span className={`text-[11px] font-mono tabular-nums px-1.5 py-0.5 rounded-full transition-colors relative z-10 ${isActive ? 'bg-white/20 text-white font-semibold' : 'bg-white/5 text-zinc-400'}`}>

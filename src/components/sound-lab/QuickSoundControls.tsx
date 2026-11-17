@@ -3,33 +3,16 @@ import { AnimatePresence, LayoutGroup } from 'motion/react';
 import { MotionFadeSlide } from '../common/motion/MotionSurface';
 import { MotionIconSwap, SharedIndicator } from '../common/motion/MotionInteractive';
 import { useMusic } from '../../context/MusicContext';
-import { 
-  Sparkles, 
-  RotateCcw, 
-  Flame, 
-  Sun, 
-  Compass, 
-  Waves, 
-  Volume2, 
-  Power, 
-  Info,
-  Radio,
-  Bookmark,
-  Check,
-  Disc3,
-  Moon,
-  Headphones,
-  Film,
-  Mic2,
-  Guitar
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
+import { AuraIconName } from '../../icons/iconRegistry';
 import { canApplyDSP, getCapabilityNotice } from '../../services/sourceService';
 
 interface MoodProfileCard {
   id: string;
   label: string;
   subtitle: string;
-  icon: React.ReactNode;
+  icon: AuraIconName;
+  iconColorClass: string;
 }
 
 const CURATED_MOOD_PROFILES: MoodProfileCard[] = [
@@ -37,49 +20,57 @@ const CURATED_MOOD_PROFILES: MoodProfileCard[] = [
     id: 'flat',
     label: 'Studio Neutral',
     subtitle: 'Flat reference curve, 0 dB uncolored response',
-    icon: <Disc3 className="w-4 h-4 text-zinc-300" />,
+    icon: 'disc',
+    iconColorClass: 'text-zinc-300',
   },
   {
     id: 'warm',
     label: 'Warm & Intimate',
     subtitle: 'Rich low-mids, smooth analog tape harmonics',
-    icon: <Sparkles className="w-4 h-4 text-orange-400" />,
+    icon: 'sparkles',
+    iconColorClass: 'text-orange-400',
   },
   {
     id: 'clear',
     label: 'Crisp & Airy',
     subtitle: 'High-frequency brilliance & open soundstage',
-    icon: <Sun className="w-4 h-4 text-amber-300" />,
+    icon: 'sun',
+    iconColorClass: 'text-amber-300',
   },
   {
     id: 'deep_bass',
     label: 'Heavy Club Bass',
     subtitle: 'Sub-bass extension, punchy 808 kick weight',
-    icon: <Flame className="w-4 h-4 text-rose-400" />,
+    icon: 'flame',
+    iconColorClass: 'text-rose-400',
   },
   {
     id: 'vocal_focus',
     label: 'Vocal Forward',
     subtitle: 'Elevated 1-3 kHz vocal clarity & intelligibility',
-    icon: <Mic2 className="w-4 h-4 text-cyan-400" />,
+    icon: 'mic',
+    iconColorClass: 'text-cyan-400',
   },
   {
     id: 'night',
     label: 'Late Night Soft',
     subtitle: 'Tamed dynamic peaks for relaxed night listening',
-    icon: <Moon className="w-4 h-4 text-indigo-400" />,
+    icon: 'moon',
+    iconColorClass: 'text-indigo-400',
   },
   {
     id: 'acoustic',
     label: 'Acoustic Presence',
     subtitle: 'Natural strings, wooden resonance & room air',
-    icon: <Guitar className="w-4 h-4 text-emerald-400" />,
+    icon: 'piano',
+    iconColorClass: 'text-emerald-400',
   },
   {
     id: 'cinema',
     label: 'Cinema Immersion',
     subtitle: 'Expanded width, cinematic low-end & ambient room',
-    icon: <Film className="w-4 h-4 text-purple-400" />,
+    icon: 'film',
+    iconColorClass: 'text-purple-400',
   },
 ];
 
@@ -113,12 +104,24 @@ export const QuickSoundControls: React.FC = () => {
     setPresetPromptOpen(false);
   };
 
-  const macroControls = [
+  const macroControls: {
+    key: 'bass' | 'clarity' | 'warmth' | 'spatial' | 'reverb' | 'loudness';
+    label: string;
+    desc: string;
+    icon: AuraIconName;
+    iconColorClass: string;
+    val: number;
+    neutralVal: number;
+    minLabel: string;
+    centerLabel: string;
+    maxLabel: string;
+  }[] = [
     {
-      key: 'bass' as const,
+      key: 'bass',
       label: 'Bass Boost & Weight',
       desc: 'Sub-bass energy, 808 depth and low-end impact',
-      icon: <Flame className="w-4 h-4 text-rose-400" />,
+      icon: 'flame',
+      iconColorClass: 'text-rose-400',
       val: quickSound.bass,
       neutralVal: 50,
       minLabel: '0 (Cut)',
@@ -126,10 +129,11 @@ export const QuickSoundControls: React.FC = () => {
       maxLabel: '100 (Max)',
     },
     {
-      key: 'clarity' as const,
+      key: 'clarity',
       label: 'Clarity & Presence',
       desc: 'Vocal projection, speech articulation and high-end air',
-      icon: <Sun className="w-4 h-4 text-amber-300" />,
+      icon: 'sun',
+      iconColorClass: 'text-amber-300',
       val: quickSound.clarity,
       neutralVal: 50,
       minLabel: '0 (Warm)',
@@ -137,10 +141,11 @@ export const QuickSoundControls: React.FC = () => {
       maxLabel: '100 (Bright)',
     },
     {
-      key: 'warmth' as const,
+      key: 'warmth',
       label: 'Warmth / Analog Drive',
       desc: 'Second-order harmonic tape drive and tube saturation',
-      icon: <Sparkles className="w-4 h-4 text-orange-400" />,
+      icon: 'sparkles',
+      iconColorClass: 'text-orange-400',
       val: quickSound.warmth,
       neutralVal: 50,
       minLabel: '0 (Clean)',
@@ -148,10 +153,11 @@ export const QuickSoundControls: React.FC = () => {
       maxLabel: '100 (Saturated)',
     },
     {
-      key: 'spatial' as const,
+      key: 'spatial',
       label: 'Spatial Width',
       desc: 'Stereo soundstage expansion and binaural depth',
-      icon: <Compass className="w-4 h-4 text-cyan-400" />,
+      icon: 'compass',
+      iconColorClass: 'text-cyan-400',
       val: quickSound.spatial,
       neutralVal: 0,
       minLabel: '0 (Mono)',
@@ -159,10 +165,11 @@ export const QuickSoundControls: React.FC = () => {
       maxLabel: '100 (Wide 3D)',
     },
     {
-      key: 'reverb' as const,
+      key: 'reverb',
       label: 'Atmosphere & Reverb',
       desc: 'Acoustic room simulation and ambient spatial decay',
-      icon: <Waves className="w-4 h-4 text-indigo-400" />,
+      icon: 'waves',
+      iconColorClass: 'text-indigo-400',
       val: quickSound.reverb,
       neutralVal: 0,
       minLabel: '0 (Dry)',
@@ -170,10 +177,11 @@ export const QuickSoundControls: React.FC = () => {
       maxLabel: '100 (Hall)',
     },
     {
-      key: 'loudness' as const,
+      key: 'loudness',
       label: 'Loudness & Impact',
       desc: 'Transparent multiband punch and dynamic body',
-      icon: <Volume2 className="w-4 h-4 text-emerald-400" />,
+      icon: 'volumeHigh',
+      iconColorClass: 'text-emerald-400',
       val: quickSound.loudness,
       neutralVal: 50,
       minLabel: '0 (Low)',
@@ -190,7 +198,7 @@ export const QuickSoundControls: React.FC = () => {
       {/* Capability Notice for streams that do not permit Web Audio DSP */}
       {!isDSPAllowed && dspNotice && (
         <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs flex items-center gap-2.5">
-          <Info className="w-4 h-4 text-amber-400 shrink-0" />
+          <AuraIcon name="info" size={16} className="text-amber-400 shrink-0" />
           <span>{dspNotice}</span>
         </div>
       )}
@@ -268,7 +276,7 @@ export const QuickSoundControls: React.FC = () => {
             title="Toggle Master DSP Bypass"
           >
             <MotionIconSwap stateKey={isMasterBypass ? 'bypass' : 'active'}>
-              <Power className="w-3.5 h-3.5" />
+              <AuraIcon name="power" size={14} />
             </MotionIconSwap>
             <span>{isMasterBypass ? 'DSP Bypassed' : 'DSP Active'}</span>
           </button>
@@ -281,7 +289,7 @@ export const QuickSoundControls: React.FC = () => {
             className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             title="Reset macro sliders to neutral default"
           >
-            <RotateCcw className="w-3 h-3" />
+            <AuraIcon name="reset" size={12} />
             <span>Neutral</span>
           </button>
         </div>
@@ -302,7 +310,7 @@ export const QuickSoundControls: React.FC = () => {
             onClick={() => setPresetPromptOpen(!presetPromptOpen)}
             className="text-xs text-cyan-400 hover:text-cyan-300 font-medium transition-colors flex items-center gap-1 cursor-pointer aura-pressable aura-focus-ring rounded px-1.5 py-0.5"
           >
-            <Bookmark className="w-3.5 h-3.5" />
+            <AuraIcon name="bookmark" size={14} />
             <span>+ Save As Custom Preset</span>
           </button>
         </div>
@@ -356,8 +364,10 @@ export const QuickSoundControls: React.FC = () => {
                 }`}
               >
                 <div className="flex items-center justify-between w-full">
-                  <div className="shrink-0">{profile.icon}</div>
-                  {isActive && <Check className="w-3.5 h-3.5 text-cyan-400" />}
+                  <div className="shrink-0 flex items-center">
+                    <AuraIcon name={profile.icon} size={16} className={profile.iconColorClass} />
+                  </div>
+                  {isActive && <AuraIcon name="check" size={14} className="text-cyan-400" />}
                 </div>
                 <span className="text-xs font-bold leading-tight line-clamp-1">{profile.label}</span>
                 <span className="text-[10px] text-zinc-500 leading-tight line-clamp-2">{profile.subtitle}</span>
@@ -383,7 +393,7 @@ export const QuickSoundControls: React.FC = () => {
                       : 'bg-zinc-900/80 border-white/5 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
                   }`}
                 >
-                  <Bookmark className="w-3 h-3 text-indigo-400" />
+                  <AuraIcon name="bookmark" size={12} className="text-indigo-400" />
                   <span>{preset.name}</span>
                 </button>
               );
@@ -407,8 +417,8 @@ export const QuickSoundControls: React.FC = () => {
               {/* Macro Header */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-lg bg-zinc-900 border border-white/5 shrink-0">
-                    {macro.icon}
+                  <div className="p-2 rounded-lg bg-zinc-900 border border-white/5 shrink-0 flex items-center justify-center">
+                    <AuraIcon name={macro.icon} size={16} className={macro.iconColorClass} />
                   </div>
                   <div>
                     <h3 className="text-xs font-semibold text-white">{macro.label}</h3>

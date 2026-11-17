@@ -25,7 +25,7 @@ export const SolidCard: React.FC<SolidCardProps> = ({
   }[variant];
 
   const interactiveClasses = interactive
-    ? 'cursor-pointer transition-all duration-200 hover:bg-[#161a26] hover:border-white/20 active:scale-[0.99] aura-focus-ring'
+    ? 'cursor-pointer transition-[transform,background-color,border-color,box-shadow] duration-150 ease-[var(--motion-ease-standard)] hover:bg-[#161a26] hover:border-white/20 active:scale-[0.99] aura-focus-ring'
     : '';
 
   const selectedClasses = selected

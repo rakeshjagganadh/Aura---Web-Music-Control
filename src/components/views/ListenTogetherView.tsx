@@ -2,46 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { AnimatePresence, LayoutGroup } from 'motion/react';
 import { useListenTogether } from '../../context/ListenTogetherContext';
 import { useMusic } from '../../context/MusicContext';
-import {
-  Users,
-  Radio,
-  Play,
-  Pause,
-  SkipForward,
-  SkipBack,
-  Copy,
-  Check,
-  Share2,
-  Plus,
-  Trash2,
-  Sparkles,
-  ArrowLeft,
-  Music2,
-  User,
-  Activity,
-  AlertCircle,
-  ExternalLink,
-  ShieldCheck,
-  Volume2,
-  Lock,
-  RefreshCw,
-  Clipboard,
-  Info,
-  CheckCircle2,
-  Disc,
-  ChevronUp,
-  ChevronDown,
-  Headphones,
-  Sliders,
-  Clock,
-  VolumeX,
-  RadioTower,
-  Wifi,
-  SlidersHorizontal,
-  MessageSquare,
-  Send,
-  ShieldAlert,
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 import { formatSeconds } from '../../utils/formatTime';
 import { Track } from '../../types';
 import { UniversalSearchModal } from '../search/UniversalSearchModal';
@@ -151,9 +112,9 @@ export const ListenTogetherView: React.FC = () => {
   // Auto-scroll chat to latest message
   useEffect(() => {
     if (activeSocialTab === 'chat' && chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      chatEndRef.current.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth' });
     }
-  }, [chatMessages, activeSocialTab]);
+  }, [chatMessages, activeSocialTab, prefersReducedMotion]);
 
   // Sync join code input with pendingJoinRoomId when invite URL is parsed
   useEffect(() => {
@@ -332,8 +293,8 @@ export const ListenTogetherView: React.FC = () => {
     return (
       <div className="max-w-xl mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-[75vh] select-none">
         <GlassPanel intensity="prominent" elevation="lg" className="w-full p-8 rounded-2xl text-center flex flex-col items-center">
-          <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 mb-5">
-            <Users className="w-8 h-8" />
+          <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 mb-5 flex items-center justify-center">
+            <AuraIcon name="users" size={32} />
           </div>
 
           <TelemetryBadge variant="cyan" size="sm" dot dotPulse className="mb-3">
@@ -365,7 +326,7 @@ export const ListenTogetherView: React.FC = () => {
 
             {joinError && (
               <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
+                <AuraIcon name="alertCircle" size={16} className="shrink-0" />
                 <span>{joinError}</span>
               </div>
             )}
@@ -392,12 +353,12 @@ export const ListenTogetherView: React.FC = () => {
               >
                 {isSubmitting ? (
                   <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <AuraIcon name="refresh" size={14} className={!prefersReducedMotion ? 'animate-spin' : ''} />
                     <span>Connecting...</span>
                   </>
                 ) : (
                   <>
-                    <Users className="w-3.5 h-3.5" />
+                    <AuraIcon name="users" size={14} />
                     <span>Join Room</span>
                   </>
                 )}
@@ -441,8 +402,8 @@ export const ListenTogetherView: React.FC = () => {
           <GlassPanel intensity="prominent" elevation="lg" className="p-6 sm:p-8 rounded-2xl flex flex-col justify-between group hover:border-indigo-500/30 transition-colors">
             <div>
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 rounded-xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/20">
-                  <Plus className="w-6 h-6" />
+                <div className="p-3 rounded-xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
+                  <AuraIcon name="add" size={24} />
                 </div>
                 <TelemetryBadge variant="cyan" size="sm">Host Session</TelemetryBadge>
               </div>
@@ -462,7 +423,7 @@ export const ListenTogetherView: React.FC = () => {
                 setIsCreateModalOpen(true);
               }}
             >
-              <Plus className="w-4 h-4" />
+              <AuraIcon name="add" size={16} />
               <span>Create New Room</span>
             </TactileButton>
           </GlassPanel>
@@ -471,8 +432,8 @@ export const ListenTogetherView: React.FC = () => {
           <GlassPanel intensity="prominent" elevation="lg" className="p-6 sm:p-8 rounded-2xl flex flex-col justify-between group hover:border-white/20 transition-colors">
             <div>
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 rounded-xl bg-purple-500/15 text-purple-400 border border-purple-500/20">
-                  <Users className="w-6 h-6" />
+                <div className="p-3 rounded-xl bg-purple-500/15 text-purple-400 border border-purple-500/20 flex items-center justify-center">
+                  <AuraIcon name="users" size={24} />
                 </div>
                 <TelemetryBadge variant="glass" size="sm">Participant</TelemetryBadge>
               </div>
@@ -492,7 +453,7 @@ export const ListenTogetherView: React.FC = () => {
                 setIsJoinModalOpen(true);
               }}
             >
-              <Users className="w-4 h-4 text-zinc-400" />
+              <AuraIcon name="users" size={16} className="text-zinc-400" />
               <span>Enter Room Code</span>
             </TactileButton>
           </GlassPanel>
@@ -523,7 +484,7 @@ export const ListenTogetherView: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2 text-xs text-zinc-400">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <AuraIcon name="shieldCheck" size={16} className="text-emerald-400" />
             <span>Anonymous Session · No Account Required</span>
           </div>
         </SolidCard>
@@ -533,7 +494,7 @@ export const ListenTogetherView: React.FC = () => {
           
           <SolidCard variant="elevated" className="p-5 rounded-xl flex flex-col gap-2">
             <div className="flex items-center gap-2 text-indigo-400 mb-1">
-              <Radio className="w-4 h-4" />
+              <AuraIcon name="radio" size={16} />
               <h3 className="text-xs font-bold uppercase tracking-wider text-white">Universal Streams</h3>
             </div>
             <p className="text-xs text-zinc-400 leading-relaxed">
@@ -543,7 +504,7 @@ export const ListenTogetherView: React.FC = () => {
 
           <SolidCard variant="elevated" className="p-5 rounded-xl flex flex-col gap-2">
             <div className="flex items-center gap-2 text-purple-400 mb-1">
-              <Sparkles className="w-4 h-4" />
+              <AuraIcon name="sparkles" size={16} />
               <h3 className="text-xs font-bold uppercase tracking-wider text-white">Drift Correction</h3>
             </div>
             <p className="text-xs text-zinc-400 leading-relaxed">
@@ -553,7 +514,7 @@ export const ListenTogetherView: React.FC = () => {
 
           <SolidCard variant="elevated" className="p-5 rounded-xl flex flex-col gap-2">
             <div className="flex items-center gap-2 text-amber-400 mb-1">
-              <Info className="w-4 h-4" />
+              <AuraIcon name="info" size={16} />
               <h3 className="text-xs font-bold uppercase tracking-wider text-white">Private Local Files</h3>
             </div>
             <p className="text-xs text-zinc-400 leading-relaxed">
@@ -616,7 +577,7 @@ export const ListenTogetherView: React.FC = () => {
 
                     {createError && (
                       <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
-                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        <AuraIcon name="alertCircle" size={16} className="shrink-0" />
                         <span>{createError}</span>
                       </div>
                     )}
@@ -645,12 +606,12 @@ export const ListenTogetherView: React.FC = () => {
                       >
                         {isSubmitting ? (
                           <>
-                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            <AuraIcon name="refresh" size={14} className={!prefersReducedMotion ? 'animate-spin' : ''} />
                             <span>Creating...</span>
                           </>
                         ) : (
                           <>
-                            <Plus className="w-3.5 h-3.5" />
+                            <AuraIcon name="add" size={14} />
                             <span>Create Room</span>
                           </>
                         )}
@@ -698,7 +659,7 @@ export const ListenTogetherView: React.FC = () => {
                           onClick={handlePasteCode}
                           className="text-[11px] font-mono text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer aura-pressable"
                         >
-                          <Clipboard className="w-3 h-3" />
+                          <AuraIcon name="clipboard" size={12} />
                           <span>Paste</span>
                         </button>
                       </div>
@@ -729,7 +690,7 @@ export const ListenTogetherView: React.FC = () => {
 
                     {joinError && (
                       <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
-                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        <AuraIcon name="alertCircle" size={16} className="shrink-0" />
                         <span>{joinError}</span>
                       </div>
                     )}
@@ -756,12 +717,12 @@ export const ListenTogetherView: React.FC = () => {
                       >
                         {isSubmitting ? (
                           <>
-                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            <AuraIcon name="refresh" size={14} className={!prefersReducedMotion ? 'animate-spin' : ''} />
                             <span>Searching...</span>
                           </>
                         ) : (
                           <>
-                            <Users className="w-3.5 h-3.5" />
+                            <AuraIcon name="users" size={14} />
                             <span>Join Session</span>
                           </>
                         )}
@@ -800,7 +761,7 @@ export const ListenTogetherView: React.FC = () => {
             title="Leave room and return to player"
             className="shrink-0"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <AuraIcon name="arrowLeft" size={16} />
           </TactileButton>
 
           <div className="min-w-0 flex-1">
@@ -819,9 +780,9 @@ export const ListenTogetherView: React.FC = () => {
                 <span>#{activeRoom.roomId.toUpperCase()}</span>
                 <MotionIconSwap stateKey={copiedCode ? 'copied' : 'copy'}>
                   {copiedCode ? (
-                    <Check className="w-3 h-3 text-emerald-400" />
+                    <AuraIcon name="check" size={12} className="text-emerald-400" />
                   ) : (
-                    <Copy className="w-3 h-3 text-zinc-400 group-hover:text-white" />
+                    <AuraIcon name="copy" size={12} className="text-zinc-400 group-hover:text-white" />
                   )}
                 </MotionIconSwap>
               </button>
@@ -857,7 +818,7 @@ export const ListenTogetherView: React.FC = () => {
             title="Copy full invite link"
           >
             <MotionIconSwap stateKey={copiedLink ? 'copied' : 'copy'}>
-              {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-zinc-400" />}
+              {copiedLink ? <AuraIcon name="check" size={14} className="text-emerald-400" /> : <AuraIcon name="copy" size={14} className="text-zinc-400" />}
             </MotionIconSwap>
             <span>{copiedLink ? 'Link Copied' : 'Invite Link'}</span>
           </TactileButton>
@@ -868,7 +829,7 @@ export const ListenTogetherView: React.FC = () => {
             onClick={shareInviteLink}
             title="Share room invitation"
           >
-            <Share2 className="w-4 h-4" />
+            <AuraIcon name="shareAlt" size={16} />
           </TactileButton>
 
           <TactileButton
@@ -877,7 +838,7 @@ export const ListenTogetherView: React.FC = () => {
             onClick={() => setIsDiagnosticsModalOpen(true)}
             title="Room connection diagnostics"
           >
-            <SlidersHorizontal className="w-4 h-4 text-zinc-400" />
+            <AuraIcon name="sliders" size={16} className="text-zinc-400" />
           </TactileButton>
 
           <TactileButton
@@ -903,7 +864,7 @@ export const ListenTogetherView: React.FC = () => {
             {/* Top Bar inside Now Playing */}
             <div className="flex items-center justify-between text-xs text-zinc-400 border-b border-white/5 pb-3">
               <div className="flex items-center gap-2">
-                <Disc className={`w-3.5 h-3.5 text-indigo-400 ${isPlaying && !prefersReducedMotion ? 'animate-spin [animation-duration:4s]' : ''}`} />
+                <AuraIcon name="disc" size={14} className={`text-indigo-400 ${isPlaying && !prefersReducedMotion ? 'animate-spin [animation-duration:4s]' : ''}`} />
                 <span className="font-mono uppercase tracking-widest text-[10px] text-zinc-400 font-semibold">
                   ROOM AUDIO CENTREPIECE
                 </span>
@@ -939,7 +900,7 @@ export const ListenTogetherView: React.FC = () => {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-950/70 via-purple-950/50 to-zinc-950 text-indigo-300">
-                        <Music2 className="w-14 h-14 stroke-1" />
+                        <AuraIcon name="musicAlt" size={56} weight={200} />
                       </div>
                     )}
 
@@ -1012,7 +973,14 @@ export const ListenTogetherView: React.FC = () => {
                   <div className="flex items-center justify-between text-xs font-mono text-zinc-400 px-0.5">
                     <span>{formatSeconds(displayCurrentTime)}</span>
                     <span className="text-[11px] text-zinc-500 font-sans">
-                      {isOwner ? '★ Host Seeking Enabled' : 'Host Controls Seek Position'}
+                      {isOwner ? (
+                        <span className="inline-flex items-center gap-1">
+                          <AuraIcon name="star" size={11} filled className="text-indigo-400" />
+                          <span>Host Seeking Enabled</span>
+                        </span>
+                      ) : (
+                        'Host Controls Seek Position'
+                      )}
                     </span>
                     <span>{formatSeconds(currentDuration)}</span>
                   </div>
@@ -1027,7 +995,7 @@ export const ListenTogetherView: React.FC = () => {
                     title="Previous track"
                     className="p-3"
                   >
-                    <SkipBack className="w-5 h-5 fill-current" />
+                    <AuraIcon name="skipPrevious" size={20} filled />
                   </TactileButton>
 
                   <TactileButton
@@ -1039,9 +1007,9 @@ export const ListenTogetherView: React.FC = () => {
                   >
                     <MotionIconSwap stateKey={isPlaying && !isLocallySilenced ? 'pause' : 'play'}>
                       {isPlaying && !isLocallySilenced ? (
-                        <Pause className="w-6 h-6 fill-current" />
+                        <AuraIcon name="pause" size={24} filled />
                       ) : (
-                        <Play className="w-6 h-6 fill-current ml-0.5" />
+                        <AuraIcon name="play" size={24} filled className="ml-0.5" />
                       )}
                     </MotionIconSwap>
                   </TactileButton>
@@ -1053,7 +1021,7 @@ export const ListenTogetherView: React.FC = () => {
                     title="Next track"
                     className="p-3"
                   >
-                    <SkipForward className="w-5 h-5 fill-current" />
+                    <AuraIcon name="skipNext" size={20} filled />
                   </TactileButton>
                 </div>
 
@@ -1071,9 +1039,9 @@ export const ListenTogetherView: React.FC = () => {
                   >
                     <MotionIconSwap stateKey={isLocallySilenced ? 'muted' : 'active'}>
                       {isLocallySilenced ? (
-                        <VolumeX className="w-4 h-4 text-amber-400 shrink-0" />
+                        <AuraIcon name="volumeMute" size={16} className="text-amber-400 shrink-0" />
                       ) : (
-                        <Volume2 className="w-4 h-4 text-zinc-400 shrink-0" />
+                        <AuraIcon name="volumeHigh" size={16} className="text-zinc-400 shrink-0" />
                       )}
                     </MotionIconSwap>
                     <span className="truncate">
@@ -1088,7 +1056,7 @@ export const ListenTogetherView: React.FC = () => {
               /* ELEGANT EMPTY NOW PLAYING STATE */
               <div className="py-12 px-6 flex flex-col items-center justify-center text-center">
                 <div className="w-20 h-20 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mb-5 shadow-inner">
-                  <Music2 className="w-10 h-10 stroke-1" />
+                  <AuraIcon name="musicAlt" size={40} weight={200} />
                 </div>
 
                 <TelemetryBadge variant="glass" size="sm" className="mb-2">
@@ -1108,7 +1076,7 @@ export const ListenTogetherView: React.FC = () => {
                   onClick={() => setIsAddMusicModalOpen(true)}
                   className="gap-2"
                 >
-                  <Plus className="w-4 h-4" />
+                  <AuraIcon name="add" size={16} />
                   <span>Add First Song to Room</span>
                 </TactileButton>
               </div>
@@ -1138,7 +1106,7 @@ export const ListenTogetherView: React.FC = () => {
                 onClick={() => setIsAddMusicModalOpen(true)}
                 className="gap-1.5"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <AuraIcon name="add" size={14} />
                 <span>Add Music</span>
               </TactileButton>
             </div>
@@ -1146,7 +1114,7 @@ export const ListenTogetherView: React.FC = () => {
             {/* Upcoming Track List (Option A: Current track is shown in Now Playing, Up Next shows strictly upcoming tracks) */}
             {upcomingTracks.length === 0 ? (
               <div className="py-10 text-center flex flex-col items-center gap-3 text-zinc-500 border border-dashed border-white/10 rounded-2xl">
-                <Music2 className="w-7 h-7 stroke-1 text-zinc-600" />
+                <AuraIcon name="musicAlt" size={28} weight={200} className="text-zinc-600" />
                 <p className="text-xs">No upcoming tracks in the queue.</p>
                 <button
                   type="button"
@@ -1178,7 +1146,7 @@ export const ListenTogetherView: React.FC = () => {
                           {track.coverUrl ? (
                             <img src={track.coverUrl} alt={track.title} className="w-full h-full object-cover" />
                           ) : (
-                            <Music2 className="w-4 h-4 text-zinc-500" />
+                            <AuraIcon name="musicAlt" size={16} className="text-zinc-500" />
                           )}
                         </div>
 
@@ -1214,7 +1182,7 @@ export const ListenTogetherView: React.FC = () => {
                               className="p-1 hover:bg-white/10 text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed cursor-pointer aura-pressable aura-focus-ring transition-colors"
                               title="Move track up in Up Next"
                             >
-                              <ChevronUp className="w-3.5 h-3.5" />
+                              <AuraIcon name="chevronUp" size={14} />
                             </button>
                             <button
                               type="button"
@@ -1224,7 +1192,7 @@ export const ListenTogetherView: React.FC = () => {
                               className="p-1 hover:bg-white/10 text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed cursor-pointer border-l border-white/10 aura-pressable aura-focus-ring transition-colors"
                               title="Move track down in Up Next"
                             >
-                              <ChevronDown className="w-3.5 h-3.5" />
+                              <AuraIcon name="chevronDown" size={14} />
                             </button>
                           </div>
                         )}
@@ -1238,7 +1206,7 @@ export const ListenTogetherView: React.FC = () => {
                           title="Play this track now for all listeners"
                           className="p-1.5"
                         >
-                          <Play className="w-3.5 h-3.5 fill-current text-indigo-400" />
+                          <AuraIcon name="play" size={14} filled className="text-indigo-400" />
                         </TactileButton>
 
                         {/* Remove Track (Host-only) */}
@@ -1251,7 +1219,7 @@ export const ListenTogetherView: React.FC = () => {
                             title="Remove from room queue"
                             className="p-1.5 hover:text-rose-400"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <AuraIcon name="trash" size={14} />
                           </TactileButton>
                         )}
                       </div>
@@ -1299,7 +1267,7 @@ export const ListenTogetherView: React.FC = () => {
                         className="absolute inset-0 rounded-lg bg-indigo-600 shadow-sm"
                       />
                     )}
-                    <MessageSquare className="relative z-10 w-3.5 h-3.5" />
+                    <AuraIcon name="messageSquare" size={14} className="relative z-10" />
                     <span className="relative z-10">Chat</span>
                     {chatMessages.length > 0 && (
                       <span className={`relative z-10 text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
@@ -1325,7 +1293,7 @@ export const ListenTogetherView: React.FC = () => {
                         className="absolute inset-0 rounded-lg bg-indigo-600 shadow-sm"
                       />
                     )}
-                    <Users className="relative z-10 w-3.5 h-3.5" />
+                    <AuraIcon name="users" size={14} className="relative z-10" />
                     <span className="relative z-10">People</span>
                     <span className={`relative z-10 text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
                       activeSocialTab === 'participants' ? 'bg-white/20 text-white' : 'bg-white/10 text-zinc-300'
@@ -1349,7 +1317,7 @@ export const ListenTogetherView: React.FC = () => {
                         className="absolute inset-0 rounded-lg bg-indigo-600 shadow-sm"
                       />
                     )}
-                    <Activity className="relative z-10 w-3.5 h-3.5" />
+                    <AuraIcon name="activity" size={14} className="relative z-10" />
                     <span className="relative z-10">Activity</span>
                   </button>
                 </div>
@@ -1370,7 +1338,7 @@ export const ListenTogetherView: React.FC = () => {
                 {/* Notice header */}
                 <div className="px-4 py-1.5 bg-indigo-500/5 border-b border-indigo-500/10 flex items-center justify-between text-[10px] font-mono text-zinc-400">
                   <span className="flex items-center gap-1.5">
-                    <Sparkles className="w-3 h-3 text-indigo-400" />
+                    <AuraIcon name="sparkles" size={12} className="text-indigo-400" />
                     <span>Real-time room conversation</span>
                   </span>
                   <span className="text-zinc-500">Live · Session only</span>
@@ -1381,7 +1349,7 @@ export const ListenTogetherView: React.FC = () => {
                   {chatMessages.length === 0 ? (
                     <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-zinc-500 my-auto">
                       <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/5 flex items-center justify-center text-zinc-400 mb-3">
-                        <MessageSquare className="w-6 h-6 stroke-1" />
+                        <AuraIcon name="messageSquare" size={24} weight={200} />
                       </div>
                       <p className="text-sm font-medium text-zinc-300 mb-1">No messages yet</p>
                       <p className="text-xs text-zinc-500 max-w-[220px] leading-relaxed">
@@ -1467,7 +1435,7 @@ export const ListenTogetherView: React.FC = () => {
                       className="shrink-0 px-3 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-30 disabled:hover:bg-indigo-600 transition-colors cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-1.5 font-medium text-xs shadow-sm aura-pressable aura-focus-ring"
                       title="Send message (Enter)"
                     >
-                      <Send className="w-3.5 h-3.5" />
+                      <AuraIcon name="send" size={14} />
                       <span className="hidden sm:inline">Send</span>
                     </button>
                   </div>
@@ -1551,7 +1519,7 @@ export const ListenTogetherView: React.FC = () => {
                               title={`Remove ${p.name} from room`}
                               className="px-2 py-1 text-[11px]"
                             >
-                              <ShieldAlert className="w-3 h-3" />
+                              <AuraIcon name="shieldAlert" size={12} />
                               <span>Remove</span>
                             </TactileButton>
                           )}
@@ -1564,7 +1532,7 @@ export const ListenTogetherView: React.FC = () => {
                 {/* Host Moderation Notice */}
                 <SolidCard variant="flat" className="p-3 rounded-xl flex flex-col gap-1.5 text-xs text-zinc-400 bg-white/[0.02] border border-white/5">
                   <div className="flex items-center gap-1.5 text-zinc-300 font-medium text-[11px]">
-                    <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
+                    <AuraIcon name="shieldCheck" size={14} className="text-indigo-400" />
                     <span>Host Moderation & Roles</span>
                   </div>
                   <p className="text-[10px] leading-relaxed text-zinc-500">
@@ -1613,7 +1581,7 @@ export const ListenTogetherView: React.FC = () => {
           {/* QUICK SESSION GUIDELINES */}
           <SolidCard variant="flat" className="p-4 rounded-xl flex flex-col gap-2.5 text-xs text-zinc-400">
             <div className="flex items-center gap-2 text-indigo-300 font-medium">
-              <Sparkles className="w-3.5 h-3.5" />
+              <AuraIcon name="sparkles" size={14} />
               <span>Room Playback Rules</span>
             </div>
             <p className="text-[11px] leading-relaxed text-zinc-500">
@@ -1645,7 +1613,7 @@ export const ListenTogetherView: React.FC = () => {
               <GlassPanel intensity="prominent" elevation="lg" className="w-full p-6 rounded-2xl text-left">
                 <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
                   <div className="flex items-center gap-2">
-                    <SlidersHorizontal className="w-4 h-4 text-indigo-400" />
+                    <AuraIcon name="sliders" size={16} className="text-indigo-400" />
                     <h2 className="text-base font-bold text-white">Room Connection Diagnostics</h2>
                   </div>
                   <TactileButton

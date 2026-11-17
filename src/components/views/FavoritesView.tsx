@@ -8,18 +8,7 @@ import { TrackGridCard } from '../library/TrackGridCard';
 import { AddToPlaylistModal } from '../playlists/AddToPlaylistModal';
 import { MotionFadeSlide } from '../common/motion/MotionSurface';
 import { SharedIndicator } from '../common/motion/MotionInteractive';
-import { 
-  Heart, 
-  Play, 
-  Shuffle, 
-  ListPlus, 
-  LayoutGrid, 
-  List, 
-  Search, 
-  X, 
-  Compass, 
-  Sparkles 
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 function formatDuration(totalSeconds: number): string {
   if (!totalSeconds || isNaN(totalSeconds) || totalSeconds <= 0) return '0 min';
@@ -110,13 +99,13 @@ export const FavoritesView: React.FC = () => {
             <img src={collageArtworks[0]} alt="Liked Songs" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center text-rose-400">
-              <Heart className="w-16 h-16 fill-current" />
+              <AuraIcon name="heart" size={64} filled />
             </div>
           )}
 
           {/* Micro Heart Badge Overlay */}
           <div className="absolute bottom-2.5 right-2.5 w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-lg">
-            <Heart className="w-4 h-4 fill-current" />
+            <AuraIcon name="heart" size={16} filled />
           </div>
         </div>
 
@@ -144,7 +133,7 @@ export const FavoritesView: React.FC = () => {
                 onClick={() => handlePlayAll(false)}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
               >
-                <Play className="w-4 h-4 fill-current text-black translate-x-0.2" />
+                <AuraIcon name="play" size={16} filled className="text-black translate-x-0.2" />
                 <span>Play All</span>
               </button>
 
@@ -153,7 +142,7 @@ export const FavoritesView: React.FC = () => {
                 onClick={() => handlePlayAll(true)}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
               >
-                <Shuffle className="w-3.5 h-3.5 text-sky-400" />
+                <AuraIcon name="shuffle" size={14} className="text-sky-400" />
                 <span>Shuffle</span>
               </button>
 
@@ -162,7 +151,7 @@ export const FavoritesView: React.FC = () => {
                 onClick={handleAddAllToQueue}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
               >
-                <ListPlus className="w-3.5 h-3.5 text-indigo-400" />
+                <AuraIcon name="playlistAdd" size={14} className="text-indigo-400" />
                 <span>Add to Queue</span>
               </button>
             </div>
@@ -181,13 +170,13 @@ export const FavoritesView: React.FC = () => {
       {favoriteTracks.length > 0 && (
         <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+            <AuraIcon name="search" size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search in liked songs..."
-              className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-white/[0.05] border border-white/10 text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-rose-500/50 transition-all font-ui-title"
+              className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-white/[0.05] border border-white/10 text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-rose-500/50 transition-colors font-ui-title"
             />
             {searchQuery && (
               <button
@@ -195,7 +184,7 @@ export const FavoritesView: React.FC = () => {
                 onClick={() => setSearchQuery('')}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
               >
-                <X className="w-3.5 h-3.5" />
+                <AuraIcon name="close" size={14} />
               </button>
             )}
           </div>
@@ -216,7 +205,7 @@ export const FavoritesView: React.FC = () => {
                     className="absolute inset-0 rounded-lg bg-white/15 shadow-sm"
                   />
                 )}
-                <List className="relative z-10 w-4 h-4" />
+                <AuraIcon name="list" size={16} className="relative z-10" />
               </button>
               <button
                 type="button"
@@ -232,7 +221,7 @@ export const FavoritesView: React.FC = () => {
                     className="absolute inset-0 rounded-lg bg-white/15 shadow-sm"
                   />
                 )}
-                <LayoutGrid className="relative z-10 w-4 h-4" />
+                <AuraIcon name="grid" size={16} className="relative z-10" />
               </button>
             </div>
           </LayoutGroup>
@@ -258,7 +247,7 @@ export const FavoritesView: React.FC = () => {
           {favoriteTracks.length === 0 ? (
             <div className="p-12 sm:p-20 rounded-3xl aura-glass-ambient border border-dashed border-white/10 flex flex-col items-center justify-center text-center gap-3">
               <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/25 flex items-center justify-center text-rose-400 mb-1">
-                <Heart className="w-7 h-7 stroke-1" />
+                <AuraIcon name="heart" size={28} weight={300} />
               </div>
               <h3 className="text-base font-bold text-white font-ui-title">No liked songs yet</h3>
               <p className="text-xs text-zinc-400 max-w-sm font-ui-meta leading-relaxed">
@@ -270,7 +259,7 @@ export const FavoritesView: React.FC = () => {
                   onClick={() => setCurrentView('home')}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-zinc-950 text-xs font-bold shadow-md cursor-pointer aura-focus-ring aura-pressable"
                 >
-                  <Compass className="w-3.5 h-3.5 text-zinc-950" />
+                  <AuraIcon name="compass" size={14} className="text-zinc-950" />
                   <span>Explore Music</span>
                 </button>
                 <button

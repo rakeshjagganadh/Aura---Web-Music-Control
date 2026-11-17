@@ -4,19 +4,9 @@ import { MotionBackdrop, MotionModal, MotionFadeSlide } from '../common/motion/M
 import { SharedIndicator } from '../common/motion/MotionInteractive';
 import { useMusic } from '../../context/MusicContext';
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
-import { 
-  X, 
-  UploadCloud, 
-  Music, 
-  Sparkles, 
-  HardDrive, 
-  FileAudio,
-  FolderPlus,
-  Radio,
-  Youtube,
-  Link,
-  Plus
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
+import { YouTubeBrandMark } from '../ui/BrandMarks';
+import type { AuraIconName } from '../../icons/iconRegistry';
 import { createWebStreamTrack } from '../../services/discoveryService';
 import { youtubeService } from '../../services/youtubeService';
 
@@ -130,7 +120,7 @@ export const UploadModal: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              <UploadCloud className="w-5 h-5" />
+              <AuraIcon name="uploadCloud" size={20} />
             </div>
             <div>
               <h3 className="text-base font-bold text-white">Add Music to AURA</h3>
@@ -144,26 +134,25 @@ export const UploadModal: React.FC = () => {
             onClick={() => setIsUploadModalOpen(false)}
             className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
-            <X className="w-5 h-5" />
+            <AuraIcon name="close" size={20} />
           </button>
         </div>
 
         {/* Tab Navigation */}
         <LayoutGroup id="upload-modal-tabs">
           <div className="flex items-center gap-1.5 p-1 bg-zinc-950 rounded-2xl border border-white/5 text-xs overflow-x-auto scrollbar-none">
-            {[
-              { id: 'files', label: 'Import Files', icon: FileAudio },
-              { id: 'folder', label: 'Import Folder', icon: FolderPlus },
-              { id: 'stream', label: 'Web Stream', icon: Radio },
-              { id: 'youtube', label: 'YouTube', icon: Youtube },
-              { id: 'demo', label: 'Demo Pack', icon: Sparkles },
-            ].map((tab) => {
-              const Icon = tab.icon;
+            {([
+              { id: 'files', label: 'Import Files', icon: 'fileAudio' },
+              { id: 'folder', label: 'Import Folder', icon: 'folderPlus' },
+              { id: 'stream', label: 'Web Stream', icon: 'radio' },
+              { id: 'youtube', label: 'YouTube', isYouTube: true },
+              { id: 'demo', label: 'Demo Pack', icon: 'sparkles' },
+            ] as Array<{ id: AddMusicTab; label: string; icon?: AuraIconName; isYouTube?: boolean }>).map((tab) => {
               const isActive = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as AddMusicTab)}
+                  onClick={() => setActiveTab(tab.id)}
                   className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-medium whitespace-nowrap transition-colors cursor-pointer aura-pressable ${
                     isActive
                       ? 'text-white'
@@ -177,7 +166,11 @@ export const UploadModal: React.FC = () => {
                     />
                   )}
                   <span className="relative z-10 flex items-center gap-1.5">
-                    <Icon className="w-3.5 h-3.5" />
+                    {tab.isYouTube ? (
+                      <YouTubeBrandMark size={14} />
+                    ) : (
+                      <AuraIcon name={tab.icon || 'musicNote'} size={14} />
+                    )}
                     <span>{tab.label}</span>
                   </span>
                 </button>
@@ -214,7 +207,7 @@ export const UploadModal: React.FC = () => {
               />
 
               <div className="w-12 h-12 rounded-2xl bg-zinc-800 group-hover:bg-indigo-600/30 group-hover:text-indigo-300 text-zinc-400 flex items-center justify-center mb-3 transition-colors">
-                <FileAudio className="w-6 h-6" />
+                <AuraIcon name="fileAudio" size={24} />
               </div>
 
               <p className="text-sm font-semibold text-zinc-200 group-hover:text-indigo-300 transition-colors">
@@ -234,7 +227,7 @@ export const UploadModal: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-zinc-900/50 border border-white/5 text-xs text-zinc-400">
-              <HardDrive className="w-4 h-4 text-emerald-400 shrink-0" />
+              <AuraIcon name="hardDrive" size={16} className="text-emerald-400 shrink-0" />
               <span>
                 <strong className="text-zinc-300 font-medium">Local-first privacy:</strong> Files are stored locally in your browser (IndexedDB) and never uploaded to any remote server.
               </span>
@@ -270,7 +263,7 @@ export const UploadModal: React.FC = () => {
               />
 
               <div className="w-12 h-12 rounded-2xl bg-zinc-800 group-hover:bg-indigo-600/30 group-hover:text-indigo-300 text-zinc-400 flex items-center justify-center mb-3 transition-colors">
-                <FolderPlus className="w-6 h-6" />
+                <AuraIcon name="folderPlus" size={24} />
               </div>
 
               <p className="text-sm font-semibold text-zinc-200 group-hover:text-indigo-300 transition-colors">
@@ -346,7 +339,7 @@ export const UploadModal: React.FC = () => {
         {activeTab === 'demo' && (
           <div className="flex flex-col items-center text-center gap-4 py-4">
             <div className="w-14 h-14 rounded-2xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center">
-              <Sparkles className="w-7 h-7" />
+              <AuraIcon name="sparkles" size={28} />
             </div>
             <div>
               <h4 className="text-sm font-bold text-white">Load Studio Demo Collection</h4>

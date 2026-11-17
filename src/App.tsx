@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AnimatePresence, MotionConfig } from 'motion/react';
 import { MusicProvider, useMusic } from './context/MusicContext';
 import { MotionPage } from './components/common/motion/MotionSurface';
@@ -101,6 +101,59 @@ const MainLayout: React.FC = () => {
   const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+
+  const mainRef = useRef<HTMLElement>(null);
+  const scrollPositionsRef = useRef<Map<string, number>>(new Map());
+  const activeViewKey =
+    selectedPlaylistId && currentView === 'playlist-detail'
+      ? `playlist-detail:${selectedPlaylistId}`
+      : currentView;
+  const activeViewKeyRef = useRef(activeViewKey);
+  const settledViewKeyRef = useRef(activeViewKey);
+  const isTransitioningViewRef = useRef(false);
+
+  useLayoutEffect(() => {
+    const prevKey = activeViewKeyRef.current;
+    if (prevKey !== activeViewKey) {
+      if (mainRef.current) {
+        scrollPositionsRef.current.set(prevKey, mainRef.current.scrollTop);
+      }
+      activeViewKeyRef.current = activeViewKey;
+      isTransitioningViewRef.current = true;
+    }
+  }, [activeViewKey]);
+
+  const handleMainScroll = useCallback((e: React.UIEvent<HTMLElement>) => {
+    if (!isTransitioningViewRef.current) {
+      scrollPositionsRef.current.set(settledViewKeyRef.current, e.currentTarget.scrollTop);
+    }
+  }, []);
+
+  const handlePageExitComplete = useCallback(() => {
+    const targetKey = activeViewKeyRef.current;
+    settledViewKeyRef.current = targetKey;
+    const isPersistentBrowseView =
+      targetKey === 'home' ||
+      targetKey === 'library' ||
+      targetKey === 'songs' ||
+      targetKey === 'albums' ||
+      targetKey === 'artists' ||
+      targetKey === 'playlists' ||
+      targetKey === 'favorites' ||
+      targetKey === 'sources' ||
+      targetKey === 'moments';
+
+    const targetTop = isPersistentBrowseView
+      ? (scrollPositionsRef.current.get(targetKey) ?? 0)
+      : 0;
+
+    requestAnimationFrame(() => {
+      if (mainRef.current) {
+        mainRef.current.scrollTop = targetTop;
+      }
+      isTransitioningViewRef.current = false;
+    });
+  }, []);
 
   // Progressive Web App installability & standalone detection
   const pwa = usePWAInstall();
@@ -266,17 +319,18 @@ const MainLayout: React.FC = () => {
           {/* Workspace Body: Main Scroll Viewport + Integrated In-Flow YouTube Companion Stage */}
           <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden relative">
             {/* Dynamic Main Viewport (with calculated safe-area clearance for floating player on desktop & mobile) */}
-            <main className="flex-1 min-w-0 overflow-y-auto pb-[calc(210px+env(safe-area-inset-bottom,0px))] sm:pb-56 lg:pb-52 scroll-smooth focus:outline-none">
-              <Suspense fallback={null}>
-                <AnimatePresence mode="wait" initial={false}>
-                  <MotionPage
-                    viewKey={
-                      selectedPlaylistId && currentView === 'playlist-detail'
-                        ? `playlist-detail:${selectedPlaylistId}`
-                        : currentView
-                    }
-                    className="w-full"
-                  >
+            <main
+              ref={mainRef}
+              onScroll={handleMainScroll}
+              className="flex-1 min-w-0 overflow-y-auto pb-[calc(210px+env(safe-area-inset-bottom,0px))] sm:pb-56 lg:pb-52 focus:outline-none"
+            >
+              <AnimatePresence mode="wait" initial={false} onExitComplete={handlePageExitComplete}>
+                <MotionPage
+                  key={activeViewKey}
+                  viewKey={activeViewKey}
+                  className="w-full"
+                >
+                  <Suspense fallback={null}>
                     {selectedPlaylistId && currentView === 'playlist-detail' ? (
                       <PlaylistDetailView />
                     ) : currentView === 'home' ? (
@@ -310,9 +364,9 @@ const MainLayout: React.FC = () => {
                     ) : (
                       <HomeView />
                     )}
-                  </MotionPage>
-                </AnimatePresence>
-              </Suspense>
+                  </Suspense>
+                </MotionPage>
+              </AnimatePresence>
             </main>
 
             {/* Official YouTube Embed Integration (in-flow dock when active, zero floating overlay over cards) */}

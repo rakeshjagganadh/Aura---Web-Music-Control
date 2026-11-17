@@ -18,25 +18,8 @@ import { AudioVisualizer } from '../visualizer/AudioVisualizer';
 import { WaveformScrubber } from '../waveform/WaveformScrubber';
 import { MotionFadeSlide } from '../common/motion/MotionSurface';
 import { SharedIndicator } from '../common/motion/MotionInteractive';
-import { 
-  Sparkles, 
-  SlidersHorizontal, 
-  Compass, 
-  Repeat, 
-  BarChart3, 
-  Activity, 
-  Scissors, 
-  Radio, 
-  Zap, 
-  RefreshCw, 
-  Maximize2, 
-  Music,
-  Bookmark,
-  Flag,
-  Wand2,
-  Split,
-  Layers
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
+import { AuraIconName } from '../../icons/iconRegistry';
 
 export type StudioCategory = 
   | 'tuning' 
@@ -64,13 +47,14 @@ interface CategoryConfig {
   id: StudioCategory;
   label: string;
   shortLabel: string;
-  icon: React.ReactNode;
+  icon: AuraIconName;
+  iconColorClass: string;
   description: string;
   defaultSubModule: StudioSubModule;
   subModules?: {
     id: StudioSubModule;
     label: string;
-    icon: React.ReactNode;
+    icon: AuraIconName;
   }[];
 }
 
@@ -79,7 +63,8 @@ const CATEGORIES: CategoryConfig[] = [
     id: 'tuning',
     label: 'Tuning & Tone',
     shortLabel: 'Tuning',
-    icon: <Sparkles className="w-4 h-4 text-cyan-400" />,
+    icon: 'sparkles',
+    iconColorClass: 'text-cyan-400',
     description: 'Aura Sound Lab macro acoustic shapers & one-click mood profiles',
     defaultSubModule: 'soundlab',
   },
@@ -87,52 +72,56 @@ const CATEGORIES: CategoryConfig[] = [
     id: 'eq_dynamics',
     label: 'EQ & Dynamics',
     shortLabel: 'EQ & Dyn',
-    icon: <SlidersHorizontal className="w-4 h-4 text-indigo-400" />,
+    icon: 'sliders',
+    iconColorClass: 'text-indigo-400',
     description: '10-band studio parametric EQ and precision dynamic range control',
     defaultSubModule: 'eq',
     subModules: [
-      { id: 'eq', label: '10-Band EQ', icon: <SlidersHorizontal className="w-3.5 h-3.5" /> },
-      { id: 'dynamics', label: 'Dynamics & Limiter', icon: <Activity className="w-3.5 h-3.5" /> },
+      { id: 'eq', label: '10-Band EQ', icon: 'sliders' },
+      { id: 'dynamics', label: 'Dynamics & Limiter', icon: 'activity' },
     ],
   },
   {
     id: 'spatial_fx',
     label: 'Spatial & FX',
     shortLabel: 'Spatial & FX',
-    icon: <Compass className="w-4 h-4 text-emerald-400" />,
+    icon: 'compass',
+    iconColorClass: 'text-emerald-400',
     description: '3D soundstage immersion, hardware effects rack & channel routing',
     defaultSubModule: 'spatial',
     subModules: [
-      { id: 'spatial', label: 'Spatial 3D Audio', icon: <Compass className="w-3.5 h-3.5" /> },
-      { id: 'effects', label: 'Effects Rack', icon: <Wand2 className="w-3.5 h-3.5" /> },
-      { id: 'channels', label: 'Pitch & Channels', icon: <Split className="w-3.5 h-3.5" /> },
+      { id: 'spatial', label: 'Spatial 3D Audio', icon: 'compass' },
+      { id: 'effects', label: 'Effects Rack', icon: 'wand' },
+      { id: 'channels', label: 'Pitch & Channels', icon: 'split' },
     ],
   },
   {
     id: 'time_cues',
     label: 'Time & Cues',
     shortLabel: 'Time & Cues',
-    icon: <Repeat className="w-4 h-4 text-purple-400" />,
+    icon: 'repeat',
+    iconColorClass: 'text-purple-400',
     description: 'Zero-gap A/B looping, cue markers, phase correlation & Aura moments',
     defaultSubModule: 'loop',
     subModules: [
-      { id: 'loop', label: 'Loop A/B', icon: <Repeat className="w-3.5 h-3.5" /> },
-      { id: 'stereo', label: 'Stereo & Phase', icon: <Compass className="w-3.5 h-3.5" /> },
-      { id: 'markers', label: 'Cue Markers', icon: <Flag className="w-3.5 h-3.5" /> },
-      { id: 'moments', label: 'Aura Moments', icon: <Bookmark className="w-3.5 h-3.5" /> },
+      { id: 'loop', label: 'Loop A/B', icon: 'repeat' },
+      { id: 'stereo', label: 'Stereo & Phase', icon: 'compass' },
+      { id: 'markers', label: 'Cue Markers', icon: 'flag' },
+      { id: 'moments', label: 'Aura Moments', icon: 'bookmark' },
     ],
   },
   {
     id: 'mastering_analysis',
     label: 'Mastering & Analysis',
     shortLabel: 'Analysis',
-    icon: <BarChart3 className="w-4 h-4 text-amber-400" />,
+    icon: 'equalizer',
+    iconColorClass: 'text-amber-400',
     description: 'High-resolution telemetry meters, hardware calibration & stem separation',
     defaultSubModule: 'analysis',
     subModules: [
-      { id: 'analysis', label: 'Meters & Analysis', icon: <BarChart3 className="w-3.5 h-3.5" /> },
-      { id: 'presets', label: 'Hardware Presets', icon: <Bookmark className="w-3.5 h-3.5" /> },
-      { id: 'stems', label: 'Stem Separation (Lab)', icon: <Layers className="w-3.5 h-3.5" /> },
+      { id: 'analysis', label: 'Meters & Analysis', icon: 'equalizer' },
+      { id: 'presets', label: 'Hardware Presets', icon: 'bookmark' },
+      { id: 'stems', label: 'Stem Separation (Lab)', icon: 'layers' },
     ],
   },
 ];
@@ -159,6 +148,7 @@ export const StudioView: React.FC = () => {
     setIsTrimExportModalOpen,
   } = useMusic();
 
+  const [failedCoverUrl, setFailedCoverUrl] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<StudioCategory>('tuning');
   const [subModuleState, setSubModuleState] = useState<Record<StudioCategory, StudioSubModule>>({
     tuning: 'soundlab',
@@ -167,6 +157,8 @@ export const StudioView: React.FC = () => {
     time_cues: 'loop',
     mastering_analysis: 'analysis',
   });
+
+  const showCoverImage = Boolean(currentTrack?.coverUrl && failedCoverUrl !== currentTrack.coverUrl);
 
   const currentCategoryConfig = CATEGORIES.find((c) => c.id === activeCategory) || CATEGORIES[0];
   const activeSubModule = subModuleState[activeCategory] || currentCategoryConfig.defaultSubModule;
@@ -204,21 +196,16 @@ export const StudioView: React.FC = () => {
           {/* Active Track Identity */}
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-white/10 overflow-hidden shrink-0 flex items-center justify-center">
-              {currentTrack?.coverUrl ? (
+              {showCoverImage && currentTrack?.coverUrl ? (
                 <img 
                   src={currentTrack.coverUrl} 
                   alt={currentTrack.title} 
                   referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLElement).style.display = 'none';
-                    if (e.currentTarget.parentElement) {
-                      e.currentTarget.parentElement.innerHTML = '<svg class="w-5 h-5 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>';
-                    }
-                  }}
+                  onError={() => setFailedCoverUrl(currentTrack.coverUrl || null)}
                   className="w-full h-full object-cover" 
                 />
               ) : (
-                <Music className="w-5 h-5 text-zinc-500" />
+                <AuraIcon name="musicNote" size={20} className="text-zinc-500" />
               )}
             </div>
 
@@ -263,7 +250,7 @@ export const StudioView: React.FC = () => {
                   : 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40 shadow-cyan-500/10 shadow-sm'
               }`}
             >
-              <Radio className={`w-3.5 h-3.5 ${!isABBypassed ? 'text-cyan-400' : 'text-amber-400'}`} />
+              <AuraIcon name="radio" size={14} className={!isABBypassed ? 'text-cyan-400' : 'text-amber-400'} />
               <span>{isABBypassed ? 'A: RAW' : 'B: DSP'}</span>
             </button>
 
@@ -273,7 +260,7 @@ export const StudioView: React.FC = () => {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600/90 hover:bg-emerald-500 text-white shadow-sm transition-colors cursor-pointer aura-pressable"
               title="Open Lossless Audio Trimmer & WAV Master Export"
             >
-              <Scissors className="w-3.5 h-3.5" />
+              <AuraIcon name="scissors" size={14} />
               <span>Trim & Export</span>
             </button>
 
@@ -287,7 +274,7 @@ export const StudioView: React.FC = () => {
               }`}
               title="Toggle between Pro engineering controls and simplified macro view"
             >
-              <Zap className="w-3.5 h-3.5 text-amber-400" />
+              <AuraIcon name="zap" size={14} className="text-amber-400" />
               <span>{isAdvancedMode ? 'Pro Mode' : 'Simple'}</span>
             </button>
 
@@ -297,7 +284,7 @@ export const StudioView: React.FC = () => {
               title="Reset all studio audio processing, filters, and effects to flat defaults"
               className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-xl transition-colors cursor-pointer aura-pressable"
             >
-              <RefreshCw className="w-3 h-3" />
+              <AuraIcon name="refresh" size={12} />
               <span>Reset All</span>
             </button>
 
@@ -308,7 +295,7 @@ export const StudioView: React.FC = () => {
               title="Open Fullscreen Visual Player"
               aria-label="Open Fullscreen Visual Player"
             >
-              <Maximize2 className="w-4 h-4" />
+              <AuraIcon name="expand" size={16} />
             </button>
           </div>
         </div>
@@ -385,7 +372,9 @@ export const StudioView: React.FC = () => {
                       className="absolute inset-0 rounded-xl bg-zinc-800 border border-white/15 shadow-sm"
                     />
                   )}
-                  <div className="relative z-10 shrink-0">{cat.icon}</div>
+                  <div className="relative z-10 shrink-0 flex items-center">
+                    <AuraIcon name={cat.icon} size={16} className={cat.iconColorClass} />
+                  </div>
                   <div className="relative z-10 truncate">
                     <span className="block truncate">{cat.label}</span>
                   </div>
@@ -417,7 +406,9 @@ export const StudioView: React.FC = () => {
                         className="absolute inset-0 rounded-lg bg-zinc-800 border border-cyan-500/30 shadow-sm"
                       />
                     )}
-                    <span className={`relative z-10 ${isSubActive ? 'text-cyan-400' : 'text-zinc-500'}`}>{sub.icon}</span>
+                    <span className={`relative z-10 flex items-center ${isSubActive ? 'text-cyan-400' : 'text-zinc-500'}`}>
+                      <AuraIcon name={sub.icon} size={14} />
+                    </span>
                     <span className="relative z-10">{sub.label}</span>
                   </button>
                 );

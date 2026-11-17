@@ -2,32 +2,18 @@ import React, { useState } from 'react';
 import { AnimatePresence, LayoutGroup } from 'motion/react';
 import { useMusic } from '../../context/MusicContext';
 import { NavView } from '../../types';
-import { 
-  Home, 
-  Music, 
-  Disc, 
-  User, 
-  ListMusic, 
-  Heart, 
-  SlidersHorizontal, 
-  Settings, 
-  Plus, 
-  ChevronLeft, 
-  ChevronRight,
-  Radio,
-  Users,
-  Bookmark,
-  HardDrive
-} from 'lucide-react';
 import { useListenTogether } from '../../context/ListenTogetherContext';
 import { AuraBrandMark } from '../common/AuraBrandMark';
 import { MotionFadeSlide } from '../common/motion/MotionSurface';
 import { SharedIndicator } from '../common/motion/MotionInteractive';
+import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
+import { AuraIcon } from '../ui/AuraIcon';
+import { AuraIconName } from '../../icons/iconRegistry';
 
 interface NavItemConfig {
   id: NavView;
   label: string;
-  icon: React.ElementType;
+  icon: AuraIconName;
   badge?: number;
   dot?: boolean;
 }
@@ -51,6 +37,7 @@ export const Sidebar: React.FC = () => {
   } = useMusic();
 
   const { isInRoom, participants } = useListenTogether();
+  const { prefersReducedMotion } = useMotionCapabilities();
 
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -58,18 +45,18 @@ export const Sidebar: React.FC = () => {
     {
       title: 'DISCOVER',
       items: [
-        { id: 'home', label: 'Home', icon: Home },
-        { id: 'sources', label: 'Open Sources & Radio', icon: Radio },
+        { id: 'home', label: 'Home', icon: 'home' },
+        { id: 'sources', label: 'Open Sources & Radio', icon: 'radio' },
       ],
     },
     {
       title: 'MUSIC VAULT',
       items: [
-        { id: 'library', label: 'Vault Overview', icon: HardDrive },
-        { id: 'songs', label: 'All Tracks', icon: Music, badge: tracks.length },
-        { id: 'albums', label: 'Albums', icon: Disc },
-        { id: 'artists', label: 'Artists', icon: User },
-        { id: 'favorites', label: 'Liked Songs', icon: Heart, badge: favoriteIds.size },
+        { id: 'library', label: 'Vault Overview', icon: 'hardDrive' },
+        { id: 'songs', label: 'All Tracks', icon: 'musicNote', badge: tracks.length },
+        { id: 'albums', label: 'Albums', icon: 'disc' },
+        { id: 'artists', label: 'Artists', icon: 'user' },
+        { id: 'favorites', label: 'Liked Songs', icon: 'heart', badge: favoriteIds.size },
       ],
     },
     {
@@ -78,24 +65,24 @@ export const Sidebar: React.FC = () => {
         {
           id: 'listen-together',
           label: 'Listen Together',
-          icon: Users,
+          icon: 'users',
           badge: isInRoom ? participants.length : undefined,
           dot: isInRoom,
         },
-        { id: 'studio', label: 'Audio Studio & DSP', icon: SlidersHorizontal },
-        { id: 'moments', label: 'Cue Moments', icon: Bookmark },
+        { id: 'studio', label: 'Audio Studio & DSP', icon: 'sliders' },
+        { id: 'moments', label: 'Cue Moments', icon: 'bookmark' },
       ],
     },
     {
       title: 'SPACES',
       items: [
-        { id: 'playlists', label: 'All Spaces', icon: ListMusic, badge: playlists.length },
+        { id: 'playlists', label: 'All Spaces', icon: 'playlist', badge: playlists.length },
       ],
     },
     {
       title: 'SYSTEM',
       items: [
-        { id: 'settings', label: 'Preferences', icon: Settings },
+        { id: 'settings', label: 'Preferences', icon: 'settings' },
       ],
     },
   ];
@@ -114,7 +101,7 @@ export const Sidebar: React.FC = () => {
     <aside
       id="main-sidebar"
       aria-label="Spatial Navigation Dock"
-      className={`hidden lg:flex mt-3.5 lg:mt-4 ml-4 lg:ml-5 mb-3.5 lg:mb-4 h-[calc(100dvh-1.75rem)] lg:h-[calc(100dvh-2rem)] rounded-3xl bg-[#0a0d16]/75 backdrop-blur-xl border border-white/[0.08] flex-col justify-between select-none transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] z-30 shrink-0 shadow-[0_16px_40px_rgba(0,0,0,0.7)] relative overflow-hidden ${
+      className={`hidden lg:flex mt-3.5 lg:mt-4 ml-4 lg:ml-5 mb-3.5 lg:mb-4 h-[calc(100dvh-1.75rem)] lg:h-[calc(100dvh-2rem)] rounded-3xl bg-[#0a0d16]/75 backdrop-blur-xl border border-white/[0.08] flex-col justify-between select-none transition-[width] duration-250 ease-[var(--motion-ease-emphasized)] z-30 shrink-0 shadow-[0_16px_40px_rgba(0,0,0,0.7)] relative overflow-hidden ${
         isCollapsed ? 'w-[72px]' : 'w-60'
       }`}
     >
@@ -147,11 +134,11 @@ export const Sidebar: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsCollapsed(true)}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.08] aura-pressable transition-all cursor-pointer shrink-0 aura-focus-ring"
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.08] aura-pressable transition-colors cursor-pointer shrink-0 aura-focus-ring"
               title="Collapse sidebar"
               aria-label="Collapse sidebar"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <AuraIcon name="chevronLeft" size={16} />
             </button>
           </>
         ) : (
@@ -168,11 +155,11 @@ export const Sidebar: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsCollapsed(false)}
-              className="w-7 h-7 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.1] aura-pressable flex items-center justify-center transition-all cursor-pointer shrink-0 aura-focus-ring"
+              className="w-7 h-7 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.1] aura-pressable flex items-center justify-center transition-colors cursor-pointer shrink-0 aura-focus-ring"
               title="Expand sidebar"
               aria-label="Expand sidebar"
             >
-              <ChevronRight className="w-4 h-4" />
+              <AuraIcon name="chevronRight" size={16} />
             </button>
           </div>
         )}
@@ -197,7 +184,6 @@ export const Sidebar: React.FC = () => {
 
               {/* Group Items */}
               {group.items.map((item) => {
-                const Icon = item.icon;
                 const isActive = currentView === item.id && !selectedPlaylistId;
 
                 if (isCollapsed) {
@@ -225,7 +211,7 @@ export const Sidebar: React.FC = () => {
                             />
                           </>
                         )}
-                        <Icon className="w-4 h-4 relative z-10 aura-icon-transition" />
+                        <AuraIcon name={item.icon} size={16} filled={isActive} className="relative z-10 aura-icon-transition" />
                         {item.dot && (
                           <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-emerald-400 ring-2 ring-[#080b12] z-10" />
                         )}
@@ -267,8 +253,11 @@ export const Sidebar: React.FC = () => {
                         />
                       </>
                     )}
-                    <Icon
-                      className={`w-4 h-4 shrink-0 relative z-10 aura-icon-transition ${
+                    <AuraIcon
+                      name={item.icon}
+                      size={16}
+                      filled={isActive}
+                      className={`shrink-0 relative z-10 aura-icon-transition ${
                         isActive ? 'text-white' : 'text-zinc-400 group-hover:text-zinc-200'
                       }`}
                     />
@@ -278,7 +267,11 @@ export const Sidebar: React.FC = () => {
                     </span>
 
                     {item.dot && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.9)] shrink-0 relative z-10" />
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full bg-emerald-400 ${
+                          !prefersReducedMotion ? 'animate-pulse' : ''
+                        } shadow-[0_0_8px_rgba(52,211,153,0.9)] shrink-0 relative z-10`}
+                      />
                     )}
 
                     {item.badge !== undefined && item.badge > 0 && (
@@ -313,7 +306,7 @@ export const Sidebar: React.FC = () => {
                     title="Create New Space"
                     aria-label="Create New Space"
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <AuraIcon name="add" size={14} />
                   </button>
                 </div>
 
@@ -360,9 +353,9 @@ export const Sidebar: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsPlaylistModalOpen(true)}
-            className="flex items-center justify-center gap-2 px-3 py-1.5 w-full text-xs font-medium text-zinc-200 bg-white/[0.04] hover:bg-white/[0.08] rounded-xl border border-white/[0.08] hover:border-white/15 aura-pressable transition-all cursor-pointer aura-focus-ring"
+            className="flex items-center justify-center gap-2 px-3 py-1.5 w-full text-xs font-medium text-zinc-200 bg-white/[0.04] hover:bg-white/[0.08] rounded-xl border border-white/[0.08] hover:border-white/15 aura-pressable transition-colors cursor-pointer aura-focus-ring"
           >
-            <Plus className="w-3.5 h-3.5 text-zinc-400" />
+            <AuraIcon name="add" size={14} className="text-zinc-400" />
             <span className="font-ui-body">New Space</span>
           </button>
         ) : (
@@ -373,7 +366,7 @@ export const Sidebar: React.FC = () => {
             title="Create New Space"
             aria-label="Create New Space"
           >
-            <Plus className="w-4 h-4" />
+            <AuraIcon name="add" size={16} />
           </button>
         )}
       </div>

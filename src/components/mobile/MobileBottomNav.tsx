@@ -3,13 +3,7 @@ import { motion, LayoutGroup, useReducedMotion } from 'motion/react';
 import { useMusic } from '../../context/MusicContext';
 import { NavView } from '../../types';
 import { OpticalGlassSurface } from '../common/OpticalGlassSurface';
-import {
-  Home,
-  Music,
-  ListMusic,
-  SlidersHorizontal,
-  MoreHorizontal,
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 interface MobileBottomNavProps {
   onOpenMore: () => void;
@@ -129,11 +123,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenMore }) 
                   className="absolute inset-0 rounded-full bg-white/[0.10] pointer-events-none"
                 />
               )}
-              <Home
-                className={`relative z-10 w-4 h-4 transition-[transform,color] duration-250 ease-out ${
+              <AuraIcon
+                name="home"
+                size={16}
+                filled={isHomeActive}
+                className={`relative z-10 transition-[transform,color] duration-250 ease-out ${
                   isHomeActive
-                    ? `${prefersReducedMotion ? '' : 'scale-[1.06] '}stroke-[2.2] text-sky-300`
-                    : 'scale-100 stroke-[1.8]'
+                    ? `${prefersReducedMotion ? '' : 'scale-[1.06] '}text-sky-300`
+                    : 'scale-100'
                 }`}
               />
               <span className="relative z-10 text-[10px] tracking-tight leading-none font-medium">
@@ -161,11 +158,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenMore }) 
                   className="absolute inset-0 rounded-full bg-white/[0.10] pointer-events-none"
                 />
               )}
-              <Music
-                className={`relative z-10 w-4 h-4 transition-[transform,color] duration-250 ease-out ${
+              <AuraIcon
+                name="musicNote"
+                size={16}
+                filled={isLibraryActive}
+                className={`relative z-10 transition-[transform,color] duration-250 ease-out ${
                   isLibraryActive
-                    ? `${prefersReducedMotion ? '' : 'scale-[1.06] '}stroke-[2.2] text-sky-300`
-                    : 'scale-100 stroke-[1.8]'
+                    ? `${prefersReducedMotion ? '' : 'scale-[1.06] '}text-sky-300`
+                    : 'scale-100'
                 }`}
               />
               <span className="relative z-10 text-[10px] tracking-tight leading-none font-medium">
@@ -193,11 +193,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenMore }) 
                   className="absolute inset-0 rounded-full bg-white/[0.10] pointer-events-none"
                 />
               )}
-              <ListMusic
-                className={`relative z-10 w-4 h-4 transition-[transform,color] duration-250 ease-out ${
+              <AuraIcon
+                name="queue"
+                size={16}
+                filled={isSpacesActive}
+                className={`relative z-10 transition-[transform,color] duration-250 ease-out ${
                   isSpacesActive
-                    ? `${prefersReducedMotion ? '' : 'scale-[1.06] '}stroke-[2.2] text-sky-300`
-                    : 'scale-100 stroke-[1.8]'
+                    ? `${prefersReducedMotion ? '' : 'scale-[1.06] '}text-sky-300`
+                    : 'scale-100'
                 }`}
               />
               <span className="relative z-10 text-[10px] tracking-tight leading-none font-medium">
@@ -227,12 +230,15 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenMore }) 
                   className="absolute inset-0 rounded-full bg-white/[0.10] pointer-events-none"
                 />
               )}
-              <div className="relative z-10">
-                <SlidersHorizontal
-                  className={`w-4 h-4 transition-[transform,color] duration-250 ease-out ${
+              <div className="relative z-10 flex items-center justify-center">
+                <AuraIcon
+                  name="sliders"
+                  size={16}
+                  filled={isStudioActive}
+                  className={`transition-[transform,color] duration-250 ease-out ${
                     isStudioActive
-                      ? `${prefersReducedMotion ? '' : 'scale-[1.06] '}stroke-[2.2] text-sky-300`
-                      : 'scale-100 stroke-[1.8]'
+                      ? `${prefersReducedMotion ? '' : 'scale-[1.06] '}text-sky-300`
+                      : 'scale-100'
                   }`}
                 />
                 {isAudioEffectActive && (
@@ -264,11 +270,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenMore }) 
                   className="absolute inset-0 rounded-full bg-white/[0.10] pointer-events-none"
                 />
               )}
-              <MoreHorizontal
-                className={`relative z-10 w-4 h-4 transition-[transform,color] duration-250 ease-out ${
+              <AuraIcon
+                name="more"
+                size={16}
+                filled={isMoreActive}
+                className={`relative z-10 transition-[transform,color] duration-250 ease-out ${
                   isMoreActive
-                    ? `${prefersReducedMotion ? '' : 'scale-[1.06] '}stroke-[2.3] text-sky-300`
-                    : 'scale-100 stroke-[1.8]'
+                    ? `${prefersReducedMotion ? '' : 'scale-[1.06] '}text-sky-300`
+                    : 'scale-100'
                 }`}
               />
               <span className="relative z-10 text-[10px] tracking-tight leading-none font-medium">

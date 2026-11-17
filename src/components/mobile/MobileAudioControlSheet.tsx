@@ -6,19 +6,8 @@ import { useMusic } from '../../context/MusicContext';
 import { EQ_10_BANDS, audioEngine } from '../../services/audioEngine';
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import { EqualizerPreset, RealtimeMeterData, ChannelMode } from '../../types';
-import { 
-  X, 
-  RotateCcw, 
-  Radio, 
-  SlidersHorizontal, 
-  Sparkles, 
-  Compass, 
-  Activity, 
-  BarChart3, 
-  Bookmark, 
-  Layers, 
-  Check
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
+import { AuraIconName } from '../../icons/iconRegistry';
 
 type MobileAudioTab = 'basic' | 'eq' | 'effects' | 'spatial' | 'dynamics' | 'analysis' | 'presets';
 
@@ -83,14 +72,14 @@ export const MobileAudioControlSheet: React.FC = () => {
     return () => window.clearInterval(id);
   }, [isAudioControlsOpen, activeTab]);
 
-  const tabs: { id: MobileAudioTab; label: string; icon: React.ElementType }[] = [
-    { id: 'basic', label: 'Tone', icon: Layers },
-    { id: 'eq', label: '10-Band EQ', icon: SlidersHorizontal },
-    { id: 'effects', label: 'Effects', icon: Sparkles },
-    { id: 'spatial', label: 'Spatial 3D', icon: Compass },
-    { id: 'dynamics', label: 'Dynamics', icon: Activity },
-    { id: 'analysis', label: 'Analysis', icon: BarChart3 },
-    { id: 'presets', label: 'Presets', icon: Bookmark },
+  const tabs: { id: MobileAudioTab; label: string; icon: AuraIconName }[] = [
+    { id: 'basic', label: 'Tone', icon: 'layers' },
+    { id: 'eq', label: '10-Band EQ', icon: 'sliders' },
+    { id: 'effects', label: 'Effects', icon: 'sparkles' },
+    { id: 'spatial', label: 'Spatial 3D', icon: 'compass' },
+    { id: 'dynamics', label: 'Dynamics', icon: 'activity' },
+    { id: 'analysis', label: 'Analysis', icon: 'equalizer' },
+    { id: 'presets', label: 'Presets', icon: 'bookmark' },
   ];
 
   const PRESET_LIST: { id: EqualizerPreset; label: string; desc: string }[] = [
@@ -177,8 +166,8 @@ export const MobileAudioControlSheet: React.FC = () => {
         {/* Top Header */}
         <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between gap-2 shrink-0">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
-              <SlidersHorizontal className="w-4 h-4" />
+            <div className="p-2 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center">
+              <AuraIcon name="sliders" size={16} />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
@@ -206,7 +195,7 @@ export const MobileAudioControlSheet: React.FC = () => {
               title="A/B Comparison"
             >
               <MotionIconSwap stateKey={isABBypassed ? 'raw' : 'dsp'}>
-                <Radio className={`w-3 h-3 ${!isABBypassed ? 'text-emerald-400' : 'text-zinc-500'}`} />
+                <AuraIcon name="radio" size={12} className={!isABBypassed ? 'text-emerald-400' : 'text-zinc-500'} />
               </MotionIconSwap>
               <span>{isABBypassed ? 'A: RAW' : 'B: DSP'}</span>
             </button>
@@ -219,7 +208,7 @@ export const MobileAudioControlSheet: React.FC = () => {
               className="p-2 text-zinc-400 hover:text-zinc-200 active:bg-zinc-800 rounded-xl transition-colors cursor-pointer aura-pressable aura-focus-ring"
               title="Reset Audio Processing"
             >
-              <RotateCcw className="w-4 h-4" />
+              <AuraIcon name="reset" size={16} />
             </button>
 
             {/* Close */}
@@ -230,7 +219,7 @@ export const MobileAudioControlSheet: React.FC = () => {
               className="p-2 text-zinc-400 hover:text-white active:bg-zinc-800 rounded-xl transition-colors cursor-pointer aura-pressable aura-focus-ring"
               title="Close"
             >
-              <X className="w-5 h-5" />
+              <AuraIcon name="close" size={20} />
             </button>
           </div>
         </div>
@@ -239,7 +228,6 @@ export const MobileAudioControlSheet: React.FC = () => {
         <LayoutGroup id="mobile-dsp-tabs">
           <div className="flex items-center gap-1 px-3 py-2 border-b border-white/5 overflow-x-auto no-scrollbar shrink-0">
             {tabs.map((tab) => {
-              const Icon = tab.icon;
               const isActive = activeTab === tab.id;
               return (
                 <button
@@ -259,7 +247,7 @@ export const MobileAudioControlSheet: React.FC = () => {
                     />
                   )}
                   <span className="relative z-10 flex items-center gap-1.5">
-                    <Icon className="w-3.5 h-3.5" />
+                    <AuraIcon name={tab.icon} size={14} />
                     <span>{tab.label}</span>
                   </span>
                 </button>
@@ -946,7 +934,7 @@ export const MobileAudioControlSheet: React.FC = () => {
                       </div>
                       {isSelected && (
                         <div className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-white shrink-0">
-                          <Check className="w-3.5 h-3.5" />
+                          <AuraIcon name="check" size={14} />
                         </div>
                       )}
                     </button>

@@ -3,7 +3,7 @@ import { AnimatePresence } from 'motion/react';
 import { MotionBackdrop, MotionModal } from './motion/MotionSurface';
 import { useMusic } from '../../context/MusicContext';
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
-import { X, Keyboard } from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 const SHORTCUTS = [
   { key: 'Space', desc: 'Play / Pause audio' },
@@ -49,7 +49,7 @@ export const ShortcutsModal: React.FC = () => {
           >
             <div className="flex items-center justify-between border-b border-white/5 pb-3">
               <div className="flex items-center gap-2">
-                <Keyboard className="w-5 h-5 text-indigo-400" />
+                <AuraIcon name="keyboard" size={20} className="text-indigo-400" />
                 <h3 className="text-sm font-semibold text-zinc-100">Keyboard Shortcuts</h3>
               </div>
 
@@ -59,7 +59,7 @@ export const ShortcutsModal: React.FC = () => {
                 onClick={() => setIsShortcutsModalOpen(false)}
                 className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors cursor-pointer aura-pressable aura-focus-ring"
               >
-                <X className="w-4 h-4" />
+                <AuraIcon name="close" size={16} />
               </button>
             </div>
 

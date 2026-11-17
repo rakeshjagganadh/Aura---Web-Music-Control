@@ -1,4 +1,5 @@
 import React from 'react';
+import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
 
 interface AuraBrandMarkProps {
   size?: number | 'sm' | 'md' | 'lg' | 'xl';
@@ -13,6 +14,7 @@ export const AuraBrandMark: React.FC<AuraBrandMarkProps> = ({
   isPlaying = false,
   withAuraGlow = false,
 }) => {
+  const { prefersReducedMotion } = useMotionCapabilities();
   const pixelSize = typeof size === 'number' 
     ? size 
     : size === 'sm' 
@@ -79,7 +81,7 @@ export const AuraBrandMark: React.FC<AuraBrandMarkProps> = ({
           cy="12"
           r="1.2"
           fill={isPlaying ? '#10b981' : '#6b7280'}
-          className={isPlaying ? 'animate-pulse' : ''}
+          className={isPlaying && !prefersReducedMotion ? 'animate-pulse' : ''}
         />
       </svg>
     </div>

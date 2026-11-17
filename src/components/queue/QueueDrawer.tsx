@@ -7,23 +7,7 @@ import { useMusic } from '../../context/MusicContext';
 import { useListenTogether } from '../../context/ListenTogetherContext';
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import { Track, MusicSourceType } from '../../types';
-import { 
-  X, 
-  Trash2, 
-  Play, 
-  Music, 
-  ChevronUp, 
-  ChevronDown, 
-  ListMusic, 
-  History, 
-  Clock, 
-  Moon, 
-  Info,
-  Shuffle,
-  Sparkles,
-  Users,
-  AlertCircle
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 function formatTime(secs?: number, source?: MusicSourceType): string {
   if (source === 'radio' || source === 'radiobrowser') return 'LIVE';
@@ -212,7 +196,7 @@ export const QueueDrawer: React.FC = () => {
         <div className="p-4 border-b border-white/[0.06] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              <ListMusic className="w-4 h-4" />
+              <AuraIcon name="playlist" size={16} />
             </div>
             <div>
               <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
@@ -223,7 +207,7 @@ export const QueueDrawer: React.FC = () => {
               </h3>
               {upNextTracks.length > 0 && activeTab === 'queue' && (
                 <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 font-mono mt-0.5">
-                  <Clock className="w-3 h-3 text-indigo-400" />
+                  <AuraIcon name="clock" size={12} className="text-indigo-400" />
                   <span>{formatRemainingDuration(totalRemainingSecs, hasUnknownDurations)}</span>
                   <span>•</span>
                   <span>{upNextTracks.length} up next</span>
@@ -245,7 +229,7 @@ export const QueueDrawer: React.FC = () => {
               }`}
               title={isSleepTimerActive ? `Sleep timer active (${sleepTimerRemainingSecs ? Math.ceil(sleepTimerRemainingSecs / 60) + 'm left' : 'End of track'})` : 'Set Sleep Timer'}
             >
-              <Moon className="w-4 h-4" />
+              <AuraIcon name="moon" size={16} />
             </button>
 
             {/* Shuffle Up Next button */}
@@ -258,7 +242,7 @@ export const QueueDrawer: React.FC = () => {
                 className="p-1.5 rounded-lg text-zinc-400 hover:text-indigo-300 hover:bg-white/5 disabled:opacity-40 disabled:hover:text-zinc-400 transition-colors cursor-pointer aura-pressable aura-focus-ring"
                 title={isQueueControlRestricted ? 'Queue ordering managed by host' : 'Shuffle Up Next'}
               >
-                <Shuffle className="w-4 h-4" />
+                <AuraIcon name="shuffle" size={16} />
               </button>
             )}
 
@@ -272,7 +256,7 @@ export const QueueDrawer: React.FC = () => {
                 className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-white/5 disabled:opacity-40 disabled:hover:text-zinc-400 transition-colors cursor-pointer aura-pressable aura-focus-ring"
                 title={isQueueControlRestricted ? 'Queue ordering managed by host' : 'Clear Up Next'}
               >
-                <Trash2 className="w-4 h-4" />
+                <AuraIcon name="trash" size={16} />
               </button>
             )}
 
@@ -284,7 +268,7 @@ export const QueueDrawer: React.FC = () => {
               className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
               title="Close Drawer"
             >
-              <X className="w-5 h-5" />
+              <AuraIcon name="close" size={20} />
             </button>
           </div>
         </div>
@@ -292,7 +276,7 @@ export const QueueDrawer: React.FC = () => {
         {/* Listen Together Notification Banner */}
         {isInRoom && (
           <div className="flex items-center gap-2 px-4 py-2 bg-indigo-950/40 border-b border-indigo-500/20 text-indigo-300 text-[11px]">
-            <Users className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+            <AuraIcon name="users" size={14} className="text-indigo-400 shrink-0" />
             <span className="truncate flex-1">
               {activeRoom?.roomName ? `Room: ${activeRoom.roomName}` : 'Listen Together Room'}
               {isOwner ? ' (Host)' : ' (Participant — Host controls queue)'}
@@ -311,7 +295,7 @@ export const QueueDrawer: React.FC = () => {
                   : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
-              <ListMusic className="w-3.5 h-3.5" />
+              <AuraIcon name="playlist" size={14} />
               <span>Up Next ({upNextTracks.length})</span>
               {activeTab === 'queue' && (
                 <SharedIndicator
@@ -328,7 +312,7 @@ export const QueueDrawer: React.FC = () => {
                   : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
-              <History className="w-3.5 h-3.5" />
+              <AuraIcon name="history" size={14} />
               <span>Recently Played ({history.length})</span>
               {activeTab === 'history' && (
                 <SharedIndicator
@@ -350,7 +334,7 @@ export const QueueDrawer: React.FC = () => {
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                      <Sparkles className="w-3 h-3 text-indigo-400" />
+                      <AuraIcon name="sparkles" size={12} className="text-indigo-400" />
                       Now Playing
                     </span>
                     <span className="text-[10px] font-mono text-indigo-400">
@@ -369,7 +353,7 @@ export const QueueDrawer: React.FC = () => {
                         />
                       ) : (
                         <div className={`w-full h-full bg-gradient-to-br ${currentTrack.coverColor || 'from-indigo-600 to-zinc-900'} flex items-center justify-center`}>
-                          <Music className="w-5 h-5 text-white/80" />
+                          <AuraIcon name="musicNote" size={20} className="text-white/80" />
                         </div>
                       )}
                     </div>
@@ -417,7 +401,7 @@ export const QueueDrawer: React.FC = () => {
                   </span>
                   {hasUnknownDurations && (
                     <span className="text-[10px] font-mono text-amber-400 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" />
+                      <AuraIcon name="alertCircle" size={12} />
                       Partial runtime
                     </span>
                   )}
@@ -425,7 +409,7 @@ export const QueueDrawer: React.FC = () => {
 
                 {upNextTracks.length === 0 ? (
                   <div className="flex flex-col items-center justify-center text-center py-12 px-4 rounded-2xl bg-[#0b0d13]/40 border border-dashed border-white/10">
-                    <Clock className="w-8 h-8 text-zinc-600 mb-2 opacity-50" />
+                    <AuraIcon name="clock" size={32} className="text-zinc-600 mb-2 opacity-50" />
                     <p className="text-xs font-medium text-zinc-300">No tracks queued</p>
                     <p className="text-[11px] text-zinc-500 mt-0.5 mb-4 max-w-xs">
                       Add tracks using "Play Next" or "Add to Queue" from your music library
@@ -461,11 +445,11 @@ export const QueueDrawer: React.FC = () => {
                               <img src={track.coverUrl} alt={track.title} className="w-full h-full object-cover" />
                             ) : (
                               <div className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-indigo-600 to-zinc-900'} flex items-center justify-center`}>
-                                <Music className="w-3.5 h-3.5 text-white/80" />
+                                <AuraIcon name="musicNote" size={14} className="text-white/80" />
                               </div>
                             )}
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                              <Play className="w-3.5 h-3.5 text-white fill-current" />
+                              <AuraIcon name="play" size={14} filled className="text-white" />
                             </div>
                           </div>
 
@@ -509,7 +493,7 @@ export const QueueDrawer: React.FC = () => {
                               title="Track Info"
                               aria-label={`Track info for ${track.title}`}
                             >
-                              <Info className="w-3 h-3" />
+                              <AuraIcon name="info" size={12} />
                             </button>
 
                             {/* Move Up */}
@@ -526,7 +510,7 @@ export const QueueDrawer: React.FC = () => {
                               title={relativeIdx === 0 ? 'Cannot move above current track' : 'Move Up'}
                               aria-label={`Move ${track.title} up in queue`}
                             >
-                              <ChevronUp className="w-3.5 h-3.5" />
+                              <AuraIcon name="chevronUp" size={14} />
                             </button>
 
                             {/* Move Down */}
@@ -543,7 +527,7 @@ export const QueueDrawer: React.FC = () => {
                               title={relativeIdx === upNextTracks.length - 1 ? 'End of queue' : 'Move Down'}
                               aria-label={`Move ${track.title} down in queue`}
                             >
-                              <ChevronDown className="w-3.5 h-3.5" />
+                              <AuraIcon name="chevronDown" size={14} />
                             </button>
 
                             {/* Remove from queue */}
@@ -560,7 +544,7 @@ export const QueueDrawer: React.FC = () => {
                               title="Remove from queue"
                               aria-label={`Remove ${track.title} from queue`}
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <AuraIcon name="trash" size={14} />
                             </button>
                           </div>
 
@@ -580,7 +564,7 @@ export const QueueDrawer: React.FC = () => {
               <MotionFadeSlide key="history" direction="up" distance={6} duration="micro" className="flex flex-col gap-1.5">
               {history.length === 0 ? (
                 <div className="flex flex-col items-center justify-center text-center py-12 px-4 rounded-2xl bg-[#0b0d13]/40 border border-dashed border-white/10">
-                  <History className="w-8 h-8 text-zinc-600 mb-2 opacity-50" />
+                  <AuraIcon name="history" size={32} className="text-zinc-600 mb-2 opacity-50" />
                   <p className="text-xs font-medium text-zinc-300">No playback history</p>
                   <p className="text-[11px] text-zinc-500 mt-0.5">Songs you play will show up here</p>
                 </div>
@@ -608,7 +592,7 @@ export const QueueDrawer: React.FC = () => {
                           <img src={track.coverUrl} alt={track.title} className="w-full h-full object-cover" />
                         ) : (
                           <div className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-indigo-600 to-zinc-900'} flex items-center justify-center`}>
-                            <Music className="w-3.5 h-3.5 text-white/80" />
+                            <AuraIcon name="musicNote" size={14} className="text-white/80" />
                           </div>
                         )}
                       </div>

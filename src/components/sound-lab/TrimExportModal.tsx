@@ -4,21 +4,7 @@ import { MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
 import { useMusic } from '../../context/MusicContext';
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import { formatSeconds, formatPreciseSeconds } from '../../utils/formatTime';
-import { 
-  Scissors, 
-  Download, 
-  Play, 
-  Pause, 
-  X, 
-  Sliders, 
-  Sparkles, 
-  Save, 
-  Music, 
-  FileAudio, 
-  Check, 
-  Clock, 
-  Volume2 
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 import { ExportAudioOptions } from '../../types';
 
 export const TrimExportModal: React.FC = () => {
@@ -126,8 +112,8 @@ export const TrimExportModal: React.FC = () => {
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/5">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <Scissors className="w-5 h-5" />
+            <div className="p-2.5 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
+              <AuraIcon name="scissors" size={20} />
             </div>
             <div>
               <h2 className="text-lg font-bold text-white tracking-tight">Audio Trimmer & Lossless Master Export</h2>
@@ -142,7 +128,7 @@ export const TrimExportModal: React.FC = () => {
             onClick={() => setIsTrimExportModalOpen(false)}
             className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
-            <X className="w-5 h-5" />
+            <AuraIcon name="close" size={20} />
           </button>
         </div>
 
@@ -156,7 +142,7 @@ export const TrimExportModal: React.FC = () => {
                   {currentTrack.coverUrl ? (
                     <img src={currentTrack.coverUrl} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <Music className="w-5 h-5 text-zinc-400" />
+                    <AuraIcon name="musicNote" size={20} className="text-zinc-400" />
                   )}
                 </div>
                 <div>
@@ -167,6 +153,7 @@ export const TrimExportModal: React.FC = () => {
 
               {/* Preview Button */}
               <button
+                type="button"
                 onClick={() => {
                   if (trimFade.isPlayingPreview) {
                     stopTrimPreview();
@@ -174,13 +161,13 @@ export const TrimExportModal: React.FC = () => {
                     previewTrimmedSection();
                   }
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors aura-pressable aura-focus-ring cursor-pointer ${
                   trimFade.isPlayingPreview
                     ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
                     : 'bg-zinc-800 text-zinc-200 border-white/10 hover:bg-zinc-700'
                 }`}
               >
-                {trimFade.isPlayingPreview ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                {trimFade.isPlayingPreview ? <AuraIcon name="pause" size={14} filled /> : <AuraIcon name="play" size={14} filled />}
                 {trimFade.isPlayingPreview ? 'Stop Preview' : 'Audition Trim'}
               </button>
             </div>
@@ -190,7 +177,7 @@ export const TrimExportModal: React.FC = () => {
           <div className="flex flex-col gap-4 p-4 rounded-2xl bg-zinc-950/40 border border-white/5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Scissors className="w-4 h-4 text-emerald-400" />
+                <AuraIcon name="scissors" size={16} className="text-emerald-400" />
                 <span className="text-xs font-bold text-white">Trim Boundaries</span>
               </div>
               <span className="text-xs font-mono text-emerald-300 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-800/30">
@@ -235,20 +222,23 @@ export const TrimExportModal: React.FC = () => {
             {/* Quick Set buttons */}
             <div className="flex items-center gap-2 pt-1">
               <button
+                type="button"
                 onClick={() => updateTrimFade({ trimStart: currentTime })}
-                className="text-xs px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors"
+                className="text-xs px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors aura-pressable aura-focus-ring cursor-pointer"
               >
                 Set Start at Playhead ({formatSeconds(currentTime)})
               </button>
               <button
+                type="button"
                 onClick={() => updateTrimFade({ trimEnd: currentTime })}
-                className="text-xs px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors"
+                className="text-xs px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors aura-pressable aura-focus-ring cursor-pointer"
               >
                 Set End at Playhead ({formatSeconds(currentTime)})
               </button>
               <button
+                type="button"
                 onClick={() => updateTrimFade({ trimStart: 0, trimEnd: trackDuration })}
-                className="text-xs px-2.5 py-1 rounded-lg bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700 hover:text-white transition-colors ml-auto"
+                className="text-xs px-2.5 py-1 rounded-lg bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700 hover:text-white transition-colors ml-auto aura-pressable aura-focus-ring cursor-pointer"
               >
                 Reset Span
               </button>
@@ -301,9 +291,10 @@ export const TrimExportModal: React.FC = () => {
                 <div className="flex gap-1.5">
                   {([16, 24, 32] as const).map((bits) => (
                     <button
+                      type="button"
                       key={bits}
                       onClick={() => setBitDepth(bits)}
-                      className={`flex-1 py-1.5 rounded-xl text-xs font-mono font-bold transition-all border ${
+                      className={`flex-1 py-1.5 rounded-xl text-xs font-mono font-bold transition-colors border aura-pressable aura-focus-ring cursor-pointer ${
                         bitDepth === bits
                           ? 'bg-emerald-600/30 border-emerald-500/50 text-emerald-200'
                           : 'bg-zinc-900 border-white/5 text-zinc-400 hover:text-zinc-200'
@@ -321,9 +312,10 @@ export const TrimExportModal: React.FC = () => {
                 <div className="flex gap-1.5">
                   {([44100, 48000, 96000] as const).map((sr) => (
                     <button
+                      type="button"
                       key={sr}
                       onClick={() => setSampleRate(sr)}
-                      className={`flex-1 py-1.5 rounded-xl text-xs font-mono font-bold transition-all border ${
+                      className={`flex-1 py-1.5 rounded-xl text-xs font-mono font-bold transition-colors border aura-pressable aura-focus-ring cursor-pointer ${
                         sampleRate === sr
                           ? 'bg-emerald-600/30 border-emerald-500/50 text-emerald-200'
                           : 'bg-zinc-900 border-white/5 text-zinc-400 hover:text-zinc-200'
@@ -375,20 +367,22 @@ export const TrimExportModal: React.FC = () => {
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
+              type="button"
               onClick={handleSaveToLibrary}
               disabled={isSavingClip || isExporting}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold border border-white/10 disabled:opacity-50 transition-colors cursor-pointer aura-pressable"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold border border-white/10 disabled:opacity-50 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             >
-              <Save className="w-3.5 h-3.5 text-cyan-400" />
+              <AuraIcon name="save" size={14} className="text-cyan-400" />
               {isSavingClip ? 'Saving...' : 'Save Clip to Library'}
             </button>
 
             <button
+              type="button"
               onClick={handleExportDownload}
               disabled={isExporting || isSavingClip}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/20 disabled:opacity-50 transition-colors cursor-pointer aura-pressable"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/20 disabled:opacity-50 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             >
-              <Download className="w-3.5 h-3.5" />
+              <AuraIcon name="download" size={14} />
               {isExporting ? 'Rendering Audio...' : 'Export WAV Master'}
             </button>
           </div>

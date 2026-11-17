@@ -4,7 +4,7 @@ import { MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
 import { useMusic } from '../../context/MusicContext';
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import { Playlist } from '../../types';
-import { X, ListPlus, Edit3 } from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 const GRADIENT_CHOICES = [
   'from-indigo-600 to-purple-800',
@@ -117,7 +117,7 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              {isEditing ? <Edit3 className="w-5 h-5" /> : <ListPlus className="w-5 h-5" />}
+              {isEditing ? <AuraIcon name="edit" size={20} /> : <AuraIcon name="playlistAdd" size={20} />}
             </div>
             <div>
               <h3 className="text-base font-semibold text-zinc-100">
@@ -135,7 +135,7 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
             onClick={handleClose}
             className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
-            <X className="w-5 h-5" />
+            <AuraIcon name="close" size={20} />
           </button>
         </div>
 

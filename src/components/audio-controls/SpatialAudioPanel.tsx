@@ -2,25 +2,16 @@ import React, { useRef, useState, useCallback } from 'react';
 import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
 import { useMusic } from '../../context/MusicContext';
 import { SpatialMode } from '../../types';
-import { 
-  Compass, 
-  Waves, 
-  RotateCcw, 
-  Headphones, 
-  Box, 
-  Radio, 
-  Move,
-  Volume2,
-  Disc3,
-  Sliders
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
+import { AuraIconName } from '../../icons/iconRegistry';
 
 interface SpatialModeOption {
   id: SpatialMode;
   label: string;
   shortDesc: string;
   techDesc: string;
-  icon: React.ReactNode;
+  icon: AuraIconName;
+  iconColorClass: string;
 }
 
 const SPATIAL_MODES: SpatialModeOption[] = [
@@ -29,35 +20,40 @@ const SPATIAL_MODES: SpatialModeOption[] = [
     label: 'Direct Stereo', 
     shortDesc: 'Standard L/R Passthrough',
     techDesc: 'Bypasses 3D processing for uncolored direct stereo monitoring.',
-    icon: <Radio className="w-4 h-4 text-zinc-400" /> 
+    icon: 'radio',
+    iconColorClass: 'text-zinc-400'
   },
   { 
     id: '3d', 
     label: '3D Binaural (HRTF)', 
     shortDesc: 'Binaural Transfer Functions',
     techDesc: 'Web Audio HRTF panner positioning sound in 360° spherical azimuth & elevation.',
-    icon: <Headphones className="w-4 h-4 text-cyan-400" /> 
+    icon: 'headphones',
+    iconColorClass: 'text-cyan-400'
   },
   { 
     id: 'stereo_wide', 
     label: 'Stereo Widening', 
     shortDesc: 'Haas Effect & Cross-Feed',
     techDesc: 'Expands stereo soundstage perception beyond physical speaker/headphone boundaries.',
-    icon: <Waves className="w-4 h-4 text-indigo-400" /> 
+    icon: 'waves',
+    iconColorClass: 'text-indigo-400'
   },
   { 
     id: 'cinema', 
     label: 'Virtual Cinema', 
     shortDesc: 'Expansive Hall Acoustics',
     techDesc: 'Simulates theater acoustic reflections with enhanced depth and ambient reverb.',
-    icon: <Box className="w-4 h-4 text-purple-400" /> 
+    icon: 'box',
+    iconColorClass: 'text-purple-400'
   },
   { 
     id: 'headphones', 
     label: 'Headphone Staging', 
     shortDesc: 'In-Head Fatigue Compensation',
     techDesc: 'Subtle crossfeed processing to reduce claustrophobic in-head acoustic fatigue.',
-    icon: <Headphones className="w-4 h-4 text-emerald-400" /> 
+    icon: 'headphones',
+    iconColorClass: 'text-emerald-400'
   },
 ];
 
@@ -143,7 +139,7 @@ export const SpatialAudioPanel: React.FC<{ className?: string }> = ({ className 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shrink-0">
-            <Compass className="w-4 h-4" />
+            <AuraIcon name="compass" size={16} />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -166,7 +162,7 @@ export const SpatialAudioPanel: React.FC<{ className?: string }> = ({ className 
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             title="Reset spatial engine to default settings"
           >
-            <RotateCcw className="w-3 h-3" />
+            <AuraIcon name="reset" size={12} />
             <span>Reset Spatial</span>
           </button>
         </div>
@@ -195,7 +191,7 @@ export const SpatialAudioPanel: React.FC<{ className?: string }> = ({ className 
             >
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-2">
-                  {m.icon}
+                  <AuraIcon name={m.icon} size={16} className={m.iconColorClass} />
                   <span className="text-xs font-bold">{m.label}</span>
                 </div>
                 {isSelected && <span className={`w-1.5 h-1.5 rounded-full bg-cyan-400 ${!prefersReducedMotion ? 'animate-pulse' : ''}`} />}
@@ -219,7 +215,7 @@ export const SpatialAudioPanel: React.FC<{ className?: string }> = ({ className 
           {/* Radar Header Telemetry */}
           <div className="flex items-center justify-between w-full mb-3 text-xs">
             <span className="text-zinc-300 font-semibold flex items-center gap-1.5">
-              <Move className="w-3.5 h-3.5 text-cyan-400" />
+              <AuraIcon name="move" size={14} className="text-cyan-400" />
               <span>360° Soundstage Radar</span>
             </span>
             <div className="flex items-center gap-2 text-[11px] font-mono tabular-nums">
@@ -251,7 +247,7 @@ export const SpatialAudioPanel: React.FC<{ className?: string }> = ({ className 
 
               {/* Listener Center Orientation Anchor */}
               <div className="w-9 h-9 rounded-full bg-zinc-800 border border-indigo-500/40 flex items-center justify-center z-10 pointer-events-none shadow-md">
-                <Headphones className="w-4 h-4 text-indigo-300" />
+                <AuraIcon name="headphones" size={16} className="text-indigo-300" />
               </div>
 
               {/* Draggable Sound Source Beacon */}

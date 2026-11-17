@@ -20,29 +20,7 @@ import {
   MotionModal,
   MotionPress,
 } from '../common/motion';
-import {
-  ChevronDown,
-  Play,
-  Pause,
-  SkipBack,
-  SkipForward,
-  Shuffle,
-  Repeat,
-  Repeat1,
-  Heart,
-  SlidersHorizontal,
-  ListMusic,
-  Music,
-  Volume2,
-  Volume1,
-  VolumeX,
-  Gauge,
-  Moon,
-  Info,
-  X,
-  Trash2,
-  ChevronUp,
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 export const MobileExpandedPlayer: React.FC = () => {
   const {
@@ -284,7 +262,7 @@ export const MobileExpandedPlayer: React.FC = () => {
               title="Minimize Player"
               aria-label="Minimize Player"
             >
-              <ChevronDown className="w-6 h-6" />
+              <AuraIcon name="chevronDown" size={24} />
             </MotionPress>
 
             {isInRoom && activeRoom ? (
@@ -327,7 +305,7 @@ export const MobileExpandedPlayer: React.FC = () => {
               }`}
               title="Audio DSP Studio"
             >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <AuraIcon name="sliders" size={14} />
               <span className="uppercase">{eqPreset !== 'flat' ? eqPreset : 'DSP'}</span>
             </MotionPress>
           </div>
@@ -386,7 +364,7 @@ export const MobileExpandedPlayer: React.FC = () => {
                           currentTrack.coverColor || 'from-[#141a29] to-[#080b12]'
                         } flex flex-col items-center justify-center p-6 text-white`}
                       >
-                        <Music className="w-14 h-14 opacity-40 mb-2" />
+                        <AuraIcon name="musicNote" size={56} className="opacity-40 mb-2" />
                         <span className="text-[10px] font-mono tracking-widest opacity-50 uppercase">
                           AURA
                         </span>
@@ -452,9 +430,12 @@ export const MobileExpandedPlayer: React.FC = () => {
                     }
                     transition={{ duration: MOTION_DURATION.standard, ease: MOTION_EASE.emphasized }}
                   >
-                    <Heart
-                      className={`w-5 h-5 transition-colors ${
-                        currentTrack.isFavorite ? 'fill-rose-500 text-rose-500' : ''
+                    <AuraIcon
+                      name="heart"
+                      size={20}
+                      filled={Boolean(currentTrack.isFavorite)}
+                      className={`transition-colors ${
+                        currentTrack.isFavorite ? 'text-rose-500' : ''
                       }`}
                     />
                   </motion.span>
@@ -549,7 +530,7 @@ export const MobileExpandedPlayer: React.FC = () => {
             }`}
             title={`Shuffle: ${isShuffle ? 'On' : 'Off'}`}
           >
-            <Shuffle className="w-4.5 h-4.5" />
+            <AuraIcon name="shuffle" size={18} />
             <AnimatePresence>
               {isShuffle && (
                 <motion.span
@@ -571,7 +552,7 @@ export const MobileExpandedPlayer: React.FC = () => {
             className="w-12 h-12 rounded-full flex items-center justify-center text-zinc-200 hover:text-white transition-colors cursor-pointer aura-focus-ring"
             title="Previous Track"
           >
-            <SkipBack className="w-6 h-6 fill-current" />
+            <AuraIcon name="skipPrevious" size={26} filled />
           </MotionPress>
 
           <MotionPress
@@ -583,9 +564,9 @@ export const MobileExpandedPlayer: React.FC = () => {
           >
             <MotionIconSwap stateKey={isPlaying && !isLocallySilenced ? 'pause' : 'play'}>
               {isPlaying && !isLocallySilenced ? (
-                <Pause className="w-6.5 h-6.5 fill-current text-zinc-950" />
+                <AuraIcon name="pause" size={28} filled className="text-zinc-950" />
               ) : (
-                <Play className="w-6.5 h-6.5 fill-current text-zinc-950 translate-x-0.5" />
+                <AuraIcon name="play" size={28} filled className="text-zinc-950" />
               )}
             </MotionIconSwap>
           </MotionPress>
@@ -597,7 +578,7 @@ export const MobileExpandedPlayer: React.FC = () => {
             className="w-12 h-12 rounded-full flex items-center justify-center text-zinc-200 hover:text-white transition-colors cursor-pointer aura-focus-ring"
             title="Next Track"
           >
-            <SkipForward className="w-6 h-6 fill-current" />
+            <AuraIcon name="skipNext" size={26} filled />
           </MotionPress>
 
           <MotionPress
@@ -612,9 +593,9 @@ export const MobileExpandedPlayer: React.FC = () => {
           >
             <MotionIconSwap stateKey={repeatMode}>
               {repeatMode === 'one' ? (
-                <Repeat1 className="w-4.5 h-4.5" />
+                <AuraIcon name="repeatOne" size={18} />
               ) : (
-                <Repeat className="w-4.5 h-4.5" />
+                <AuraIcon name="repeat" size={18} />
               )}
             </MotionIconSwap>
             <AnimatePresence>
@@ -656,11 +637,11 @@ export const MobileExpandedPlayer: React.FC = () => {
                   }
                 >
                   {isMuted || volume === 0 ? (
-                    <VolumeX className="w-4 h-4 text-rose-400" />
+                    <AuraIcon name="volumeMute" size={16} className="text-rose-400" />
                   ) : volume < 0.5 ? (
-                    <Volume1 className="w-4 h-4" />
+                    <AuraIcon name="volumeLow" size={16} />
                   ) : (
-                    <Volume2 className="w-4 h-4" />
+                    <AuraIcon name="volumeHigh" size={16} />
                   )}
                 </MotionIconSwap>
               </MotionPress>
@@ -735,11 +716,11 @@ export const MobileExpandedPlayer: React.FC = () => {
               }
             >
               {isMuted || volume === 0 ? (
-                <VolumeX className="w-4 h-4 text-rose-400" />
+                <AuraIcon name="volumeMute" size={16} className="text-rose-400" />
               ) : volume < 0.5 ? (
-                <Volume1 className="w-4 h-4" />
+                <AuraIcon name="volumeLow" size={16} />
               ) : (
-                <Volume2 className="w-4 h-4" />
+                <AuraIcon name="volumeHigh" size={16} />
               )}
             </MotionIconSwap>
             <span className="tabular-nums text-[11px]">{volumePercent}%</span>
@@ -758,7 +739,7 @@ export const MobileExpandedPlayer: React.FC = () => {
             }`}
             title="Playback Speed"
           >
-            <Gauge className="w-4 h-4" />
+            <AuraIcon name="gauge" size={16} />
             <span className="tabular-nums text-[11px]">{playbackRate}×</span>
           </MotionPress>
 
@@ -774,7 +755,7 @@ export const MobileExpandedPlayer: React.FC = () => {
             }`}
             title="Sleep Timer"
           >
-            <Moon className="w-4 h-4" />
+            <AuraIcon name="moon" size={16} />
             {isSleepTimerActive && sleepTimerRemainingSecs ? (
               <span className="text-[10px] font-mono tabular-nums">
                 {Math.ceil(sleepTimerRemainingSecs / 60)}m
@@ -790,7 +771,7 @@ export const MobileExpandedPlayer: React.FC = () => {
             className="w-10 h-10 rounded-xl flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer aura-focus-ring"
             title="Track Info"
           >
-            <Info className="w-4 h-4" />
+            <AuraIcon name="info" size={16} />
           </MotionPress>
 
           {/* Up Next Queue */}
@@ -801,7 +782,7 @@ export const MobileExpandedPlayer: React.FC = () => {
             className="h-10 px-2.5 rounded-xl flex items-center gap-1.5 text-zinc-400 hover:text-zinc-200 active:bg-white/10 transition-colors cursor-pointer aura-focus-ring"
             title="Up Next Queue"
           >
-            <ListMusic className="w-4 h-4" />
+            <AuraIcon name="queue" size={16} />
             {upNextTracks.length > 0 && (
               <span className="text-[11px] font-mono tabular-nums text-zinc-300">
                 {upNextTracks.length}
@@ -830,7 +811,7 @@ export const MobileExpandedPlayer: React.FC = () => {
                 <div className="w-12 h-1 rounded-full bg-white/20" />
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center gap-2">
-                    <ListMusic className="w-4 h-4 text-indigo-400" />
+                    <AuraIcon name="queue" size={16} className="text-indigo-400" />
                     <h3 className="text-sm font-bold text-white font-display">Up Next Queue</h3>
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.06] text-zinc-400 border border-white/[0.06]">
                       {upNextTracks.length}
@@ -845,7 +826,7 @@ export const MobileExpandedPlayer: React.FC = () => {
                         className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
                         title="Shuffle upcoming"
                       >
-                        <Shuffle className="w-3.5 h-3.5" />
+                        <AuraIcon name="shuffle" size={14} />
                       </button>
                     )}
 
@@ -856,7 +837,7 @@ export const MobileExpandedPlayer: React.FC = () => {
                         className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-white/5 transition-colors cursor-pointer"
                         title="Clear upcoming"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <AuraIcon name="trash" size={14} />
                       </button>
                     )}
 
@@ -866,7 +847,7 @@ export const MobileExpandedPlayer: React.FC = () => {
                       className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors ml-1 cursor-pointer"
                       aria-label="Close Queue"
                     >
-                      <X className="w-4 h-4" />
+                      <AuraIcon name="close" size={16} />
                     </button>
                   </div>
                 </div>
@@ -883,7 +864,7 @@ export const MobileExpandedPlayer: React.FC = () => {
                     />
                   ) : (
                     <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-400">
-                      <Music className="w-4 h-4" />
+                      <AuraIcon name="musicNote" size={16} />
                     </div>
                   )}
                   {isPlaying && (
@@ -925,7 +906,7 @@ export const MobileExpandedPlayer: React.FC = () => {
                             />
                           ) : (
                             <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-500">
-                              <Music className="w-3.5 h-3.5" />
+                              <AuraIcon name="musicNote" size={14} />
                             </div>
                           )}
                         </div>
@@ -946,7 +927,7 @@ export const MobileExpandedPlayer: React.FC = () => {
                             className="p-1 rounded text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
                             title="Move Up"
                           >
-                            <ChevronUp className="w-3.5 h-3.5" />
+                            <AuraIcon name="chevronUp" size={14} />
                           </button>
                         )}
 
@@ -957,7 +938,7 @@ export const MobileExpandedPlayer: React.FC = () => {
                             className="p-1 rounded text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
                             title="Move Down"
                           >
-                            <ChevronDown className="w-3.5 h-3.5" />
+                            <AuraIcon name="chevronDown" size={14} />
                           </button>
                         )}
 
@@ -967,14 +948,14 @@ export const MobileExpandedPlayer: React.FC = () => {
                           className="p-1 rounded text-zinc-500 hover:text-rose-400 hover:bg-white/10 transition-colors cursor-pointer"
                           title="Remove from queue"
                         >
-                          <X className="w-3.5 h-3.5" />
+                          <AuraIcon name="close" size={14} />
                         </button>
                       </div>
                     </div>
                   ))
                 ) : (
                   <div className="py-10 text-center flex flex-col items-center justify-center gap-2 text-zinc-500">
-                    <ListMusic className="w-8 h-8 opacity-40 mb-1" />
+                    <AuraIcon name="queue" size={32} className="opacity-40 mb-1" />
                     <p className="text-xs font-medium text-zinc-400">Queue is empty</p>
                     <p className="text-[11px] text-zinc-600 max-w-[200px]">
                       Add tracks from your library or universal search.

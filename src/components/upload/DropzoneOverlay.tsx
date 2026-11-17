@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { AnimatePresence } from 'motion/react';
 import { MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
 import { useMusic } from '../../context/MusicContext';
-import { UploadCloud, Music } from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 export const DropzoneOverlay: React.FC = () => {
   const { uploadFiles } = useMusic();
@@ -68,7 +68,7 @@ export const DropzoneOverlay: React.FC = () => {
             className="flex flex-col items-center justify-center max-w-md w-full p-10 rounded-3xl border-2 border-dashed border-indigo-500/70 bg-indigo-950/20 text-center shadow-2xl"
           >
             <div className="w-16 h-16 rounded-2xl bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-300 mb-4">
-              <UploadCloud className="w-8 h-8" />
+              <AuraIcon name="uploadCloud" size={32} />
             </div>
             <h3 className="text-lg font-bold text-white tracking-tight">
               Drop your music here
@@ -77,7 +77,7 @@ export const DropzoneOverlay: React.FC = () => {
               Automatic metadata, waveform extraction, and local-first persistence.
             </p>
             <div className="flex items-center gap-1.5 mt-4 text-[11px] font-mono text-indigo-300/80 bg-indigo-900/40 px-3 py-1 rounded-full border border-indigo-500/30">
-              <Music className="w-3 h-3" /> MP3 • WAV • FLAC • M4A • AAC • OGG
+              <AuraIcon name="musicNote" size={12} /> MP3 • WAV • FLAC • M4A • AAC • OGG
             </div>
           </MotionModal>
         </MotionBackdrop>

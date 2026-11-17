@@ -1,15 +1,16 @@
 import React from 'react';
 import { useMusic } from '../../context/MusicContext';
-import { Mic2, Drum, AudioLines, Music4, Info } from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
+import { AuraIconName } from '../../icons/iconRegistry';
 
 export const StemsPlaceholderPanel: React.FC<{ className?: string }> = ({ className = '' }) => {
   const { stemState } = useMusic();
 
-  const stemConfigs = [
-    { key: 'vocals' as const, label: 'Vocals', icon: Mic2, color: 'text-rose-400' },
-    { key: 'drums' as const, label: 'Drums & Rhythm', icon: Drum, color: 'text-amber-400' },
-    { key: 'bass' as const, label: 'Bass Guitar / Synth', icon: AudioLines, color: 'text-indigo-400' },
-    { key: 'instruments' as const, label: 'Melody & Synths', icon: Music4, color: 'text-cyan-400' },
+  const stemConfigs: { key: 'vocals' | 'drums' | 'bass' | 'instruments'; label: string; icon: AuraIconName; color: string }[] = [
+    { key: 'vocals', label: 'Vocals', icon: 'mic', color: 'text-rose-400' },
+    { key: 'drums', label: 'Drums & Rhythm', icon: 'waveform', color: 'text-amber-400' },
+    { key: 'bass', label: 'Bass Guitar / Synth', icon: 'waves', color: 'text-indigo-400' },
+    { key: 'instruments', label: 'Melody & Synths', icon: 'piano', color: 'text-cyan-400' },
   ];
 
   return (
@@ -17,7 +18,7 @@ export const StemsPlaceholderPanel: React.FC<{ className?: string }> = ({ classN
       {/* Informational banner explaining unavailable neural stem pipeline */}
       <div className="flex items-start justify-between gap-3 p-3.5 rounded-xl bg-indigo-950/30 border border-indigo-500/20">
         <div className="flex items-start gap-3">
-          <Info className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+          <AuraIcon name="info" size={16} className="text-indigo-400 shrink-0 mt-0.5" />
           <div className="text-xs text-zinc-300 leading-relaxed">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-indigo-300">Stem Isolation Engine Architecture</span>
@@ -35,7 +36,6 @@ export const StemsPlaceholderPanel: React.FC<{ className?: string }> = ({ classN
       {/* Disabled Stem Sliders Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         {stemConfigs.map((stem) => {
-          const Icon = stem.icon;
           const val = stemState[stem.key];
 
           return (
@@ -45,8 +45,8 @@ export const StemsPlaceholderPanel: React.FC<{ className?: string }> = ({ classN
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <div className={`p-1.5 rounded-lg bg-zinc-800 border border-white/5 ${stem.color}`}>
-                    <Icon className="w-4 h-4" />
+                  <div className={`p-1.5 rounded-lg bg-zinc-800 border border-white/5 ${stem.color} flex items-center justify-center`}>
+                    <AuraIcon name={stem.icon} size={16} />
                   </div>
                   <div>
                     <span className="text-xs font-semibold text-zinc-200 block">{stem.label}</span>

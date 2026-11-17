@@ -1,7 +1,7 @@
 import React from 'react';
 import { AnimatePresence } from 'motion/react';
 import { MotionBackdrop, MotionModal } from '../common/motion/MotionSurface';
-import { X, Share, PlusSquare, Smartphone, CheckCircle, ExternalLink } from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 import { AuraBrandMark } from '../common/AuraBrandMark';
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 
@@ -46,7 +46,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
           className="absolute top-5 right-5 p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer aura-pressable"
           aria-label="Close"
         >
-          <X className="w-5 h-5" />
+          <AuraIcon name="close" size={20} />
         </button>
 
         {/* Header with AURA Home Screen Logo */}
@@ -74,7 +74,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
               {/* Step 1 */}
               <div className="flex items-start gap-3">
                 <div className="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center shrink-0 mt-0.5">
-                  <Share className="w-3.5 h-3.5 text-indigo-400" />
+                  <AuraIcon name="share" size={14} className="text-indigo-400" />
                 </div>
                 <div>
                   <div className="text-xs font-semibold text-white">1. Tap the Share button</div>
@@ -85,7 +85,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
               {/* Step 2 */}
               <div className="flex items-start gap-3">
                 <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0 mt-0.5">
-                  <PlusSquare className="w-3.5 h-3.5 text-emerald-400" />
+                  <AuraIcon name="plusSquare" size={14} className="text-emerald-400" />
                 </div>
                 <div>
                   <div className="text-xs font-semibold text-white">2. Select "Add to Home Screen"</div>
@@ -96,7 +96,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
               {/* Step 3 */}
               <div className="flex items-start gap-3">
                 <div className="w-7 h-7 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center shrink-0 mt-0.5">
-                  <CheckCircle className="w-3.5 h-3.5 text-white" />
+                  <AuraIcon name="checkCircle" size={14} className="text-white" />
                 </div>
                 <div>
                   <div className="text-xs font-semibold text-white">3. Tap "Add"</div>
@@ -107,7 +107,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
 
             {/* Standalone Benefits Badge */}
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/[0.02] border border-white/[0.05] text-[11px] text-zinc-400">
-              <Smartphone className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+              <AuraIcon name="smartphone" size={14} className="text-zinc-400 shrink-0" />
               <span>Full-screen audio player, offline app shell, and quick launcher.</span>
             </div>
           </div>

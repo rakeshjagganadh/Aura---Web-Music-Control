@@ -7,21 +7,7 @@ import { MotionPopover } from '../common/motion/MotionSurface';
 import { MotionIconSwap } from '../common/motion/MotionInteractive';
 import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
 import { MOTION_TRANSITION } from '../../motion/tokens';
-import { 
-  Play, 
-  Pause, 
-  Heart, 
-  MoreHorizontal, 
-  ListPlus, 
-  ListMusic, 
-  Trash2, 
-  Music, 
-  Info, 
-  Users,
-  CheckSquare,
-  Square,
-  HardDrive
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 interface TrackRowProps {
   track: Track;
@@ -77,12 +63,13 @@ export const TrackRow: React.FC<TrackRowProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const { canHover, prefersReducedMotion } = useMotionCapabilities();
 
   const isCurrent = currentTrack?.id === track.id;
   const isActivelyPlaying = isCurrent && isPlaying;
 
-  // Close context menu when clicking outside
+  // Close context menu when clicking outside or pressing Escape
   useEffect(() => {
     if (!isMenuOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
@@ -90,8 +77,19 @@ export const TrackRow: React.FC<TrackRowProps> = ({
         setIsMenuOpen(false);
       }
     };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        setIsMenuOpen(false);
+        menuTriggerRef.current?.focus();
+      }
+    };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isMenuOpen]);
 
   const handleRowClick = () => {
@@ -150,10 +148,7 @@ export const TrackRow: React.FC<TrackRowProps> = ({
       tabIndex={0}
       aria-label={`${isActivelyPlaying ? 'Pause' : 'Play'} ${track.title} by ${track.artist}`}
       onMouseEnter={() => { if (canHover) setIsHovered(true); }}
-      onMouseLeave={() => {
-        setIsHovered(false);
-        setIsMenuOpen(false);
-      }}
+      onMouseLeave={() => setIsHovered(false)}
       onClick={handleRowClick}
       onKeyDown={(e) => {
         if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
@@ -185,9 +180,9 @@ export const TrackRow: React.FC<TrackRowProps> = ({
             title={isSelected ? 'Deselect track' : 'Select track'}
           >
             {isSelected ? (
-              <CheckSquare className="w-4 h-4 text-sky-400" />
+              <AuraIcon name="checkSquare" size={16} filled className="text-sky-400" />
             ) : (
-              <Square className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400" />
+              <AuraIcon name="square" size={16} className="text-zinc-600 group-hover:text-zinc-400" />
             )}
           </button>
         )}
@@ -204,7 +199,7 @@ export const TrackRow: React.FC<TrackRowProps> = ({
             ) : isCurrent ? (
               <span className="w-2 h-2 rounded-full bg-sky-400" />
             ) : isHovered ? (
-              <Play className="w-3.5 h-3.5 text-white fill-current translate-x-0.5" />
+              <AuraIcon name="play" size={14} filled className="text-white translate-x-0.5" />
             ) : (
               <span className="text-zinc-500 font-mono text-[11px] tabular-nums">{index}</span>
             )}
@@ -224,7 +219,7 @@ export const TrackRow: React.FC<TrackRowProps> = ({
             />
           ) : (
             <div className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-indigo-950 to-zinc-900'} flex items-center justify-center`}>
-              <Music className="w-4 h-4 text-white/50" />
+              <AuraIcon name="musicNote" size={16} className="text-white/50" />
             </div>
           )}
 
@@ -236,9 +231,9 @@ export const TrackRow: React.FC<TrackRowProps> = ({
           >
             <MotionIconSwap stateKey={isActivelyPlaying ? 'pause' : 'play'}>
               {isActivelyPlaying ? (
-                <Pause className="w-3.5 h-3.5 text-white fill-current" />
+                <AuraIcon name="pause" size={14} filled className="text-white" />
               ) : (
-                <Play className="w-3.5 h-3.5 text-white fill-current translate-x-0.5" />
+                <AuraIcon name="play" size={14} filled className="text-white translate-x-0.5" />
               )}
             </MotionIconSwap>
           </div>
@@ -321,6 +316,7 @@ export const TrackRow: React.FC<TrackRowProps> = ({
         <button
           type="button"
           onClick={() => toggleFavorite(track.id)}
+          aria-pressed={Boolean(track.isFavorite)}
           className={`min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg aura-pressable transition-colors cursor-pointer aura-focus-ring ${
             track.isFavorite
               ? 'text-rose-400 hover:text-rose-300'
@@ -329,13 +325,15 @@ export const TrackRow: React.FC<TrackRowProps> = ({
                 : 'text-zinc-500 hover:text-zinc-200 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100'
           }`}
           title={track.isFavorite ? 'Remove from Liked Songs' : 'Save to Liked Songs'}
+          aria-label={track.isFavorite ? `Remove ${track.title} from Liked Songs` : `Save ${track.title} to Liked Songs`}
         >
           <motion.span
             className="inline-flex items-center justify-center"
+            initial={false}
             animate={!prefersReducedMotion && track.isFavorite ? { scale: [1, 1.24, 1] } : { scale: 1 }}
             transition={MOTION_TRANSITION.micro}
           >
-            <Heart className={`w-4 h-4 ${track.isFavorite ? 'fill-rose-500 text-rose-500' : ''}`} />
+            <AuraIcon name="heart" size={16} filled={Boolean(track.isFavorite)} className={track.isFavorite ? 'text-rose-500' : ''} />
           </motion.span>
         </button>
 
@@ -347,62 +345,72 @@ export const TrackRow: React.FC<TrackRowProps> = ({
         {/* Context Menu Dropdown */}
         <div className="relative" ref={menuRef}>
           <button
+            ref={menuTriggerRef}
             type="button"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-haspopup="menu"
+            aria-expanded={isMenuOpen}
+            aria-label={`More options for ${track.title}`}
             className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.08] aura-pressable transition-colors cursor-pointer aura-focus-ring"
             title="More track options"
           >
-            <MoreHorizontal className="w-4 h-4" />
+            <AuraIcon name="more" size={16} />
           </button>
 
           <AnimatePresence>
             {isMenuOpen && (
               <MotionPopover
                 placement="top"
+                role="menu"
+                aria-label={`Options for ${track.title}`}
                 style={{ pointerEvents: 'auto' }}
                 className="absolute right-0 bottom-full mb-1.5 w-48 rounded-2xl aura-glass-island shadow-2xl p-1.5 z-50 flex flex-col gap-0.5 border border-white/10 select-none"
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
                   type="button"
+                  role="menuitem"
                   onClick={() => {
                     playNext(track);
                     setIsMenuOpen(false);
                   }}
-                  className="flex items-center gap-2 px-3 py-2 text-xs text-zinc-200 hover:text-white hover:bg-white/[0.08] rounded-xl text-left aura-pressable transition-colors cursor-pointer"
+                  className="flex items-center gap-2 px-3 py-2 text-xs text-zinc-200 hover:text-white hover:bg-white/[0.08] rounded-xl text-left aura-pressable aura-focus-ring transition-colors cursor-pointer"
                 >
-                  <ListMusic className="w-3.5 h-3.5 text-sky-400" />
+                  <AuraIcon name="playlist" size={14} className="text-sky-400" />
                   <span>Play Next</span>
                 </button>
 
                 <button
                   type="button"
+                  role="menuitem"
                   onClick={() => {
                     addToQueue(track);
                     setIsMenuOpen(false);
                   }}
-                  className="flex items-center gap-2 px-3 py-2 text-xs text-zinc-200 hover:text-white hover:bg-white/[0.08] rounded-xl text-left aura-pressable transition-colors cursor-pointer"
+                  className="flex items-center gap-2 px-3 py-2 text-xs text-zinc-200 hover:text-white hover:bg-white/[0.08] rounded-xl text-left aura-pressable aura-focus-ring transition-colors cursor-pointer"
                 >
-                  <ListPlus className="w-3.5 h-3.5 text-indigo-400" />
+                  <AuraIcon name="playlistAdd" size={14} className="text-indigo-400" />
                   <span>Add to Queue</span>
                 </button>
 
                 {onOpenPlaylistModal && (
                   <button
                     type="button"
+                    role="menuitem"
                     onClick={() => {
                       onOpenPlaylistModal(track);
                       setIsMenuOpen(false);
                     }}
-                    className="flex items-center gap-2 px-3 py-2 text-xs text-zinc-200 hover:text-white hover:bg-white/[0.08] rounded-xl text-left aura-pressable transition-colors cursor-pointer"
+                    className="flex items-center gap-2 px-3 py-2 text-xs text-zinc-200 hover:text-white hover:bg-white/[0.08] rounded-xl text-left aura-pressable aura-focus-ring transition-colors cursor-pointer"
                   >
-                    <ListPlus className="w-3.5 h-3.5 text-amber-400" />
+                    <AuraIcon name="playlistAdd" size={14} className="text-amber-400" />
                     <span>Add to Playlist...</span>
                   </button>
                 )}
 
                 <button
                   type="button"
+                  role="menuitem"
                   onClick={() => {
                     setIsMenuOpen(false);
                     if (isInRoom) {
@@ -413,35 +421,37 @@ export const TrackRow: React.FC<TrackRowProps> = ({
                       });
                     }
                   }}
-                  className="flex items-center gap-2 px-3 py-2 text-xs text-zinc-200 hover:text-white hover:bg-white/[0.08] rounded-xl text-left aura-pressable transition-colors cursor-pointer"
+                  className="flex items-center gap-2 px-3 py-2 text-xs text-zinc-200 hover:text-white hover:bg-white/[0.08] rounded-xl text-left aura-pressable aura-focus-ring transition-colors cursor-pointer"
                 >
-                  <Users className="w-3.5 h-3.5 text-purple-400" />
+                  <AuraIcon name="users" size={14} className="text-purple-400" />
                   <span>{isInRoom ? 'Add to Room' : 'Listen Together'}</span>
                 </button>
 
                 {track.artist && onSelectArtist && (
                   <button
                     type="button"
+                    role="menuitem"
                     onClick={() => {
                       onSelectArtist(track.artist);
                       setIsMenuOpen(false);
                     }}
-                    className="flex items-center gap-2 px-3 py-2 text-xs text-zinc-200 hover:text-white hover:bg-white/[0.08] rounded-xl text-left aura-pressable transition-colors cursor-pointer"
+                    className="flex items-center gap-2 px-3 py-2 text-xs text-zinc-200 hover:text-white hover:bg-white/[0.08] rounded-xl text-left aura-pressable aura-focus-ring transition-colors cursor-pointer"
                   >
-                    <Music className="w-3.5 h-3.5 text-zinc-400" />
+                    <AuraIcon name="musicNote" size={14} className="text-zinc-400" />
                     <span>View Artist</span>
                   </button>
                 )}
 
                 <button
                   type="button"
+                  role="menuitem"
                   onClick={() => {
                     openTrackInfo(track);
                     setIsMenuOpen(false);
                   }}
-                  className="flex items-center gap-2 px-3 py-2 text-xs text-zinc-200 hover:text-white hover:bg-white/[0.08] rounded-xl text-left aura-pressable transition-colors cursor-pointer"
+                  className="flex items-center gap-2 px-3 py-2 text-xs text-zinc-200 hover:text-white hover:bg-white/[0.08] rounded-xl text-left aura-pressable aura-focus-ring transition-colors cursor-pointer"
                 >
-                  <Info className="w-3.5 h-3.5 text-zinc-400" />
+                  <AuraIcon name="info" size={14} className="text-zinc-400" />
                   <span>Track Details</span>
                 </button>
 
@@ -449,25 +459,27 @@ export const TrackRow: React.FC<TrackRowProps> = ({
                 {onRemove ? (
                   <button
                     type="button"
+                    role="menuitem"
                     onClick={() => {
                       onRemove(track.id);
                       setIsMenuOpen(false);
                     }}
-                    className="flex items-center gap-2 px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/10 rounded-xl text-left aura-pressable transition-colors cursor-pointer border-t border-white/[0.06] mt-1"
+                    className="flex items-center gap-2 px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/10 rounded-xl text-left aura-pressable aura-focus-ring transition-colors cursor-pointer border-t border-white/[0.06] mt-1"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <AuraIcon name="trash" size={14} />
                     <span>{removeLabel || 'Remove'}</span>
                   </button>
                 ) : (!track.source || track.source === 'local') ? (
                   <button
                     type="button"
+                    role="menuitem"
                     onClick={() => {
                       deleteTrack(track.id);
                       setIsMenuOpen(false);
                     }}
-                    className="flex items-center gap-2 px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/10 rounded-xl text-left aura-pressable transition-colors cursor-pointer border-t border-white/[0.06] mt-1"
+                    className="flex items-center gap-2 px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/10 rounded-xl text-left aura-pressable aura-focus-ring transition-colors cursor-pointer border-t border-white/[0.06] mt-1"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <AuraIcon name="trash" size={14} />
                     <span>Delete from Vault</span>
                   </button>
                 ) : null}

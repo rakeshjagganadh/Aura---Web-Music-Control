@@ -153,7 +153,7 @@ export const OpticalGlassSurface: React.FC<OpticalGlassSurfaceProps> = ({
       aria-label={ariaLabel}
       onClick={onClick}
       style={style}
-      className={`relative overflow-hidden select-none transition-all duration-300 ${shape} ${className}`}
+      className={`relative overflow-hidden select-none transition-[box-shadow,border-color,opacity] duration-200 ${shape} ${className}`}
     >
       {/* Unique SVG optical lens filter (no post-displacement heavy blur) */}
       {lensMapUrl && (

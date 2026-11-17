@@ -5,7 +5,7 @@ import { MotionIconSwap } from '../common/motion/MotionInteractive';
 import { useMusic } from '../../context/MusicContext';
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import { Track } from '../../types';
-import { X, Plus, Check } from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 interface AddToPlaylistModalProps {
   track?: Track | null;
@@ -76,7 +76,7 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
             onClick={onClose}
             className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
-            <X className="w-4 h-4" />
+            <AuraIcon name="close" size={16} />
           </button>
         </div>
 
@@ -112,9 +112,9 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
 
                   <MotionIconSwap stateKey={allInPlaylist} className="inline-flex items-center justify-center shrink-0">
                     {allInPlaylist ? (
-                      <Check className="w-4 h-4 text-indigo-400" />
+                      <AuraIcon name="check" size={16} className="text-indigo-400" />
                     ) : (
-                      <Plus className="w-4 h-4 text-zinc-500 hover:text-zinc-300" />
+                      <AuraIcon name="add" size={16} className="text-zinc-500 hover:text-zinc-300" />
                     )}
                   </MotionIconSwap>
                 </button>
@@ -131,7 +131,7 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
           }}
           className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-semibold text-indigo-300 bg-indigo-600/15 hover:bg-indigo-600/25 border border-indigo-500/30 rounded-xl transition-colors cursor-pointer aura-pressable"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <AuraIcon name="add" size={14} />
           <span>Create New Space</span>
         </button>
 

@@ -3,34 +3,20 @@ import { AnimatePresence } from 'motion/react';
 import { MotionFadeSlide } from '../common/motion/MotionSurface';
 import { useMusic } from '../../context/MusicContext';
 import { ListeningDeviceType, UserPreset } from '../../types';
-import { 
-  Bookmark, 
-  Trash2, 
-  Copy, 
-  Check, 
-  Headphones, 
-  Speaker, 
-  Car, 
-  Laptop, 
-  Sparkles, 
-  Music, 
-  Download, 
-  Upload,
-  Layers,
-  Plus
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
+import { AuraIconName } from '../../icons/iconRegistry';
 
 const DEVICE_TEMPLATES: {
   type: ListeningDeviceType;
   label: string;
   desc: string;
-  icon: React.ReactNode;
+  icon: AuraIconName;
 }[] = [
-  { type: 'earbuds', label: 'AirPods / In-Ear', desc: 'Slight mid clarity lift and sub warmth compensation', icon: <Headphones className="w-4 h-4" /> },
-  { type: 'speakers', label: 'Studio Monitors', desc: 'Flat acoustic curve with transparent dynamics', icon: <Speaker className="w-4 h-4" /> },
-  { type: 'car', label: 'Car Stereo', desc: 'Road noise compensation with punchy bass boost', icon: <Car className="w-4 h-4" /> },
-  { type: 'headphones', label: 'Over-Ear Headphones', desc: 'Extended soundstage width and high-end air', icon: <Headphones className="w-4 h-4" /> },
-  { type: 'bluetooth', label: 'Bluetooth Portable', desc: 'Midrange speech clarity and bass punch tuning', icon: <Laptop className="w-4 h-4" /> },
+  { type: 'earbuds', label: 'AirPods / In-Ear', desc: 'Slight mid clarity lift and sub warmth compensation', icon: 'headphones' },
+  { type: 'speakers', label: 'Studio Monitors', desc: 'Flat acoustic curve with transparent dynamics', icon: 'speaker' },
+  { type: 'car', label: 'Car Stereo', desc: 'Road noise compensation with punchy bass boost', icon: 'car' },
+  { type: 'headphones', label: 'Over-Ear Headphones', desc: 'Extended soundstage width and high-end air', icon: 'headphones' },
+  { type: 'bluetooth', label: 'Bluetooth Portable', desc: 'Midrange speech clarity and bass punch tuning', icon: 'laptop' },
 ];
 
 export const PresetsProfilesPanel: React.FC<{ className?: string }> = ({ className = '' }) => {
@@ -106,7 +92,7 @@ export const PresetsProfilesPanel: React.FC<{ className?: string }> = ({ classNa
       <div className="flex items-center justify-between pb-3 border-b border-white/5">
         <div className="flex items-center gap-2.5">
           <div className="p-2 rounded-xl bg-violet-500/15 text-violet-400 border border-violet-500/30">
-            <Bookmark className="w-4 h-4" />
+            <AuraIcon name="bookmark" size={16} />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-zinc-100">Presets, Profiles & Device Calibration</h3>
@@ -123,7 +109,7 @@ export const PresetsProfilesPanel: React.FC<{ className?: string }> = ({ classNa
             onClick={copyCurrentSettings}
             className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg border border-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
-            <Copy className="w-3.5 h-3.5 text-violet-400" />
+            <AuraIcon name="copy" size={14} className="text-violet-400" />
             Copy Studio Settings
           </button>
 
@@ -133,7 +119,7 @@ export const PresetsProfilesPanel: React.FC<{ className?: string }> = ({ classNa
             disabled={!hasCopiedSettings}
             className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg border border-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
-            <Check className="w-3.5 h-3.5 text-emerald-400" />
+            <AuraIcon name="check" size={14} className="text-emerald-400" />
             Paste Settings
           </button>
         </div>
@@ -143,7 +129,7 @@ export const PresetsProfilesPanel: React.FC<{ className?: string }> = ({ classNa
       <div className="p-4 rounded-2xl bg-zinc-900/40 border border-white/5 flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Music className="w-4 h-4 text-violet-400" />
+            <AuraIcon name="musicNote" size={16} className="text-violet-400" />
             <div>
               <span className="text-xs font-bold text-zinc-200 uppercase tracking-wide">Per-Song Audio Profile</span>
               <span className="text-[10px] text-zinc-400 block">
@@ -257,7 +243,7 @@ export const PresetsProfilesPanel: React.FC<{ className?: string }> = ({ classNa
               className="p-3 rounded-xl bg-zinc-950/60 hover:bg-zinc-900 border border-white/5 text-left flex flex-col gap-1.5 transition-colors group cursor-pointer aura-pressable-subtle aura-focus-ring"
             >
               <div className="flex items-center gap-2 text-zinc-300 group-hover:text-white">
-                <span className="text-violet-400">{dev.icon}</span>
+                <span className="text-violet-400 flex items-center"><AuraIcon name={dev.icon} size={16} /></span>
                 <span className="text-xs font-semibold">{dev.label}</span>
               </div>
               <p className="text-[10px] text-zinc-400 leading-snug">{dev.desc}</p>
@@ -278,7 +264,7 @@ export const PresetsProfilesPanel: React.FC<{ className?: string }> = ({ classNa
           <div className="flex items-center gap-2">
             {/* Import / Export buttons */}
             <label className="flex items-center gap-1 px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200 bg-zinc-950 rounded-lg border border-white/5 cursor-pointer transition-colors">
-              <Upload className="w-3 h-3" />
+              <AuraIcon name="upload" size={12} />
               Import
               <input type="file" accept=".json" onChange={importPresetsJSON} className="hidden" />
             </label>
@@ -289,7 +275,7 @@ export const PresetsProfilesPanel: React.FC<{ className?: string }> = ({ classNa
                 onClick={exportPresetsJSON}
                 className="flex items-center gap-1 px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200 bg-zinc-950 rounded-lg border border-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
               >
-                <Download className="w-3 h-3" />
+                <AuraIcon name="download" size={12} />
                 Export
               </button>
             )}
@@ -299,7 +285,7 @@ export const PresetsProfilesPanel: React.FC<{ className?: string }> = ({ classNa
               onClick={() => setIsAddingPreset(!isAddingPreset)}
               className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-white bg-violet-600 hover:bg-violet-500 rounded-lg transition-colors cursor-pointer aura-pressable aura-focus-ring"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <AuraIcon name="add" size={14} />
               Create Preset
             </button>
           </div>
@@ -377,7 +363,7 @@ export const PresetsProfilesPanel: React.FC<{ className?: string }> = ({ classNa
                     aria-label={`Delete preset ${preset.name}`}
                     className="p-1 text-zinc-500 hover:text-rose-400 transition-colors cursor-pointer aura-pressable aura-focus-ring rounded"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <AuraIcon name="trash" size={14} />
                   </button>
                 </div>
               </div>

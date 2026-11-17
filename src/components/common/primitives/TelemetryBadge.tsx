@@ -1,4 +1,5 @@
 import React from 'react';
+import { useMotionCapabilities } from '../../../motion/useMotionCapabilities';
 
 export interface TelemetryBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   children?: React.ReactNode;
@@ -18,6 +19,7 @@ export const TelemetryBadge: React.FC<TelemetryBadgeProps> = ({
   className = '',
   ...props
 }) => {
+  const { prefersReducedMotion } = useMotionCapabilities();
   const variantClasses = {
     default: 'bg-white/[0.05] text-zinc-400 border-white/[0.08]',
     active: 'bg-white/10 text-white border-white/20 font-semibold',
@@ -56,7 +58,7 @@ export const TelemetryBadge: React.FC<TelemetryBadgeProps> = ({
       {dot && (
         <span
           className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColorClasses} ${
-            dotPulse ? 'animate-pulse' : ''
+            dotPulse && !prefersReducedMotion ? 'animate-pulse' : ''
           }`}
           aria-hidden="true"
         />

@@ -3,31 +3,12 @@ import { AnimatePresence, LayoutGroup, motion } from 'motion/react';
 import { useMusic } from '../../context/MusicContext';
 import { Track } from '../../types';
 import { MotionBackdrop, MotionFadeSlide, MotionModal } from '../common/motion/MotionSurface';
-import { SharedIndicator } from '../common/motion/MotionInteractive';
+import { MotionIconSwap, SharedIndicator } from '../common/motion/MotionInteractive';
 import { useMotionCapabilities } from '../../motion/useMotionCapabilities';
 import { MOTION_TRANSITION } from '../../motion/tokens';
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
-import { 
-  Search, 
-  X, 
-  Play, 
-  Pause,
-  Music, 
-  Disc, 
-  User, 
-  Radio as RadioIcon, 
-  Youtube, 
-  HardDrive,
-  Plus, 
-  Sparkles,
-  History,
-  ListMusic,
-  Heart,
-  Globe,
-  Compass,
-  ArrowRight,
-  ExternalLink
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
+import { YouTubeBrandMark } from '../ui/BrandMarks';
 import { universalSearchCoordinator, UniversalSearchResults, SearchMatchArtist, SearchMatchAlbum, SearchMatchPlaylist } from '../../services/sourceAdapters';
 import { youtubeService } from '../../services/youtubeService';
 
@@ -97,6 +78,32 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
   });
   const [isSearchingExternal, setIsSearchingExternal] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
+  const [queuedTrackIds, setQueuedTrackIds] = useState<Record<string, boolean>>({});
+  const queueFeedbackTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  useEffect(() => {
+    const timers = queueFeedbackTimersRef.current;
+    return () => {
+      timers.forEach((timer) => clearTimeout(timer));
+      timers.clear();
+    };
+  }, []);
+
+  const handleAddToQueueWithFeedback = useCallback((track: Track) => {
+    addToQueue(track);
+    setQueuedTrackIds((prev) => ({ ...prev, [track.id]: true }));
+    const existing = queueFeedbackTimersRef.current.get(track.id);
+    if (existing) clearTimeout(existing);
+    const timer = setTimeout(() => {
+      queueFeedbackTimersRef.current.delete(track.id);
+      setQueuedTrackIds((prev) => {
+        const next = { ...prev };
+        delete next[track.id];
+        return next;
+      });
+    }, 1200);
+    queueFeedbackTimersRef.current.set(track.id, timer);
+  }, [addToQueue]);
 
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     try {
@@ -376,7 +383,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
             SEARCH HEADER BAR
             ------------------------------------------------------------- */}
         <div className="p-4 sm:p-5 border-b border-white/[0.08] flex items-center gap-3 bg-white/[0.02]">
-          <Search className={`w-5 h-5 shrink-0 transition-colors ${query ? 'text-sky-400' : 'text-zinc-500'}`} />
+          <AuraIcon name="search" size={20} className={`shrink-0 transition-colors ${query ? 'text-sky-400' : 'text-zinc-500'}`} />
           <input
             ref={inputRef}
             type="text"
@@ -393,7 +400,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
           
           {isSearchingExternal && (
             <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-sky-500/10 text-sky-300 text-[11px] font-mono border border-sky-500/20 shrink-0 ${!prefersReducedMotion ? 'animate-pulse' : ''}`}>
-              <Sparkles className="w-3.5 h-3.5" />
+              <AuraIcon name="sparkles" size={14} />
               <span className="hidden sm:inline">Federating sources...</span>
             </div>
           )}
@@ -414,7 +421,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
               className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 aura-pressable transition-colors cursor-pointer"
               title="Clear search query"
             >
-              <X className="w-4 h-4" />
+              <AuraIcon name="close" size={16} />
             </button>
           )}
 
@@ -551,7 +558,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                         className="absolute inset-0 rounded-xl bg-cyan-400 shadow-sm pointer-events-none"
                       />
                     )}
-                    <RadioIcon className="w-3.5 h-3.5 relative z-10" />
+                    <AuraIcon name="radio" size={14} className="relative z-10" />
                     <span className="relative z-10">Radio ({sourceCounts.radiobrowser})</span>
                   </button>
                 )}
@@ -669,7 +676,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   {searchResults.detectedDirectTrack.coverUrl ? (
                     <img src={searchResults.detectedDirectTrack.coverUrl} alt="Thumbnail" className="w-full h-full object-cover" />
                   ) : (
-                    <Youtube className="w-6 h-6 fill-current" />
+                    <YouTubeBrandMark size={24} />
                   )}
                 </div>
                 <div className="min-w-0">
@@ -692,19 +699,26 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   onClick={() => handlePlayTrack(searchResults.detectedDirectTrack!)}
                   className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold shadow-md aura-pressable aura-focus-ring transition-colors cursor-pointer"
                 >
-                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <AuraIcon name="play" size={14} filled />
                   <span>{onSelectTrack ? 'Add to Room' : 'Play Now'}</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    addToQueue(searchResults.detectedDirectTrack!);
+                    handleAddToQueueWithFeedback(searchResults.detectedDirectTrack!);
                     setQuery('');
                   }}
-                  className="p-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-white aura-pressable transition-colors cursor-pointer"
-                  title="Add to queue"
+                  className="p-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-white aura-pressable aura-focus-ring transition-colors cursor-pointer"
+                  title={queuedTrackIds[searchResults.detectedDirectTrack.id] ? 'Added to queue' : 'Add to queue'}
+                  aria-label="Add to queue"
                 >
-                  <Plus className="w-4 h-4" />
+                  <MotionIconSwap stateKey={queuedTrackIds[searchResults.detectedDirectTrack.id] ? 'queued' : 'add'}>
+                    {queuedTrackIds[searchResults.detectedDirectTrack.id] ? (
+                      <AuraIcon name="check" size={16} className="text-emerald-400" />
+                    ) : (
+                      <AuraIcon name="add" size={16} />
+                    )}
+                  </MotionIconSwap>
                 </button>
               </div>
             </div>
@@ -721,7 +735,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 <div className="flex flex-col gap-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold flex items-center gap-1.5">
-                      <History className="w-3 h-3 text-sky-400" />
+                      <AuraIcon name="history" size={12} className="text-sky-400" />
                       Recent Searches
                     </span>
                     <button
@@ -742,7 +756,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                           onClick={() => setQuery(term)}
                           className="flex items-center gap-1.5 pl-3 pr-1 py-1.5 cursor-pointer aura-focus-ring rounded-l-xl"
                         >
-                          <Search className="w-3 h-3 text-zinc-500 group-hover:text-zinc-300" />
+                          <AuraIcon name="search" size={12} className="text-zinc-500 group-hover:text-zinc-300" />
                           <span>{term}</span>
                         </button>
                         <button
@@ -752,7 +766,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                           title={`Remove search ${term}`}
                           aria-label={`Remove search ${term}`}
                         >
-                          <X className="w-3 h-3" />
+                          <AuraIcon name="close" size={12} />
                         </button>
                       </div>
                     ))}
@@ -763,7 +777,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
               {/* Explore By Sound / Mood Categories */}
               <div className="flex flex-col gap-2.5">
                 <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold flex items-center gap-1.5">
-                  <Compass className="w-3 h-3 text-sky-400" />
+                  <AuraIcon name="compass" size={12} className="text-sky-400" />
                   Explore By Sound & Mood
                 </span>
                 <div className="flex flex-wrap gap-2">
@@ -794,7 +808,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
               {/* Browse Catalog Sources */}
               <div className="flex flex-col gap-2.5">
                 <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold flex items-center gap-1.5">
-                  <Globe className="w-3 h-3 text-emerald-400" />
+                  <AuraIcon name="globe" size={12} className="text-emerald-400" />
                   Supported Catalog Sources
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -810,7 +824,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-[9px] font-mono text-red-400 uppercase font-semibold">PRIMARY SOURCE</span>
-                      <Youtube className="w-3.5 h-3.5 text-red-400" />
+                      <YouTubeBrandMark size={14} className="text-red-400" />
                     </div>
                     <h5 className="text-xs font-bold text-white mt-1.5 font-ui-title group-hover:text-red-300">YouTube Music</h5>
                     <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta line-clamp-1">Search songs or paste URL</p>
@@ -827,7 +841,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-[9px] font-mono text-emerald-400 uppercase font-semibold">INDEXEDDB</span>
-                      <HardDrive className="w-3.5 h-3.5 text-emerald-400" />
+                      <AuraIcon name="hardDrive" size={14} className="text-emerald-400" />
                     </div>
                     <h5 className="text-xs font-bold text-white mt-1.5 font-ui-title group-hover:text-emerald-300">Personal Vault</h5>
                     <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta line-clamp-1">{tracks.length} local files</p>
@@ -844,7 +858,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-[9px] font-mono text-purple-400 uppercase font-semibold">DECENTRALIZED</span>
-                      <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                      <AuraIcon name="sparkles" size={14} className="text-purple-400" />
                     </div>
                     <h5 className="text-xs font-bold text-white mt-1.5 font-ui-title group-hover:text-purple-300">Audius Network</h5>
                     <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta line-clamp-1">1M+ open tracks</p>
@@ -861,7 +875,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-[9px] font-mono text-amber-400 uppercase font-semibold">CREATIVE COMMONS</span>
-                      <Music className="w-3.5 h-3.5 text-amber-400" />
+                      <AuraIcon name="musicNote" size={14} className="text-amber-400" />
                     </div>
                     <h5 className="text-xs font-bold text-white mt-1.5 font-ui-title group-hover:text-amber-300">Jamendo Catalog</h5>
                     <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta line-clamp-1">Free CC licensing</p>
@@ -878,7 +892,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-[9px] font-mono text-cyan-400 uppercase font-semibold">LIVE RADIO</span>
-                      <RadioIcon className="w-3.5 h-3.5 text-cyan-400" />
+                      <AuraIcon name="radio" size={14} className="text-cyan-400" />
                     </div>
                     <h5 className="text-xs font-bold text-white mt-1.5 font-ui-title group-hover:text-cyan-300">Radio Browser</h5>
                     <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta line-clamp-1">30k+ live broadcasts</p>
@@ -921,11 +935,11 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                       <img src={topMatch.coverUrl} alt={topMatch.title} className={`w-full h-full object-cover transition-transform duration-300 ${canHover ? 'group-hover:scale-105' : ''}`} referrerPolicy="no-referrer" />
                     ) : (
                       <div className={`w-full h-full bg-gradient-to-br ${topMatch.coverColor || 'from-indigo-900 to-black'} flex items-center justify-center text-white/80`}>
-                        <Music className="w-7 h-7" />
+                        <AuraIcon name="musicNote" size={28} />
                       </div>
                     )}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <Play className="w-5 h-5 fill-white" />
+                      <AuraIcon name="play" size={20} filled className="text-white" />
                     </div>
                   </div>
 
@@ -952,19 +966,26 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                     }}
                     className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs transition-colors shadow-sm"
                   >
-                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <AuraIcon name="play" size={14} filled />
                     <span>Play Now</span>
                   </button>
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      addToQueue(topMatch);
+                      handleAddToQueueWithFeedback(topMatch);
                     }}
-                    className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
-                    title="Add to queue"
+                    className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+                    title={queuedTrackIds[topMatch.id] ? 'Added to queue' : 'Add to queue'}
+                    aria-label="Add to queue"
                   >
-                    <Plus className="w-4 h-4" />
+                    <MotionIconSwap stateKey={queuedTrackIds[topMatch.id] ? 'queued' : 'add'}>
+                      {queuedTrackIds[topMatch.id] ? (
+                        <AuraIcon name="check" size={16} className="text-emerald-400" />
+                      ) : (
+                        <AuraIcon name="add" size={16} />
+                      )}
+                    </MotionIconSwap>
                   </button>
                 </div>
               </div>
@@ -980,7 +1001,9 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 <span className="uppercase tracking-widest font-semibold">
                   Tracks ({songsToShow.length})
                 </span>
-                <span>↑↓ navigate · Enter to play</span>
+                <span className="inline-flex items-center gap-1">
+                  <AuraIcon name="arrowUpDown" size={11} /> navigate · Enter to play
+                </span>
               </div>
 
               <div className="flex flex-col gap-1">
@@ -1017,11 +1040,11 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                             <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                           ) : (
                             <div className={`w-full h-full bg-gradient-to-br ${song.coverColor || 'from-indigo-600 to-zinc-900'} flex items-center justify-center text-white`}>
-                              <Music className="w-4 h-4" />
+                              <AuraIcon name="musicNote" size={16} />
                             </div>
                           )}
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                            <Play className="w-4 h-4 fill-white translate-x-0.5" />
+                            <AuraIcon name="play" size={16} filled className="text-white translate-x-0.5" />
                           </div>
                         </div>
 
@@ -1060,24 +1083,34 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                         >
                           <button
                             type="button"
-                            onClick={() => addToQueue(song)}
+                            onClick={() => handleAddToQueueWithFeedback(song)}
                             className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
-                            title="Add to queue"
+                            title={queuedTrackIds[song.id] ? 'Added to queue' : 'Add to queue'}
+                            aria-label="Add to queue"
                           >
-                            <Plus className="w-3.5 h-3.5" />
+                            <MotionIconSwap stateKey={queuedTrackIds[song.id] ? 'queued' : 'add'}>
+                              {queuedTrackIds[song.id] ? (
+                                <AuraIcon name="check" size={14} className="text-emerald-400" />
+                              ) : (
+                                <AuraIcon name="add" size={14} />
+                              )}
+                            </MotionIconSwap>
                           </button>
                           <button
                             type="button"
                             onClick={() => toggleFavorite(song.id)}
                             className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
                             title={song.isFavorite ? 'Remove favorite' : 'Add favorite'}
+                            aria-label={song.isFavorite ? 'Remove favorite' : 'Add favorite'}
+                            aria-pressed={Boolean(song.isFavorite)}
                           >
                             <motion.span
                               className="inline-flex items-center justify-center"
+                              initial={false}
                               animate={!prefersReducedMotion && song.isFavorite ? { scale: [1, 1.24, 1] } : { scale: 1 }}
                               transition={MOTION_TRANSITION.micro}
                             >
-                              <Heart className={`w-3.5 h-3.5 ${song.isFavorite ? 'fill-rose-500 text-rose-500' : ''}`} />
+                              <AuraIcon name="heart" size={14} filled={Boolean(song.isFavorite)} className={song.isFavorite ? 'text-rose-500' : ''} />
                             </motion.span>
                           </button>
                         </div>
@@ -1113,7 +1146,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                     className="p-3 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-white/20 transition-colors cursor-pointer flex items-center gap-3 group aura-pressable-subtle aura-focus-ring"
                   >
                     <div className={`w-10 h-10 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center text-zinc-400 shrink-0 transition-transform duration-200 ${canHover ? 'group-hover:scale-105' : ''}`}>
-                      <User className="w-4 h-4" />
+                      <AuraIcon name="user" size={16} />
                     </div>
                     <div className="min-w-0">
                       <h4 className="text-xs font-bold text-white truncate font-ui-title group-hover:text-sky-300 transition-colors">
@@ -1156,7 +1189,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                       {album.coverUrl ? (
                         <img src={album.coverUrl} alt={album.name} className="w-full h-full object-cover" />
                       ) : (
-                        <Disc className="w-4 h-4 text-indigo-400" />
+                        <AuraIcon name="disc" size={16} className="text-indigo-400" />
                       )}
                     </div>
                     <div className="min-w-0">
@@ -1197,7 +1230,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                     className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-white/20 transition-colors cursor-pointer flex items-center gap-3.5 group aura-pressable-subtle aura-focus-ring"
                   >
                     <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${pl.coverGradient || 'from-sky-500 to-indigo-600'} flex items-center justify-center text-white shrink-0 shadow-sm`}>
-                      <ListMusic className="w-4 h-4" />
+                      <AuraIcon name="playlist" size={16} />
                     </div>
                     <div className="min-w-0">
                       <h4 className="text-xs font-bold text-white truncate font-ui-title group-hover:text-sky-300 transition-colors">
@@ -1235,7 +1268,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
           {/* Empty Search Result Feedback */}
           {query && !hasAnyResults && !isSearchingExternal && (
             <div className="p-10 rounded-2xl bg-[#0c0e17] border border-white/[0.06] text-center flex flex-col items-center justify-center gap-3">
-              <Search className="w-8 h-8 text-zinc-600" />
+              <AuraIcon name="search" size={32} className="text-zinc-600" />
               <h4 className="text-sm font-semibold text-white">No results found for &quot;{query}&quot;</h4>
               <p className="text-xs text-zinc-400 max-w-sm font-ui-meta">
                 Try searching for an artist, album, genre, or paste a YouTube video link to stream directly.

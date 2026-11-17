@@ -10,26 +10,26 @@ import type { Transition, Variants } from 'motion/react';
 
 export const MOTION_DURATION = {
   /** Micro icon swaps, press releases, immediate toggles */
-  instant: 0.12,
+  instant: 0.1,
   /** Compact hover responses, small menu dismissals, focus transitions */
-  micro: 0.16,
+  micro: 0.15,
   /** Standard UI state changes, tooltips, list highlights */
-  standard: 0.24,
+  standard: 0.22,
   /** Floating surfaces, popovers, sheets, expanded controls */
-  surface: 0.3,
+  surface: 0.28,
   /** Main content view changes */
-  page: 0.34,
+  page: 0.2,
   /** Shared layout & artwork continuity transitions */
-  shared: 0.42,
+  shared: 0.36,
 } as const;
 
 export const MOTION_DURATION_MS = {
-  instant: 120,
-  micro: 160,
-  standard: 240,
-  surface: 300,
-  page: 340,
-  shared: 420,
+  instant: 100,
+  micro: 150,
+  standard: 220,
+  surface: 280,
+  page: 200,
+  shared: 360,
 } as const;
 
 export const MOTION_EASE = {
@@ -100,6 +100,10 @@ export const REDUCED_FADE_TRANSITION: Transition = {
 };
 
 export const MOTION_TRANSITION = {
+  instant: {
+    duration: MOTION_DURATION.instant,
+    ease: MOTION_EASE.standard,
+  } satisfies Transition,
   micro: {
     duration: MOTION_DURATION.micro,
     ease: MOTION_EASE.standard,
@@ -121,7 +125,7 @@ export const MOTION_TRANSITION = {
     ease: MOTION_EASE.emphasized,
   } satisfies Transition,
   pageExit: {
-    duration: MOTION_DURATION.micro,
+    duration: 0.09,
     ease: MOTION_EASE.exit,
   } satisfies Transition,
 } as const;

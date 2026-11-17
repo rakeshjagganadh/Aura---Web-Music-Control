@@ -1,19 +1,8 @@
 import React, { useState } from 'react';
 import { AnimatePresence, LayoutGroup } from 'motion/react';
 import { useMusic } from '../../context/MusicContext';
-import { 
-  Radio, 
-  HardDrive, 
-  Sparkles, 
-  Youtube, 
-  Music,
-  CheckCircle2, 
-  SlidersHorizontal, 
-  ShieldCheck, 
-  Plus, 
-  Play,
-  Loader2
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
+import { YouTubeBrandMark } from '../ui/BrandMarks';
 import { DEFAULT_MUSIC_SOURCES, canApplyDSP, canTrimOrExport } from '../../services/sourceService';
 import { createWebStreamTrack, createYouTubeTrack, CURATED_DISCOVERY_TRACKS } from '../../services/discoveryService';
 import { audiusService } from '../../services/audiusService';
@@ -178,7 +167,7 @@ export const SourcesView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="p-3 rounded-2xl bg-white/[0.04] text-zinc-200 border border-white/[0.06]">
-            <Radio className="w-5 h-5" />
+            <AuraIcon name="radio" size={20} />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -196,7 +185,7 @@ export const SourcesView: React.FC = () => {
             onClick={() => setIsUploadModalOpen(true)}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 text-xs font-semibold shadow-md transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <AuraIcon name="add" size={14} weight={600} />
             <span>Add Music / Source</span>
           </button>
         </div>
@@ -211,12 +200,12 @@ export const SourcesView: React.FC = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  <HardDrive className="w-4 h-4" />
+                  <AuraIcon name="hardDrive" size={16} />
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-white font-display">Local Device Vault</h3>
                   <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> Connected & Active
+                    <AuraIcon name="checkCircle" size={12} /> Connected & Active
                   </span>
                 </div>
               </div>
@@ -253,12 +242,12 @@ export const SourcesView: React.FC = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                  <Sparkles className="w-4 h-4" />
+                  <AuraIcon name="sparkles" size={16} />
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-white font-display">AURA Open Sound Catalog</h3>
                   <span className="text-[10px] font-mono text-cyan-400 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> Built-in Streams
+                    <AuraIcon name="checkCircle" size={12} /> Built-in Streams
                   </span>
                 </div>
               </div>
@@ -284,7 +273,7 @@ export const SourcesView: React.FC = () => {
               onClick={() => playTrack(CURATED_DISCOVERY_TRACKS[0], CURATED_DISCOVERY_TRACKS)}
               className="flex-1 py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 border border-white/[0.08] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             >
-              <Play className="w-3.5 h-3.5 fill-current" />
+              <AuraIcon name="play" size={14} filled />
               Listen to Curated Stream
             </button>
           </div>
@@ -296,12 +285,12 @@ export const SourcesView: React.FC = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                  <Radio className="w-4 h-4" />
+                  <AuraIcon name="radio" size={16} />
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-white font-display">Audius Decentralized Catalog</h3>
                   <span className="text-[10px] font-mono text-purple-400 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> Public Web Streaming
+                    <AuraIcon name="checkCircle" size={12} /> Public Web Streaming
                   </span>
                 </div>
               </div>
@@ -334,12 +323,12 @@ export const SourcesView: React.FC = () => {
               >
                 {isLoadingAudiusTrending ? (
                   <>
-                    <Loader2 className={`w-3.5 h-3.5 ${!prefersReducedMotion ? 'animate-spin' : ''}`} />
+                    <AuraIcon name="loader" size={14} className={!prefersReducedMotion ? 'animate-spin' : ''} />
                     <span>Loading Audius Trending...</span>
                   </>
                 ) : (
                   <>
-                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <AuraIcon name="play" size={14} filled />
                     <span>Play Trending Audius Tracks</span>
                   </>
                 )}
@@ -354,12 +343,12 @@ export const SourcesView: React.FC = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                  <Music className="w-4 h-4" />
+                  <AuraIcon name="musicNote" size={16} />
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-white font-display">Jamendo Music Catalog</h3>
                   <span className="text-[10px] font-mono text-amber-400 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> Creative Commons API
+                    <AuraIcon name="checkCircle" size={12} /> Creative Commons API
                   </span>
                 </div>
               </div>
@@ -392,12 +381,12 @@ export const SourcesView: React.FC = () => {
               >
                 {isLoadingJamendo ? (
                   <>
-                    <Loader2 className={`w-3.5 h-3.5 ${!prefersReducedMotion ? 'animate-spin' : ''}`} />
+                    <AuraIcon name="loader" size={14} className={!prefersReducedMotion ? 'animate-spin' : ''} />
                     <span>Loading Jamendo Tracks...</span>
                   </>
                 ) : (
                   <>
-                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <AuraIcon name="play" size={14} filled />
                     <span>Play Trending Jamendo Tracks</span>
                   </>
                 )}
@@ -412,12 +401,12 @@ export const SourcesView: React.FC = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                  <Radio className="w-4 h-4" />
+                  <AuraIcon name="radio" size={16} />
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-white font-display">Radio Browser Directory</h3>
                   <span className="text-[10px] font-mono text-cyan-400 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> Live Internet Radio
+                    <AuraIcon name="checkCircle" size={12} /> Live Internet Radio
                   </span>
                 </div>
               </div>
@@ -448,7 +437,7 @@ export const SourcesView: React.FC = () => {
               }}
               className="w-full py-2 px-3 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-200 border border-cyan-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             >
-              <Radio className="w-3.5 h-3.5" />
+              <AuraIcon name="radio" size={14} />
               <span>Explore Radio Stations</span>
             </button>
           </div>
@@ -460,7 +449,7 @@ export const SourcesView: React.FC = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="p-2.5 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20">
-                  <Youtube className="w-5 h-5" />
+                  <YouTubeBrandMark size={20} />
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-white">YouTube Embed Player</h3>
@@ -534,7 +523,7 @@ export const SourcesView: React.FC = () => {
               <div className="flex items-center justify-between border-b border-white/5 pb-3">
                 <div className="flex items-center gap-2">
                   <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                    <Radio className="w-4 h-4" />
+                    <AuraIcon name="radio" size={16} />
                   </div>
                   <div>
                     <h2 className="text-base font-bold text-white">Global Radio Explorer</h2>
@@ -572,7 +561,16 @@ export const SourcesView: React.FC = () => {
                             className="absolute inset-0 rounded-xl bg-cyan-500/20 border border-cyan-500/40"
                           />
                         )}
-                        <span className="relative z-10">{cat === 'top' ? '★ Top Voted' : cat}</span>
+                        <span className="relative z-10 inline-flex items-center gap-1">
+                          {cat === 'top' ? (
+                            <>
+                              <AuraIcon name="star" size={12} filled />
+                              <span>Top Voted</span>
+                            </>
+                          ) : (
+                            cat
+                          )}
+                        </span>
                       </button>
                     );
                   })}
@@ -637,7 +635,7 @@ export const SourcesView: React.FC = () => {
                                 {st.favicon ? (
                                   <img src={st.favicon} alt={st.name} className="w-full h-full object-cover" />
                                 ) : (
-                                  <Radio className="w-4 h-4 text-zinc-600" />
+                                  <AuraIcon name="radio" size={16} className="text-zinc-600" />
                                 )}
                               </div>
                               <div className="min-w-0 flex-1">
@@ -665,7 +663,7 @@ export const SourcesView: React.FC = () => {
                                 className="p-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white transition-colors cursor-pointer aura-pressable"
                                 title="Play Station"
                               >
-                                <Play className="w-3.5 h-3.5 fill-current" />
+                                <AuraIcon name="play" size={14} filled />
                               </button>
                             </div>
                           </div>
@@ -683,7 +681,7 @@ export const SourcesView: React.FC = () => {
       {/* Capabilities & Compatibility Matrix */}
       <div className="p-6 rounded-3xl bg-[#090b10] border border-white/5 flex flex-col gap-4 shadow-xl">
         <div className="flex items-center gap-2">
-          <SlidersHorizontal className="w-4 h-4 text-indigo-400" />
+          <AuraIcon name="sliders" size={16} className="text-indigo-400" />
           <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-300">
             Source Capabilities & DSP Processing Matrix
           </h2>
@@ -708,50 +706,50 @@ export const SourcesView: React.FC = () => {
             <tbody className="divide-y divide-white/5 text-zinc-300">
               <tr>
                 <td className="py-2.5 font-bold text-white">Local Library Files</td>
-                <td className="py-2.5 text-emerald-400">✓ Full</td>
-                <td className="py-2.5 text-emerald-400">✓ Unlocked</td>
-                <td className="py-2.5 text-emerald-400">✓ Supported</td>
-                <td className="py-2.5 text-emerald-400">✓ Zero-Gap Web Audio</td>
-                <td className="py-2.5 text-emerald-400">✓ Lossless 32-bit</td>
+                <td className="py-2.5 text-emerald-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>Full</span></span></td>
+                <td className="py-2.5 text-emerald-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>Unlocked</span></span></td>
+                <td className="py-2.5 text-emerald-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>Supported</span></span></td>
+                <td className="py-2.5 text-emerald-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>Zero-Gap Web Audio</span></span></td>
+                <td className="py-2.5 text-emerald-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>Lossless 32-bit</span></span></td>
               </tr>
               <tr>
                 <td className="py-2.5 font-bold text-amber-300">Jamendo (Creative Commons)</td>
-                <td className="py-2.5 text-emerald-400">✓ Full</td>
-                <td className="py-2.5 text-emerald-400">✓ When CORS Allowed (Direct Fallback)</td>
-                <td className="py-2.5 text-emerald-400">✓ Supported</td>
-                <td className="py-2.5 text-emerald-400">✓ Direct MP3 Stream</td>
+                <td className="py-2.5 text-emerald-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>Full</span></span></td>
+                <td className="py-2.5 text-emerald-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>When CORS Allowed (Direct Fallback)</span></span></td>
+                <td className="py-2.5 text-emerald-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>Supported</span></span></td>
+                <td className="py-2.5 text-emerald-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>Direct MP3 Stream</span></span></td>
                 <td className="py-2.5 text-zinc-500">— Stream Only</td>
               </tr>
               <tr>
                 <td className="py-2.5 font-bold text-cyan-300">Radio Browser (Live Radio)</td>
-                <td className="py-2.5 text-amber-400">✓ Live Stream (No Seek)</td>
-                <td className="py-2.5 text-emerald-400">✓ When CORS Allowed (Direct Fallback)</td>
-                <td className="py-2.5 text-emerald-400">✓ Supported</td>
-                <td className="py-2.5 text-emerald-400">✓ Live ICY/AAC Stream</td>
+                <td className="py-2.5 text-amber-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>Live Stream (No Seek)</span></span></td>
+                <td className="py-2.5 text-emerald-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>When CORS Allowed (Direct Fallback)</span></span></td>
+                <td className="py-2.5 text-emerald-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>Supported</span></span></td>
+                <td className="py-2.5 text-emerald-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>Live ICY/AAC Stream</span></span></td>
                 <td className="py-2.5 text-zinc-500">— Stream Only</td>
               </tr>
               <tr>
                 <td className="py-2.5 font-bold text-purple-300">Audius Decentralized</td>
-                <td className="py-2.5 text-emerald-400">✓ Full HTTP Range</td>
-                <td className="py-2.5 text-emerald-400">✓ When CORS Allowed (Direct Fallback)</td>
-                <td className="py-2.5 text-emerald-400">✓ Supported</td>
-                <td className="py-2.5 text-emerald-400">✓ Public Direct Stream</td>
+                <td className="py-2.5 text-emerald-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>Full HTTP Range</span></span></td>
+                <td className="py-2.5 text-emerald-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>When CORS Allowed (Direct Fallback)</span></span></td>
+                <td className="py-2.5 text-emerald-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>Supported</span></span></td>
+                <td className="py-2.5 text-emerald-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>Public Direct Stream</span></span></td>
                 <td className="py-2.5 text-zinc-500">— Stream Only</td>
               </tr>
               <tr>
                 <td className="py-2.5 font-bold text-white">Curated Open Audio</td>
-                <td className="py-2.5 text-emerald-400">✓ Full</td>
-                <td className="py-2.5 text-emerald-400">✓ Unlocked</td>
-                <td className="py-2.5 text-emerald-400">✓ Supported</td>
-                <td className="py-2.5 text-emerald-400">✓ Web Audio Stream</td>
+                <td className="py-2.5 text-emerald-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>Full</span></span></td>
+                <td className="py-2.5 text-emerald-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>Unlocked</span></span></td>
+                <td className="py-2.5 text-emerald-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>Supported</span></span></td>
+                <td className="py-2.5 text-emerald-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>Web Audio Stream</span></span></td>
                 <td className="py-2.5 text-zinc-500">— Stream Only</td>
               </tr>
               <tr>
                 <td className="py-2.5 font-bold text-white">YouTube Embed</td>
-                <td className="py-2.5 text-emerald-400">✓ Embed API</td>
+                <td className="py-2.5 text-emerald-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>Embed API</span></span></td>
                 <td className="py-2.5 text-zinc-500">— YouTube Output</td>
-                <td className="py-2.5 text-emerald-400">✓ Supported</td>
-                <td className="py-2.5 text-emerald-400">✓ IFrame API Bridge</td>
+                <td className="py-2.5 text-emerald-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>Supported</span></span></td>
+                <td className="py-2.5 text-emerald-400"><span className="inline-flex items-center gap-1"><AuraIcon name="check" size={12} weight={600} /><span>IFrame API Bridge</span></span></td>
                 <td className="py-2.5 text-zinc-500">— Protected Media</td>
               </tr>
             </tbody>
@@ -760,7 +758,7 @@ export const SourcesView: React.FC = () => {
 
         {/* Privacy Seal */}
         <div className="flex items-center gap-2 pt-3 border-t border-white/5 text-[11px] text-zinc-500">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          <AuraIcon name="shieldCheck" size={16} className="text-emerald-400" />
           <span>
             AURA respects copyright and privacy. No unauthorized audio stream extraction or third-party scraping is performed.
           </span>

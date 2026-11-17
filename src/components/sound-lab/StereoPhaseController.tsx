@@ -1,16 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useMusic } from '../../context/MusicContext';
-import { 
-  Compass, 
-  Split, 
-  RotateCcw, 
-  Radio, 
-  Sliders, 
-  Activity, 
-  Volume2,
-  Headphones,
-  Check
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 import { ChannelMonitorMode } from '../../types';
 
 export const StereoPhaseController: React.FC = () => {
@@ -72,8 +62,8 @@ export const StereoPhaseController: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-4">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
-            <Compass className="w-4 h-4" />
+          <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center">
+            <AuraIcon name="compass" size={16} />
           </div>
           <div>
             <h3 className="text-base font-bold text-white tracking-tight">Stereo Field & Phase Studio</h3>
@@ -92,7 +82,7 @@ export const StereoPhaseController: React.FC = () => {
           }}
           className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium text-zinc-400 hover:text-white bg-zinc-800/80 hover:bg-zinc-700 border border-white/5 transition-colors self-start sm:self-auto cursor-pointer aura-pressable aura-focus-ring"
         >
-          <RotateCcw className="w-3 h-3" />
+          <AuraIcon name="reset" size={12} />
           Reset Stereo
         </button>
       </div>
@@ -101,7 +91,7 @@ export const StereoPhaseController: React.FC = () => {
       <div className="flex flex-col gap-2.5 p-4 rounded-2xl bg-zinc-950/70 border border-white/5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-semibold text-zinc-300">
-            <Activity className="w-3.5 h-3.5 text-cyan-400" />
+            <AuraIcon name="activity" size={14} className="text-cyan-400" />
             <span>Stereo Phase Correlation Meter</span>
           </div>
           <span className={`text-xs font-mono font-bold ${
@@ -237,7 +227,7 @@ export const StereoPhaseController: React.FC = () => {
               >
                 <div className="flex items-center justify-between w-full">
                   <span className="text-xs font-bold text-white">{m.label}</span>
-                  {isSelected && <Check className="w-3.5 h-3.5 text-blue-400" />}
+                  {isSelected && <AuraIcon name="check" size={14} className="text-blue-400" />}
                 </div>
                 <span className="text-[10px] text-zinc-400 leading-tight">{m.desc}</span>
               </button>

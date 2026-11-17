@@ -4,25 +4,7 @@ import { Track } from '../../types';
 import { LibraryNav } from '../library/LibraryNav';
 import { TrackGridCard } from '../library/TrackGridCard';
 import { AddToPlaylistModal } from '../playlists/AddToPlaylistModal';
-import { 
-  Music, 
-  Disc, 
-  User, 
-  Heart, 
-  ListMusic, 
-  Clock, 
-  Plus, 
-  ChevronRight, 
-  HardDrive, 
-  Sparkles,
-  Shuffle,
-  Play,
-  Search,
-  X,
-  ArrowUpRight,
-  Database,
-  FileAudio
-} from 'lucide-react';
+import { AuraIcon } from '../ui/AuraIcon';
 
 export const LibraryOverviewView: React.FC = () => {
   const {
@@ -123,7 +105,7 @@ export const LibraryOverviewView: React.FC = () => {
       <section className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-white/[0.06]">
         <div>
           <div className="flex items-center gap-2 mb-1.5 text-xs font-mono text-zinc-400">
-            <Database className="w-3.5 h-3.5 text-sky-400" />
+            <AuraIcon name="database" size={14} className="text-sky-400" />
             <span className="uppercase tracking-wider text-[11px] font-semibold text-sky-400">Personal Collection</span>
             <span className="text-zinc-600" aria-hidden="true">·</span>
             <span>IndexedDB Vault</span>
@@ -141,13 +123,13 @@ export const LibraryOverviewView: React.FC = () => {
         <div className="flex items-center gap-2.5 flex-wrap">
           {/* Quick Search within Library */}
           <form onSubmit={handleLibrarySearch} className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+            <AuraIcon name="search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
             <input
               type="text"
               value={libraryFilter}
               onChange={(e) => setLibraryFilter(e.target.value)}
               placeholder="Filter library..."
-              className="w-40 sm:w-48 pl-8 pr-7 py-2 rounded-xl bg-white/[0.05] border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-sky-500/50 transition-all"
+              className="w-40 sm:w-48 pl-8 pr-7 py-2 rounded-xl bg-white/[0.05] border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-sky-500/50 transition-colors"
             />
             {libraryFilter && (
               <button
@@ -155,7 +137,7 @@ export const LibraryOverviewView: React.FC = () => {
                 onClick={() => setLibraryFilter('')}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
               >
-                <X className="w-3 h-3" />
+                <AuraIcon name="close" size={12} />
               </button>
             )}
           </form>
@@ -167,7 +149,7 @@ export const LibraryOverviewView: React.FC = () => {
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
               title="Shuffle all tracks in library"
             >
-              <Shuffle className="w-3.5 h-3.5 text-sky-400" />
+              <AuraIcon name="shuffle" size={14} className="text-sky-400" />
               <span>Shuffle</span>
             </button>
           )}
@@ -178,7 +160,7 @@ export const LibraryOverviewView: React.FC = () => {
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
             title="Create a new playlist"
           >
-            <Plus className="w-3.5 h-3.5 text-emerald-400" />
+            <AuraIcon name="add" size={14} className="text-emerald-400" />
             <span>New Playlist</span>
           </button>
 
@@ -188,7 +170,7 @@ export const LibraryOverviewView: React.FC = () => {
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
             title="Import audio files into vault"
           >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <AuraIcon name="add" size={14} weight={600} />
             <span>Import Audio</span>
           </button>
         </div>
@@ -209,7 +191,7 @@ export const LibraryOverviewView: React.FC = () => {
         >
           <div className="flex items-center justify-between text-zinc-400">
             <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300">Tracks</span>
-            <Music className="w-4 h-4 text-sky-400" />
+            <AuraIcon name="musicNote" size={16} className="text-sky-400" />
           </div>
           <div className="mt-3">
             <span className="text-xl sm:text-2xl font-bold text-white font-mono tabular-nums">{tracks.length}</span>
@@ -223,7 +205,7 @@ export const LibraryOverviewView: React.FC = () => {
         >
           <div className="flex items-center justify-between text-zinc-400">
             <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300">Albums</span>
-            <Disc className="w-4 h-4 text-purple-400" />
+            <AuraIcon name="disc" size={16} className="text-purple-400" />
           </div>
           <div className="mt-3">
             <span className="text-xl sm:text-2xl font-bold text-white font-mono tabular-nums">{albumCount}</span>
@@ -237,7 +219,7 @@ export const LibraryOverviewView: React.FC = () => {
         >
           <div className="flex items-center justify-between text-zinc-400">
             <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300">Artists</span>
-            <User className="w-4 h-4 text-amber-400" />
+            <AuraIcon name="user" size={16} className="text-amber-400" />
           </div>
           <div className="mt-3">
             <span className="text-xl sm:text-2xl font-bold text-white font-mono tabular-nums">{artistCount}</span>
@@ -251,7 +233,7 @@ export const LibraryOverviewView: React.FC = () => {
         >
           <div className="flex items-center justify-between text-zinc-400">
             <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300">Playlists</span>
-            <ListMusic className="w-4 h-4 text-emerald-400" />
+            <AuraIcon name="playlist" size={16} className="text-emerald-400" />
           </div>
           <div className="mt-3">
             <span className="text-xl sm:text-2xl font-bold text-white font-mono tabular-nums">{playlists.length}</span>
@@ -265,7 +247,7 @@ export const LibraryOverviewView: React.FC = () => {
         >
           <div className="flex items-center justify-between text-zinc-400">
             <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300">Liked Songs</span>
-            <Heart className="w-4 h-4 text-rose-400 fill-rose-500/20" />
+            <AuraIcon name="heart" size={16} filled className="text-rose-400" />
           </div>
           <div className="mt-3">
             <span className="text-xl sm:text-2xl font-bold text-white font-mono tabular-nums">{favoriteItems.length}</span>
@@ -276,7 +258,7 @@ export const LibraryOverviewView: React.FC = () => {
         <div className="p-4 rounded-3xl glass-ambient border border-white/[0.18] flex flex-col justify-between shadow-lg">
           <div className="flex items-center justify-between text-zinc-400">
             <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300">Vault Storage</span>
-            <HardDrive className="w-4 h-4 text-cyan-400" />
+            <AuraIcon name="hardDrive" size={16} className="text-cyan-400" />
           </div>
           <div className="mt-3">
             <span className="text-xl sm:text-2xl font-bold text-white font-mono tabular-nums">{formatStorageMB(storageUsage.approxBytes)}</span>
@@ -292,7 +274,7 @@ export const LibraryOverviewView: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="font-section-title text-white flex items-center gap-2">
-              <Clock className="w-4 h-4 text-sky-400" />
+              <AuraIcon name="clock" size={16} className="text-sky-400" />
               Recently Added
             </h2>
             <p className="text-xs text-zinc-400 mt-0.5 font-ui-meta">
@@ -305,7 +287,7 @@ export const LibraryOverviewView: React.FC = () => {
             className="text-xs text-zinc-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer font-medium aura-pressable"
           >
             <span>View All</span>
-            <ChevronRight className="w-3.5 h-3.5" />
+            <AuraIcon name="chevronRight" size={14} />
           </button>
         </div>
 
@@ -323,7 +305,7 @@ export const LibraryOverviewView: React.FC = () => {
         ) : (
           <div className="p-8 sm:p-12 rounded-2xl aura-glass-ambient border border-dashed border-white/10 flex flex-col items-center justify-center text-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-zinc-500">
-              <FileAudio className="w-6 h-6 text-zinc-400" />
+              <AuraIcon name="fileAudio" size={24} className="text-zinc-400" />
             </div>
             <h3 className="text-sm font-semibold text-zinc-200">Your library is currently empty</h3>
             <p className="text-xs text-zinc-400 max-w-sm font-ui-meta">
@@ -357,7 +339,7 @@ export const LibraryOverviewView: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="font-section-title text-white flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-emerald-400" />
+                <AuraIcon name="sparkles" size={16} className="text-emerald-400" />
                 Recently Played
               </h2>
               <p className="text-xs text-zinc-400 mt-0.5 font-ui-meta">
@@ -386,7 +368,7 @@ export const LibraryOverviewView: React.FC = () => {
       <section className="p-5 sm:p-7 rounded-2xl aura-glass-island border border-white/10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 shadow-xl">
         <div className="flex items-start gap-4 max-w-2xl">
           <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/25 flex items-center justify-center shrink-0 text-cyan-400">
-            <HardDrive className="w-6 h-6" />
+            <AuraIcon name="hardDrive" size={24} />
           </div>
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -421,7 +403,7 @@ export const LibraryOverviewView: React.FC = () => {
             onClick={() => setIsUploadModalOpen(true)}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
           >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <AuraIcon name="add" size={16} weight={600} />
             <span>Import Audio Files</span>
           </button>
         </div>
