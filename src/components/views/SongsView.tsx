@@ -196,11 +196,11 @@ export const SongsView: React.FC = () => {
           ------------------------------------------------------------- */}
       <section className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-white/[0.06]">
         <div>
-          <div className="flex items-center gap-2 mb-1.5 text-xs font-mono text-zinc-400">
+          <div className="flex items-center gap-2 mb-1.5 text-xs text-zinc-400 font-medium font-sans">
             <AuraIcon name="musicNote" size={14} className="text-sky-400" />
             <span className="uppercase tracking-wider text-[11px] font-semibold text-sky-400">Music Catalogue</span>
             <span className="text-zinc-600" aria-hidden="true">·</span>
-            <span>{tracks.length} tracks total</span>
+            <span><span className="font-mono tabular-nums">{tracks.length}</span> tracks total</span>
           </div>
 
           <h1 className="text-2xl sm:text-4xl font-page-title text-white tracking-tight">
@@ -278,11 +278,12 @@ export const SongsView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="hover:text-white px-1 text-[10px] font-mono font-bold uppercase tracking-wider text-sky-400 cursor-pointer aura-focus-ring rounded"
+                className="hover:text-white px-2 py-1 text-xs font-semibold rounded-lg bg-white/5 hover:bg-white/10 text-sky-400 cursor-pointer aura-focus-ring flex items-center gap-1 min-h-[28px] sm:min-h-[30px]"
                 title="Toggle sort direction"
                 aria-label={`Sort order ${sortOrder === 'asc' ? 'ascending' : 'descending'}`}
               >
-                {sortOrder}
+                <AuraIcon name={sortOrder === 'asc' ? 'chevronUp' : 'chevronDown'} size={14} />
+                <span className="uppercase text-[10px] tracking-wider">{sortOrder}</span>
               </button>
             </div>
 
@@ -543,7 +544,7 @@ export const SongsView: React.FC = () => {
             viewMode === 'row' ? (
               <div className="flex flex-col rounded-2xl aura-glass-ambient border border-white/10 overflow-hidden">
                 {/* Table Header Row (Desktop) */}
-                <div className="hidden sm:flex items-center justify-between gap-3 px-4 py-2.5 border-b border-white/[0.06] text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+                <div className="hidden sm:flex items-center justify-between gap-3 px-4 py-2.5 border-b border-white/[0.06] text-[11px] font-sans font-semibold text-zinc-400 uppercase tracking-wider">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <button
                       type="button"

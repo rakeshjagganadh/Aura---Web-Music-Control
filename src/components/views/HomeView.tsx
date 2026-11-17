@@ -254,7 +254,7 @@ export const HomeView: React.FC = () => {
               <AuraIcon name="zap" size={16} className="text-sky-400" />
               Quick Picks
             </h2>
-            <span className="text-xs text-zinc-500 font-mono hidden sm:inline">Instant Play</span>
+            <span className="text-xs text-zinc-500 font-sans font-medium hidden sm:inline">Instant Play</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -440,7 +440,7 @@ export const HomeView: React.FC = () => {
 
                 {/* Bottom Section: Honest Provenance & Controls */}
                 <div className="relative z-10 px-5 pb-4 pt-2 flex items-center justify-between border-t border-white/[0.06] bg-black/20">
-                  <p className="text-[11px] text-zinc-400 font-mono line-clamp-1 flex-1 pr-3" title={mix.reason}>
+                  <p className="text-[11px] text-zinc-400 font-sans line-clamp-1 flex-1 pr-3" title={mix.reason}>
                     {mix.reason}
                   </p>
 
@@ -448,7 +448,7 @@ export const HomeView: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handlePlayDiscoveryMix(mix, true)}
-                      className="p-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 hover:text-white aura-pressable transition-colors cursor-pointer aura-focus-ring"
+                      className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 hover:text-white aura-pressable transition-colors cursor-pointer aura-focus-ring"
                       title="Shuffle Mix"
                     >
                       <AuraIcon name="shuffle" size={14} />
@@ -456,7 +456,7 @@ export const HomeView: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handlePlayDiscoveryMix(mix, false)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-zinc-100 text-zinc-950 font-semibold text-xs aura-pressable transition-colors cursor-pointer aura-focus-ring shadow"
+                      className="flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] rounded-lg bg-white hover:bg-zinc-100 text-zinc-950 font-semibold text-xs aura-pressable transition-colors cursor-pointer aura-focus-ring shadow"
                       title={`Play ${mix.title}`}
                     >
                       <AuraIcon name="play" size={12} filled className="text-black translate-x-0.2" />
@@ -525,7 +525,7 @@ export const HomeView: React.FC = () => {
             <AuraIcon name="compass" size={16} className="text-purple-400" />
             Explore by Mood
           </h2>
-          <span className="text-xs text-zinc-500 font-mono hidden sm:inline">Sonic Mood Filter</span>
+          <span className="text-xs text-zinc-500 font-sans font-medium hidden sm:inline">Sonic Mood Filter</span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -575,7 +575,7 @@ export const HomeView: React.FC = () => {
             <AuraIcon name="layers" size={16} className="text-sky-400" />
             Explore Genres
           </h2>
-          <span className="text-xs text-zinc-500 font-mono hidden sm:inline">Provider Catalog Search</span>
+          <span className="text-xs text-zinc-500 font-sans font-medium hidden sm:inline">Provider Catalog Search</span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
@@ -597,7 +597,7 @@ export const HomeView: React.FC = () => {
               <div className={`absolute inset-0 bg-gradient-to-br ${g.color} opacity-70 group-hover:opacity-95 transition-opacity`} />
               
               <div className="relative z-10 flex items-center justify-between">
-                <span className="text-[8px] font-mono text-zinc-400 uppercase tracking-wider">GENRE</span>
+                <span className="text-[8px] font-sans font-semibold text-zinc-400 uppercase tracking-wider">GENRE</span>
               </div>
 
               <div className="relative z-10">
@@ -622,7 +622,7 @@ export const HomeView: React.FC = () => {
             <AuraIcon name="waves" size={16} className="text-emerald-400" />
             Explore Soundscapes
           </h2>
-          <span className="text-xs text-zinc-500 font-mono hidden sm:inline">AURA Sonic Environments</span>
+          <span className="text-xs text-zinc-500 font-sans font-medium hidden sm:inline">AURA Sonic Environments</span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
@@ -677,7 +677,7 @@ export const HomeView: React.FC = () => {
           <button
             type="button"
             onClick={() => setCurrentView('sources')}
-            className="text-xs text-zinc-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer font-medium"
+            className="text-xs text-zinc-400 hover:text-white transition-colors inline-flex items-center gap-1 cursor-pointer font-medium min-h-[36px] py-1.5 px-2.5 -mr-2 rounded-lg hover:bg-white/[0.04] aura-pressable"
           >
             All Sources <AuraIcon name="chevronRight" size={16} />
           </button>
@@ -728,7 +728,7 @@ export const HomeView: React.FC = () => {
               direction="up"
               distance={4}
               duration="micro"
-              className="p-6 rounded-2xl aura-glass-ambient text-center text-xs text-zinc-400 font-mono"
+              className="p-6 rounded-2xl aura-glass-ambient text-center text-xs text-zinc-400 font-sans font-medium"
             >
               No trending discoveries available right now.
             </MotionFadeSlide>
@@ -749,7 +749,7 @@ export const HomeView: React.FC = () => {
             <button
               type="button"
               onClick={() => setCurrentView('sources')}
-              className="text-xs text-zinc-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer font-medium"
+              className="text-xs text-zinc-400 hover:text-white transition-colors inline-flex items-center gap-1 cursor-pointer font-medium min-h-[36px] py-1.5 px-2.5 -mr-2 rounded-lg hover:bg-white/[0.04] aura-pressable"
             >
               Radio Radar <AuraIcon name="chevronRight" size={16} />
             </button>
@@ -818,7 +818,7 @@ export const HomeView: React.FC = () => {
           <button
             type="button"
             onClick={() => setCurrentView('playlists')}
-            className="text-xs text-zinc-400 hover:text-white aura-pressable transition-colors flex items-center gap-1 cursor-pointer font-medium"
+            className="text-xs text-zinc-400 hover:text-white transition-colors inline-flex items-center gap-1 cursor-pointer font-medium min-h-[36px] py-1.5 px-2.5 -mr-2 rounded-lg hover:bg-white/[0.04] aura-pressable"
           >
             All Spaces <AuraIcon name="chevronRight" size={16} />
           </button>

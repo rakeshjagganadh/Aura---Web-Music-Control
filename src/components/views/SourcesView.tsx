@@ -204,12 +204,12 @@ export const SourcesView: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-white font-display">Local Device Vault</h3>
-                  <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1">
+                  <span className="text-[10px] font-sans font-medium text-emerald-400 flex items-center gap-1">
                     <AuraIcon name="checkCircle" size={12} /> Connected & Active
                   </span>
                 </div>
               </div>
-              <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
+              <span className="text-[10px] font-sans font-semibold text-zinc-400 uppercase tracking-wider">
                 Full DSP
               </span>
             </div>
@@ -218,10 +218,10 @@ export const SourcesView: React.FC = () => {
               Your audio files (MP3, WAV, FLAC, AAC, OGG) stored locally in browser IndexedDB. Offers zero-latency Web Audio processing, 10-band EQ, 3D spatial acoustics, and lossless master WAV export.
             </p>
 
-            <div className="flex items-center gap-4 text-xs font-mono text-zinc-400 pt-2 border-t border-white/5">
-              <span>{localTrackCount} tracks stored</span>
+            <div className="flex items-center gap-4 text-xs font-sans text-zinc-400 pt-2 border-t border-white/5">
+              <span><span className="font-mono tabular-nums">{localTrackCount}</span> tracks stored</span>
               <span>•</span>
-              <span>{formatStorageMB(storageUsage.approxBytes)} used</span>
+              <span><span className="font-mono tabular-nums">{formatStorageMB(storageUsage.approxBytes)}</span> used</span>
             </div>
           </div>
 
@@ -246,12 +246,12 @@ export const SourcesView: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-white font-display">AURA Open Sound Catalog</h3>
-                  <span className="text-[10px] font-mono text-cyan-400 flex items-center gap-1">
+                  <span className="text-[10px] font-sans font-medium text-cyan-400 flex items-center gap-1">
                     <AuraIcon name="checkCircle" size={12} /> Built-in Streams
                   </span>
                 </div>
               </div>
-              <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
+              <span className="text-[10px] font-sans font-semibold text-zinc-400 uppercase tracking-wider">
                 Lossless DSP
               </span>
             </div>
@@ -260,8 +260,8 @@ export const SourcesView: React.FC = () => {
               Curated royalty-free and Creative Commons soundscapes (Ambient 432Hz, Cyber Synthwave, Lo-Fi Study, Neo-Classical Grand) ready to stream instantly without uploading any files.
             </p>
 
-            <div className="flex items-center gap-4 text-xs font-mono text-zinc-400 pt-2 border-t border-white/5">
-              <span>{CURATED_DISCOVERY_TRACKS.length} instant streams</span>
+            <div className="flex items-center gap-4 text-xs font-sans text-zinc-400 pt-2 border-t border-white/5">
+              <span><span className="font-mono tabular-nums">{CURATED_DISCOVERY_TRACKS.length}</span> instant streams</span>
               <span>•</span>
               <span>Real-time Spectrum</span>
             </div>
@@ -289,12 +289,12 @@ export const SourcesView: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-white font-display">Audius Decentralized Catalog</h3>
-                  <span className="text-[10px] font-mono text-purple-400 flex items-center gap-1">
+                  <span className="text-[10px] font-sans font-medium text-purple-400 flex items-center gap-1">
                     <AuraIcon name="checkCircle" size={12} /> Public Web Streaming
                   </span>
                 </div>
               </div>
-              <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
+              <span className="text-[10px] font-sans font-semibold text-zinc-400 uppercase tracking-wider">
                 Full DSP & EQ
               </span>
             </div>
@@ -303,7 +303,7 @@ export const SourcesView: React.FC = () => {
               Decentralized Web3 music catalog powered by independent creators. Direct public high-quality HTTP audio streaming with full 10-band EQ, 3D spatial sound, reverb, and real-time audio analysis.
             </p>
 
-            <div className="flex items-center gap-4 text-xs font-mono text-zinc-400 pt-2 border-t border-white/5">
+            <div className="flex items-center gap-4 text-xs font-sans text-zinc-400 pt-2 border-t border-white/5">
               <span>Public Discovery</span>
               <span>•</span>
               <span>No Login or Key Required</span>
@@ -347,12 +347,12 @@ export const SourcesView: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-white font-display">Jamendo Music Catalog</h3>
-                  <span className="text-[10px] font-mono text-amber-400 flex items-center gap-1">
+                  <span className="text-[10px] font-sans font-medium text-amber-400 flex items-center gap-1">
                     <AuraIcon name="checkCircle" size={12} /> Creative Commons API
                   </span>
                 </div>
               </div>
-              <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
+              <span className="text-[10px] font-sans font-semibold text-zinc-400 uppercase tracking-wider">
                 Open CORS DSP
               </span>
             </div>
@@ -361,8 +361,8 @@ export const SourcesView: React.FC = () => {
               Official Jamendo API integration. Free independent music under Creative Commons licenses with high-fidelity MP3 streams, full 10-band EQ, 3D audio, and waveform rendering.
             </p>
 
-            <div className="flex items-center gap-4 text-xs font-mono text-zinc-400 pt-2 border-t border-white/5">
-              <span>600,000+ Tracks</span>
+            <div className="flex items-center gap-4 text-xs font-sans text-zinc-400 pt-2 border-t border-white/5">
+              <span><span className="font-mono tabular-nums">600,000+</span> Tracks</span>
               <span>•</span>
               <span>100% Free & Legal</span>
             </div>
@@ -405,12 +405,12 @@ export const SourcesView: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-white font-display">Radio Browser Directory</h3>
-                  <span className="text-[10px] font-mono text-cyan-400 flex items-center gap-1">
+                  <span className="text-[10px] font-sans font-medium text-cyan-400 flex items-center gap-1">
                     <AuraIcon name="checkCircle" size={12} /> Live Internet Radio
                   </span>
                 </div>
               </div>
-              <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
+              <span className="text-[10px] font-sans font-semibold text-zinc-400 uppercase tracking-wider">
                 Live DSP
               </span>
             </div>
@@ -419,8 +419,8 @@ export const SourcesView: React.FC = () => {
               Global community directory with 60,000+ live internet radio stations. Filter by genre, country, and codec with continuous live audio streaming.
             </p>
 
-            <div className="flex items-center gap-4 text-xs font-mono text-zinc-400 pt-2 border-t border-white/5">
-              <span>60,000+ Stations</span>
+            <div className="flex items-center gap-4 text-xs font-sans text-zinc-400 pt-2 border-t border-white/5">
+              <span><span className="font-mono tabular-nums">60,000+</span> Stations</span>
               <span>•</span>
               <span>Live Broadcast</span>
             </div>
@@ -453,7 +453,7 @@ export const SourcesView: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-white">YouTube Embed Player</h3>
-                  <span className="text-[10px] font-mono text-zinc-400 flex items-center gap-1">
+                  <span className="text-[10px] font-sans font-medium text-zinc-400 flex items-center gap-1">
                     Official Web Embed
                   </span>
                 </div>
@@ -549,10 +549,10 @@ export const SourcesView: React.FC = () => {
                         type="button"
                         key={cat}
                         onClick={() => loadRadioCategory(cat)}
-                        className={`relative px-3 py-1 rounded-xl font-mono text-[11px] capitalize transition-colors cursor-pointer aura-pressable aura-focus-ring ${
+                        className={`relative px-3 py-1.5 min-h-[32px] rounded-xl font-sans text-xs capitalize transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                           isActive
                             ? 'text-cyan-300 font-semibold'
-                            : 'bg-white/[0.03] text-zinc-400 hover:text-zinc-200 border border-white/5'
+                            : 'bg-white/[0.03] text-zinc-400 hover:text-zinc-200 border border-white/5 font-medium'
                         }`}
                       >
                         {isActive && (
@@ -613,7 +613,7 @@ export const SourcesView: React.FC = () => {
                         ))}
                       </div>
                     ) : radioStationsList.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center p-12 text-zinc-500 text-xs font-mono">
+                      <div className="flex flex-col items-center justify-center p-12 text-zinc-500 text-xs font-sans font-medium">
                         <span>No stations found for this category.</span>
                       </div>
                     ) : (

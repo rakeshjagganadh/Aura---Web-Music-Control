@@ -175,7 +175,7 @@ export const Sidebar: React.FC = () => {
               
               {/* Group Header */}
               {!isCollapsed ? (
-                <span className="text-[9px] font-mono uppercase tracking-widest text-zinc-500 font-semibold px-2 py-1 select-none">
+                <span className="text-[9px] font-sans uppercase tracking-widest text-zinc-500 font-semibold px-2 py-1 select-none">
                   {group.title}
                 </span>
               ) : (
@@ -296,7 +296,7 @@ export const Sidebar: React.FC = () => {
                 className="flex flex-col gap-1 pt-2 border-t border-white/[0.06] mt-1"
               >
                 <div className="flex items-center justify-between px-2 pb-1">
-                  <span className="text-[9px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">
+                  <span className="text-[9px] font-sans uppercase tracking-widest text-zinc-500 font-semibold">
                     ACTIVE SPACES
                   </span>
                   <button

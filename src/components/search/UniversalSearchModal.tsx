@@ -399,7 +399,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
           />
           
           {isSearchingExternal && (
-            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-sky-500/10 text-sky-300 text-[11px] font-mono border border-sky-500/20 shrink-0 ${!prefersReducedMotion ? 'animate-pulse' : ''}`}>
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-sky-500/10 text-sky-300 text-[11px] font-sans font-medium border border-sky-500/20 shrink-0 ${!prefersReducedMotion ? 'animate-pulse' : ''}`}>
               <AuraIcon name="sparkles" size={14} />
               <span className="hidden sm:inline">Federating sources...</span>
             </div>
@@ -568,7 +568,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
             {/* Source Origin Filters */}
             {(activeTab === 'all' || activeTab === 'songs') && searchResults.songs.length > 0 && (
               <div className="flex items-center gap-2 overflow-x-auto text-[11px] no-scrollbar pt-1 border-t border-white/[0.06]">
-                <span className="text-zinc-500 font-mono uppercase text-[9px] mr-0.5">Source:</span>
+                <span className="text-zinc-500 font-sans font-semibold uppercase text-[9px] mr-0.5">Source:</span>
                 
                 <button
                   onClick={() => setActiveSourceFilter('all')}
@@ -734,13 +734,13 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
               {recentSearches.length > 0 && (
                 <div className="flex flex-col gap-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold flex items-center gap-1.5">
+                    <span className="text-[10px] font-sans uppercase tracking-widest text-zinc-500 font-semibold flex items-center gap-1.5">
                       <AuraIcon name="history" size={12} className="text-sky-400" />
                       Recent Searches
                     </span>
                     <button
                       onClick={clearRecentSearches}
-                      className="text-[10px] font-mono text-zinc-500 hover:text-rose-400 transition-colors cursor-pointer"
+                      className="text-[10px] font-sans font-medium text-zinc-500 hover:text-rose-400 transition-colors cursor-pointer"
                     >
                       Clear All
                     </button>
@@ -776,7 +776,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
 
               {/* Explore By Sound / Mood Categories */}
               <div className="flex flex-col gap-2.5">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold flex items-center gap-1.5">
+                <span className="text-[10px] font-sans uppercase tracking-widest text-zinc-500 font-semibold flex items-center gap-1.5">
                   <AuraIcon name="compass" size={12} className="text-sky-400" />
                   Explore By Sound & Mood
                 </span>
@@ -807,7 +807,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
 
               {/* Browse Catalog Sources */}
               <div className="flex flex-col gap-2.5">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold flex items-center gap-1.5">
+                <span className="text-[10px] font-sans uppercase tracking-widest text-zinc-500 font-semibold flex items-center gap-1.5">
                   <AuraIcon name="globe" size={12} className="text-emerald-400" />
                   Supported Catalog Sources
                 </span>
@@ -909,7 +909,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
               ------------------------------------------------------------- */}
           {query && topMatch && (activeTab === 'all' || activeTab === 'songs') && !searchResults.detectedDirectTrack && (
             <div className="flex flex-col gap-2">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">
+              <span className="text-[10px] font-sans uppercase tracking-widest text-zinc-500 font-semibold">
                 Best Match
               </span>
 
@@ -997,11 +997,11 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
               ------------------------------------------------------------- */}
           {query && (activeTab === 'all' || activeTab === 'songs' || activeTab === 'radio') && songsToShow.length > 0 && (
             <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500">
+              <div className="flex items-center justify-between text-[10px] font-sans text-zinc-500">
                 <span className="uppercase tracking-widest font-semibold">
                   Tracks ({songsToShow.length})
                 </span>
-                <span className="inline-flex items-center gap-1">
+                <span className="inline-flex items-center gap-1 font-medium">
                   <AuraIcon name="arrowUpDown" size={11} /> navigate · Enter to play
                 </span>
               </div>
@@ -1127,7 +1127,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
               ------------------------------------------------------------- */}
           {query && (activeTab === 'all' || activeTab === 'artists') && searchResults.artists.length > 0 && (
             <div className="flex flex-col gap-2.5">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">
+              <span className="text-[10px] font-sans uppercase tracking-widest text-zinc-500 font-semibold">
                 Artists ({searchResults.artists.length})
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -1152,8 +1152,8 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                       <h4 className="text-xs font-bold text-white truncate font-ui-title group-hover:text-sky-300 transition-colors">
                         <HighlightMatch text={artist.name} query={query} />
                       </h4>
-                      <p className="text-[10px] text-zinc-500 font-mono mt-0.5">
-                        {artist.trackCount} {artist.trackCount === 1 ? 'track' : 'tracks'}
+                      <p className="text-[10px] text-zinc-500 font-sans mt-0.5">
+                        <span className="font-mono tabular-nums">{artist.trackCount}</span> {artist.trackCount === 1 ? 'track' : 'tracks'}
                       </p>
                     </div>
                   </div>
@@ -1167,7 +1167,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
               ------------------------------------------------------------- */}
           {query && (activeTab === 'all' || activeTab === 'albums') && searchResults.albums.length > 0 && (
             <div className="flex flex-col gap-2.5">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">
+              <span className="text-[10px] font-sans uppercase tracking-widest text-zinc-500 font-semibold">
                 Albums ({searchResults.albums.length})
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -1211,7 +1211,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
               ------------------------------------------------------------- */}
           {query && (activeTab === 'all' || activeTab === 'playlists') && searchResults.playlists.length > 0 && (
             <div className="flex flex-col gap-2.5">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">
+              <span className="text-[10px] font-sans uppercase tracking-widest text-zinc-500 font-semibold">
                 Spaces ({searchResults.playlists.length})
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1236,8 +1236,8 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                       <h4 className="text-xs font-bold text-white truncate font-ui-title group-hover:text-sky-300 transition-colors">
                         <HighlightMatch text={pl.title} query={query} />
                       </h4>
-                      <p className="text-[10px] text-zinc-400 font-mono mt-0.5">
-                        {pl.trackCount} tracks in space
+                      <p className="text-[10px] text-zinc-400 font-sans mt-0.5">
+                        <span className="font-mono tabular-nums">{pl.trackCount}</span> tracks in space
                       </p>
                     </div>
                   </div>

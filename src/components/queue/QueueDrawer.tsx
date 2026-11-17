@@ -201,16 +201,16 @@ export const QueueDrawer: React.FC = () => {
             <div>
               <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
                 <span>Play Queue</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-white/5 text-zinc-400 font-mono border border-white/5">
+                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-white/5 text-zinc-400 font-mono tabular-nums border border-white/5">
                   {queue.length}
                 </span>
               </h3>
               {upNextTracks.length > 0 && activeTab === 'queue' && (
-                <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 font-mono mt-0.5">
+                <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 font-sans mt-0.5">
                   <AuraIcon name="clock" size={12} className="text-indigo-400" />
-                  <span>{formatRemainingDuration(totalRemainingSecs, hasUnknownDurations)}</span>
+                  <span className="font-mono tabular-nums">{formatRemainingDuration(totalRemainingSecs, hasUnknownDurations)}</span>
                   <span>•</span>
-                  <span>{upNextTracks.length} up next</span>
+                  <span><span className="font-mono tabular-nums">{upNextTracks.length}</span> up next</span>
                 </div>
               )}
             </div>
@@ -333,11 +333,11 @@ export const QueueDrawer: React.FC = () => {
               {currentTrack && (
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                    <span className="text-[10px] font-sans font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
                       <AuraIcon name="sparkles" size={12} className="text-indigo-400" />
                       Now Playing
                     </span>
-                    <span className="text-[10px] font-mono text-indigo-400">
+                    <span className="text-[10px] font-sans font-medium text-indigo-400">
                       {isPlaying ? 'Playing' : 'Paused'}
                     </span>
                   </div>
@@ -386,7 +386,7 @@ export const QueueDrawer: React.FC = () => {
                     </div>
 
                     {/* Duration */}
-                    <span className="text-xs font-mono text-indigo-300 shrink-0">
+                    <span className="text-xs font-mono tabular-nums text-indigo-300 shrink-0">
                       {formatTime(currentTrack.duration, currentTrack.source)}
                     </span>
                   </div>
@@ -396,11 +396,11 @@ export const QueueDrawer: React.FC = () => {
               {/* Up Next List */}
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">
+                  <span className="text-[10px] font-sans font-semibold uppercase tracking-wider text-zinc-400">
                     Next in Queue ({upNextTracks.length})
                   </span>
                   {hasUnknownDurations && (
-                    <span className="text-[10px] font-mono text-amber-400 flex items-center gap-1">
+                    <span className="text-[10px] font-sans font-medium text-amber-400 flex items-center gap-1">
                       <AuraIcon name="alertCircle" size={12} />
                       Partial runtime
                     </span>

@@ -177,7 +177,7 @@ export const AuraAccountModal: React.FC<AuraAccountModalProps> = ({ isOpen, onCl
                 aria-label="Listener Name"
                 className="w-full bg-transparent font-bold text-white text-sm focus:outline-none border-b border-transparent focus:border-indigo-500 py-0.5"
               />
-              <p className="text-[11px] text-zinc-400 font-mono">On-Device Studio Profile</p>
+              <p className="text-[11px] text-zinc-400 font-sans font-medium">On-Device Studio Profile</p>
             </div>
           </div>
 

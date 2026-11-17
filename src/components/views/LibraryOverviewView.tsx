@@ -104,7 +104,7 @@ export const LibraryOverviewView: React.FC = () => {
           ------------------------------------------------------------- */}
       <section className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-white/[0.06]">
         <div>
-          <div className="flex items-center gap-2 mb-1.5 text-xs font-mono text-zinc-400">
+          <div className="flex items-center gap-2 mb-1.5 text-xs text-zinc-400 font-medium font-sans">
             <AuraIcon name="database" size={14} className="text-sky-400" />
             <span className="uppercase tracking-wider text-[11px] font-semibold text-sky-400">Personal Collection</span>
             <span className="text-zinc-600" aria-hidden="true">·</span>
@@ -190,7 +190,7 @@ export const LibraryOverviewView: React.FC = () => {
           className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-lg aura-hover-scale aura-pressable-subtle"
         >
           <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300">Tracks</span>
+            <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400">Tracks</span>
             <AuraIcon name="musicNote" size={16} className="text-sky-400" />
           </div>
           <div className="mt-3">
@@ -204,7 +204,7 @@ export const LibraryOverviewView: React.FC = () => {
           className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-lg aura-hover-scale aura-pressable-subtle"
         >
           <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300">Albums</span>
+            <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400">Albums</span>
             <AuraIcon name="disc" size={16} className="text-purple-400" />
           </div>
           <div className="mt-3">
@@ -218,7 +218,7 @@ export const LibraryOverviewView: React.FC = () => {
           className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-lg aura-hover-scale aura-pressable-subtle"
         >
           <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300">Artists</span>
+            <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400">Artists</span>
             <AuraIcon name="user" size={16} className="text-amber-400" />
           </div>
           <div className="mt-3">
@@ -232,7 +232,7 @@ export const LibraryOverviewView: React.FC = () => {
           className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-lg aura-hover-scale aura-pressable-subtle"
         >
           <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300">Playlists</span>
+            <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400">Playlists</span>
             <AuraIcon name="playlist" size={16} className="text-emerald-400" />
           </div>
           <div className="mt-3">
@@ -246,7 +246,7 @@ export const LibraryOverviewView: React.FC = () => {
           className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-lg aura-hover-scale aura-pressable-subtle"
         >
           <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300">Liked Songs</span>
+            <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400">Liked Songs</span>
             <AuraIcon name="heart" size={16} filled className="text-rose-400" />
           </div>
           <div className="mt-3">
@@ -257,7 +257,7 @@ export const LibraryOverviewView: React.FC = () => {
 
         <div className="p-4 rounded-3xl glass-ambient border border-white/[0.18] flex flex-col justify-between shadow-lg">
           <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300">Vault Storage</span>
+            <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400">Vault Storage</span>
             <AuraIcon name="hardDrive" size={16} className="text-cyan-400" />
           </div>
           <div className="mt-3">
@@ -346,7 +346,7 @@ export const LibraryOverviewView: React.FC = () => {
                 Tracks you recently experienced across your active playback sessions
               </p>
             </div>
-            <span className="text-xs text-zinc-500 font-mono hidden sm:inline">Recent Sessions</span>
+            <span className="text-xs text-zinc-500 font-sans font-medium hidden sm:inline">Recent Sessions</span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-5">

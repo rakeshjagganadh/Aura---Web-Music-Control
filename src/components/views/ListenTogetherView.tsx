@@ -865,7 +865,7 @@ export const ListenTogetherView: React.FC = () => {
             <div className="flex items-center justify-between text-xs text-zinc-400 border-b border-white/5 pb-3">
               <div className="flex items-center gap-2">
                 <AuraIcon name="disc" size={14} className={`text-indigo-400 ${isPlaying && !prefersReducedMotion ? 'animate-spin [animation-duration:4s]' : ''}`} />
-                <span className="font-mono uppercase tracking-widest text-[10px] text-zinc-400 font-semibold">
+                <span className="font-sans uppercase tracking-widest text-[10px] text-zinc-400 font-semibold">
                   ROOM AUDIO CENTREPIECE
                 </span>
               </div>
@@ -873,11 +873,11 @@ export const ListenTogetherView: React.FC = () => {
               <div className="flex items-center gap-2">
                 {currentTrack?.source && renderSourceBadge(currentTrack.source)}
                 {isOwner ? (
-                  <span className="text-[10px] font-mono text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+                  <span className="text-[10px] font-sans font-medium text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
                     Host Seeking Enabled
                   </span>
                 ) : (
-                  <span className="text-[10px] font-mono text-zinc-500">
+                  <span className="text-[10px] font-sans font-medium text-zinc-500">
                     Host Controls Seek
                   </span>
                 )}
@@ -919,7 +919,7 @@ export const ListenTogetherView: React.FC = () => {
 
                   {/* Metadata Hierarchy */}
                   <div className="w-full min-w-0 flex flex-col justify-center pt-1 overflow-hidden">
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-indigo-400 font-bold mb-1">
+                    <span className="text-[10px] font-sans uppercase tracking-widest text-indigo-400 font-bold mb-1">
                       CURRENTLY PLAYING FOR ALL LISTENERS
                     </span>
                     <h2 
@@ -935,10 +935,10 @@ export const ListenTogetherView: React.FC = () => {
                       {currentTrack.artist}
                     </p>
 
-                    <div className="flex items-center gap-2 justify-center sm:justify-start text-xs font-mono text-zinc-400 flex-wrap">
+                    <div className="flex items-center gap-2 justify-center sm:justify-start text-xs font-sans text-zinc-400 flex-wrap">
                       <span className="truncate max-w-[180px] sm:max-w-xs">{currentTrack.album || 'Single Release'}</span>
                       <span>·</span>
-                      <span>{formatSeconds(currentTrack.duration)}</span>
+                      <span className="font-mono tabular-nums">{formatSeconds(currentTrack.duration)}</span>
                       <span>·</span>
                       <span className="capitalize">{currentTrack.source || 'Stream'}</span>
                     </div>
@@ -1240,7 +1240,7 @@ export const ListenTogetherView: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className={`w-2 h-2 rounded-full bg-emerald-400 ${!prefersReducedMotion ? 'animate-pulse' : ''}`} />
-                  <span className="text-[11px] font-mono uppercase tracking-widest text-zinc-300 font-bold">
+                  <span className="text-[11px] font-sans uppercase tracking-widest text-zinc-300 font-bold">
                     ROOM SOCIAL HUB
                   </span>
                 </div>
@@ -1454,7 +1454,7 @@ export const ListenTogetherView: React.FC = () => {
             {activeSocialTab === 'participants' && (
               <div className="p-4 flex flex-col gap-4">
                 <div className="flex items-center justify-between text-xs text-zinc-400 border-b border-white/5 pb-2.5">
-                  <span className="font-mono uppercase tracking-wider text-[11px] text-zinc-300 font-bold">
+                  <span className="font-sans uppercase tracking-wider text-[11px] text-zinc-300 font-bold">
                     Connected Listeners ({participants.length || 1})
                   </span>
                   <TelemetryBadge variant="emerald" size="sm" dot>
@@ -1497,10 +1497,10 @@ export const ListenTogetherView: React.FC = () => {
                                 {p.name}
                               </span>
                               {isSelf && (
-                                <span className="text-zinc-500 text-[10px] font-mono">(You)</span>
+                                <span className="text-zinc-500 text-[10px] font-sans font-medium">(You)</span>
                               )}
                             </div>
-                            <span className="text-[10px] text-zinc-500 font-mono">
+                            <span className="text-[10px] text-zinc-500 font-sans font-medium">
                               Joined {formatRelativeTime(p.joinedAt || Date.now())}
                             </span>
                           </div>
@@ -1546,7 +1546,7 @@ export const ListenTogetherView: React.FC = () => {
             {activeSocialTab === 'activity' && (
               <div className="p-4 flex flex-col gap-4">
                 <div className="flex items-center justify-between text-xs text-zinc-400 border-b border-white/5 pb-2.5">
-                  <span className="font-mono uppercase tracking-wider text-[11px] text-zinc-300 font-bold">
+                  <span className="font-sans uppercase tracking-wider text-[11px] text-zinc-300 font-bold">
                     Room Event Stream
                   </span>
                   <TelemetryBadge variant="glass" size="sm">Live</TelemetryBadge>

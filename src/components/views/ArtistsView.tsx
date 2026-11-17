@@ -461,9 +461,12 @@ export const ArtistsView: React.FC = () => {
             <button
               type="button"
               onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              className="hover:text-white px-1 text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400 cursor-pointer"
+              className="hover:text-white px-2 py-1 text-xs font-semibold rounded-lg bg-white/5 hover:bg-white/10 text-amber-400 cursor-pointer aura-focus-ring flex items-center gap-1 min-h-[28px] sm:min-h-[30px]"
+              title="Toggle sort direction"
+              aria-label={`Sort order ${sortOrder === 'asc' ? 'ascending' : 'descending'}`}
             >
-              {sortOrder}
+              <AuraIcon name={sortOrder === 'asc' ? 'chevronUp' : 'chevronDown'} size={14} />
+              <span className="uppercase text-[10px] tracking-wider">{sortOrder}</span>
             </button>
           </div>
         </div>

@@ -165,7 +165,7 @@ export const PlaylistDetailView: React.FC = () => {
 
         {/* Details & Controls */}
         <div className="flex-1 min-w-0 text-center md:text-left">
-          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-300 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/25 inline-block mb-2">
+          <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-emerald-400 inline-block mb-2">
             PLAYLIST
           </span>
 
@@ -182,7 +182,7 @@ export const PlaylistDetailView: React.FC = () => {
           <div className="flex items-center justify-center md:justify-start gap-2 mt-2 text-xs text-zinc-400 font-ui-meta">
             <span>{playlistTracks.length} {playlistTracks.length === 1 ? 'track' : 'tracks'}</span>
             <span className="text-zinc-600" aria-hidden="true">·</span>
-            <span className="font-mono">{formatDuration(totalDurationSeconds)}</span>
+            <span className="font-mono tabular-nums">{formatDuration(totalDurationSeconds)}</span>
             {playlist.createdAt && (
               <>
                 <span className="text-zinc-600" aria-hidden="true">·</span>

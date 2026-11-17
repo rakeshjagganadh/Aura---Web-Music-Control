@@ -161,11 +161,11 @@ export const PlaylistsView: React.FC = () => {
       {/* Header */}
       <section className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-white/[0.06]">
         <div>
-          <div className="flex items-center gap-2 mb-1.5 text-xs font-mono text-zinc-400">
+          <div className="flex items-center gap-2 mb-1.5 text-xs text-zinc-400 font-medium font-sans">
             <AuraIcon name="playlist" size={14} className="text-emerald-400" />
             <span className="uppercase tracking-wider text-[11px] font-semibold text-emerald-400">Playlists & Spaces</span>
             <span className="text-zinc-600" aria-hidden="true">·</span>
-            <span>{playlists.length} custom collections</span>
+            <span><span className="font-mono tabular-nums">{playlists.length}</span> custom collections</span>
           </div>
 
           <h1 className="text-2xl sm:text-4xl font-page-title text-white tracking-tight">
@@ -230,9 +230,12 @@ export const PlaylistsView: React.FC = () => {
             <button
               type="button"
               onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              className="hover:text-white px-1 text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 cursor-pointer"
+              className="hover:text-white px-2 py-1 text-xs font-semibold rounded-lg bg-white/5 hover:bg-white/10 text-emerald-400 cursor-pointer aura-focus-ring flex items-center gap-1 min-h-[28px] sm:min-h-[30px]"
+              title="Toggle sort direction"
+              aria-label={`Sort order ${sortOrder === 'asc' ? 'ascending' : 'descending'}`}
             >
-              {sortOrder}
+              <AuraIcon name={sortOrder === 'asc' ? 'chevronUp' : 'chevronDown'} size={14} />
+              <span className="uppercase text-[10px] tracking-wider">{sortOrder}</span>
             </button>
           </div>
         </div>

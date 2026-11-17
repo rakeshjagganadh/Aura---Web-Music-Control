@@ -252,10 +252,10 @@ export const SettingsView: React.FC = () => {
                     type="button"
                     key={mode}
                     onClick={() => updateSettings({ qualityDsp: mode })}
-                    className={`relative px-3 py-1 text-xs font-mono capitalize rounded-lg transition-colors cursor-pointer aura-pressable aura-focus-ring ${
+                    className={`relative px-3 py-1.5 min-h-[30px] text-xs font-sans capitalize rounded-lg transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                       isActive
                         ? 'text-white font-semibold'
-                        : 'text-zinc-400 hover:text-zinc-200'
+                        : 'text-zinc-400 hover:text-zinc-200 font-medium'
                     }`}
                   >
                     {isActive && (
@@ -325,16 +325,16 @@ export const SettingsView: React.FC = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
           <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-white/5">
-            <span className="text-[11px] font-mono text-zinc-500">Tracks Stored</span>
-            <p className="text-lg font-bold text-zinc-100 mt-0.5">{tracks.length}</p>
+            <span className="text-[11px] font-sans font-medium text-zinc-400">Tracks Stored</span>
+            <p className="text-lg font-bold text-zinc-100 mt-0.5 font-mono tabular-nums">{tracks.length}</p>
           </div>
           <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-white/5">
-            <span className="text-[11px] font-mono text-zinc-500">Playlists</span>
-            <p className="text-lg font-bold text-zinc-100 mt-0.5">{playlists.length}</p>
+            <span className="text-[11px] font-sans font-medium text-zinc-400">Playlists</span>
+            <p className="text-lg font-bold text-zinc-100 mt-0.5 font-mono tabular-nums">{playlists.length}</p>
           </div>
           <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-white/5">
-            <span className="text-[11px] font-mono text-zinc-500">Storage Used</span>
-            <p className="text-lg font-bold text-emerald-400 mt-0.5">{formatStorageMB(storageUsage.approxBytes)}</p>
+            <span className="text-[11px] font-sans font-medium text-zinc-400">Storage Used</span>
+            <p className="text-lg font-bold text-emerald-400 mt-0.5 font-mono tabular-nums">{formatStorageMB(storageUsage.approxBytes)}</p>
           </div>
         </div>
 
@@ -526,7 +526,7 @@ export const SettingsView: React.FC = () => {
           </div>
 
           {isInstalled ? (
-            <span className="flex items-center gap-1.5 text-emerald-400 text-xs font-medium font-mono">
+            <span className="flex items-center gap-1.5 text-emerald-400 text-xs font-sans font-medium">
               <AuraIcon name="checkCircle" size={14} />
               Standalone Mode
             </span>
@@ -540,7 +540,7 @@ export const SettingsView: React.FC = () => {
               <span>Install AURA</span>
             </button>
           ) : (
-            <span className="px-2.5 py-1 rounded-lg bg-white/5 text-zinc-400 text-xs font-mono">
+            <span className="px-2.5 py-1 rounded-lg bg-white/5 text-zinc-400 text-xs font-sans font-medium">
               Browser Web Mode
             </span>
           )}
@@ -549,15 +549,15 @@ export const SettingsView: React.FC = () => {
         <div className="flex flex-col gap-2 text-xs text-zinc-300 pt-2 border-t border-white/5">
           <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/60">
             <span>App Shell Cache & Service Worker</span>
-            <span className="font-mono text-emerald-400">Active (v2 shell precached)</span>
+            <span className="font-sans font-medium text-emerald-400">Active (v2 shell precached)</span>
           </div>
           <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/60">
             <span>Local Music Storage</span>
-            <span className="font-mono text-zinc-400">Local Browser IndexedDB (Private)</span>
+            <span className="font-sans font-medium text-zinc-400">Local Browser IndexedDB (Private)</span>
           </div>
           <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/60">
             <span>Display Environment</span>
-            <span className="font-mono text-zinc-400">
+            <span className="font-sans font-medium text-zinc-400">
               {isInstalled ? 'Standalone Window (Zero URL bar)' : 'Standard Browser View'}
             </span>
           </div>
