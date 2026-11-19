@@ -162,7 +162,8 @@ class RoomService {
   public async createRoom(
     roomName: string,
     initialTrack: SharedRoomTrack | null = null,
-    creatorName?: string
+    creatorName?: string,
+    options?: { initialIsPlaying?: boolean; initialPosition?: number }
   ): Promise<{ roomId: string; state: SharedRoomState }> {
     const roomId = this.generateRoomId();
     const identity = this.getOrCreateUserIdentity(creatorName);
@@ -175,6 +176,11 @@ class RoomService {
       isSelf: true,
     };
 
+    const initialIsPlaying = Boolean(initialTrack && options?.initialIsPlaying);
+    const initialPosition = initialTrack && typeof options?.initialPosition === 'number' && Number.isFinite(options.initialPosition)
+      ? Math.max(0, options.initialPosition)
+      : 0;
+
     const initialState: SharedRoomState = {
       roomId,
       roomName: roomName.trim() || 'AURA Shared Room',
@@ -182,8 +188,8 @@ class RoomService {
       ownerName: identity.name,
       currentTrack: initialTrack,
       queue: initialTrack ? [initialTrack] : [],
-      isPlaying: false,
-      position: 0,
+      isPlaying: initialIsPlaying,
+      position: initialPosition,
       playbackRate: 1,
       updatedAt: Date.now(),
       version: 1,

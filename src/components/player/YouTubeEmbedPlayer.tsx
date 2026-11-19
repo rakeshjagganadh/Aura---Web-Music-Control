@@ -62,7 +62,7 @@ export const YouTubeEmbedPlayer: React.FC = () => {
               // YT.PlayerState: UNSTARTED = -1, ENDED = 0, PLAYING = 1, PAUSED = 2, BUFFERING = 3, CUED = 5
               if (event.data === 1) {
                 // Confirmed Playing
-                youtubePlayerBridge.updateState({ isPlaying: true });
+                youtubePlayerBridge.notifyPlaybackStarted(event.target);
                 youtubePlayerBridge.applyPendingSyncSeekIfNeeded();
                 const dur = event.target?.getDuration?.();
                 if (typeof dur === 'number' && !isNaN(dur) && dur > 0) {
@@ -167,7 +167,15 @@ export const YouTubeEmbedPlayer: React.FC = () => {
       }
     };
 
+    const handleGestureUnlock = () => {
+      if (youtubePlayerBridge.getState().autoplayBlocked) {
+        youtubePlayerBridge.unlockFromGesture();
+      }
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('pointerdown', handleGestureUnlock, { passive: true, capture: true });
+    document.addEventListener('keydown', handleGestureUnlock, { passive: true, capture: true });
 
     return () => {
       isMounted = false;
@@ -176,6 +184,8 @@ export const YouTubeEmbedPlayer: React.FC = () => {
         clearInterval(timeUpdateInterval.current);
       }
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('pointerdown', handleGestureUnlock, { capture: true });
+      document.removeEventListener('keydown', handleGestureUnlock, { capture: true });
       youtubePlayerBridge.unregisterPlayer();
     };
   }, []);

@@ -40,6 +40,7 @@ export const MobileMiniPlayer: React.FC = () => {
   const {
     currentTrack,
     isPlaying,
+    isAudioOutputBlocked,
     currentTime,
     duration,
     togglePlay,
@@ -55,11 +56,13 @@ export const MobileMiniPlayer: React.FC = () => {
 
   const {
     isInRoom,
+    activeRoom,
     isOwner,
     isLocallySilenced,
     roomTogglePlay,
     roomNext,
     roomSeek,
+    resyncPlayback,
   } = useListenTogether();
 
   const progressBarRef = useRef<HTMLDivElement>(null);
@@ -288,6 +291,19 @@ export const MobileMiniPlayer: React.FC = () => {
             className="flex items-center gap-0.5 sm:gap-1 shrink-0"
             onClick={(e) => e.stopPropagation()}
           >
+            {isInRoom && !isLocallySilenced && activeRoom?.isPlaying && isAudioOutputBlocked && (
+              <MotionPress
+                onClick={resyncPlayback}
+                intensity="control"
+                aria-label="Enable Room Sound"
+                title="Browser paused room audio — tap to enable sound"
+                className="h-8 px-2 rounded-full bg-amber-400 hover:bg-amber-300 text-zinc-950 text-[10px] font-semibold flex items-center gap-1 cursor-pointer aura-focus-ring shrink-0"
+              >
+                <AuraIcon name="volumeHigh" size={14} />
+                <span>Sound</span>
+              </MotionPress>
+            )}
+
             {/* Favorite Heart */}
             <MotionPress
               onClick={() => toggleFavorite(currentTrack.id)}

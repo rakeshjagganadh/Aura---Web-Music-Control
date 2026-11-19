@@ -57,7 +57,14 @@ export const TrackRow: React.FC<TrackRowProps> = ({
     setCurrentView,
   } = useMusic();
 
-  const { isInRoom, roomAddTrack, createRoom } = useListenTogether();
+  const {
+    isInRoom,
+    isLocallySilenced,
+    roomTogglePlay,
+    roomPlayTrack,
+    roomAddTrack,
+    createRoom,
+  } = useListenTogether();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -93,6 +100,15 @@ export const TrackRow: React.FC<TrackRowProps> = ({
   }, [isMenuOpen]);
 
   const handleRowClick = () => {
+    if (isInRoom && !isLocallySilenced) {
+      if (isCurrent) {
+        void roomTogglePlay();
+      } else {
+        void roomPlayTrack(track);
+      }
+      return;
+    }
+
     if (isCurrent) {
       togglePlay();
     } else {

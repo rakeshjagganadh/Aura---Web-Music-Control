@@ -137,6 +137,18 @@ export interface IRoomRealtimeAdapter {
   setLivePositionProvider?(provider: LivePlaybackPositionProvider | null): void;
 }
 
+// Checks whether a track is stored only locally on the host device and cannot be streamed by remote room guests
+export function isPrivateLocalTrack(track: Partial<Track> | Partial<SharedRoomTrack> | null | undefined): boolean {
+  if (!track) return false;
+  if (track.source && track.source !== 'local') return false;
+  const hasStream = Boolean(
+    track.externalStreamUrl ||
+      (track as Partial<Track>).audioUrl ||
+      track.sourceUrl
+  );
+  return !hasStream;
+}
+
 // Helper to convert Track to SharedRoomTrack
 export function trackToSharedTrack(track: Track): SharedRoomTrack {
   let streamUrl = track.externalStreamUrl || track.audioUrl || '';
@@ -154,7 +166,7 @@ export function trackToSharedTrack(track: Track): SharedRoomTrack {
     source: track.source || 'local',
     sourceId: track.sourceId ? String(track.sourceId).replace(/^audius-/, '') : undefined,
     sourceUrl: track.sourceUrl,
-    externalStreamUrl: streamUrl,
+    externalStreamUrl: streamUrl || undefined,
     coverUrl: track.coverUrl,
     coverColor: track.coverColor,
   };
@@ -162,13 +174,17 @@ export function trackToSharedTrack(track: Track): SharedRoomTrack {
 
 // Helper to convert SharedRoomTrack back to Track for AURA player
 export function sharedTrackToTrack(shared: SharedRoomTrack): Track {
-  let streamUrl = shared.externalStreamUrl || '';
+  let streamUrl = shared.externalStreamUrl || shared.sourceUrl || '';
   const cleanSourceId = shared.sourceId ? String(shared.sourceId).replace(/^audius-/, '') : String(shared.id).replace(/^audius-/, '');
 
   if (shared.source === 'audius') {
-    if (!streamUrl || !streamUrl.includes('/stream')) {
+    if (!shared.externalStreamUrl || !shared.externalStreamUrl.includes('/stream')) {
       streamUrl = `https://api.audius.co/v1/tracks/${cleanSourceId}/stream?app_name=AURA_STUDIO`;
+    } else {
+      streamUrl = shared.externalStreamUrl;
     }
+  } else if (shared.source === 'youtube') {
+    streamUrl = shared.externalStreamUrl || '';
   }
 
   return {
@@ -185,8 +201,8 @@ export function sharedTrackToTrack(shared: SharedRoomTrack): Track {
     source: shared.source,
     sourceId: cleanSourceId,
     sourceUrl: shared.sourceUrl || (shared.source === 'audius' ? `https://audius.co/tracks/${cleanSourceId}` : undefined),
-    externalStreamUrl: streamUrl,
-    audioUrl: streamUrl,
+    externalStreamUrl: streamUrl || undefined,
+    audioUrl: streamUrl || undefined,
     isAvailable: true,
   };
 }

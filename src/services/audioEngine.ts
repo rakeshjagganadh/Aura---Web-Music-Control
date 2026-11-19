@@ -230,9 +230,15 @@ export class AudioEngine {
   private onEndedCallback: (() => void) | null = null;
   private onStateChangeCallback: ((isPlaying: boolean) => void) | null = null;
   private onDirectStreamChangeCallback: ((isDirect: boolean) => void) | null = null;
+  private blockedListeners = new Set<(blocked: boolean) => void>();
   private isUserPlaying: boolean = false;
   private isExplicitUserPause: boolean = false;
   private lastLifecycleTransitionTime: number = 0;
+  private lastPlayNotAllowed: boolean = false;
+  private autoplayBlocked: boolean = false;
+  private hasBoundGestureUnlock: boolean = false;
+  private desiredVolume: number = 0.85;
+  private desiredMuted: boolean = false;
 
   public init(): void {
     if (this.isInitialized) return;
@@ -314,21 +320,42 @@ export class AudioEngine {
           }
         }
       });
-    }
-
-      if (this.ctx) {
-        this.ctx.onstatechange = () => {
-          if (
-            typeof document !== 'undefined' &&
-            document.visibilityState === 'visible' &&
-            this.ctx &&
-            this.ctx.state === 'suspended' &&
-            this.isUserPlaying
-          ) {
-            this.ctx.resume().catch(() => {});
+      if (!this.hasBoundGestureUnlock) {
+        this.hasBoundGestureUnlock = true;
+        const handleUserGesture = () => {
+          const needsCtxResume = Boolean(this.ctx && this.ctx.state === 'suspended');
+          const activeEl = this.getActiveAudioEl();
+          const needsElPlay = Boolean(
+            this.isUserPlaying &&
+            !this.isExplicitUserPause &&
+            activeEl &&
+            activeEl.src &&
+            (activeEl.paused || this.lastPlayNotAllowed)
+          );
+          if (needsCtxResume || needsElPlay || this.autoplayBlocked) {
+            this.unlockAudio();
           }
         };
+        document.addEventListener('pointerdown', handleUserGesture, { passive: true, capture: true });
+        document.addEventListener('keydown', handleUserGesture, { passive: true, capture: true });
+        document.addEventListener('touchend', handleUserGesture, { passive: true, capture: true });
       }
+    }
+
+    if (this.ctx) {
+      this.ctx.onstatechange = () => {
+        if (
+          typeof document !== 'undefined' &&
+          document.visibilityState === 'visible' &&
+          this.ctx &&
+          this.ctx.state === 'suspended' &&
+          this.isUserPlaying
+        ) {
+          this.ctx.resume().catch(() => {});
+        }
+        this.recomputeAutoplayBlocked();
+      };
+    }
 
     const setupListeners = (el: HTMLAudioElement, isDirect: boolean) => {
       el.addEventListener('timeupdate', () => {
@@ -379,7 +406,16 @@ export class AudioEngine {
         if (this.isDirectStreaming === isDirect) {
           this.isUserPlaying = true;
           this.isExplicitUserPause = false;
+          this.lastPlayNotAllowed = false;
           this.onStateChangeCallback?.(true);
+          this.recomputeAutoplayBlocked();
+        }
+      });
+
+      el.addEventListener('playing', () => {
+        if (this.isDirectStreaming === isDirect) {
+          this.lastPlayNotAllowed = false;
+          this.recomputeAutoplayBlocked();
         }
       });
 
@@ -744,10 +780,89 @@ export class AudioEngine {
     return curve;
   }
 
+  private recomputeAutoplayBlocked(): void {
+    const wantsPlay = this.isUserPlaying && !this.isExplicitUserPause && !!this.currentTrack;
+    const ctxBlocked = Boolean(wantsPlay && !this.isDirectStreaming && this.ctx && this.ctx.state !== 'running');
+    const elBlocked = Boolean(wantsPlay && this.lastPlayNotAllowed);
+    const next = ctxBlocked || elBlocked;
+    if (next !== this.autoplayBlocked) {
+      this.autoplayBlocked = next;
+      this.blockedListeners.forEach((fn) => {
+        try {
+          fn(next);
+        } catch {}
+      });
+    }
+  }
+
+  public isAudioOutputBlocked(): boolean {
+    return this.autoplayBlocked;
+  }
+
+  public onAutoplayBlockedChange(cb: (blocked: boolean) => void): () => void {
+    this.blockedListeners.add(cb);
+    cb(this.autoplayBlocked);
+    return () => this.blockedListeners.delete(cb);
+  }
+
+  /**
+   * Synchronously unlocks WebAudio AudioContext and retries any blocked media element
+   * inside a real user gesture (click / tap / keydown). Never blocks caller.
+   */
+  public unlockAudio(): void {
+    this.init();
+
+    if (this.ctx && this.ctx.state === 'suspended') {
+      try {
+        // 1-sample silent buffer helps Safari/iOS WebKit unlock hardware audio output immediately
+        const silentBuf = this.ctx.createBuffer(1, 1, 22050);
+        const src = this.ctx.createBufferSource();
+        src.buffer = silentBuf;
+        src.connect(this.ctx.destination);
+        src.start(0);
+      } catch {
+        // ignore
+      }
+      this.ctx
+        .resume()
+        .then(() => {
+          this.recomputeAutoplayBlocked();
+        })
+        .catch(() => {
+          this.recomputeAutoplayBlocked();
+        });
+    }
+
+    const activeEl = this.getActiveAudioEl();
+    if (this.isUserPlaying && !this.isExplicitUserPause && activeEl && activeEl.src) {
+      activeEl.muted = this.desiredMuted;
+      if (this.isDirectStreaming) {
+        activeEl.volume = this.desiredVolume;
+      }
+      if (activeEl.paused || this.lastPlayNotAllowed) {
+        activeEl
+          .play()
+          .then(() => {
+            this.lastPlayNotAllowed = false;
+            this.recomputeAutoplayBlocked();
+          })
+          .catch((err: any) => {
+            if (err?.name === 'NotAllowedError') {
+              this.lastPlayNotAllowed = true;
+            }
+            this.recomputeAutoplayBlocked();
+          });
+      }
+    } else {
+      this.recomputeAutoplayBlocked();
+    }
+  }
+
   public async resumeContext(): Promise<void> {
     this.init();
     if (this.ctx && this.ctx.state === 'suspended') {
-      await this.ctx.resume();
+      await this.ctx.resume().catch(() => {});
+      this.recomputeAutoplayBlocked();
     }
   }
 
@@ -759,7 +874,14 @@ export class AudioEngine {
 
   public async loadTrack(track: Track, audioSource: Blob | string, autoPlay = true, startTime: number = 0): Promise<void> {
     this.init();
-    await this.resumeContext();
+    // Kick off non-blocking resume if suspended; NEVER await ctx.resume() here because
+    // Safari/iOS can hang ctx.resume() outside a user gesture and deadlock track loading.
+    if (this.ctx && this.ctx.state === 'suspended') {
+      void this.ctx
+        .resume()
+        .then(() => this.recomputeAutoplayBlocked())
+        .catch(() => this.recomputeAutoplayBlocked());
+    }
 
     const myLoadGen = ++this.loadGeneration;
     if (this.activeLoadErrorCleanup) {
@@ -789,6 +911,7 @@ export class AudioEngine {
     }
 
     this.currentTrack = track;
+    this.lastPlayNotAllowed = false;
 
     const isRemoteHttp = typeof audioSource === 'string' && (url.startsWith('http://') || url.startsWith('https://'));
     // Attempt CORS Web Audio first for all HTTP streams (Local, Audius, Jamendo, Curated, Radio Browser).
@@ -799,6 +922,7 @@ export class AudioEngine {
     this.onDirectStreamChangeCallback?.(this.isDirectStreaming);
     this.isUserPlaying = autoPlay;
     this.isExplicitUserPause = !autoPlay;
+    this.recomputeAutoplayBlocked();
 
     const startDirectPlayback = async (reason?: string): Promise<void> => {
       if (myLoadGen !== this.loadGeneration) return;
@@ -826,6 +950,8 @@ export class AudioEngine {
       }
 
       if (this.directAudioEl) {
+        this.directAudioEl.volume = this.desiredVolume;
+        this.directAudioEl.muted = this.desiredMuted;
         this.directAudioEl.src = url;
 
         if (startTime > 0) {
@@ -844,18 +970,28 @@ export class AudioEngine {
         if (autoPlay && this.isUserPlaying) {
           try {
             await this.directAudioEl.play();
+            this.lastPlayNotAllowed = false;
             if (startTime > 0 && myLoadGen === this.loadGeneration) {
               try {
                 this.directAudioEl.currentTime = startTime;
               } catch {}
             }
+            this.recomputeAutoplayBlocked();
           } catch (fallbackErr: any) {
+            if (myLoadGen !== this.loadGeneration) return;
             if (fallbackErr?.name === 'AbortError' || fallbackErr?.message?.includes('interrupted')) {
               console.debug('[AudioEngine] Direct fallback play interrupted:', fallbackErr);
+            } else if (fallbackErr?.name === 'NotAllowedError') {
+              console.warn('[AudioEngine] Direct audio autoplay waiting for user gesture:', fallbackErr);
+              this.lastPlayNotAllowed = true;
+              this.recomputeAutoplayBlocked();
             } else {
-              console.warn('[AudioEngine] Direct audio fallback waiting for gesture or failed:', fallbackErr);
+              console.warn('[AudioEngine] Direct audio fallback failed:', fallbackErr);
+              this.recomputeAutoplayBlocked();
             }
           }
+        } else {
+          this.recomputeAutoplayBlocked();
         }
       }
     };
@@ -871,6 +1007,9 @@ export class AudioEngine {
     }
 
     if (this.audioEl) {
+      this.audioEl.volume = 1.0;
+      this.audioEl.muted = this.desiredMuted;
+
       // Strip crossOrigin for local blobs to prevent browser CORS sandbox bugs
       if (isRemoteHttp) {
         this.audioEl.crossOrigin = 'anonymous';
@@ -895,6 +1034,8 @@ export class AudioEngine {
           this.activeLoadErrorCleanup();
           this.activeLoadErrorCleanup = null;
         }
+        this.lastPlayNotAllowed = false;
+        this.recomputeAutoplayBlocked();
       };
 
       if (isRemoteHttp) {
@@ -924,17 +1065,21 @@ export class AudioEngine {
       if (autoPlay) {
         try {
           await this.audioEl.play();
+          this.lastPlayNotAllowed = false;
           if (startTime > 0 && myLoadGen === this.loadGeneration) {
             try {
               this.audioEl.currentTime = startTime;
             } catch {}
           }
+          this.recomputeAutoplayBlocked();
         } catch (e: any) {
           if (myLoadGen !== this.loadGeneration) return;
           if (e?.name === 'AbortError' || e?.message?.includes('interrupted')) {
             console.debug('[AudioEngine] WebAudio play interrupted:', e);
           } else if (e?.name === 'NotAllowedError') {
             console.warn('[AudioEngine] WebAudio autoplay waiting for user gesture:', e);
+            this.lastPlayNotAllowed = true;
+            this.recomputeAutoplayBlocked();
           } else {
             console.warn('[AudioEngine] WebAudio CORS/decode fallback to direct stream:', e?.message || e);
             if (isRemoteHttp) {
@@ -949,33 +1094,49 @@ export class AudioEngine {
   public async play(): Promise<void> {
     this.isUserPlaying = true;
     this.isExplicitUserPause = false;
+    this.lastPlayNotAllowed = false;
     this.init();
     if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume().catch(() => {});
+      this.ctx.resume().then(() => this.recomputeAutoplayBlocked()).catch(() => this.recomputeAutoplayBlocked());
     }
     const el = this.getActiveAudioEl();
     if (el) {
+      el.muted = this.desiredMuted;
+      if (this.isDirectStreaming) {
+        el.volume = this.desiredVolume;
+      }
       try {
         await el.play();
+        this.lastPlayNotAllowed = false;
+        this.recomputeAutoplayBlocked();
       } catch (err: any) {
         if (err?.name === 'AbortError' || err?.message?.includes('interrupted')) {
           console.debug('[AudioEngine] Play request interrupted by pause or track change');
+        } else if (err?.name === 'NotAllowedError') {
+          console.warn('[AudioEngine] Play blocked waiting for gesture:', err);
+          this.lastPlayNotAllowed = true;
+          this.recomputeAutoplayBlocked();
         } else {
           console.warn('[AudioEngine] Play request failed:', err);
+          this.recomputeAutoplayBlocked();
         }
       }
+    } else {
+      this.recomputeAutoplayBlocked();
     }
   }
 
   public pause(): void {
     this.isUserPlaying = false;
     this.isExplicitUserPause = true;
+    this.lastPlayNotAllowed = false;
     if (this.audioEl) {
       this.audioEl.pause();
     }
     if (this.directAudioEl) {
       this.directAudioEl.pause();
     }
+    this.recomputeAutoplayBlocked();
   }
 
   public togglePlay(): void {
@@ -1002,6 +1163,7 @@ export class AudioEngine {
 
   public setVolume(val: number): void {
     const clamped = Math.max(0, Math.min(1, val));
+    this.desiredVolume = clamped;
     if (this.masterGain && this.ctx) {
       // Smooth linear transition prevents digital clicking/zipper noise on volume adjustments
       this.masterGain.gain.setTargetAtTime(clamped, this.ctx.currentTime, 0.015);
@@ -1016,6 +1178,7 @@ export class AudioEngine {
   }
 
   public setMute(muted: boolean): void {
+    this.desiredMuted = muted;
     if (this.audioEl) {
       this.audioEl.muted = muted;
     }

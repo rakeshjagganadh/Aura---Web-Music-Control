@@ -44,6 +44,7 @@ export const BottomPlayer: React.FC = () => {
     currentTrack,
     isDirectStreamActive,
     isPlaying,
+    isAudioOutputBlocked,
     currentTime,
     duration,
     setIsSeeking,
@@ -82,12 +83,14 @@ export const BottomPlayer: React.FC = () => {
 
   const {
     isInRoom,
+    activeRoom,
     isOwner,
     isLocallySilenced,
     roomTogglePlay,
     roomNext,
     roomPrev,
     roomSeek,
+    resyncPlayback,
   } = useListenTogether();
 
   const { prefersReducedMotion, controlTransition } = useMotionCapabilities();
@@ -640,9 +643,21 @@ export const BottomPlayer: React.FC = () => {
           </div>
 
           {/* -------------------------------------------------------------
-              RIGHT — FAVOURITE · VOLUME · AUDIO STUDIO · QUEUE · MORE
+              RIGHT — ENABLE SOUND (IF BLOCKED) · FAVOURITE · VOLUME · AUDIO STUDIO · QUEUE · MORE
               ------------------------------------------------------------- */}
           <div className="flex items-center justify-end gap-1 xl:gap-1.5 min-w-0">
+            {isInRoom && !isLocallySilenced && activeRoom?.isPlaying && isAudioOutputBlocked && (
+              <button
+                type="button"
+                onClick={resyncPlayback}
+                title="Browser paused room audio — click to enable sound and sync"
+                className="shrink-0 h-7 px-2.5 rounded-full bg-amber-400 hover:bg-amber-300 text-zinc-950 text-[11px] font-semibold flex items-center gap-1 shadow-sm cursor-pointer aura-pressable aura-focus-ring"
+              >
+                <AuraIcon name="volumeHigh" size={13} />
+                <span>Enable Sound</span>
+              </button>
+            )}
+
             {/* Favourite */}
             <MotionPress
               onClick={() => toggleFavorite(currentTrack.id)}

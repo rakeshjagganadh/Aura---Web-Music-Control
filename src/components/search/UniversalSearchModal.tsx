@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { AnimatePresence, LayoutGroup, motion } from 'motion/react';
 import { useMusic } from '../../context/MusicContext';
+import { useListenTogether } from '../../context/ListenTogetherContext';
 import { Track } from '../../types';
 import { MotionBackdrop, MotionFadeSlide, MotionModal } from '../common/motion/MotionSurface';
 import { MotionIconSwap, SharedIndicator } from '../common/motion/MotionInteractive';
@@ -62,6 +63,8 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
     togglePlay,
     toggleFavorite,
   } = useMusic();
+
+  const { isInRoom, isLocallySilenced, roomPlayTrack } = useListenTogether();
 
   const { canHover, prefersReducedMotion } = useMotionCapabilities();
 
@@ -298,6 +301,8 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
     }
     if (onSelectTrack) {
       onSelectTrack(track);
+    } else if (isInRoom && !isLocallySilenced) {
+      void roomPlayTrack(track);
     } else {
       playTrack(track);
     }

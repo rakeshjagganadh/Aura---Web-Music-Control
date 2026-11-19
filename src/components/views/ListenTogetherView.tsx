@@ -64,9 +64,10 @@ export const ListenTogetherView: React.FC = () => {
     roomReorderQueue,
     roomPlayTrack,
     roomKickParticipant,
+    resyncPlayback,
   } = useListenTogether();
 
-  const { currentTime, duration, showToast, setCurrentView } = useMusic();
+  const { currentTime, duration, isAudioOutputBlocked, showToast, setCurrentView } = useMusic();
   const { canHover, prefersReducedMotion } = useMotionCapabilities();
 
   // Modal & Form states
@@ -259,6 +260,8 @@ export const ListenTogetherView: React.FC = () => {
 
   const currentTrack = activeRoom?.currentTrack;
   const isPlaying = activeRoom?.isPlaying ?? false;
+  const isAudioActivelyFlowing = isPlaying && !isLocallySilenced && !isAudioOutputBlocked;
+  const needsAudioUnlock = Boolean(currentTrack && isPlaying && !isLocallySilenced && isAudioOutputBlocked);
   const queue = activeRoom?.queue ?? [];
 
   // Up Next: strictly upcoming tracks excluding the currently playing track (Option A)
@@ -864,7 +867,7 @@ export const ListenTogetherView: React.FC = () => {
             {/* Top Bar inside Now Playing */}
             <div className="flex items-center justify-between text-xs text-zinc-400 border-b border-white/5 pb-3">
               <div className="flex items-center gap-2">
-                <AuraIcon name="disc" size={14} className={`text-indigo-400 ${isPlaying && !prefersReducedMotion ? 'animate-spin [animation-duration:4s]' : ''}`} />
+                <AuraIcon name="disc" size={14} className={`text-indigo-400 ${isAudioActivelyFlowing && !prefersReducedMotion ? 'animate-spin [animation-duration:4s]' : ''}`} />
                 <span className="font-sans uppercase tracking-widest text-[10px] text-zinc-400 font-semibold">
                   ROOM AUDIO CENTREPIECE
                 </span>
@@ -904,8 +907,8 @@ export const ListenTogetherView: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Equalizer Pulsing Overlay when Playing */}
-                    {isPlaying && !isLocallySilenced && (
+                    {/* Equalizer Pulsing Overlay when Audio is Actively Flowing */}
+                    {isAudioActivelyFlowing && (
                       <div className="absolute inset-0 bg-black/35 backdrop-blur-[1px] flex items-end justify-center pb-3 pointer-events-none">
                         <span className="flex items-end gap-1.5 h-6">
                           <span className={`w-1.5 bg-indigo-400 rounded-full h-4 ${!prefersReducedMotion ? 'animate-[pulse_0.8s_ease-in-out_infinite_100ms]' : ''}`} />
@@ -919,8 +922,24 @@ export const ListenTogetherView: React.FC = () => {
 
                   {/* Metadata Hierarchy */}
                   <div className="w-full min-w-0 flex flex-col justify-center pt-1 overflow-hidden">
-                    <span className="text-[10px] font-sans uppercase tracking-widest text-indigo-400 font-bold mb-1">
-                      CURRENTLY PLAYING FOR ALL LISTENERS
+                    <span
+                      className={`text-[10px] font-sans uppercase tracking-widest font-bold mb-1 ${
+                        needsAudioUnlock
+                          ? 'text-amber-400'
+                          : isLocallySilenced
+                          ? 'text-amber-300'
+                          : isPlaying
+                          ? 'text-indigo-400'
+                          : 'text-zinc-500'
+                      }`}
+                    >
+                      {needsAudioUnlock
+                        ? 'BROWSER PAUSED AUDIO · TAP ENABLE SOUND TO HEAR ROOM'
+                        : isLocallySilenced
+                        ? 'SOLO BREAK ACTIVE · MUTED ON YOUR DEVICE'
+                        : isPlaying
+                        ? 'CURRENTLY PLAYING FOR ALL LISTENERS'
+                        : 'PAUSED FOR ALL LISTENERS'}
                     </span>
                     <h2 
                       className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white leading-tight break-words line-clamp-2 mb-1.5 font-display"
@@ -1024,6 +1043,21 @@ export const ListenTogetherView: React.FC = () => {
                     <AuraIcon name="skipNext" size={20} filled />
                   </TactileButton>
                 </div>
+
+                {/* Browser Audio Unlock CTA (shown only if browser blocked guest autoplay) */}
+                {needsAudioUnlock && (
+                  <div className="pt-1 flex justify-center w-full">
+                    <TactileButton
+                      variant="primary"
+                      size="md"
+                      onClick={resyncPlayback}
+                      className="gap-2 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold shadow-lg shadow-amber-500/20"
+                    >
+                      <AuraIcon name="volumeHigh" size={16} />
+                      <span>Tap to Enable Room Sound & Sync</span>
+                    </TactileButton>
+                  </div>
+                )}
 
                 {/* Personal Solo Break / Device Mute */}
                 <div className="pt-1 flex justify-center w-full">

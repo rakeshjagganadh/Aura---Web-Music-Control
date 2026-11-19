@@ -86,25 +86,56 @@ function verifyToken(token: string): RoomTokenPayload | null {
   }
 }
 
-function isOriginAllowed(origin: string | undefined, host: string | undefined): boolean {
+function normalizeOriginEntry(raw: string): string {
+  const trimmed = raw.trim().replace(/\/+$/, '');
+  if (!trimmed) return '';
+  try {
+    return new URL(trimmed).origin;
+  } catch {
+    return trimmed;
+  }
+}
+
+function isOriginAllowed(
+  origin: string | undefined,
+  host: string | undefined,
+  forwardedHost?: string | undefined
+): boolean {
   const configured = (process.env.ALLOWED_ORIGINS || '')
     .split(',')
-    .map((s) => s.trim())
+    .map(normalizeOriginEntry)
     .filter(Boolean);
 
-  if (configured.length > 0) {
-    if (!origin) return false;
-    return configured.includes(origin);
+  const appOrigin = process.env.APP_URL ? normalizeOriginEntry(process.env.APP_URL) : '';
+  if (appOrigin && !configured.includes(appOrigin)) {
+    configured.push(appOrigin);
   }
 
-  // When ALLOWED_ORIGINS is unset, enforce same-host origin when Origin header is present
-  if (!origin) return true;
-  if (!host) return false;
+  const normalizedHosts = [host, forwardedHost]
+    .filter((h): h is string => typeof h === 'string' && h.trim().length > 0)
+    .map((h) => h.split(',')[0].trim().toLowerCase());
+
+  if (!origin) {
+    // Non-browser local loopback calls or unconfigured environments
+    if (configured.length === 0) return true;
+    return normalizedHosts.some(
+      (h) => h.startsWith('localhost:') || h === 'localhost' || h.startsWith('127.0.0.1')
+    );
+  }
+
+  let parsedOrigin: URL;
   try {
-    return new URL(origin).host === host;
+    parsedOrigin = new URL(origin);
   } catch {
     return false;
   }
+
+  if (configured.includes(parsedOrigin.origin)) {
+    return true;
+  }
+
+  // Always allow genuine same-host requests (handles localhost, Cloud Run, and AI Studio preview URLs)
+  return normalizedHosts.includes(parsedOrigin.host.toLowerCase());
 }
 
 function sanitizeDisplayName(raw: unknown): string {
@@ -114,8 +145,8 @@ function sanitizeDisplayName(raw: unknown): string {
 }
 
 function isValidHttpUrl(url: unknown): boolean {
-  if (typeof url !== 'string' || !url.trim()) return true;
-  if (url.length > 1000) return false;
+  if (typeof url !== 'string' || !url.trim()) return false;
+  if (url.length > 2048) return false;
   try {
     const parsed = new URL(url);
     return parsed.protocol === 'http:' || parsed.protocol === 'https:';
@@ -124,13 +155,15 @@ function isValidHttpUrl(url: unknown): boolean {
   }
 }
 
+function sanitizeOptionalHttpUrl(url: unknown): string | undefined {
+  if (typeof url !== 'string' || !url.trim()) return undefined;
+  return isValidHttpUrl(url) ? url.trim() : undefined;
+}
+
 function sanitizeTrack(raw: any): any | null {
   if (!raw || typeof raw !== 'object') return null;
   if (typeof raw.id !== 'string' || !raw.id.trim() || raw.id.length > 128) return null;
   if (typeof raw.title !== 'string' || !raw.title.trim()) return null;
-  if (!isValidHttpUrl(raw.sourceUrl) || !isValidHttpUrl(raw.externalStreamUrl) || !isValidHttpUrl(raw.coverUrl)) {
-    return null;
-  }
 
   const allowedSources = new Set([
     'youtube',
@@ -144,6 +177,18 @@ function sanitizeTrack(raw: any): any | null {
   ]);
   const source = allowedSources.has(raw.source) ? raw.source : 'web_stream';
 
+  const rawStream =
+    typeof raw.externalStreamUrl === 'string' && raw.externalStreamUrl.trim()
+      ? raw.externalStreamUrl
+      : typeof raw.audioUrl === 'string' && raw.audioUrl.trim()
+      ? raw.audioUrl
+      : undefined;
+
+  // If a stream URL was supplied, it must be valid http(s)
+  if (rawStream && !isValidHttpUrl(rawStream)) {
+    return null;
+  }
+
   return {
     id: raw.id.slice(0, 128),
     title: String(raw.title).slice(0, 200),
@@ -152,9 +197,9 @@ function sanitizeTrack(raw: any): any | null {
     duration: typeof raw.duration === 'number' && Number.isFinite(raw.duration) ? Math.max(0, raw.duration) : 0,
     source,
     sourceId: typeof raw.sourceId === 'string' ? raw.sourceId.slice(0, 128) : undefined,
-    sourceUrl: typeof raw.sourceUrl === 'string' ? raw.sourceUrl : undefined,
-    externalStreamUrl: typeof raw.externalStreamUrl === 'string' ? raw.externalStreamUrl : undefined,
-    coverUrl: typeof raw.coverUrl === 'string' ? raw.coverUrl : undefined,
+    sourceUrl: sanitizeOptionalHttpUrl(raw.sourceUrl),
+    externalStreamUrl: sanitizeOptionalHttpUrl(rawStream),
+    coverUrl: sanitizeOptionalHttpUrl(raw.coverUrl),
     coverColor: typeof raw.coverColor === 'string' ? raw.coverColor.slice(0, 80) : undefined,
   };
 }
@@ -373,7 +418,11 @@ roomAuthRouter.use(expressJson({ limit: '16kb' }));
 roomAuthRouter.post('/token', (req: Request, res: Response) => {
   const origin = typeof req.headers.origin === 'string' ? req.headers.origin : undefined;
   const host = typeof req.headers.host === 'string' ? req.headers.host : undefined;
-  if (!isOriginAllowed(origin, host)) {
+  const forwardedHost =
+    typeof req.headers['x-forwarded-host'] === 'string'
+      ? req.headers['x-forwarded-host']
+      : undefined;
+  if (!isOriginAllowed(origin, host, forwardedHost)) {
     res.status(403).json({ error: 'Origin not allowed.' });
     return;
   }
@@ -461,7 +510,11 @@ export function attachRoomWebSocketServer(httpServer: any) {
     }
 
     const origin = typeof request.headers.origin === 'string' ? request.headers.origin : undefined;
-    if (!isOriginAllowed(origin, hostHeader)) {
+    const forwardedHost =
+      typeof request.headers['x-forwarded-host'] === 'string'
+        ? request.headers['x-forwarded-host']
+        : undefined;
+    if (!isOriginAllowed(origin, hostHeader, forwardedHost)) {
       socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
       socket.destroy();
       return;

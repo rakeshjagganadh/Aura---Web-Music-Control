@@ -40,7 +40,7 @@ import { PlaylistDetailView } from './components/views/PlaylistDetailView';
 import { FavoritesView } from './components/views/FavoritesView';
 import { AuraMomentsPanel } from './components/sound-lab/AuraMomentsPanel';
 import { SettingsView } from './components/views/SettingsView';
-import { ListenTogetherProvider } from './context/ListenTogetherContext';
+import { ListenTogetherProvider, useListenTogether } from './context/ListenTogetherContext';
 import { Analytics } from '@vercel/analytics/react';
 
 // Lazy-loaded heavy studio, social, and audio control bundles
@@ -70,6 +70,7 @@ const MainLayout: React.FC = () => {
   const {
     currentView,
     currentTrack,
+    currentTime,
     togglePlay,
     seekRelative,
     nextTrack,
@@ -97,6 +98,16 @@ const MainLayout: React.FC = () => {
     isSleepTimerModalOpen,
     setIsSleepTimerModalOpen,
   } = useMusic();
+
+  const {
+    isInRoom,
+    isOwner,
+    isLocallySilenced,
+    roomTogglePlay,
+    roomNext,
+    roomPrev,
+    roomSeek,
+  } = useListenTogether();
 
   const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
@@ -184,15 +195,27 @@ const MainLayout: React.FC = () => {
       switch (e.code) {
         case 'Space':
           e.preventDefault();
-          togglePlay();
+          if (isInRoom && !isLocallySilenced) {
+            void roomTogglePlay();
+          } else {
+            togglePlay();
+          }
           break;
         case 'ArrowLeft':
           e.preventDefault();
-          seekRelative(-10);
+          if (isInRoom && !isLocallySilenced) {
+            if (isOwner) void roomSeek(Math.max(0, currentTime - 10));
+          } else {
+            seekRelative(-10);
+          }
           break;
         case 'ArrowRight':
           e.preventDefault();
-          seekRelative(10);
+          if (isInRoom && !isLocallySilenced) {
+            if (isOwner) void roomSeek(currentTime + 10);
+          } else {
+            seekRelative(10);
+          }
           break;
         case 'ArrowUp':
           e.preventDefault();
@@ -208,11 +231,19 @@ const MainLayout: React.FC = () => {
           break;
         case 'KeyN':
           e.preventDefault();
-          nextTrack();
+          if (isInRoom && !isLocallySilenced) {
+            void roomNext();
+          } else {
+            nextTrack();
+          }
           break;
         case 'KeyP':
           e.preventDefault();
-          prevTrack();
+          if (isInRoom && !isLocallySilenced) {
+            void roomPrev();
+          } else {
+            prevTrack();
+          }
           break;
         case 'KeyS':
           e.preventDefault();
@@ -291,6 +322,14 @@ const MainLayout: React.FC = () => {
     isUniversalSearchOpen,
     setIsUniversalSearchOpen,
     openUniversalSearch,
+    isInRoom,
+    isOwner,
+    isLocallySilenced,
+    roomTogglePlay,
+    roomNext,
+    roomPrev,
+    roomSeek,
+    currentTime,
   ]);
 
   return (

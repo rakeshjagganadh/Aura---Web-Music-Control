@@ -41,6 +41,9 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
 
   const {
     isInRoom,
+    isLocallySilenced,
+    roomTogglePlay,
+    roomPlayTrack,
     roomAddTrack,
     createRoom,
   } = useListenTogether();
@@ -78,6 +81,15 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
   const isActivelyPlaying = isCurrent && isPlaying;
 
   const handleCardClick = () => {
+    if (isInRoom && !isLocallySilenced) {
+      if (isCurrent) {
+        void roomTogglePlay();
+      } else {
+        void roomPlayTrack(track);
+      }
+      return;
+    }
+
     if (isCurrent) {
       togglePlay();
     } else {

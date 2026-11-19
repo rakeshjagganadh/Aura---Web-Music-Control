@@ -98,6 +98,7 @@ export interface MusicContextType {
   activeSource: PlaybackSource;
   isDirectStreamActive: boolean;
   isPlaying: boolean;
+  isAudioOutputBlocked: boolean;
   currentTime: number;
   duration: number;
   isSeeking: boolean;
@@ -336,6 +337,8 @@ export interface MusicContextType {
   removeFromQueue: (index: number) => void;
   reorderQueue: (fromIndex: number, toIndex: number) => void;
   clearQueue: () => void;
+  ensurePlaying: (shouldPlay: boolean) => void;
+  unlockAudioOutput: () => void;
 
   // Library Actions
   toggleFavorite: (trackId: string, trackObj?: Track) => Promise<void>;
@@ -628,6 +631,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [activeSource, setActiveSource] = useState<PlaybackSource>('none');
   const [isDirectStreamActive, setIsDirectStreamActive] = useState<boolean>(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isEngineAutoplayBlocked, setIsEngineAutoplayBlocked] = useState(false);
+  const [isYtAutoplayBlocked, setIsYtAutoplayBlocked] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolumeState] = useState(0.85);
@@ -687,6 +692,16 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const volumeRef = useRef<number>(volume);
   volumeRef.current = volume;
+
+  const isMutedRef = useRef<boolean>(isMuted);
+  isMutedRef.current = isMuted;
+
+  const isAudioOutputBlocked =
+    activeSource === 'youtube'
+      ? isYtAutoplayBlocked
+      : activeSource === 'local' || activeSource === 'audius'
+      ? isEngineAutoplayBlocked
+      : false;
 
   const isShuffleRef = useRef<boolean>(false);
   isShuffleRef.current = isShuffle;
@@ -1009,6 +1024,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setIsDirectStreamActive(isDirect);
     });
 
+    const unsubEngineBlocked = audioEngine.onAutoplayBlockedChange((blocked) => {
+      setIsEngineAutoplayBlocked(blocked);
+    });
+
     // Hook YouTube player bridge subscriptions (YouTube Streams)
     const unsubYTTime = youtubePlayerBridge.onTimeUpdate((time, dur) => {
       if (activeSourceRef.current === 'youtube') {
@@ -1020,7 +1039,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const unsubYTState = youtubePlayerBridge.subscribe((state) => {
       if (activeSourceRef.current === 'youtube') {
         setIsPlaying(state.isPlaying);
+        setIsYtAutoplayBlocked(Boolean(state.autoplayBlocked));
         if (state.duration > 0) setDuration(state.duration);
+      } else if (!state.autoplayBlocked) {
+        setIsYtAutoplayBlocked(false);
       }
     });
 
@@ -1043,6 +1065,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       unsubAudioState();
       unsubAudioEnded();
       unsubDirectStream();
+      unsubEngineBlocked();
       unsubYTTime();
       unsubYTState();
       unsubYTEnded();
@@ -1225,6 +1248,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       // Load into local audio engine
       try {
+        audioEngine.setVolume(volumeRef.current);
+        audioEngine.setMute(isMutedRef.current);
         if (blob) {
           await audioEngine.loadTrack(track, blob, shouldAutoplay, initialStartTime);
         } else if (track.audioUrl) {
@@ -1286,6 +1311,38 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     await switchToTrack(track, { autoplay: true, newQueue });
   }, [switchToTrack]);
 
+  const unlockAudioOutput = useCallback(() => {
+    audioEngine.unlockAudio();
+    youtubePlayerBridge.unlockFromGesture();
+  }, []);
+
+  const ensurePlaying = useCallback((shouldPlay: boolean) => {
+    if (!currentTrackRef.current) return;
+    if (activeSourceRef.current === 'youtube') {
+      const ytPlaying = youtubePlayerBridge.getState().isPlaying;
+      if (shouldPlay && !ytPlaying) {
+        backgroundAudioKeepAlive.startYouTubeKeepAlive();
+        youtubePlayerBridge.play();
+      } else if (!shouldPlay && ytPlaying) {
+        backgroundAudioKeepAlive.stopKeepAlive();
+        youtubePlayerBridge.pause();
+      } else if (!shouldPlay) {
+        youtubePlayerBridge.setUserExplicitPause(true);
+      }
+    } else {
+      const enginePlaying = audioEngine.isPlaying();
+      if (shouldPlay && (!enginePlaying || audioEngine.isAudioOutputBlocked())) {
+        backgroundAudioKeepAlive.startKeepAlive();
+        audioEngine.play();
+      } else if (!shouldPlay && enginePlaying) {
+        backgroundAudioKeepAlive.stopKeepAlive();
+        audioEngine.pause();
+      } else if (!shouldPlay) {
+        audioEngine.pause();
+      }
+    }
+  }, []);
+
   const togglePlay = useCallback(() => {
     if (!currentTrackRef.current) {
       if (tracks.length > 0) {
@@ -1300,7 +1357,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     if (activeSourceRef.current === 'youtube') {
-      if (isPlaying) {
+      const currentlyPlaying = youtubePlayerBridge.getState().isPlaying;
+      if (currentlyPlaying) {
         backgroundAudioKeepAlive.stopKeepAlive();
         youtubePlayerBridge.pause();
       } else {
@@ -1308,7 +1366,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         youtubePlayerBridge.play();
       }
     } else {
-      if (isPlaying) {
+      const currentlyPlaying = audioEngine.isPlaying();
+      if (currentlyPlaying) {
         backgroundAudioKeepAlive.stopKeepAlive();
         audioEngine.pause();
       } else {
@@ -1316,7 +1375,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         audioEngine.play();
       }
     }
-  }, [tracks, isPlaying, switchToTrack, showToast]);
+  }, [tracks, switchToTrack, showToast]);
 
   const [isSeeking, setIsSeekingState] = useState(false);
 
@@ -2923,6 +2982,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         activeSource,
         isDirectStreamActive,
         isPlaying,
+        isAudioOutputBlocked,
         currentTime,
         duration,
         volume,
@@ -3090,6 +3150,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         switchToTrack,
         playTrack,
         togglePlay,
+        ensurePlaying,
+        unlockAudioOutput,
         seek,
         seekRelative,
         isSeeking,

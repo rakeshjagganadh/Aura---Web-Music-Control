@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { AnimatePresence, LayoutGroup } from 'motion/react';
 import { useMusic } from '../../context/MusicContext';
+import { useListenTogether } from '../../context/ListenTogetherContext';
 import { Track } from '../../types';
 import { MotionFadeSlide, MotionModal } from '../common/motion/MotionSurface';
 import { MotionIconSwap, SharedIndicator } from '../common/motion/MotionInteractive';
@@ -65,6 +66,8 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
     isPlaying,
     togglePlay,
   } = useMusic();
+
+  const { isInRoom, isLocallySilenced, roomPlayTrack } = useListenTogether();
 
   const { prefersReducedMotion } = useMotionCapabilities();
 
@@ -217,7 +220,11 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
     if (query.trim()) {
       saveRecentSearch(query.trim());
     }
-    playTrack(track);
+    if (isInRoom && !isLocallySilenced) {
+      void roomPlayTrack(track);
+    } else {
+      playTrack(track);
+    }
     onClose();
   };
 

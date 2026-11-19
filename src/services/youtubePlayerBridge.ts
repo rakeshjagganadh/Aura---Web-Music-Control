@@ -1,6 +1,7 @@
 export interface YouTubePlayerBridgeState {
   isReady: boolean;
   isPlaying: boolean;
+  autoplayBlocked: boolean;
   currentTime: number;
   duration: number;
   videoId: string | null;
@@ -55,6 +56,7 @@ class YouTubePlayerBridge {
   private currentState: YouTubePlayerBridgeState = {
     isReady: false,
     isPlaying: false,
+    autoplayBlocked: false,
     currentTime: 0,
     duration: 0,
     videoId: null,
@@ -67,7 +69,101 @@ class YouTubePlayerBridge {
   private isSeeking = false;
   private seekResumeTimeout: any = null;
   private userExplicitPause: boolean = false;
+  private desiredAutoplay: boolean = false;
+  private desiredUserMuted: boolean = false;
+  private desiredVolume: number = 85;
   private pendingSyncSeek: number | null = null;
+  private autoplayWatchdog: ReturnType<typeof setTimeout> | null = null;
+
+  private clearWatchdog() {
+    if (this.autoplayWatchdog) {
+      clearTimeout(this.autoplayWatchdog);
+      this.autoplayWatchdog = null;
+    }
+  }
+
+  private scheduleAutoplayWatchdog(delayMs = 1500, attempt = 0) {
+    this.clearWatchdog();
+    if (!this.desiredAutoplay || this.userExplicitPause) return;
+
+    this.autoplayWatchdog = setTimeout(() => {
+      this.autoplayWatchdog = null;
+      if (!this.playerInstance || !this.desiredAutoplay || this.userExplicitPause) return;
+
+      try {
+        const pState = this.playerInstance.getPlayerState?.();
+        if (pState === 1) {
+          const ytMuted = Boolean(this.playerInstance.isMuted?.());
+          this.updateState({
+            isPlaying: true,
+            autoplayBlocked: ytMuted && !this.desiredUserMuted,
+          });
+          return;
+        }
+        if (pState === 3 && attempt < 2) {
+          // Still buffering cleanly; give network a little longer before assuming blocked
+          this.scheduleAutoplayWatchdog(1400, attempt + 1);
+          return;
+        }
+
+        // Player remained UNSTARTED (-1), CUED (5), or PAUSED (2) while autoplay was requested
+        if (attempt === 0) {
+          // Attempt muted autoplay fallback so clock advances in sync, while prompting user to tap to unmute
+          try {
+            if (typeof this.playerInstance.mute === 'function') {
+              this.playerInstance.mute();
+            }
+            if (typeof this.playerInstance.playVideo === 'function') {
+              this.playerInstance.playVideo();
+            }
+          } catch {}
+          this.updateState({ autoplayBlocked: true });
+          this.scheduleAutoplayWatchdog(1000, 1);
+        } else {
+          this.updateState({ autoplayBlocked: true });
+        }
+      } catch {
+        this.updateState({ autoplayBlocked: true });
+      }
+    }, delayMs);
+  }
+
+  public notifyPlaybackStarted(player: any) {
+    this.clearWatchdog();
+    let ytMuted = false;
+    try {
+      ytMuted = Boolean(player?.isMuted?.());
+    } catch {}
+    this.updateState({
+      isPlaying: true,
+      autoplayBlocked: ytMuted && !this.desiredUserMuted,
+    });
+  }
+
+  public unlockFromGesture() {
+    if (!this.playerInstance || !this.desiredAutoplay || this.userExplicitPause) {
+      if (this.currentState.autoplayBlocked && (!this.desiredAutoplay || this.userExplicitPause)) {
+        this.updateState({ autoplayBlocked: false });
+      }
+      return;
+    }
+
+    try {
+      if (!this.desiredUserMuted && typeof this.playerInstance.unMute === 'function') {
+        this.playerInstance.unMute();
+      }
+      if (typeof this.playerInstance.setVolume === 'function') {
+        this.playerInstance.setVolume(this.desiredVolume);
+      }
+      if (typeof this.playerInstance.playVideo === 'function') {
+        this.playerInstance.playVideo();
+      }
+      this.updateState({ autoplayBlocked: false, isMuted: this.desiredUserMuted });
+      this.scheduleAutoplayWatchdog(1200, 1);
+    } catch (err) {
+      console.warn('Could not unlock YouTube playback from gesture:', err);
+    }
+  }
 
   public isUserExplicitPause(): boolean {
     return this.userExplicitPause;
@@ -75,6 +171,13 @@ class YouTubePlayerBridge {
 
   public setUserExplicitPause(val: boolean) {
     this.userExplicitPause = val;
+    if (val) {
+      this.desiredAutoplay = false;
+      this.clearWatchdog();
+      if (this.currentState.autoplayBlocked) {
+        this.updateState({ autoplayBlocked: false });
+      }
+    }
   }
 
   public setPendingSyncSeek(seconds: number): void {
@@ -127,6 +230,7 @@ class YouTubePlayerBridge {
   }
 
   public unregisterPlayer() {
+    this.clearWatchdog();
     this.playerInstance = null;
     this.isReady = false;
     this.pendingRequest = null;
@@ -136,7 +240,7 @@ class YouTubePlayerBridge {
       clearTimeout(this.seekResumeTimeout);
       this.seekResumeTimeout = null;
     }
-    this.updateState({ isReady: false, isPlaying: false });
+    this.updateState({ isReady: false, isPlaying: false, autoplayBlocked: false });
   }
 
   public isPlayerReady(): boolean {
@@ -214,7 +318,8 @@ class YouTubePlayerBridge {
   }
 
   public notifyEnded() {
-    this.updateState({ isPlaying: false });
+    this.clearWatchdog();
+    this.updateState({ isPlaying: false, autoplayBlocked: false });
     this.endListeners.forEach((fn) => {
       try {
         fn();
@@ -225,7 +330,8 @@ class YouTubePlayerBridge {
   }
 
   public notifyError(code: number, message: string) {
-    this.updateState({ error: { code, message }, isPlaying: false });
+    this.clearWatchdog();
+    this.updateState({ error: { code, message }, isPlaying: false, autoplayBlocked: false });
     this.errorListeners.forEach((fn) => {
       try {
         fn(code, message);
@@ -238,8 +344,12 @@ class YouTubePlayerBridge {
   // --- Core Playback Execution ---
 
   public loadAndPlay(videoId: string, options: YouTubePlayOptions = {}) {
-    this.userExplicitPause = false;
     const autoplay = options.autoplay ?? true;
+    this.userExplicitPause = !autoplay;
+    this.desiredAutoplay = autoplay;
+    if (typeof options.isMuted === 'boolean') this.desiredUserMuted = options.isMuted;
+    if (typeof options.volume === 'number') this.desiredVolume = Math.max(0, Math.min(100, Math.round(options.volume)));
+
     const requestId = options.requestId ?? 0;
     const startTime = options.startTime;
     const req = {
@@ -254,7 +364,7 @@ class YouTubePlayerBridge {
 
     if (!this.isReady || !this.playerInstance) {
       this.pendingRequest = req;
-      this.updateState({ videoId, error: null, currentTime: startTime || 0 });
+      this.updateState({ videoId, error: null, currentTime: startTime || 0, autoplayBlocked: false });
       return;
     }
 
@@ -273,12 +383,16 @@ class YouTubePlayerBridge {
     if (!this.playerInstance) return;
 
     const startSeconds = (typeof req.startTime === 'number' && req.startTime > 0) ? req.startTime : 0;
-    this.updateState({ videoId: req.videoId, error: null, currentTime: startSeconds });
+    this.updateState({ videoId: req.videoId, error: null, currentTime: startSeconds, autoplayBlocked: false });
 
     try {
       // 1. Apply volume & mute
       if (typeof req.isMuted === 'boolean') {
         this.setMute(req.isMuted);
+      } else if (!this.desiredUserMuted && typeof this.playerInstance.unMute === 'function') {
+        try {
+          this.playerInstance.unMute();
+        } catch {}
       }
       if (typeof req.volume === 'number') {
         this.setVolume(req.volume);
@@ -302,12 +416,9 @@ class YouTubePlayerBridge {
         if (typeof this.playerInstance.playVideo === 'function') {
           this.playerInstance.playVideo();
         }
-        if (startSeconds > 0 && typeof this.playerInstance.seekTo === 'function') {
-          try {
-            this.playerInstance.seekTo(startSeconds, true);
-          } catch {}
-        }
+        this.scheduleAutoplayWatchdog(1500, 0);
       } else {
+        this.clearWatchdog();
         if (typeof this.playerInstance.cueVideoById === 'function') {
           if (startSeconds > 0) {
             this.playerInstance.cueVideoById({
@@ -345,8 +456,12 @@ class YouTubePlayerBridge {
       playbackRate?: number;
     } = {}
   ) {
-    this.userExplicitPause = false;
     const autoplay = options.autoplay ?? true;
+    this.userExplicitPause = !autoplay;
+    this.desiredAutoplay = autoplay;
+    if (typeof options.isMuted === 'boolean') this.desiredUserMuted = options.isMuted;
+    if (typeof options.volume === 'number') this.desiredVolume = Math.max(0, Math.min(100, Math.round(options.volume)));
+
     const startIndex = options.startIndex || 0;
     const startSeconds = options.startSeconds || 0;
 
@@ -390,7 +505,7 @@ class YouTubePlayerBridge {
         this.setPlaybackRate(req.playbackRate);
       }
 
-      this.updateState({ videoId: `playlist:${req.playlistId}`, error: null });
+      this.updateState({ videoId: `playlist:${req.playlistId}`, error: null, autoplayBlocked: false });
 
       if (req.autoplay) {
         if (typeof this.playerInstance.loadPlaylist === 'function') {
@@ -401,7 +516,9 @@ class YouTubePlayerBridge {
             startSeconds: req.startSeconds,
           });
         }
+        this.scheduleAutoplayWatchdog(1500, 0);
       } else {
+        this.clearWatchdog();
         if (typeof this.playerInstance.cuePlaylist === 'function') {
           this.playerInstance.cuePlaylist({
             list: req.playlistId,
@@ -438,9 +555,18 @@ class YouTubePlayerBridge {
 
   public play() {
     this.userExplicitPause = false;
-    if (this.playerInstance && typeof this.playerInstance.playVideo === 'function') {
+    this.desiredAutoplay = true;
+    if (this.playerInstance) {
       try {
-        this.playerInstance.playVideo();
+        if (!this.desiredUserMuted && typeof this.playerInstance.unMute === 'function') {
+          this.playerInstance.unMute();
+        }
+        if (typeof this.playerInstance.setVolume === 'function') {
+          this.playerInstance.setVolume(this.desiredVolume);
+        }
+        if (typeof this.playerInstance.playVideo === 'function') {
+          this.playerInstance.playVideo();
+        }
       } catch (err) {
         console.warn('Could not play YouTube video:', err);
       }
@@ -453,10 +579,13 @@ class YouTubePlayerBridge {
     } catch {
       // ignore
     }
+    this.scheduleAutoplayWatchdog(1500, 0);
   }
 
   public pause() {
     this.userExplicitPause = true;
+    this.desiredAutoplay = false;
+    this.clearWatchdog();
     if (this.playerInstance && typeof this.playerInstance.pauseVideo === 'function') {
       try {
         this.playerInstance.pauseVideo();
@@ -464,11 +593,13 @@ class YouTubePlayerBridge {
         console.warn('Could not pause YouTube video:', err);
       }
     }
-    this.updateState({ isPlaying: false });
+    this.updateState({ isPlaying: false, autoplayBlocked: false });
   }
 
   public stop() {
     this.userExplicitPause = true;
+    this.desiredAutoplay = false;
+    this.clearWatchdog();
     if (this.playerInstance && typeof this.playerInstance.stopVideo === 'function') {
       try {
         this.playerInstance.stopVideo();
@@ -476,7 +607,7 @@ class YouTubePlayerBridge {
         // ignore
       }
     }
-    this.updateState({ isPlaying: false, currentTime: 0, videoId: null, error: null });
+    this.updateState({ isPlaying: false, autoplayBlocked: false, currentTime: 0, videoId: null, error: null });
   }
 
   public seekTo(seconds: number) {
@@ -494,6 +625,7 @@ class YouTubePlayerBridge {
   public setVolume(volume: number) {
     // volume is 0-100
     const clamped = Math.max(0, Math.min(100, Math.round(volume)));
+    this.desiredVolume = clamped;
     if (this.playerInstance && typeof this.playerInstance.setVolume === 'function') {
       try {
         this.playerInstance.setVolume(clamped);
@@ -505,6 +637,7 @@ class YouTubePlayerBridge {
   }
 
   public setMute(isMuted: boolean) {
+    this.desiredUserMuted = isMuted;
     if (this.playerInstance) {
       try {
         if (isMuted && typeof this.playerInstance.mute === 'function') {
@@ -516,7 +649,7 @@ class YouTubePlayerBridge {
         // ignore
       }
     }
-    this.updateState({ isMuted });
+    this.updateState({ isMuted, autoplayBlocked: isMuted ? false : this.currentState.autoplayBlocked });
   }
 
   public setPlaybackRate(rate: number) {
