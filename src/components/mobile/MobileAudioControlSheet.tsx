@@ -42,6 +42,7 @@ export const MobileAudioControlSheet: React.FC = () => {
     updateChannels,
     isDirectStreamActive,
     currentTrack,
+    setCurrentView,
   } = useMusic();
 
   const [activeTab, setActiveTab] = useState<MobileAudioTab>('basic');
@@ -157,69 +158,81 @@ export const MobileAudioControlSheet: React.FC = () => {
             aria-label="Audio Studio"
             variant="bottom-sheet"
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-h-[92vh] glass-immersive border-t border-white/[0.16] rounded-t-3xl shadow-[0_-16px_60px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden pb-safe"
+            className="relative w-full max-h-[90dvh] glass-immersive border-t border-white/[0.16] rounded-t-3xl shadow-[0_-16px_60px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden pb-safe"
           >
         
         {/* Sheet Handle */}
         <div className="w-12 h-1.5 rounded-full bg-zinc-700 mx-auto mt-3 mb-1 shrink-0" />
 
         {/* Top Header */}
-        <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between gap-2 shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center">
-              <AuraIcon name="sliders" size={16} />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <h3 className="text-sm font-bold text-white tracking-tight">Audio Studio</h3>
-                <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                  DSP
-                </span>
+        <div className="px-4 pt-2.5 pb-2.5 border-b border-white/10 flex flex-col gap-2 shrink-0">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <AuraIcon name="sliders" size={18} className="text-indigo-400 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm font-bold text-white tracking-tight truncate">Audio Studio</h3>
+                <p className="text-[11px] text-zinc-400 truncate">
+                  {currentTrack ? currentTrack.title : 'Master Audio Controls'}
+                </p>
               </div>
-              <p className="text-[10px] text-zinc-400 truncate max-w-[170px] sm:max-w-xs">
-                {currentTrack ? currentTrack.title : 'Master Audio Controls'}
-              </p>
+            </div>
+
+            <div className="flex items-center gap-1 shrink-0">
+              {/* Reset Processing */}
+              <button
+                type="button"
+                onClick={resetAllAudioProcessing}
+                aria-label="Reset audio processing"
+                className="w-10 h-10 flex items-center justify-center text-zinc-400 hover:text-zinc-200 active:bg-zinc-800 rounded-xl transition-colors cursor-pointer aura-pressable aura-focus-ring"
+                title="Reset Audio Processing"
+              >
+                <AuraIcon name="reset" size={16} />
+              </button>
+
+              {/* Close */}
+              <button
+                type="button"
+                onClick={() => setIsAudioControlsOpen(false)}
+                aria-label="Close Audio Studio"
+                className="w-10 h-10 flex items-center justify-center text-zinc-400 hover:text-white active:bg-zinc-800 rounded-xl transition-colors cursor-pointer aura-pressable aura-focus-ring"
+                title="Close"
+              >
+                <AuraIcon name="close" size={20} />
+              </button>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center justify-between gap-2">
             {/* A/B Comparison Toggle */}
             <button
               type="button"
               onClick={toggleABBypass}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold font-mono border transition-colors cursor-pointer aura-pressable ${
+              className={`min-h-[40px] flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold font-mono tabular-nums border transition-colors cursor-pointer aura-pressable ${
                 isABBypassed
-                  ? 'bg-zinc-800 text-zinc-400 border-white/10'
-                  : 'bg-emerald-600/25 text-emerald-300 border-emerald-500/40'
+                  ? 'bg-zinc-900 text-amber-300 border-amber-500/30'
+                  : 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40'
               }`}
               title="A/B Comparison"
             >
               <MotionIconSwap stateKey={isABBypassed ? 'raw' : 'dsp'}>
-                <AuraIcon name="radio" size={12} className={!isABBypassed ? 'text-emerald-400' : 'text-zinc-500'} />
+                <AuraIcon name="radio" size={12} className={!isABBypassed ? 'text-cyan-400' : 'text-amber-400'} />
               </MotionIconSwap>
               <span>{isABBypassed ? 'A: RAW' : 'B: DSP'}</span>
             </button>
 
-            {/* Reset Processing */}
+            {/* Full Studio Shortcut */}
             <button
               type="button"
-              onClick={resetAllAudioProcessing}
-              aria-label="Reset audio processing"
-              className="p-2 text-zinc-400 hover:text-zinc-200 active:bg-zinc-800 rounded-xl transition-colors cursor-pointer aura-pressable aura-focus-ring"
-              title="Reset Audio Processing"
+              onClick={() => {
+                setIsAudioControlsOpen(false);
+                setCurrentView('studio');
+              }}
+              className="min-h-[40px] flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-cyan-300 border border-cyan-500/25 text-[11px] font-semibold whitespace-nowrap transition-colors cursor-pointer aura-pressable aura-focus-ring"
+              title="Open Full Audio Studio"
             >
-              <AuraIcon name="reset" size={16} />
-            </button>
-
-            {/* Close */}
-            <button
-              type="button"
-              onClick={() => setIsAudioControlsOpen(false)}
-              aria-label="Close Audio Studio"
-              className="p-2 text-zinc-400 hover:text-white active:bg-zinc-800 rounded-xl transition-colors cursor-pointer aura-pressable aura-focus-ring"
-              title="Close"
-            >
-              <AuraIcon name="close" size={20} />
+              <AuraIcon name="sparkles" size={12} />
+              <span>Full Studio</span>
+              <AuraIcon name="arrowRight" size={12} />
             </button>
           </div>
         </div>
@@ -234,7 +247,7 @@ export const MobileAudioControlSheet: React.FC = () => {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`relative flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl whitespace-nowrap transition-colors cursor-pointer aura-pressable ${
+                  className={`relative min-h-[40px] flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl whitespace-nowrap transition-colors cursor-pointer aura-pressable ${
                     isActive
                       ? 'text-indigo-200'
                       : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
@@ -259,9 +272,9 @@ export const MobileAudioControlSheet: React.FC = () => {
         {/* Scrollable Tab Body */}
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
           {(currentTrack?.source === 'youtube' || isDirectStreamActive) && (
-            <div className="p-3 rounded-2xl bg-zinc-900/80 border border-amber-500/25 text-[11px] text-zinc-300 leading-relaxed">
-              <span className="inline-block px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono text-[9px] border border-amber-500/30 font-semibold mr-2">
-                {currentTrack?.source === 'youtube' ? 'YOUTUBE EMBED' : 'DIRECT STREAM (BYPASSED)'}
+            <div className="p-3 rounded-xl bg-amber-500/[0.06] border border-amber-500/20 text-[11px] text-zinc-300 leading-relaxed">
+              <span className="font-semibold text-amber-300 mr-1.5">
+                {currentTrack?.source === 'youtube' ? 'YouTube Embed ·' : 'Direct Stream ·'}
               </span>
               {currentTrack?.source === 'youtube'
                 ? 'Playback controls work normally. Web Audio EQ & DSP apply to local files and CORS-enabled streams.'
@@ -275,10 +288,10 @@ export const MobileAudioControlSheet: React.FC = () => {
                 <div className="flex flex-col gap-5">
               
               {/* Bass Slider */}
-              <div className="p-4 rounded-2xl bg-zinc-900/60 border border-white/5 flex flex-col gap-3">
+              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex flex-col gap-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider">Low-End Bass</span>
-                  <span className={`text-xs font-mono font-bold ${bass > 0 ? 'text-indigo-400' : bass < 0 ? 'text-rose-400' : 'text-zinc-400'}`}>
+                  <span className="text-xs font-semibold text-zinc-200">Low-End Bass</span>
+                  <span className={`text-xs font-mono tabular-nums font-bold ${bass > 0 ? 'text-indigo-400' : bass < 0 ? 'text-rose-400' : 'text-zinc-400'}`}>
                     {bass > 0 ? `+${bass.toFixed(1)}` : bass.toFixed(1)} dB
                   </span>
                 </div>
@@ -288,16 +301,17 @@ export const MobileAudioControlSheet: React.FC = () => {
                   max="12"
                   step="0.5"
                   value={bass}
+                  aria-label="Low-End Bass"
                   onChange={(e) => setBass(parseFloat(e.target.value))}
                   className="w-full"
                 />
               </div>
 
               {/* Treble Slider */}
-              <div className="p-4 rounded-2xl bg-zinc-900/60 border border-white/5 flex flex-col gap-3">
+              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex flex-col gap-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider">High-End Treble</span>
-                  <span className={`text-xs font-mono font-bold ${treble > 0 ? 'text-cyan-400' : treble < 0 ? 'text-rose-400' : 'text-zinc-400'}`}>
+                  <span className="text-xs font-semibold text-zinc-200">High-End Treble</span>
+                  <span className={`text-xs font-mono tabular-nums font-bold ${treble > 0 ? 'text-cyan-400' : treble < 0 ? 'text-rose-400' : 'text-zinc-400'}`}>
                     {treble > 0 ? `+${treble.toFixed(1)}` : treble.toFixed(1)} dB
                   </span>
                 </div>
@@ -307,17 +321,18 @@ export const MobileAudioControlSheet: React.FC = () => {
                   max="12"
                   step="0.5"
                   value={treble}
+                  aria-label="High-End Treble"
                   onChange={(e) => setTreble(parseFloat(e.target.value))}
                   className="w-full"
                 />
               </div>
 
               {/* Stereo Balance Slider */}
-              <div className="p-4 rounded-2xl bg-zinc-900/60 border border-white/5 flex flex-col gap-3">
+              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex flex-col gap-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider">Stereo Balance</span>
-                  <span className="text-xs font-mono font-bold text-zinc-300">
-                    {balance === 0 ? 'CENTER' : balance < 0 ? `L ${Math.abs(Math.round(balance * 100))}%` : `R ${Math.round(balance * 100)}%`}
+                  <span className="text-xs font-semibold text-zinc-200">Stereo Balance</span>
+                  <span className="text-xs font-mono tabular-nums font-bold text-zinc-300">
+                    {balance === 0 ? 'Center' : balance < 0 ? `L ${Math.abs(Math.round(balance * 100))}%` : `R ${Math.round(balance * 100)}%`}
                   </span>
                 </div>
                 <input
@@ -326,16 +341,17 @@ export const MobileAudioControlSheet: React.FC = () => {
                   max="1"
                   step="0.05"
                   value={balance}
+                  aria-label="Stereo Balance"
                   onChange={(e) => setBalance(parseFloat(e.target.value))}
                   className="w-full"
                 />
               </div>
 
               {/* Channel Mode Selector */}
-              <div className="p-4 rounded-2xl bg-zinc-900/60 border border-white/5 flex flex-col gap-2.5">
+              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex flex-col gap-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider">Channel Routing</span>
-                  <span className="text-[10px] font-mono text-indigo-400 uppercase">{channel.mode}</span>
+                  <span className="text-xs font-semibold text-zinc-200">Channel Routing</span>
+                  <span className="text-[11px] font-mono text-indigo-400 capitalize">{channel.mode}</span>
                 </div>
                 <div className="grid grid-cols-5 gap-1.5">
                   {([
@@ -349,7 +365,7 @@ export const MobileAudioControlSheet: React.FC = () => {
                       key={m.id}
                       type="button"
                       onClick={() => updateChannels({ mode: m.id })}
-                      className={`py-2 px-1 rounded-xl text-[11px] font-semibold border transition-colors cursor-pointer aura-pressable aura-focus-ring ${
+                      className={`min-h-[40px] py-2 px-1 rounded-xl text-[11px] font-semibold border transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                         channel.mode === m.id
                           ? 'bg-indigo-600/30 border-indigo-500/50 text-white'
                           : 'bg-zinc-950/60 border-white/5 text-zinc-400 hover:text-zinc-200'
@@ -372,7 +388,7 @@ export const MobileAudioControlSheet: React.FC = () => {
                       key={p}
                       type="button"
                       onClick={() => setEQPreset(p as EqualizerPreset)}
-                      className={`px-3 py-2 rounded-xl text-xs font-semibold capitalize transition-colors cursor-pointer aura-pressable aura-focus-ring ${
+                      className={`min-h-[40px] px-3 py-2 rounded-xl text-xs font-semibold capitalize transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                         eqPreset === p
                           ? 'bg-indigo-600 text-white shadow-md'
                           : 'bg-zinc-900 text-zinc-300 border border-white/5 hover:bg-zinc-800'
@@ -391,8 +407,8 @@ export const MobileAudioControlSheet: React.FC = () => {
           {activeTab === 'eq' && (
             <div className="flex flex-col gap-5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-zinc-300 uppercase tracking-wide">
-                  Active Curve: {eqPreset.toUpperCase()}
+                <span className="text-xs font-semibold text-zinc-300 capitalize">
+                  Active Curve: <span className="text-white">{eqPreset.replace('_', ' ')}</span>
                 </span>
                 <button
                   type="button"
@@ -404,13 +420,13 @@ export const MobileAudioControlSheet: React.FC = () => {
               </div>
 
               {/* 10 Vertical Bands with touch spacing and horizontal scroll */}
-              <div className="p-4 rounded-2xl bg-zinc-900/60 border border-white/5 overflow-x-auto no-scrollbar">
+              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] overflow-x-auto no-scrollbar">
                 <div className="flex items-end justify-between gap-3 min-w-[460px] h-48 py-2">
                   {EQ_10_BANDS.map((band, idx) => {
                     const gainVal = eqGains[idx] || 0;
                     return (
                       <div key={band.freq} className="flex flex-col items-center gap-2 flex-1">
-                        <span className={`text-[10px] font-mono font-bold ${gainVal > 0 ? 'text-indigo-400' : gainVal < 0 ? 'text-rose-400' : 'text-zinc-500'}`}>
+                        <span className={`text-[10px] font-mono tabular-nums font-bold ${gainVal > 0 ? 'text-indigo-400' : gainVal < 0 ? 'text-rose-400' : 'text-zinc-500'}`}>
                           {gainVal > 0 ? `+${gainVal.toFixed(0)}` : gainVal.toFixed(0)}
                         </span>
                         <div className="h-32 flex items-center justify-center">
@@ -846,8 +862,8 @@ export const MobileAudioControlSheet: React.FC = () => {
             <div className="flex flex-col gap-4">
               
               {/* Stereo Peak VU Meters */}
-              <div className="p-4 rounded-2xl bg-zinc-900/60 border border-white/5 flex flex-col gap-3">
-                <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider">Live Output Levels</span>
+              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex flex-col gap-3">
+                <span className="text-xs font-semibold text-zinc-200">Live Output Levels</span>
                 
                 {/* L Channel */}
                 <div className="flex items-center gap-3">
@@ -858,7 +874,7 @@ export const MobileAudioControlSheet: React.FC = () => {
                       style={{ width: `${Math.min(100, Math.max(0, (meterLevels.peakL + 60) * 1.66))}%` }}
                     />
                   </div>
-                  <span className="text-[11px] font-mono text-zinc-400 w-12 text-right">
+                  <span className="text-[11px] font-mono tabular-nums text-zinc-400 w-14 text-right">
                     {meterLevels.peakL.toFixed(1)} dB
                   </span>
                 </div>
@@ -872,19 +888,19 @@ export const MobileAudioControlSheet: React.FC = () => {
                       style={{ width: `${Math.min(100, Math.max(0, (meterLevels.peakR + 60) * 1.66))}%` }}
                     />
                   </div>
-                  <span className="text-[11px] font-mono text-zinc-400 w-12 text-right">
+                  <span className="text-[11px] font-mono tabular-nums text-zinc-400 w-14 text-right">
                     {meterLevels.peakR.toFixed(1)} dB
                   </span>
                 </div>
               </div>
 
               {/* Integrated Loudness LUFS */}
-              <div className="p-4 rounded-2xl bg-zinc-900/60 border border-white/5 flex items-center justify-between">
+              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-bold text-zinc-200">Estimated Loudness</span>
-                  <p className="text-[10px] text-zinc-400">Standard Streaming Target: -14.0 LUFS</p>
+                  <span className="text-xs font-semibold text-zinc-200">Estimated Loudness</span>
+                  <p className="text-[10px] text-zinc-400 tabular-nums">Streaming target: -14.0 LUFS</p>
                 </div>
-                <div className="text-right">
+                <div className="text-right tabular-nums">
                   <span className="text-lg font-mono font-bold text-indigo-300">
                     {meterLevels.approxLufs.toFixed(1)}
                   </span>
@@ -894,10 +910,10 @@ export const MobileAudioControlSheet: React.FC = () => {
 
               {/* Track Metadata Specs */}
               {currentTrack && (
-                <div className="p-4 rounded-2xl bg-zinc-900/40 border border-white/5 flex flex-col gap-2">
-                  <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500">Audio Stream Info</span>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div><span className="text-zinc-500">Format:</span> <span className="text-zinc-200 font-mono">{currentTrack.fileFormat}</span></div>
+                <div className="p-4 rounded-2xl bg-white/[0.025] border border-white/[0.06] flex flex-col gap-2">
+                  <span className="text-xs font-semibold text-zinc-300">Audio Stream Info</span>
+                  <div className="grid grid-cols-2 gap-2 text-xs tabular-nums">
+                    <div><span className="text-zinc-500">Format:</span> <span className="text-zinc-200 font-mono uppercase">{currentTrack.fileFormat}</span></div>
                     <div><span className="text-zinc-500">Sample Rate:</span> <span className="text-zinc-200 font-mono">{currentTrack.sampleRate ? `${(currentTrack.sampleRate / 1000).toFixed(1)} kHz` : '44.1 kHz'}</span></div>
                     <div><span className="text-zinc-500">Channels:</span> <span className="text-zinc-200 font-mono">{currentTrack.channels === 1 ? 'Mono' : 'Stereo 2.0'}</span></div>
                     <div><span className="text-zinc-500">Bitrate:</span> <span className="text-zinc-200 font-mono">{currentTrack.bitrate ? `${Math.round(currentTrack.bitrate / 1000)} kbps` : '320 kbps (est)'}</span></div>
@@ -922,7 +938,7 @@ export const MobileAudioControlSheet: React.FC = () => {
                       key={p.id}
                       type="button"
                       onClick={() => setEQPreset(p.id)}
-                      className={`flex items-center justify-between p-3 rounded-2xl border transition-colors cursor-pointer aura-pressable-subtle aura-focus-ring ${
+                      className={`min-h-[44px] flex items-center justify-between p-3 rounded-2xl border transition-colors cursor-pointer aura-pressable-subtle aura-focus-ring ${
                         isSelected
                           ? 'bg-indigo-950/40 text-indigo-200 border-indigo-500/50 shadow-sm'
                           : 'bg-zinc-900/60 text-zinc-300 border-white/5 hover:bg-zinc-900'

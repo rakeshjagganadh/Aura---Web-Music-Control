@@ -348,19 +348,24 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
         ? 'empty'
         : 'results';
 
-  const getSourceBadgeStyle = (source?: string) => {
+  const formatSourceLabel = (source?: string) => {
     switch (source) {
       case 'audius':
-        return 'text-purple-400 bg-purple-500/10 border-purple-500/20';
+        return 'Audius';
       case 'jamendo':
-        return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
+        return 'Jamendo';
       case 'radio':
       case 'radiobrowser':
-        return 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20';
+        return 'Live Radio';
       case 'youtube':
-        return 'text-red-400 bg-red-500/10 border-red-500/20';
+        return 'YouTube';
+      case 'curated_stream':
+        return 'Curated Stream';
+      case 'web_stream':
+        return 'Web Stream';
+      case 'local':
       default:
-        return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+        return 'Vault';
     }
   };
 
@@ -404,9 +409,9 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
           />
           
           {isSearchingExternal && (
-            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-sky-500/10 text-sky-300 text-[11px] font-sans font-medium border border-sky-500/20 shrink-0 ${!prefersReducedMotion ? 'animate-pulse' : ''}`}>
-              <AuraIcon name="sparkles" size={14} />
-              <span className="hidden sm:inline">Federating sources...</span>
+            <div className="flex items-center gap-1.5 text-sky-300 text-[11px] font-sans font-medium shrink-0">
+              <AuraIcon name="loader" size={14} className={!prefersReducedMotion ? 'animate-spin' : ''} />
+              <span className="hidden sm:inline">Searching catalogs...</span>
             </div>
           )}
 
@@ -825,14 +830,14 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                       setActiveSourceFilter('youtube');
                       inputRef.current?.focus();
                     }}
-                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-red-500/30 text-left transition-colors cursor-pointer group col-span-2 sm:col-span-1 aura-pressable-subtle aura-focus-ring"
+                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.07] hover:border-white/[0.16] text-left transition-colors cursor-pointer group col-span-2 sm:col-span-1 aura-pressable-subtle aura-focus-ring"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-mono text-red-400 uppercase font-semibold">PRIMARY SOURCE</span>
+                      <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider font-medium">Primary</span>
                       <YouTubeBrandMark size={14} className="text-red-400" />
                     </div>
-                    <h5 className="text-xs font-bold text-white mt-1.5 font-ui-title group-hover:text-red-300">YouTube Music</h5>
-                    <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta line-clamp-1">Search songs or paste URL</p>
+                    <h5 className="text-xs font-semibold text-white mt-1.5 font-ui-title group-hover:text-sky-300 transition-colors">YouTube Music</h5>
+                    <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta line-clamp-1">Search songs or paste URL</p>
                   </button>
 
                   {/* Personal Vault */}
@@ -842,14 +847,14 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                       setQuery('local');
                       setActiveSourceFilter('local');
                     }}
-                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-emerald-500/30 text-left transition-colors cursor-pointer group aura-pressable-subtle aura-focus-ring"
+                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.07] hover:border-white/[0.16] text-left transition-colors cursor-pointer group aura-pressable-subtle aura-focus-ring"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-mono text-emerald-400 uppercase font-semibold">INDEXEDDB</span>
+                      <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider font-medium">Local</span>
                       <AuraIcon name="hardDrive" size={14} className="text-emerald-400" />
                     </div>
-                    <h5 className="text-xs font-bold text-white mt-1.5 font-ui-title group-hover:text-emerald-300">Personal Vault</h5>
-                    <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta line-clamp-1">{tracks.length} local files</p>
+                    <h5 className="text-xs font-semibold text-white mt-1.5 font-ui-title group-hover:text-sky-300 transition-colors">Personal Vault</h5>
+                    <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta line-clamp-1 tabular-nums">{tracks.length} local files</p>
                   </button>
 
                   {/* Audius */}
@@ -859,14 +864,14 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                       setQuery('audius');
                       setActiveSourceFilter('audius');
                     }}
-                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-purple-500/30 text-left transition-colors cursor-pointer group aura-pressable-subtle aura-focus-ring"
+                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.07] hover:border-white/[0.16] text-left transition-colors cursor-pointer group aura-pressable-subtle aura-focus-ring"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-mono text-purple-400 uppercase font-semibold">DECENTRALIZED</span>
+                      <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider font-medium">Open Audio</span>
                       <AuraIcon name="sparkles" size={14} className="text-purple-400" />
                     </div>
-                    <h5 className="text-xs font-bold text-white mt-1.5 font-ui-title group-hover:text-purple-300">Audius Network</h5>
-                    <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta line-clamp-1">1M+ open tracks</p>
+                    <h5 className="text-xs font-semibold text-white mt-1.5 font-ui-title group-hover:text-sky-300 transition-colors">Audius Network</h5>
+                    <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta line-clamp-1">1M+ open tracks</p>
                   </button>
 
                   {/* Jamendo */}
@@ -876,14 +881,14 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                       setQuery('jamendo');
                       setActiveSourceFilter('jamendo');
                     }}
-                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-amber-500/30 text-left transition-colors cursor-pointer group aura-pressable-subtle aura-focus-ring"
+                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.07] hover:border-white/[0.16] text-left transition-colors cursor-pointer group aura-pressable-subtle aura-focus-ring"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-mono text-amber-400 uppercase font-semibold">CREATIVE COMMONS</span>
+                      <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider font-medium">Licensed CC</span>
                       <AuraIcon name="musicNote" size={14} className="text-amber-400" />
                     </div>
-                    <h5 className="text-xs font-bold text-white mt-1.5 font-ui-title group-hover:text-amber-300">Jamendo Catalog</h5>
-                    <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta line-clamp-1">Free CC licensing</p>
+                    <h5 className="text-xs font-semibold text-white mt-1.5 font-ui-title group-hover:text-sky-300 transition-colors">Jamendo Catalog</h5>
+                    <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta line-clamp-1">Creative Commons audio</p>
                   </button>
 
                   {/* Radio Browser */}
@@ -893,14 +898,14 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                       setQuery('radio');
                       setActiveTab('radio');
                     }}
-                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.06] hover:border-cyan-500/30 text-left transition-colors cursor-pointer group aura-pressable-subtle aura-focus-ring"
+                    className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.07] hover:border-white/[0.16] text-left transition-colors cursor-pointer group aura-pressable-subtle aura-focus-ring"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-mono text-cyan-400 uppercase font-semibold">LIVE RADIO</span>
+                      <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider font-medium">Broadcasts</span>
                       <AuraIcon name="radio" size={14} className="text-cyan-400" />
                     </div>
-                    <h5 className="text-xs font-bold text-white mt-1.5 font-ui-title group-hover:text-cyan-300">Radio Browser</h5>
-                    <p className="text-[10px] text-zinc-500 mt-0.5 font-ui-meta line-clamp-1">30k+ live broadcasts</p>
+                    <h5 className="text-xs font-semibold text-white mt-1.5 font-ui-title group-hover:text-sky-300 transition-colors">Radio Browser</h5>
+                    <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta line-clamp-1">30k+ live stations</p>
                   </button>
 
                 </div>
@@ -949,10 +954,10 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                   </div>
 
                   <div className="min-w-0">
-                    <span className={`text-[9px] font-mono px-2 py-0.5 rounded-md border font-semibold uppercase ${getSourceBadgeStyle(topMatch.source)}`}>
-                      {(topMatch.source || 'LOCAL').toUpperCase()} STREAM
+                    <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-sky-300 font-semibold">
+                      {formatSourceLabel(topMatch.source)}
                     </span>
-                    <h3 className="text-base font-bold text-white truncate mt-1 font-ui-title group-hover:text-sky-300 transition-colors">
+                    <h3 className="text-base font-bold text-white truncate mt-0.5 font-ui-title group-hover:text-sky-300 transition-colors">
                       <HighlightMatch text={topMatch.title} query={query} />
                     </h3>
                     <p className="text-xs text-zinc-400 truncate mt-0.5 font-ui-meta">
@@ -1055,19 +1060,14 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
 
                         {/* Title and metadata */}
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className={`text-xs font-semibold truncate font-ui-title ${isCurrent ? 'text-sky-300' : 'text-zinc-100 group-hover:text-white'}`}>
-                              <HighlightMatch text={song.title} query={query} />
-                            </h4>
-
-                            <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded border font-semibold uppercase ${getSourceBadgeStyle(song.source)}`}>
-                              {(song.source || 'LOCAL').toUpperCase()}
-                            </span>
-                          </div>
+                          <h4 className={`text-xs font-semibold truncate font-ui-title ${isCurrent ? 'text-sky-300' : 'text-zinc-100 group-hover:text-white'}`}>
+                            <HighlightMatch text={song.title} query={query} />
+                          </h4>
 
                           <p className="text-[11px] text-zinc-400 truncate mt-0.5 font-ui-meta">
                             <HighlightMatch text={song.artist} query={query} />
                             {song.album && <span> · <HighlightMatch text={song.album} query={query} /></span>}
+                            <span className="text-zinc-500"> · {formatSourceLabel(song.source)}</span>
                           </p>
                         </div>
                       </div>

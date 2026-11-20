@@ -97,39 +97,39 @@ export const LibraryOverviewView: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-8 sm:gap-10 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none pb-36 sm:pb-44">
+    <div className="flex flex-col gap-5 sm:gap-10 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none pb-6 sm:pb-44">
       
       {/* -------------------------------------------------------------
           1. REFINED EDITORIAL HEADER & COMPACT ACTIONS
           ------------------------------------------------------------- */}
-      <section className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-white/[0.06]">
+      <section className="flex flex-col md:flex-row md:items-end justify-between gap-3 sm:gap-4 pb-3 sm:pb-4 border-b border-white/[0.06]">
         <div>
-          <div className="flex items-center gap-2 mb-1.5 text-xs text-zinc-400 font-medium font-sans">
+          <div className="flex items-center gap-2 mb-1 text-xs text-zinc-400 font-medium font-sans">
             <AuraIcon name="database" size={14} className="text-sky-400" />
-            <span className="uppercase tracking-wider text-[11px] font-semibold text-sky-400">Personal Collection</span>
+            <span className="uppercase tracking-wider text-[10px] sm:text-[11px] font-semibold text-sky-400">Personal Collection</span>
             <span className="text-zinc-600" aria-hidden="true">·</span>
             <span>IndexedDB Vault</span>
           </div>
 
-          <h1 className="text-2xl sm:text-4xl font-page-title text-white tracking-tight">
+          <h1 className="text-xl sm:text-4xl font-page-title text-white tracking-tight">
             Your Library
           </h1>
-          <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-xl font-ui-meta leading-relaxed">
+          <p className="hidden sm:block text-xs sm:text-sm text-zinc-400 mt-1 max-w-xl font-ui-meta leading-relaxed">
             Your personal music catalogue, lossless local vault, and curated listening collections.
           </p>
         </div>
 
         {/* Compact Actions */}
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* Quick Search within Library */}
-          <form onSubmit={handleLibrarySearch} className="relative">
+          <form onSubmit={handleLibrarySearch} className="relative flex-1 sm:flex-initial">
             <AuraIcon name="search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
             <input
               type="text"
               value={libraryFilter}
               onChange={(e) => setLibraryFilter(e.target.value)}
               placeholder="Filter library..."
-              className="w-40 sm:w-48 pl-8 pr-7 py-2 rounded-xl bg-white/[0.05] border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-sky-500/50 transition-colors"
+              className="w-full sm:w-48 pl-8 pr-7 py-2 min-h-[40px] rounded-xl bg-white/[0.05] border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-sky-500/50 transition-colors"
             />
             {libraryFilter && (
               <button
@@ -146,7 +146,7 @@ export const LibraryOverviewView: React.FC = () => {
             <button
               type="button"
               onClick={handleShuffleAll}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
+              className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 min-h-[40px] rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable shrink-0"
               title="Shuffle all tracks in library"
             >
               <AuraIcon name="shuffle" size={14} className="text-sky-400" />
@@ -157,21 +157,23 @@ export const LibraryOverviewView: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsPlaylistModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
+            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 min-h-[40px] rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable shrink-0"
             title="Create a new playlist"
           >
             <AuraIcon name="add" size={14} className="text-emerald-400" />
-            <span>New Playlist</span>
+            <span className="hidden sm:inline">New Playlist</span>
+            <span className="sm:hidden">Playlist</span>
           </button>
 
           <button
             type="button"
             onClick={() => setIsUploadModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
+            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 min-h-[40px] rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable shrink-0"
             title="Import audio files into vault"
           >
             <AuraIcon name="add" size={14} weight={600} />
-            <span>Import Audio</span>
+            <span className="hidden sm:inline">Import Audio</span>
+            <span className="sm:hidden">Import</span>
           </button>
         </div>
       </section>
@@ -184,85 +186,85 @@ export const LibraryOverviewView: React.FC = () => {
       {/* -------------------------------------------------------------
           3. REAL COLLECTION METRICS BAR (ZERO INVENTED NUMBERS)
           ------------------------------------------------------------- */}
-      <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <section className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
         <div 
           onClick={() => setCurrentView('songs')}
-          className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-lg aura-hover-scale aura-pressable-subtle"
+          className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.08] hover:border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-md aura-hover-scale aura-pressable-subtle"
         >
           <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400">Tracks</span>
-            <AuraIcon name="musicNote" size={16} className="text-sky-400" />
+            <span className="text-[10px] sm:text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400 truncate">Tracks</span>
+            <AuraIcon name="musicNote" size={15} className="text-sky-400 shrink-0" />
           </div>
-          <div className="mt-3">
-            <span className="text-xl sm:text-2xl font-bold text-white font-mono tabular-nums">{tracks.length}</span>
-            <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta">In library</p>
+          <div className="mt-2 sm:mt-3">
+            <span className="text-lg sm:text-2xl font-bold text-white font-mono tabular-nums">{tracks.length}</span>
+            <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-0.5 font-ui-meta truncate">In library</p>
           </div>
         </div>
 
         <div 
           onClick={() => setCurrentView('albums')}
-          className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-lg aura-hover-scale aura-pressable-subtle"
+          className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.08] hover:border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-md aura-hover-scale aura-pressable-subtle"
         >
           <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400">Albums</span>
-            <AuraIcon name="disc" size={16} className="text-purple-400" />
+            <span className="text-[10px] sm:text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400 truncate">Albums</span>
+            <AuraIcon name="disc" size={15} className="text-purple-400 shrink-0" />
           </div>
-          <div className="mt-3">
-            <span className="text-xl sm:text-2xl font-bold text-white font-mono tabular-nums">{albumCount}</span>
-            <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta">Catalogued</p>
+          <div className="mt-2 sm:mt-3">
+            <span className="text-lg sm:text-2xl font-bold text-white font-mono tabular-nums">{albumCount}</span>
+            <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-0.5 font-ui-meta truncate">Catalogued</p>
           </div>
         </div>
 
         <div 
           onClick={() => setCurrentView('artists')}
-          className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-lg aura-hover-scale aura-pressable-subtle"
+          className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.08] hover:border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-md aura-hover-scale aura-pressable-subtle"
         >
           <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400">Artists</span>
-            <AuraIcon name="user" size={16} className="text-amber-400" />
+            <span className="text-[10px] sm:text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400 truncate">Artists</span>
+            <AuraIcon name="user" size={15} className="text-amber-400 shrink-0" />
           </div>
-          <div className="mt-3">
-            <span className="text-xl sm:text-2xl font-bold text-white font-mono tabular-nums">{artistCount}</span>
-            <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta">Creators</p>
+          <div className="mt-2 sm:mt-3">
+            <span className="text-lg sm:text-2xl font-bold text-white font-mono tabular-nums">{artistCount}</span>
+            <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-0.5 font-ui-meta truncate">Creators</p>
           </div>
         </div>
 
         <div 
           onClick={() => setCurrentView('playlists')}
-          className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-lg aura-hover-scale aura-pressable-subtle"
+          className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.08] hover:border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-md aura-hover-scale aura-pressable-subtle"
         >
           <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400">Playlists</span>
-            <AuraIcon name="playlist" size={16} className="text-emerald-400" />
+            <span className="text-[10px] sm:text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400 truncate">Playlists</span>
+            <AuraIcon name="playlist" size={15} className="text-emerald-400 shrink-0" />
           </div>
-          <div className="mt-3">
-            <span className="text-xl sm:text-2xl font-bold text-white font-mono tabular-nums">{playlists.length}</span>
-            <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta">Organized</p>
+          <div className="mt-2 sm:mt-3">
+            <span className="text-lg sm:text-2xl font-bold text-white font-mono tabular-nums">{playlists.length}</span>
+            <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-0.5 font-ui-meta truncate">Organized</p>
           </div>
         </div>
 
         <div 
           onClick={() => setCurrentView('favorites')}
-          className="p-4 rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-lg aura-hover-scale aura-pressable-subtle"
+          className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.08] hover:border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-md aura-hover-scale aura-pressable-subtle"
         >
           <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400">Liked Songs</span>
-            <AuraIcon name="heart" size={16} filled className="text-rose-400" />
+            <span className="text-[10px] sm:text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400 truncate">Liked</span>
+            <AuraIcon name="heart" size={15} filled className="text-rose-400 shrink-0" />
           </div>
-          <div className="mt-3">
-            <span className="text-xl sm:text-2xl font-bold text-white font-mono tabular-nums">{favoriteItems.length}</span>
-            <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta">Starred</p>
+          <div className="mt-2 sm:mt-3">
+            <span className="text-lg sm:text-2xl font-bold text-white font-mono tabular-nums">{favoriteItems.length}</span>
+            <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-0.5 font-ui-meta truncate">Starred</p>
           </div>
         </div>
 
-        <div className="p-4 rounded-3xl glass-ambient border border-white/[0.18] flex flex-col justify-between shadow-lg">
+        <div className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
           <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400">Vault Storage</span>
-            <AuraIcon name="hardDrive" size={16} className="text-cyan-400" />
+            <span className="text-[10px] sm:text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400 truncate">Vault</span>
+            <AuraIcon name="hardDrive" size={15} className="text-cyan-400 shrink-0" />
           </div>
-          <div className="mt-3">
-            <span className="text-xl sm:text-2xl font-bold text-white font-mono tabular-nums">{formatStorageMB(storageUsage.approxBytes)}</span>
-            <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta">{localVaultTracks.length} local files</p>
+          <div className="mt-2 sm:mt-3">
+            <span className="text-base sm:text-2xl font-bold text-white font-mono tabular-nums truncate block">{formatStorageMB(storageUsage.approxBytes)}</span>
+            <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-0.5 font-ui-meta truncate tabular-nums">{localVaultTracks.length} local</p>
           </div>
         </div>
       </section>
@@ -270,21 +272,21 @@ export const LibraryOverviewView: React.FC = () => {
       {/* -------------------------------------------------------------
           4. RECENTLY ADDED (ARTWORK-LED SHELF)
           ------------------------------------------------------------- */}
-      <section className="flex flex-col gap-4">
+      <section className="flex flex-col gap-3 sm:gap-4">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="font-section-title text-white flex items-center gap-2">
               <AuraIcon name="clock" size={16} className="text-sky-400" />
               Recently Added
             </h2>
-            <p className="text-xs text-zinc-400 mt-0.5 font-ui-meta">
+            <p className="hidden sm:block text-xs text-zinc-400 mt-0.5 font-ui-meta">
               Latest audio files and discovered tracks added to your collection
             </p>
           </div>
           <button
             type="button"
             onClick={() => setCurrentView('songs')}
-            className="text-xs text-zinc-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer font-medium aura-pressable"
+            className="text-xs text-zinc-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer font-medium aura-pressable min-h-[36px] px-2 -mr-2"
           >
             <span>View All</span>
             <AuraIcon name="chevronRight" size={14} />
@@ -292,7 +294,7 @@ export const LibraryOverviewView: React.FC = () => {
         </div>
 
         {recentlyAddedTracks.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-5">
+          <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar gap-3 -mx-3 px-3 pb-1 sm:mx-0 sm:px-0 sm:pb-0 sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 sm:gap-5 [&>*]:w-[42vw] [&>*]:max-w-[168px] [&>*]:shrink-0 [&>*]:snap-start sm:[&>*]:w-auto sm:[&>*]:max-w-none">
             {recentlyAddedTracks.map((track) => (
               <TrackGridCard
                 key={`rec-add-${track.id}`}
@@ -335,21 +337,21 @@ export const LibraryOverviewView: React.FC = () => {
           5. RECENTLY PLAYED HISTORY (ONLY WHEN REAL DATA EXISTS)
           ------------------------------------------------------------- */}
       {recentHistoryTracks.length > 0 && (
-        <section className="flex flex-col gap-4">
+        <section className="flex flex-col gap-3 sm:gap-4">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="font-section-title text-white flex items-center gap-2">
                 <AuraIcon name="sparkles" size={16} className="text-emerald-400" />
                 Recently Played
               </h2>
-              <p className="text-xs text-zinc-400 mt-0.5 font-ui-meta">
+              <p className="hidden sm:block text-xs text-zinc-400 mt-0.5 font-ui-meta">
                 Tracks you recently experienced across your active playback sessions
               </p>
             </div>
             <span className="text-xs text-zinc-500 font-sans font-medium hidden sm:inline">Recent Sessions</span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-5">
+          <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar gap-3 -mx-3 px-3 pb-1 sm:mx-0 sm:px-0 sm:pb-0 sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 sm:gap-5 [&>*]:w-[42vw] [&>*]:max-w-[168px] [&>*]:shrink-0 [&>*]:snap-start sm:[&>*]:w-auto sm:[&>*]:max-w-none">
             {recentHistoryTracks.map((track) => (
               <TrackGridCard
                 key={`rec-play-${track.id}`}
@@ -365,17 +367,18 @@ export const LibraryOverviewView: React.FC = () => {
       {/* -------------------------------------------------------------
           6. LOCAL MUSIC VAULT MANAGEMENT (HONEST INDEXEDDB OVERVIEW)
           ------------------------------------------------------------- */}
-      <section className="p-5 sm:p-7 rounded-2xl aura-glass-island border border-white/10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 shadow-xl">
+      <section className="p-4 sm:p-7 rounded-2xl aura-glass-island border border-white/10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6 shadow-xl">
         <div className="flex items-start gap-4 max-w-2xl">
           <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/25 flex items-center justify-center shrink-0 text-cyan-400">
             <AuraIcon name="hardDrive" size={24} />
           </div>
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-300 px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/25">
-                PRIVATE VAULT
+            <div className="flex items-center gap-2 mb-1 text-[11px] font-mono">
+              <span className="font-semibold uppercase tracking-[0.12em] text-cyan-300">
+                Private Vault
               </span>
-              <span className="text-xs font-mono text-zinc-400">
+              <span className="text-zinc-600" aria-hidden="true">·</span>
+              <span className="text-zinc-400 tabular-nums">
                 {localVaultTracks.length} tracks · {formatStorageMB(storageUsage.approxBytes)}
               </span>
             </div>
@@ -383,17 +386,12 @@ export const LibraryOverviewView: React.FC = () => {
               Local Audio Vault & Offline Engine
             </h3>
             <p className="text-xs text-zinc-400 mt-1 font-ui-meta leading-relaxed">
-              Files imported into AURA are stored directly in your browser's private IndexedDB storage for instant offline listening and high-fidelity Web Audio DSP processing. No external tracking or uploads.
+              Imported audio stays inside browser-local IndexedDB storage for offline playback and Web Audio DSP processing.
             </p>
-            <div className="flex items-center gap-2 mt-3 flex-wrap text-[11px] font-mono text-zinc-400">
-              <span className="text-zinc-500">Supported Formats:</span>
-              <span className="px-1.5 py-0.5 rounded bg-white/[0.05] border border-white/10 text-zinc-300">FLAC</span>
-              <span className="px-1.5 py-0.5 rounded bg-white/[0.05] border border-white/10 text-zinc-300">WAV</span>
-              <span className="px-1.5 py-0.5 rounded bg-white/[0.05] border border-white/10 text-zinc-300">MP3</span>
-              <span className="px-1.5 py-0.5 rounded bg-white/[0.05] border border-white/10 text-zinc-300">AAC</span>
-              <span className="px-1.5 py-0.5 rounded bg-white/[0.05] border border-white/10 text-zinc-300">OGG</span>
-              <span className="px-1.5 py-0.5 rounded bg-white/[0.05] border border-white/10 text-zinc-300">WebM</span>
-            </div>
+            <p className="mt-2.5 text-[11px] font-mono text-zinc-400">
+              <span className="text-zinc-500">Formats: </span>
+              FLAC · WAV · MP3 · AAC · OGG · WebM
+            </p>
           </div>
         </div>
 

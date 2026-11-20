@@ -228,17 +228,20 @@ export const ExpandedPlayer: React.FC = () => {
             <div className="flex items-center justify-between w-full max-w-7xl mx-auto pb-4 border-b border-white/[0.08] shrink-0">
               <div className="flex items-center gap-3">
                 <AuraBrandMark size={24} isPlaying={isPlaying} />
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono font-bold uppercase tracking-widest text-zinc-300">
-                    NOW PLAYING
+                <div className="flex items-center gap-2 text-xs font-mono">
+                  <span className="font-semibold uppercase tracking-[0.14em] text-zinc-200">
+                    Now Playing
                   </span>
-                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${sourceBadge.color}`}>
-                    {sourceBadge.label}
-                  </span>
+                  <span className="text-zinc-600" aria-hidden="true">·</span>
+                  <span className="text-zinc-400">{sourceBadge.label}</span>
                   {currentTrack.fileFormat && (
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-white/[0.04] text-zinc-400 font-mono border border-white/[0.06]">
-                      {currentTrack.fileFormat} {currentTrack.fileSize ? `• ${formatBytes(currentTrack.fileSize)}` : ''}
-                    </span>
+                    <>
+                      <span className="text-zinc-600" aria-hidden="true">·</span>
+                      <span className="text-zinc-400 tabular-nums">
+                        {currentTrack.fileFormat}
+                        {currentTrack.fileSize ? ` · ${formatBytes(currentTrack.fileSize)}` : ''}
+                      </span>
+                    </>
                   )}
                 </div>
               </div>
@@ -383,13 +386,6 @@ export const ExpandedPlayer: React.FC = () => {
                     )}
                   </MotionArtwork>
                 </AnimatePresence>
-
-                {/* Source Attribution Tag */}
-                <div className="absolute top-3 left-3 z-10">
-                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded-lg backdrop-blur-md border ${sourceBadge.color}`}>
-                    {sourceBadge.label}
-                  </span>
-                </div>
               </motion.div>
             </div>
 
@@ -457,7 +453,7 @@ export const ExpandedPlayer: React.FC = () => {
                 </MotionPress>
 
                 {currentTrack.genre && (
-                  <span className="text-[10px] font-mono px-2 py-1 rounded-lg bg-white/[0.03] text-zinc-400 border border-white/[0.05] truncate max-w-[120px]">
+                  <span className="text-xs font-mono text-zinc-400 truncate max-w-[160px] ml-1">
                     {currentTrack.genre}
                   </span>
                 )}
@@ -781,8 +777,8 @@ export const ExpandedPlayer: React.FC = () => {
                     </MotionArtwork>
                   </AnimatePresence>
                   {isPlaying && (
-                    <div className="absolute inset-0 z-10 bg-black/40 flex items-center justify-center">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <div className="absolute inset-0 z-10 bg-black/45 flex items-center justify-center">
+                      <AuraIcon name="volumeHigh" size={14} className="text-emerald-400" />
                     </div>
                   )}
                 </div>

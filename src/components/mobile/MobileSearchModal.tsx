@@ -16,6 +16,9 @@ import { youtubeService } from '../../services/youtubeService';
 interface MobileSearchModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialQuery?: string;
+  title?: string;
+  onSelectTrack?: (track: Track) => void;
 }
 
 type MobileTab = 'all' | 'songs' | 'artists' | 'albums' | 'playlists';
@@ -53,7 +56,13 @@ const HighlightText: React.FC<{ text: string; query: string; className?: string 
   );
 };
 
-export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, onClose }) => {
+export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({
+  isOpen,
+  onClose,
+  initialQuery,
+  title,
+  onSelectTrack,
+}) => {
   const {
     tracks,
     playlists,
@@ -64,15 +73,22 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
     setIsUploadModalOpen,
     currentTrack,
     isPlaying,
-    togglePlay,
   } = useMusic();
 
   const { isInRoom, isLocallySilenced, roomPlayTrack } = useListenTogether();
 
   const { prefersReducedMotion } = useMotionCapabilities();
 
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialQuery ?? '');
   const [activeTab, setActiveTab] = useState<MobileTab>('all');
+
+  useEffect(() => {
+    if (isOpen && initialQuery !== undefined) {
+      setQuery(initialQuery);
+      setActiveTab('all');
+    }
+  }, [isOpen, initialQuery]);
+
   const [searchResults, setSearchResults] = useState<UniversalSearchResults>({
     query: '',
     songs: [],
@@ -94,7 +110,11 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
   }, []);
 
   const handleAddToQueueWithFeedback = useCallback((track: Track) => {
-    addToQueue(track);
+    if (onSelectTrack) {
+      onSelectTrack(track);
+    } else {
+      addToQueue(track);
+    }
     setQueuedTrackIds((prev) => ({ ...prev, [track.id]: true }));
     const existing = queueFeedbackTimersRef.current.get(track.id);
     if (existing) clearTimeout(existing);
@@ -107,7 +127,7 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
       });
     }, 1200);
     queueFeedbackTimersRef.current.set(track.id, timer);
-  }, [addToQueue]);
+  }, [addToQueue, onSelectTrack]);
 
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     try {
@@ -220,6 +240,11 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
     if (query.trim()) {
       saveRecentSearch(query.trim());
     }
+    if (onSelectTrack) {
+      onSelectTrack(track);
+      onClose();
+      return;
+    }
     if (isInRoom && !isLocallySilenced) {
       void roomPlayTrack(track);
     } else {
@@ -260,14 +285,17 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
         ? 'empty'
         : 'results';
 
-  const getSourceBadgeStyle = (source?: string) => {
+  const formatSourceLabel = (source?: string) => {
     switch (source) {
-      case 'audius': return 'text-purple-400 bg-purple-500/10 border-purple-500/20';
-      case 'jamendo': return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
+      case 'audius': return 'Audius';
+      case 'jamendo': return 'Jamendo';
       case 'radio':
-      case 'radiobrowser': return 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20';
-      case 'youtube': return 'text-red-400 bg-red-500/10 border-red-500/20';
-      default: return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+      case 'radiobrowser': return 'Radio';
+      case 'youtube': return 'YouTube';
+      case 'curated_stream': return 'Curated';
+      case 'web_stream': return 'Stream';
+      case 'local':
+      default: return 'Vault';
     }
   };
 
@@ -292,7 +320,7 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
           <input
             ref={inputRef}
             type="text"
-            placeholder="Search all 5 catalogs or paste YouTube link..."
+            placeholder={title || 'Search tracks, artists or YouTube link...'}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="w-full pl-10 pr-10 py-3 rounded-2xl bg-white/[0.04] border border-white/[0.08] focus:border-sky-500/50 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none transition-colors shadow-inner font-ui-body"
@@ -323,7 +351,7 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
 
       {/* Category Tabs & Searching Indicator */}
       {query && hasAnyResults && (
-        <div className="px-3 py-2 bg-zinc-950/80 border-b border-white/[0.06] flex items-center justify-between gap-2 overflow-x-auto text-xs scrollbar-none sticky top-[69px] z-10 backdrop-blur-md">
+        <div className="px-3 py-2 bg-zinc-950/90 border-b border-white/[0.06] flex items-center justify-between gap-2 overflow-x-auto text-xs scrollbar-none shrink-0 z-10 backdrop-blur-md">
           <LayoutGroup id="mobile-search-tabs">
             <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
               <button
@@ -436,15 +464,14 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
       )}
 
       {/* Results & Suggestions List */}
-      <div className="flex-1 overflow-y-auto p-4 pb-28 flex flex-col gap-5">
-        <AnimatePresence mode="wait" initial={false}>
-          <MotionFadeSlide
-            key={contentViewState}
-            direction="up"
-            distance={6}
-            duration="micro"
-            className="flex flex-col gap-5"
-          >
+      <div className="flex-1 overflow-y-auto p-4 pb-10 flex flex-col gap-5">
+        <MotionFadeSlide
+          key={contentViewState}
+          direction="up"
+          distance={6}
+          duration="micro"
+          className="flex flex-col gap-5"
+        >
         
         {/* Direct YouTube Video Link Card */}
         {searchResults.detectedDirectTrack && (
@@ -559,13 +586,14 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
                 <button
                   type="button"
                   onClick={() => inputRef.current?.focus()}
-                  className="col-span-2 p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-left flex items-center justify-between min-h-[44px]"
+                  className="col-span-2 p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.07] text-left flex items-center justify-between min-h-[44px] transition-colors cursor-pointer aura-focus-ring aura-pressable-subtle"
                 >
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     <YouTubeBrandMark size={16} className="text-red-400 shrink-0" />
-                    <span className="text-xs font-semibold text-red-200 truncate font-ui-title">YouTube Music (Primary)</span>
+                    <span className="text-xs font-semibold text-zinc-100 truncate font-ui-title">YouTube Music</span>
+                    <span className="text-[10px] font-mono text-zinc-500 shrink-0">Primary</span>
                   </div>
-                  <AuraIcon name="arrowRight" size={12} className="text-red-400/70 shrink-0" />
+                  <AuraIcon name="arrowRight" size={12} className="text-zinc-500 shrink-0" />
                 </button>
 
                 <button
@@ -574,37 +602,37 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
                     onClose();
                     setCurrentView('library');
                   }}
-                  className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-left flex items-center justify-between min-h-[44px]"
+                  className="p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.07] text-left flex items-center justify-between min-h-[44px] transition-colors cursor-pointer aura-focus-ring aura-pressable-subtle"
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <AuraIcon name="hardDrive" size={16} className="text-emerald-400 shrink-0" />
-                    <span className="text-xs font-semibold text-emerald-200 truncate font-ui-title">Local Vault</span>
+                    <span className="text-xs font-semibold text-zinc-100 truncate font-ui-title">Local Vault</span>
                   </div>
-                  <AuraIcon name="arrowRight" size={12} className="text-emerald-400/60 shrink-0" />
+                  <AuraIcon name="arrowRight" size={12} className="text-zinc-500 shrink-0" />
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setQuery('Audius')}
-                  className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-left flex items-center justify-between min-h-[44px]"
+                  className="p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.07] text-left flex items-center justify-between min-h-[44px] transition-colors cursor-pointer aura-focus-ring aura-pressable-subtle"
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <AuraIcon name="sparkles" size={16} className="text-purple-400 shrink-0" />
-                    <span className="text-xs font-semibold text-purple-200 truncate font-ui-title">Audius Live</span>
+                    <span className="text-xs font-semibold text-zinc-100 truncate font-ui-title">Audius Live</span>
                   </div>
-                  <AuraIcon name="arrowRight" size={12} className="text-purple-400/60 shrink-0" />
+                  <AuraIcon name="arrowRight" size={12} className="text-zinc-500 shrink-0" />
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setQuery('Jamendo')}
-                  className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-left flex items-center justify-between min-h-[44px]"
+                  className="p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.07] text-left flex items-center justify-between min-h-[44px] transition-colors cursor-pointer aura-focus-ring aura-pressable-subtle"
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <AuraIcon name="musicNote" size={16} className="text-amber-400 shrink-0" />
-                    <span className="text-xs font-semibold text-amber-200 truncate font-ui-title">Jamendo CC</span>
+                    <span className="text-xs font-semibold text-zinc-100 truncate font-ui-title">Jamendo CC</span>
                   </div>
-                  <AuraIcon name="arrowRight" size={12} className="text-amber-400/60 shrink-0" />
+                  <AuraIcon name="arrowRight" size={12} className="text-zinc-500 shrink-0" />
                 </button>
 
                 <button
@@ -613,13 +641,13 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
                     onClose();
                     setCurrentView('sources');
                   }}
-                  className="p-3 rounded-xl bg-sky-500/10 border border-sky-500/20 text-left flex items-center justify-between min-h-[44px]"
+                  className="p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.07] text-left flex items-center justify-between min-h-[44px] transition-colors cursor-pointer aura-focus-ring aura-pressable-subtle"
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <AuraIcon name="radio" size={16} className="text-sky-400 shrink-0" />
-                    <span className="text-xs font-semibold text-sky-200 truncate font-ui-title">World Radio</span>
+                    <span className="text-xs font-semibold text-zinc-100 truncate font-ui-title">World Radio</span>
                   </div>
-                  <AuraIcon name="arrowRight" size={12} className="text-sky-400/60 shrink-0" />
+                  <AuraIcon name="arrowRight" size={12} className="text-zinc-500 shrink-0" />
                 </button>
               </div>
             </div>
@@ -693,12 +721,8 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
                 </h3>
                 <p className="text-xs text-zinc-400 truncate mt-0.5 font-ui-meta">
                   <HighlightText text={bestMatch.artist} query={query} />
+                  <span className="text-zinc-500"> · {formatSourceLabel(bestMatch.source)}</span>
                 </p>
-                <div className="text-[10px] font-mono mt-1">
-                  <span className={`px-1.5 py-0.2 rounded border font-semibold uppercase ${getSourceBadgeStyle(bestMatch.source)}`}>
-                    {bestMatch.source === 'radiobrowser' ? 'RADIO' : (bestMatch.source || 'LOCAL')}
-                  </span>
-                </div>
               </div>
 
               <button
@@ -759,15 +783,10 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
                           <HighlightText text={song.title} query={query} />
                         </h4>
 
-                        <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 truncate mt-0.5">
-                          <span className="truncate font-ui-meta">
-                            <HighlightText text={song.artist} query={query} />
-                          </span>
-                          <span className="text-zinc-600">·</span>
-                          <span className={`text-[9px] font-mono px-1 py-0.2 rounded border uppercase shrink-0 font-semibold ${getSourceBadgeStyle(song.source)}`}>
-                            {song.source === 'radiobrowser' ? 'RADIO' : (song.source || 'LOCAL')}
-                          </span>
-                        </div>
+                        <p className="text-[11px] text-zinc-400 truncate mt-0.5 font-ui-meta">
+                          <HighlightText text={song.artist} query={query} />
+                          <span className="text-zinc-500"> · {formatSourceLabel(song.source)}</span>
+                        </p>
                       </div>
                     </div>
 
@@ -967,8 +986,7 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({ isOpen, on
           </div>
         )}
 
-          </MotionFadeSlide>
-        </AnimatePresence>
+        </MotionFadeSlide>
       </div>
         </MotionModal>
       )}

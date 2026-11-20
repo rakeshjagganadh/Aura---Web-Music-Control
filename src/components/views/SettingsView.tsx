@@ -71,29 +71,27 @@ export const SettingsView: React.FC = () => {
   } = usePWAInstall();
 
   return (
-    <div className="flex flex-col gap-8 p-4 sm:p-8 max-w-4xl mx-auto">
+    <div className="flex flex-col gap-4 sm:gap-8 p-3 sm:p-8 pb-6 max-w-4xl mx-auto">
       
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Settings & Audio Engine Preferences</h1>
+        <h1 className="text-lg sm:text-2xl font-bold text-white tracking-tight">Settings & Audio Preferences</h1>
         <p className="text-xs text-zinc-400 mt-0.5">Configure playback behaviors, DSP engine parameters, sleep timer, and storage</p>
       </div>
 
       {/* Playback Behaviors & Experience Section */}
-      <div className="flex flex-col gap-5 p-6 rounded-3xl bg-zinc-900/40 border border-white/5">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
-            <AuraIcon name="playCircle" size={20} />
-          </div>
+      <section className="flex flex-col gap-4 p-4 sm:p-6 rounded-2xl bg-white/[0.025] border border-white/[0.07]">
+        <div className="flex items-start gap-3">
+          <AuraIcon name="playCircle" size={20} className="text-indigo-400 shrink-0 mt-0.5" />
           <div>
             <h3 className="text-sm font-semibold text-zinc-100">Playback Behaviors</h3>
             <p className="text-xs text-zinc-400">Control queue progression, transitions, and automated playback</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+        <div className="divide-y divide-white/[0.06] border-t border-white/[0.06]">
           {/* Autoplay Toggle */}
-          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/60 border border-white/5">
+          <div className="flex items-center justify-between gap-4 py-3.5">
             <div>
               <span className="text-xs font-semibold text-zinc-200">Continuous Autoplay</span>
               <p className="text-[11px] text-zinc-400">Automatically advance to next queue item</p>
@@ -104,7 +102,7 @@ export const SettingsView: React.FC = () => {
               aria-checked={settings.autoplay}
               aria-label="Continuous Autoplay"
               onClick={() => updateSettings({ autoplay: !settings.autoplay })}
-              className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer aura-pressable-subtle aura-focus-ring ${
+              className={`w-11 h-6 rounded-full transition-colors relative shrink-0 cursor-pointer aura-pressable-subtle aura-focus-ring ${
                 settings.autoplay ? 'bg-indigo-600' : 'bg-zinc-700'
               }`}
             >
@@ -117,7 +115,7 @@ export const SettingsView: React.FC = () => {
           </div>
 
           {/* Gapless Playback */}
-          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/60 border border-white/5">
+          <div className="flex items-center justify-between gap-4 py-3.5">
             <div>
               <span className="text-xs font-semibold text-zinc-200">Gapless Audio Playback</span>
               <p className="text-[11px] text-zinc-400">Eliminate dead silence between consecutive tracks</p>
@@ -128,7 +126,7 @@ export const SettingsView: React.FC = () => {
               aria-checked={settings.gapless}
               aria-label="Gapless Audio Playback"
               onClick={() => updateSettings({ gapless: !settings.gapless })}
-              className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer aura-pressable-subtle aura-focus-ring ${
+              className={`w-11 h-6 rounded-full transition-colors relative shrink-0 cursor-pointer aura-pressable-subtle aura-focus-ring ${
                 settings.gapless ? 'bg-indigo-600' : 'bg-zinc-700'
               }`}
             >
@@ -139,56 +137,55 @@ export const SettingsView: React.FC = () => {
               />
             </button>
           </div>
-        </div>
 
-        {/* Crossfade Duration Slider */}
-        <div className="p-4 rounded-2xl bg-zinc-900/60 border border-white/5 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-xs font-semibold text-zinc-200">Track Crossfade</span>
-              <p className="text-[11px] text-zinc-400">Smoothly blend outgoing and incoming audio streams</p>
+          {/* Crossfade Duration Slider */}
+          <div className="pt-3.5 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-xs font-semibold text-zinc-200">Track Crossfade</span>
+                <p className="text-[11px] text-zinc-400">Smoothly blend outgoing and incoming audio streams</p>
+              </div>
+              <span className="text-xs font-mono tabular-nums font-semibold text-indigo-300">
+                {settings.crossfade === 0 ? 'Off · 0s' : `${settings.crossfade}s`}
+              </span>
             </div>
-            <span className="text-xs font-mono font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-lg border border-indigo-500/20">
-              {settings.crossfade === 0 ? 'Off (0s)' : `${settings.crossfade} seconds`}
-            </span>
-          </div>
 
-          <input
-            type="range"
-            min="0"
-            max="12"
-            step="1"
-            value={settings.crossfade}
-            onChange={(e) => updateSettings({ crossfade: parseInt(e.target.value, 10) })}
-            className="w-full cursor-pointer accent-indigo-500"
-          />
+            <input
+              type="range"
+              min="0"
+              max="12"
+              step="1"
+              value={settings.crossfade}
+              aria-label="Track Crossfade Seconds"
+              onChange={(e) => updateSettings({ crossfade: parseInt(e.target.value, 10) })}
+              className="w-full cursor-pointer accent-indigo-500"
+            />
 
-          <div className="flex justify-between text-[10px] font-mono text-zinc-500">
-            <span>Off</span>
-            <span>2s</span>
-            <span>4s</span>
-            <span>6s</span>
-            <span>8s</span>
-            <span>12s</span>
+            <div className="flex justify-between text-[10px] font-mono tabular-nums text-zinc-500">
+              <span>Off</span>
+              <span>2s</span>
+              <span>4s</span>
+              <span>6s</span>
+              <span>8s</span>
+              <span>12s</span>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Audio Engine & DSP Dynamics Section */}
-      <div className="flex flex-col gap-5 p-6 rounded-3xl bg-zinc-900/40 border border-white/5">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center">
-            <AuraIcon name="zap" size={20} />
-          </div>
+      <section className="flex flex-col gap-4 p-4 sm:p-6 rounded-2xl bg-white/[0.025] border border-white/[0.07]">
+        <div className="flex items-start gap-3">
+          <AuraIcon name="zap" size={20} className="text-cyan-400 shrink-0 mt-0.5" />
           <div>
             <h3 className="text-sm font-semibold text-zinc-100">DSP Dynamics & Loudness Engine</h3>
             <p className="text-xs text-zinc-400">Loudness normalization, anti-clipping limiter, and buffer quality</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="divide-y divide-white/[0.06] border-t border-white/[0.06]">
           {/* Prevent Clipping (Limiter) */}
-          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/60 border border-white/5">
+          <div className="flex items-center justify-between gap-4 py-3.5">
             <div>
               <span className="text-xs font-semibold text-zinc-200">Prevent Audio Clipping</span>
               <p className="text-[11px] text-zinc-400">Fast peak limiter ceiling at -0.2 dB</p>
@@ -199,7 +196,7 @@ export const SettingsView: React.FC = () => {
               aria-checked={limiter.enabled}
               aria-label="Prevent Audio Clipping"
               onClick={() => updateLimiter({ enabled: !limiter.enabled })}
-              className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer aura-pressable-subtle aura-focus-ring ${
+              className={`w-11 h-6 rounded-full transition-colors relative shrink-0 cursor-pointer aura-pressable-subtle aura-focus-ring ${
                 limiter.enabled ? 'bg-indigo-600' : 'bg-zinc-700'
               }`}
             >
@@ -212,7 +209,7 @@ export const SettingsView: React.FC = () => {
           </div>
 
           {/* Loudness Auto-Normalization */}
-          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/60 border border-white/5">
+          <div className="flex items-center justify-between gap-4 py-3.5">
             <div>
               <span className="text-xs font-semibold text-zinc-200">Auto Loudness Normalization</span>
               <p className="text-[11px] text-zinc-400">Equalize track volumes to standard -14 LUFS</p>
@@ -223,7 +220,7 @@ export const SettingsView: React.FC = () => {
               aria-checked={settings.autoNormalize}
               aria-label="Auto Loudness Normalization"
               onClick={() => updateSettings({ autoNormalize: !settings.autoNormalize })}
-              className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer aura-pressable-subtle aura-focus-ring ${
+              className={`w-11 h-6 rounded-full transition-colors relative shrink-0 cursor-pointer aura-pressable-subtle aura-focus-ring ${
                 settings.autoNormalize ? 'bg-indigo-600' : 'bg-zinc-700'
               }`}
             >
@@ -234,69 +231,67 @@ export const SettingsView: React.FC = () => {
               />
             </button>
           </div>
-        </div>
 
-        {/* DSP Quality Mode */}
-        <div className="p-4 rounded-2xl bg-zinc-900/60 border border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div>
-            <span className="text-xs font-semibold text-zinc-200">Audio Processing Precision</span>
-            <p className="text-[11px] text-zinc-400">Internal floating-point math and filter resolution</p>
-          </div>
-
-          <LayoutGroup id="settings-dsp-quality">
-            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-zinc-950 border border-white/5">
-              {(['standard', 'high', 'ultra'] as const).map((mode) => {
-                const isActive = settings.qualityDsp === mode;
-                return (
-                  <button
-                    type="button"
-                    key={mode}
-                    onClick={() => updateSettings({ qualityDsp: mode })}
-                    className={`relative px-3 py-1.5 min-h-[30px] text-xs font-sans capitalize rounded-lg transition-colors cursor-pointer aura-pressable aura-focus-ring ${
-                      isActive
-                        ? 'text-white font-semibold'
-                        : 'text-zinc-400 hover:text-zinc-200 font-medium'
-                    }`}
-                  >
-                    {isActive && (
-                      <SharedIndicator
-                        layoutId="settings-dsp-quality-pill"
-                        className="absolute inset-0 rounded-lg bg-indigo-600 shadow-sm"
-                      />
-                    )}
-                    <span className="relative z-10">{mode}</span>
-                  </button>
-                );
-              })}
+          {/* DSP Quality Mode */}
+          <div className="pt-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <span className="text-xs font-semibold text-zinc-200">Audio Processing Precision</span>
+              <p className="text-[11px] text-zinc-400">Internal floating-point math and filter resolution</p>
             </div>
-          </LayoutGroup>
+
+            <LayoutGroup id="settings-dsp-quality">
+              <div className="flex items-center gap-1 p-1 rounded-xl bg-zinc-950/90 border border-white/[0.07]">
+                {(['standard', 'high', 'ultra'] as const).map((mode) => {
+                  const isActive = settings.qualityDsp === mode;
+                  return (
+                    <button
+                      type="button"
+                      key={mode}
+                      onClick={() => updateSettings({ qualityDsp: mode })}
+                      className={`relative px-3 py-1.5 min-h-[30px] text-xs font-sans capitalize rounded-lg transition-colors cursor-pointer aura-pressable aura-focus-ring ${
+                        isActive
+                          ? 'text-white font-semibold'
+                          : 'text-zinc-400 hover:text-zinc-200 font-medium'
+                      }`}
+                    >
+                      {isActive && (
+                        <SharedIndicator
+                          layoutId="settings-dsp-quality-pill"
+                          className="absolute inset-0 rounded-lg bg-indigo-600 shadow-sm"
+                        />
+                      )}
+                      <span className="relative z-10">{mode}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </LayoutGroup>
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* Sleep Timer Section */}
-      <div className="flex items-center justify-between p-6 rounded-3xl bg-zinc-900/40 border border-white/5">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center">
-            <AuraIcon name="moon" size={20} />
-          </div>
+      <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-6 rounded-2xl bg-white/[0.025] border border-white/[0.07]">
+        <div className="flex items-start gap-3">
+          <AuraIcon name="moon" size={20} className="text-purple-400 shrink-0 mt-0.5" />
           <div>
             <h3 className="text-sm font-semibold text-zinc-100">Sleep Timer</h3>
-            <p className="text-xs text-zinc-400">
+            <p className="text-xs text-zinc-400 tabular-nums">
               {isSleepTimerActive
                 ? sleepTimerMinutes === -1
-                  ? 'Active • Pausing at end of current track'
-                  : `Active • ${sleepTimerRemainingSecs ? formatTimerRemaining(sleepTimerRemainingSecs) : ''} remaining`
+                  ? 'Active · Pausing at end of current track'
+                  : `Active · ${sleepTimerRemainingSecs ? formatTimerRemaining(sleepTimerRemainingSecs) : ''} remaining`
                 : 'Automatically fade out and pause music after a set duration'}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {isSleepTimerActive && (
             <button
               type="button"
               onClick={cancelSleepTimer}
-              className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-xs font-medium text-rose-300 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+              className="min-h-[40px] px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-xs font-medium text-rose-300 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             >
               Cancel
             </button>
@@ -304,45 +299,43 @@ export const SettingsView: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsSleepTimerModalOpen(true)}
-            className="px-3.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-200 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+            className="min-h-[40px] px-3.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.10] border border-white/[0.08] text-xs font-medium text-zinc-200 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
             {isSleepTimerActive ? 'Change Timer' : 'Set Sleep Timer'}
           </button>
         </div>
-      </div>
+      </section>
 
       {/* Storage Section */}
-      <div className="flex flex-col gap-4 p-6 rounded-3xl bg-zinc-900/40 border border-white/5">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
-            <AuraIcon name="hardDrive" size={20} />
-          </div>
+      <section className="flex flex-col gap-4 p-4 sm:p-6 rounded-2xl bg-white/[0.025] border border-white/[0.07]">
+        <div className="flex items-start gap-3">
+          <AuraIcon name="hardDrive" size={20} className="text-emerald-400 shrink-0 mt-0.5" />
           <div>
             <h3 className="text-sm font-semibold text-zinc-100">Local-First Storage (IndexedDB)</h3>
             <p className="text-xs text-zinc-400">All audio files and metadata remain securely on your device</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-          <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-white/5">
-            <span className="text-[11px] font-sans font-medium text-zinc-400">Tracks Stored</span>
-            <p className="text-lg font-bold text-zinc-100 mt-0.5 font-mono tabular-nums">{tracks.length}</p>
+        <div className="grid grid-cols-3 divide-x divide-white/[0.06] py-2 border-y border-white/[0.06]">
+          <div className="pr-3">
+            <span className="text-[11px] font-sans font-medium text-zinc-400">Tracks</span>
+            <p className="text-base sm:text-lg font-bold text-zinc-100 mt-0.5 font-mono tabular-nums">{tracks.length}</p>
           </div>
-          <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-white/5">
+          <div className="px-3">
             <span className="text-[11px] font-sans font-medium text-zinc-400">Playlists</span>
-            <p className="text-lg font-bold text-zinc-100 mt-0.5 font-mono tabular-nums">{playlists.length}</p>
+            <p className="text-base sm:text-lg font-bold text-zinc-100 mt-0.5 font-mono tabular-nums">{playlists.length}</p>
           </div>
-          <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-white/5">
-            <span className="text-[11px] font-sans font-medium text-zinc-400">Storage Used</span>
-            <p className="text-lg font-bold text-emerald-400 mt-0.5 font-mono tabular-nums">{formatStorageMB(storageUsage.approxBytes)}</p>
+          <div className="pl-3">
+            <span className="text-[11px] font-sans font-medium text-zinc-400">Storage</span>
+            <p className="text-base sm:text-lg font-bold text-emerald-400 mt-0.5 font-mono tabular-nums truncate">{formatStorageMB(storageUsage.approxBytes)}</p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-white/5">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 pt-1">
           <button
             type="button"
             onClick={loadDemoPack}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-xs font-medium text-indigo-300 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+            className="min-h-[40px] flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-medium text-indigo-300 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
             <AuraIcon name="sparkles" size={14} className="text-indigo-400" />
             Reload Demo Tracks
@@ -351,13 +344,13 @@ export const SettingsView: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsConfirmOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-xs font-medium text-rose-300 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+            className="min-h-[40px] flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-xs font-medium text-rose-300 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
             <AuraIcon name="trash" size={14} />
-            Clear All Stored Library Data
+            Clear All Stored Data
           </button>
         </div>
-      </div>
+      </section>
 
       {/* Confirmation Modal */}
       <AnimatePresence>
@@ -374,7 +367,7 @@ export const SettingsView: React.FC = () => {
               aria-modal="true"
               aria-label="Clear All Stored Library Data"
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-md rounded-2xl bg-zinc-950 border border-rose-500/30 shadow-2xl p-6 flex flex-col gap-4"
+              className="relative w-full max-w-md max-h-[90dvh] overflow-y-auto rounded-2xl bg-zinc-950 border border-rose-500/30 shadow-2xl p-4 sm:p-6 flex flex-col gap-4"
             >
               <div className="flex items-start gap-3">
                 <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 shrink-0 flex items-center justify-center">
@@ -396,18 +389,18 @@ export const SettingsView: React.FC = () => {
                 </button>
               </div>
 
-              <div className="p-3 rounded-xl bg-zinc-900/60 border border-white/5 text-xs text-zinc-400">
+              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-xs text-zinc-400">
                 <div className="flex justify-between py-0.5">
                   <span>Tracks to delete:</span>
-                  <span className="font-mono text-zinc-200">{tracks.length}</span>
+                  <span className="font-mono tabular-nums text-zinc-200">{tracks.length}</span>
                 </div>
                 <div className="flex justify-between py-0.5">
                   <span>Playlists to delete:</span>
-                  <span className="font-mono text-zinc-200">{playlists.length}</span>
+                  <span className="font-mono tabular-nums text-zinc-200">{playlists.length}</span>
                 </div>
                 <div className="flex justify-between py-0.5">
                   <span>Storage to reclaim:</span>
-                  <span className="font-mono text-emerald-400">{formatStorageMB(storageUsage.approxBytes)}</span>
+                  <span className="font-mono tabular-nums text-emerald-400">{formatStorageMB(storageUsage.approxBytes)}</span>
                 </div>
               </div>
 
@@ -434,39 +427,35 @@ export const SettingsView: React.FC = () => {
       </AnimatePresence>
 
       {/* Audio Engine Specs */}
-      <div className="flex flex-col gap-4 p-6 rounded-3xl bg-zinc-900/40 border border-white/5">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
-            <AuraIcon name="sliders" size={20} />
-          </div>
+      <section className="flex flex-col gap-3 p-4 sm:p-6 rounded-2xl bg-white/[0.025] border border-white/[0.07]">
+        <div className="flex items-start gap-3">
+          <AuraIcon name="sliders" size={20} className="text-indigo-400 shrink-0 mt-0.5" />
           <div>
             <h3 className="text-sm font-semibold text-zinc-100">Web Audio API Engine Pipeline</h3>
             <p className="text-xs text-zinc-400">High precision browser-native DSP architecture</p>
           </div>
         </div>
 
-        <div className="flex flex-col gap-2 text-xs text-zinc-300">
-          <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/60">
-            <span>Audio Graph Path</span>
-            <span className="font-mono text-zinc-400">Source → EQ(10) → Comp → Limiter → Spatial(3D) → FX → Pan → Analyser</span>
+        <div className="flex flex-col divide-y divide-white/[0.06] border-t border-white/[0.06] text-xs text-zinc-300">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4 py-3">
+            <span className="shrink-0 font-medium text-zinc-200">Audio Graph Path</span>
+            <span className="font-mono tabular-nums text-zinc-400 break-words sm:text-right">Source → EQ(10) → Comp → Limiter → Spatial(3D) → FX → Pan → Analyser</span>
           </div>
-          <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/60">
-            <span>Sample Rate Support</span>
-            <span className="font-mono text-zinc-400">44.1 kHz - 96 kHz Native Float32</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4 py-3">
+            <span className="shrink-0 font-medium text-zinc-200">Sample Rate Support</span>
+            <span className="font-mono tabular-nums text-zinc-400">44.1 kHz – 96 kHz Native Float32</span>
           </div>
-          <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/60">
-            <span>FFT Analyser Resolution</span>
-            <span className="font-mono text-zinc-400">2048 Points (Smoothing 0.82)</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4 pt-3">
+            <span className="shrink-0 font-medium text-zinc-200">FFT Analyser Resolution</span>
+            <span className="font-mono tabular-nums text-zinc-400">2048 Points (Smoothing 0.82)</span>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Shortcuts Sheet Button */}
-      <div className="flex items-center justify-between p-6 rounded-3xl bg-zinc-900/40 border border-white/5">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center">
-            <AuraIcon name="keyboard" size={20} />
-          </div>
+      <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-6 rounded-2xl bg-white/[0.025] border border-white/[0.07]">
+        <div className="flex items-start gap-3">
+          <AuraIcon name="keyboard" size={20} className="text-cyan-400 shrink-0 mt-0.5" />
           <div>
             <h3 className="text-sm font-semibold text-zinc-100">Keyboard Shortcuts</h3>
             <p className="text-xs text-zinc-400">Full keyboard accessibility, transport controls, and shortcuts sheet</p>
@@ -476,24 +465,22 @@ export const SettingsView: React.FC = () => {
         <button
           type="button"
           onClick={() => setIsShortcutsModalOpen(true)}
-          className="px-3.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-200 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+          className="min-h-[40px] shrink-0 px-3.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.10] border border-white/[0.08] text-xs font-medium text-zinc-200 transition-colors cursor-pointer aura-pressable aura-focus-ring"
         >
           View Shortcuts (?)
         </button>
-      </div>
+      </section>
 
       {/* Optical Glass Lab (Dev only) */}
       {import.meta.env.DEV && (
-        <div className="flex items-center justify-between p-6 rounded-3xl bg-zinc-900/40 border border-indigo-500/20">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
-              <AuraIcon name="sparkles" size={20} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
+        <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-6 rounded-2xl bg-white/[0.025] border border-indigo-500/20">
+          <div className="flex items-start gap-3 min-w-0">
+            <AuraIcon name="sparkles" size={20} className="text-indigo-400 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-sm font-semibold text-zinc-100">Optical Glass Lab (Dev)</h3>
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-indigo-500/20 text-indigo-300">
-                  CSS vs Canvas vs SVG vs WebGL
+                <span className="text-[11px] font-mono text-indigo-300/90">
+                  · CSS · Canvas · SVG · WebGL
                 </span>
               </div>
               <p className="text-xs text-zinc-400">
@@ -505,20 +492,18 @@ export const SettingsView: React.FC = () => {
           <button
             type="button"
             onClick={() => setCurrentView('optical-lab')}
-            className="px-3.5 py-1.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-xs font-medium border border-indigo-500/30 transition-colors cursor-pointer shrink-0 aura-pressable aura-focus-ring"
+            className="min-h-[40px] px-3.5 py-1.5 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 text-xs font-medium border border-indigo-500/25 transition-colors cursor-pointer shrink-0 aura-pressable aura-focus-ring"
           >
             Open Optical Lab
           </button>
-        </div>
+        </section>
       )}
 
       {/* PWA Application & Install Status */}
-      <div className="flex flex-col gap-4 p-6 rounded-3xl bg-zinc-900/40 border border-white/5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
-              <AuraIcon name="smartphone" size={20} />
-            </div>
+      <section className="flex flex-col gap-3 p-4 sm:p-6 rounded-2xl bg-white/[0.025] border border-white/[0.07]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <AuraIcon name="smartphone" size={20} className="text-emerald-400 shrink-0 mt-0.5" />
             <div>
               <h3 className="text-sm font-semibold text-zinc-100">Progressive Web App (PWA)</h3>
               <p className="text-xs text-zinc-400">Standalone installability, shell caching, and local storage</p>
@@ -526,7 +511,7 @@ export const SettingsView: React.FC = () => {
           </div>
 
           {isInstalled ? (
-            <span className="flex items-center gap-1.5 text-emerald-400 text-xs font-sans font-medium">
+            <span className="flex items-center gap-1.5 text-emerald-400 text-xs font-sans font-medium shrink-0">
               <AuraIcon name="checkCircle" size={14} />
               Standalone Mode
             </span>
@@ -534,35 +519,35 @@ export const SettingsView: React.FC = () => {
             <button
               type="button"
               onClick={promptInstall}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold transition-colors cursor-pointer shadow-sm aura-pressable"
+              className="min-h-[40px] flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold transition-colors cursor-pointer shadow-sm shrink-0 aura-pressable"
             >
               <AuraIcon name="download" size={14} />
               <span>Install AURA</span>
             </button>
           ) : (
-            <span className="px-2.5 py-1 rounded-lg bg-white/5 text-zinc-400 text-xs font-sans font-medium">
+            <span className="self-start sm:self-auto text-zinc-400 text-xs font-sans font-medium shrink-0">
               Browser Web Mode
             </span>
           )}
         </div>
 
-        <div className="flex flex-col gap-2 text-xs text-zinc-300 pt-2 border-t border-white/5">
-          <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/60">
+        <div className="flex flex-col divide-y divide-white/[0.06] border-t border-white/[0.06] text-xs text-zinc-300">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2.5">
             <span>App Shell Cache & Service Worker</span>
             <span className="font-sans font-medium text-emerald-400">Active (v2 shell precached)</span>
           </div>
-          <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/60">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2.5">
             <span>Local Music Storage</span>
             <span className="font-sans font-medium text-zinc-400">Local Browser IndexedDB (Private)</span>
           </div>
-          <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/60">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pt-2.5">
             <span>Display Environment</span>
             <span className="font-sans font-medium text-zinc-400">
               {isInstalled ? 'Standalone Window (Zero URL bar)' : 'Standard Browser View'}
             </span>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* PWA iOS / Browser Instructions Modal */}
       <PWAInstallModal

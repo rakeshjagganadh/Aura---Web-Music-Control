@@ -81,82 +81,85 @@ export const FavoritesView: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 sm:gap-8 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none pb-36 sm:pb-44">
+    <div className="flex flex-col gap-4 sm:gap-8 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none pb-6 sm:pb-44">
       
       {/* -------------------------------------------------------------
-          1. LARGE ARTWORK HERO BANNER
+          1. COMPACT ARTWORK HERO BANNER ON MOBILE, EDITORIAL ON DESKTOP
           ------------------------------------------------------------- */}
-      <section className="relative overflow-hidden rounded-3xl aura-glass-island p-6 sm:p-8 border border-white/10 shadow-2xl flex flex-col md:flex-row items-center md:items-end gap-6 sm:gap-8">
-        {/* Dynamic Collage or Heart Icon Artwork */}
-        <div className="relative w-40 h-40 sm:w-52 sm:h-52 rounded-2xl overflow-hidden shrink-0 bg-gradient-to-br from-rose-950 via-zinc-900 to-black border border-rose-500/30 shadow-2xl flex items-center justify-center">
-          {collageArtworks.length >= 4 ? (
-            <div className="w-full h-full grid grid-cols-2 grid-rows-2">
-              {collageArtworks.slice(0, 4).map((url, i) => (
-                <img key={i} src={url} alt="" className="w-full h-full object-cover" />
-              ))}
-            </div>
-          ) : collageArtworks.length > 0 ? (
-            <img src={collageArtworks[0]} alt="Liked Songs" className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center text-rose-400">
-              <AuraIcon name="heart" size={64} filled />
-            </div>
-          )}
+      <section className="relative overflow-hidden rounded-2xl sm:rounded-3xl aura-glass-island p-3.5 sm:p-8 border border-white/10 shadow-2xl flex flex-col gap-3.5 sm:gap-6">
+        <div className="flex flex-row items-center md:items-end gap-3.5 sm:gap-8">
+          {/* Dynamic Collage or Heart Icon Artwork */}
+          <div className="relative w-20 h-20 sm:w-52 sm:h-52 rounded-xl sm:rounded-2xl overflow-hidden shrink-0 bg-gradient-to-br from-rose-950 via-zinc-900 to-black border border-rose-500/30 shadow-2xl flex items-center justify-center">
+            {collageArtworks.length >= 4 ? (
+              <div className="w-full h-full grid grid-cols-2 grid-rows-2">
+                {collageArtworks.slice(0, 4).map((url, i) => (
+                  <img key={i} src={url} alt="" className="w-full h-full object-cover" />
+                ))}
+              </div>
+            ) : collageArtworks.length > 0 ? (
+              <img src={collageArtworks[0]} alt="Liked Songs" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-rose-400">
+                <AuraIcon name="heart" size={32} filled />
+              </div>
+            )}
 
-          {/* Micro Heart Badge Overlay */}
-          <div className="absolute bottom-2.5 right-2.5 w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-lg">
-            <AuraIcon name="heart" size={16} filled />
+            {/* Micro Heart Badge Overlay */}
+            <div className="hidden sm:flex absolute bottom-2.5 right-2.5 w-8 h-8 rounded-full bg-rose-500 text-white items-center justify-center shadow-lg">
+              <AuraIcon name="heart" size={16} filled />
+            </div>
+          </div>
+
+          {/* Details */}
+          <div className="flex-1 min-w-0 text-left">
+            <span className="text-[11px] font-mono font-semibold uppercase tracking-[0.14em] text-rose-400 inline-block mb-1 sm:mb-1.5">
+              Liked Collection
+            </span>
+
+            <h1 className="text-lg sm:text-4xl font-page-title text-white tracking-tight">
+              Liked Songs
+            </h1>
+
+            <div className="flex items-center justify-start gap-2 mt-1 sm:mt-2 text-[11px] sm:text-sm text-zinc-300 font-ui-meta">
+              <span className="tabular-nums">{favoriteTracks.length} {favoriteTracks.length === 1 ? 'liked track' : 'liked tracks'}</span>
+              <span className="text-zinc-600" aria-hidden="true">·</span>
+              <span className="font-mono tabular-nums text-zinc-400">{formatDuration(totalDuration)}</span>
+            </div>
           </div>
         </div>
 
-        {/* Details & Controls */}
-        <div className="flex-1 min-w-0 text-center md:text-left">
-          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-rose-300 px-2.5 py-0.5 rounded-full bg-rose-500/15 border border-rose-500/25 inline-block mb-2">
-            COLLECTION PLAYLIST
-          </span>
+        {/* Action Buttons */}
+        {favoriteTracks.length > 0 && (
+          <div className="flex items-center justify-start gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => handlePlayAll(false)}
+              className="flex items-center gap-2 px-4 sm:px-5 py-2 min-h-[40px] rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
+            >
+              <AuraIcon name="play" size={16} filled className="text-black translate-x-0.2" />
+              <span>Play All</span>
+            </button>
 
-          <h1 className="text-2xl sm:text-4xl font-page-title text-white tracking-tight">
-            Liked Songs
-          </h1>
+            <button
+              type="button"
+              onClick={() => handlePlayAll(true)}
+              className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 min-h-[40px] rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
+            >
+              <AuraIcon name="shuffle" size={14} className="text-sky-400" />
+              <span>Shuffle</span>
+            </button>
 
-          <div className="flex items-center justify-center md:justify-start gap-2 mt-2 text-xs sm:text-sm text-zinc-300 font-ui-meta">
-            <span>{favoriteTracks.length} {favoriteTracks.length === 1 ? 'liked track' : 'liked tracks'}</span>
-            <span className="text-zinc-600" aria-hidden="true">·</span>
-            <span className="font-mono text-zinc-400">{formatDuration(totalDuration)}</span>
+            <button
+              type="button"
+              onClick={handleAddAllToQueue}
+              className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 min-h-[40px] rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
+            >
+              <AuraIcon name="playlistAdd" size={14} className="text-indigo-400" />
+              <span className="hidden sm:inline">Add to Queue</span>
+              <span className="sm:hidden">Queue</span>
+            </button>
           </div>
-
-          {/* Action Buttons */}
-          {favoriteTracks.length > 0 && (
-            <div className="flex items-center justify-center md:justify-start gap-2.5 mt-5 flex-wrap">
-              <button
-                type="button"
-                onClick={() => handlePlayAll(false)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
-              >
-                <AuraIcon name="play" size={16} filled className="text-black translate-x-0.2" />
-                <span>Play All</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handlePlayAll(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
-              >
-                <AuraIcon name="shuffle" size={14} className="text-sky-400" />
-                <span>Shuffle</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleAddAllToQueue}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
-              >
-                <AuraIcon name="playlistAdd" size={14} className="text-indigo-400" />
-                <span>Add to Queue</span>
-              </button>
-            </div>
-          )}
-        </div>
+        )}
       </section>
 
       {/* -------------------------------------------------------------
@@ -168,7 +171,7 @@ export const FavoritesView: React.FC = () => {
           3. FILTER & VIEW MODE CONTROLS
           ------------------------------------------------------------- */}
       {favoriteTracks.length > 0 && (
-        <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <section className="flex flex-row items-center justify-between gap-2.5">
           <div className="relative flex-1 max-w-md">
             <AuraIcon name="search" size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
             <input
@@ -190,11 +193,11 @@ export const FavoritesView: React.FC = () => {
           </div>
 
           <LayoutGroup id="favorites-viewmode">
-            <div className="flex items-center gap-1 p-1 rounded-xl bg-white/[0.05] border border-white/10 self-end sm:self-auto">
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-white/[0.05] border border-white/10 shrink-0">
               <button
                 type="button"
                 onClick={() => setViewMode('row')}
-                className={`relative p-1.5 rounded-lg transition-colors cursor-pointer aura-pressable ${
+                className={`relative min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg transition-colors cursor-pointer aura-pressable ${
                   viewMode === 'row' ? 'text-white' : 'text-zinc-400 hover:text-white'
                 }`}
                 title="List View"
@@ -210,7 +213,7 @@ export const FavoritesView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setViewMode('grid')}
-                className={`relative p-1.5 rounded-lg transition-colors cursor-pointer aura-pressable ${
+                className={`relative min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg transition-colors cursor-pointer aura-pressable ${
                   viewMode === 'grid' ? 'text-white' : 'text-zinc-400 hover:text-white'
                 }`}
                 title="Grid View"

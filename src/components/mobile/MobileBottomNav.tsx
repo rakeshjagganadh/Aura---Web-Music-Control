@@ -7,9 +7,11 @@ import { AuraIcon } from '../ui/AuraIcon';
 
 interface MobileBottomNavProps {
   onOpenMore: () => void;
+  onOpenSearch: () => void;
+  isSearchOpen?: boolean;
 }
 
-type MobileNavTabId = 'home' | 'vault' | 'spaces' | 'studio' | 'more';
+type MobileNavTabId = 'home' | 'search' | 'library' | 'studio' | 'more';
 
 const PILL_SPRING_TRANSITION = {
   type: 'spring' as const,
@@ -18,7 +20,11 @@ const PILL_SPRING_TRANSITION = {
   mass: 0.85,
 };
 
-export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenMore }) => {
+export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
+  onOpenMore,
+  onOpenSearch,
+  isSearchOpen = false,
+}) => {
   const {
     currentView,
     setCurrentView,
@@ -51,38 +57,41 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenMore }) 
     Boolean(spatial?.enabled);
 
   const handleNav = (id: NavView) => {
+    setIsAudioControlsOpen(false);
     setSelectedPlaylistId(null);
     setCurrentView(id);
   };
 
   // Single mutually-exclusive active tab so the shared glass pill always has one unambiguous target
   const activeTab: MobileNavTabId | null = useMemo(() => {
+    if (isSearchOpen) return 'search';
     if (isAudioControlsOpen || currentView === 'studio') return 'studio';
-    if (currentView === 'playlists' || currentView === 'playlist-detail' || selectedPlaylistId) {
-      return 'spaces';
-    }
-    if (currentView === 'home') return 'home';
-    if (currentView === 'library' || currentView === 'songs') return 'vault';
     if (
       [
+        'library',
+        'songs',
         'albums',
         'artists',
+        'playlists',
+        'playlist-detail',
         'favorites',
-        'moments',
-        'sources',
-        'listen-together',
-        'settings',
-        'optical-lab',
-      ].includes(currentView)
+      ].includes(currentView) ||
+      Boolean(selectedPlaylistId)
+    ) {
+      return 'library';
+    }
+    if (currentView === 'home') return 'home';
+    if (
+      ['moments', 'sources', 'listen-together', 'settings', 'optical-lab'].includes(currentView)
     ) {
       return 'more';
     }
     return null;
-  }, [isAudioControlsOpen, currentView, selectedPlaylistId]);
+  }, [isSearchOpen, isAudioControlsOpen, currentView, selectedPlaylistId]);
 
   const isHomeActive = activeTab === 'home';
-  const isLibraryActive = activeTab === 'vault';
-  const isSpacesActive = activeTab === 'spaces';
+  const isSearchActive = activeTab === 'search';
+  const isLibraryActive = activeTab === 'library';
   const isStudioActive = activeTab === 'studio';
   const isMoreActive = activeTab === 'more';
 
@@ -92,23 +101,23 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenMore }) 
     <nav
       id="mobile-bottom-navigation"
       aria-label="Mobile Bottom Navigation"
-      className="lg:hidden fixed bottom-[calc(10px+env(safe-area-inset-bottom,0px))] left-3 right-3 max-w-md mx-auto z-40 select-none"
+      className="lg:hidden fixed bottom-[calc(8px+env(safe-area-inset-bottom,0px))] left-2.5 right-2.5 max-w-md mx-auto z-40 select-none"
     >
       <OpticalGlassSurface
-        className="w-full p-1.5 shadow-[0_16px_36px_rgba(0,0,0,0.8)]"
+        className="w-full p-1.5 shadow-[0_14px_34px_rgba(0,0,0,0.82)]"
         artworkUrl={currentTrack?.coverUrl}
         refractionScale={6}
         intensity="moderate"
         shape="rounded-full"
       >
         <LayoutGroup id="mobile-bottom-nav-group">
-          <div className="grid grid-cols-5 items-center h-12 gap-1">
+          <div className="grid grid-cols-5 items-center h-12 gap-0.5">
             {/* 1. Home */}
             <button
               type="button"
               onClick={() => handleNav('home')}
               aria-current={isHomeActive ? 'page' : undefined}
-              className={`relative flex flex-col items-center justify-center gap-0.5 h-11 rounded-full transition-colors duration-250 ease-out cursor-pointer aura-focus-ring ${
+              className={`relative flex flex-col items-center justify-center gap-0.5 h-11 rounded-full transition-colors duration-200 ease-out cursor-pointer aura-focus-ring whitespace-nowrap ${
                 isHomeActive
                   ? 'text-sky-300 font-semibold'
                   : 'text-zinc-400 hover:text-zinc-200 active:text-white'
@@ -120,14 +129,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenMore }) 
                   layoutId="mobile-nav-active-pill"
                   aria-hidden="true"
                   transition={pillTransition}
-                  className="absolute inset-0 rounded-full bg-white/[0.10] pointer-events-none"
+                  className="absolute inset-0 rounded-full bg-white/[0.11] pointer-events-none"
                 />
               )}
               <AuraIcon
                 name="home"
-                size={16}
+                size={17}
                 filled={isHomeActive}
-                className={`relative z-10 transition-[transform,color] duration-250 ease-out ${
+                className={`relative z-10 transition-[transform,color] duration-200 ease-out ${
                   isHomeActive
                     ? `${prefersReducedMotion ? '' : 'scale-[1.06] '}text-sky-300`
                     : 'scale-100'
@@ -138,12 +147,47 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenMore }) 
               </span>
             </button>
 
-            {/* 2. Library / Vault */}
+            {/* 2. Search */}
+            <button
+              type="button"
+              onClick={onOpenSearch}
+              aria-current={isSearchActive ? 'page' : undefined}
+              className={`relative flex flex-col items-center justify-center gap-0.5 h-11 rounded-full transition-colors duration-200 ease-out cursor-pointer aura-focus-ring whitespace-nowrap ${
+                isSearchActive
+                  ? 'text-sky-300 font-semibold'
+                  : 'text-zinc-400 hover:text-zinc-200 active:text-white'
+              }`}
+              aria-label="Search"
+            >
+              {isSearchActive && (
+                <motion.span
+                  layoutId="mobile-nav-active-pill"
+                  aria-hidden="true"
+                  transition={pillTransition}
+                  className="absolute inset-0 rounded-full bg-white/[0.11] pointer-events-none"
+                />
+              )}
+              <AuraIcon
+                name="search"
+                size={17}
+                filled={isSearchActive}
+                className={`relative z-10 transition-[transform,color] duration-200 ease-out ${
+                  isSearchActive
+                    ? `${prefersReducedMotion ? '' : 'scale-[1.06] '}text-sky-300`
+                    : 'scale-100'
+                }`}
+              />
+              <span className="relative z-10 text-[10px] tracking-tight leading-none font-medium">
+                Search
+              </span>
+            </button>
+
+            {/* 3. Library */}
             <button
               type="button"
               onClick={() => handleNav('songs')}
               aria-current={isLibraryActive ? 'page' : undefined}
-              className={`relative flex flex-col items-center justify-center gap-0.5 h-11 rounded-full transition-colors duration-250 ease-out cursor-pointer aura-focus-ring ${
+              className={`relative flex flex-col items-center justify-center gap-0.5 h-11 rounded-full transition-colors duration-200 ease-out cursor-pointer aura-focus-ring whitespace-nowrap ${
                 isLibraryActive
                   ? 'text-sky-300 font-semibold'
                   : 'text-zinc-400 hover:text-zinc-200 active:text-white'
@@ -155,65 +199,30 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenMore }) 
                   layoutId="mobile-nav-active-pill"
                   aria-hidden="true"
                   transition={pillTransition}
-                  className="absolute inset-0 rounded-full bg-white/[0.10] pointer-events-none"
+                  className="absolute inset-0 rounded-full bg-white/[0.11] pointer-events-none"
                 />
               )}
               <AuraIcon
                 name="musicNote"
-                size={16}
+                size={17}
                 filled={isLibraryActive}
-                className={`relative z-10 transition-[transform,color] duration-250 ease-out ${
+                className={`relative z-10 transition-[transform,color] duration-200 ease-out ${
                   isLibraryActive
                     ? `${prefersReducedMotion ? '' : 'scale-[1.06] '}text-sky-300`
                     : 'scale-100'
                 }`}
               />
               <span className="relative z-10 text-[10px] tracking-tight leading-none font-medium">
-                Vault
-              </span>
-            </button>
-
-            {/* 3. Spaces / Playlists */}
-            <button
-              type="button"
-              onClick={() => handleNav('playlists')}
-              aria-current={isSpacesActive ? 'page' : undefined}
-              className={`relative flex flex-col items-center justify-center gap-0.5 h-11 rounded-full transition-colors duration-250 ease-out cursor-pointer aura-focus-ring ${
-                isSpacesActive
-                  ? 'text-sky-300 font-semibold'
-                  : 'text-zinc-400 hover:text-zinc-200 active:text-white'
-              }`}
-              aria-label="Spaces"
-            >
-              {isSpacesActive && (
-                <motion.span
-                  layoutId="mobile-nav-active-pill"
-                  aria-hidden="true"
-                  transition={pillTransition}
-                  className="absolute inset-0 rounded-full bg-white/[0.10] pointer-events-none"
-                />
-              )}
-              <AuraIcon
-                name="queue"
-                size={16}
-                filled={isSpacesActive}
-                className={`relative z-10 transition-[transform,color] duration-250 ease-out ${
-                  isSpacesActive
-                    ? `${prefersReducedMotion ? '' : 'scale-[1.06] '}text-sky-300`
-                    : 'scale-100'
-                }`}
-              />
-              <span className="relative z-10 text-[10px] tracking-tight leading-none font-medium">
-                Spaces
+                Library
               </span>
             </button>
 
             {/* 4. Audio Studio DSP Control Sheet Trigger */}
             <button
               type="button"
-              onClick={() => setIsAudioControlsOpen(true)}
+              onClick={() => setIsAudioControlsOpen(!isAudioControlsOpen)}
               aria-current={isStudioActive ? 'page' : undefined}
-              className={`relative flex flex-col items-center justify-center gap-0.5 h-11 rounded-full transition-colors duration-250 ease-out cursor-pointer aura-focus-ring ${
+              className={`relative flex flex-col items-center justify-center gap-0.5 h-11 rounded-full transition-colors duration-200 ease-out cursor-pointer aura-focus-ring whitespace-nowrap ${
                 isStudioActive
                   ? 'text-sky-300 font-semibold'
                   : isAudioEffectActive
@@ -227,15 +236,15 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenMore }) 
                   layoutId="mobile-nav-active-pill"
                   aria-hidden="true"
                   transition={pillTransition}
-                  className="absolute inset-0 rounded-full bg-white/[0.10] pointer-events-none"
+                  className="absolute inset-0 rounded-full bg-white/[0.11] pointer-events-none"
                 />
               )}
               <div className="relative z-10 flex items-center justify-center">
                 <AuraIcon
                   name="sliders"
-                  size={16}
+                  size={17}
                   filled={isStudioActive}
-                  className={`transition-[transform,color] duration-250 ease-out ${
+                  className={`transition-[transform,color] duration-200 ease-out ${
                     isStudioActive
                       ? `${prefersReducedMotion ? '' : 'scale-[1.06] '}text-sky-300`
                       : 'scale-100'
@@ -255,7 +264,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenMore }) 
               type="button"
               onClick={onOpenMore}
               aria-current={isMoreActive ? 'page' : undefined}
-              className={`relative flex flex-col items-center justify-center gap-0.5 h-11 rounded-full transition-colors duration-250 ease-out cursor-pointer aura-focus-ring ${
+              className={`relative flex flex-col items-center justify-center gap-0.5 h-11 rounded-full transition-colors duration-200 ease-out cursor-pointer aura-focus-ring whitespace-nowrap ${
                 isMoreActive
                   ? 'text-sky-300 font-semibold'
                   : 'text-zinc-400 hover:text-zinc-200 active:text-white'
@@ -267,14 +276,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenMore }) 
                   layoutId="mobile-nav-active-pill"
                   aria-hidden="true"
                   transition={pillTransition}
-                  className="absolute inset-0 rounded-full bg-white/[0.10] pointer-events-none"
+                  className="absolute inset-0 rounded-full bg-white/[0.11] pointer-events-none"
                 />
               )}
               <AuraIcon
                 name="more"
-                size={16}
+                size={17}
                 filled={isMoreActive}
-                className={`relative z-10 transition-[transform,color] duration-250 ease-out ${
+                className={`relative z-10 transition-[transform,color] duration-200 ease-out ${
                   isMoreActive
                     ? `${prefersReducedMotion ? '' : 'scale-[1.06] '}text-sky-300`
                     : 'scale-100'

@@ -25,27 +25,24 @@ export const AuraEmptyState: React.FC<AuraEmptyStateProps> = ({
   onSecondaryAction,
   className = '',
 }) => {
-  const { prefersReducedMotion } = useMotionCapabilities();
-
   return (
     <MotionFadeSlide
       direction="up"
       distance={10}
       duration="standard"
-      className={`relative flex flex-col items-center justify-center text-center p-12 sm:p-16 rounded-3xl bg-[#0e1017]/60 border border-white/5 backdrop-blur-sm overflow-hidden select-none ${className}`}
+      className={`relative flex flex-col items-center justify-center text-center p-12 sm:p-16 rounded-3xl bg-[#0e1017]/60 border border-white/[0.06] backdrop-blur-sm overflow-hidden select-none ${className}`}
     >
       {/* Subtle background acoustic echo lines */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-10">
-        <div className={`w-64 h-64 rounded-full border border-indigo-400/30 ${!prefersReducedMotion ? 'animate-pulse' : ''}`} />
+        <div className="w-64 h-64 rounded-full border border-indigo-400/25" />
         <div className="absolute w-96 h-96 rounded-full border border-white/10" />
       </div>
 
-      {/* Icon with refined aura ring */}
+      {/* Icon */}
       <div className="relative mb-5 flex items-center justify-center">
-        <div className="w-14 h-14 rounded-2xl bg-zinc-900/90 border border-white/10 flex items-center justify-center text-zinc-400 shadow-xl shadow-black/40">
+        <div className="w-14 h-14 rounded-2xl bg-zinc-900/90 border border-white/10 flex items-center justify-center text-zinc-400 shadow-lg shadow-black/40">
           <AuraIcon name={icon} size={24} className="text-zinc-400" />
         </div>
-        <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-transparent blur-sm -z-10" />
       </div>
 
       <h3 className="text-base sm:text-lg font-bold text-zinc-100 tracking-tight">

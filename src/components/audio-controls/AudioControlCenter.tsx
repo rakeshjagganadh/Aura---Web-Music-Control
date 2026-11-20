@@ -85,31 +85,24 @@ export const AudioControlCenter: React.FC = () => {
           <div className="flex items-center justify-between gap-3">
             
             {/* Title & Status */}
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
-                <AuraIcon name="sliders" size={20} />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
-                    Audio Control Studio
-                  </h2>
-                  <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
-                    isAdvancedMode 
-                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' 
-                      : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
-                  }`}>
-                    {isAdvancedMode ? 'PRO DSP' : 'SIMPLE'}
-                  </span>
-                </div>
+            <div className="flex items-center gap-3 min-w-0">
+              <AuraIcon name="sliders" size={20} className="text-indigo-400 shrink-0" />
+              <div className="min-w-0">
+                <h2 className="text-base sm:text-lg font-bold text-white tracking-tight truncate">
+                  Audio Control Studio
+                </h2>
                 <p className="text-xs text-zinc-400 truncate max-w-xs sm:max-w-md">
+                  <span className={isAdvancedMode ? 'text-amber-300 font-medium' : 'text-indigo-300 font-medium'}>
+                    {isAdvancedMode ? 'Pro DSP' : 'Simple'}
+                  </span>
+                  <span aria-hidden="true"> · </span>
                   {currentTrack ? (
                     <>
-                      Target: <span className="text-zinc-200 font-medium">{currentTrack.title}</span>
-                      {hasSongProfile && <span className="ml-1.5 text-violet-400 font-semibold">• Custom Song Profile</span>}
+                      <span className="text-zinc-200 font-medium">{currentTrack.title}</span>
+                      {hasSongProfile && <span className="ml-1.5 text-violet-400 font-medium">· Custom Song Profile</span>}
                     </>
                   ) : (
-                    'Configure master output DSP'
+                    'Master output DSP'
                   )}
                 </p>
               </div>
@@ -122,17 +115,17 @@ export const AudioControlCenter: React.FC = () => {
               <button
                 type="button"
                 onClick={toggleABBypass}
-                title="A/B Comparison: Toggle between original unprocessed audio and studio DSP"
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-colors border shadow-sm cursor-pointer aura-pressable aura-focus-ring ${
+                title="A/B Comparison: Toggle between original unprocessed audio (A: RAW) and studio DSP (B: DSP)"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold font-mono tabular-nums transition-colors border shadow-sm cursor-pointer aura-pressable aura-focus-ring ${
                   isABBypassed
-                    ? 'bg-zinc-800 text-zinc-300 border-white/20'
-                    : 'bg-emerald-600/25 text-emerald-300 border-emerald-500/40 shadow-emerald-500/10'
+                    ? 'bg-zinc-900 text-amber-300 border-amber-500/30'
+                    : 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40'
                 }`}
               >
                 <MotionIconSwap stateKey={isABBypassed ? 'raw' : 'dsp'}>
-                  <AuraIcon name="radio" size={14} className={!isABBypassed ? 'text-emerald-400' : 'text-zinc-500'} />
+                  <AuraIcon name="radio" size={14} className={!isABBypassed ? 'text-cyan-400' : 'text-amber-400'} />
                 </MotionIconSwap>
-                <span>{isABBypassed ? 'A: ORIGINAL' : 'B: STUDIO DSP'}</span>
+                <span>{isABBypassed ? 'A: RAW' : 'B: DSP'}</span>
               </button>
 
               {/* Mode Toggle (Simple vs Pro) */}
@@ -205,17 +198,15 @@ export const AudioControlCenter: React.FC = () => {
         {/* Scrollable Main Content Body */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 select-none">
           {(currentTrack?.source === 'youtube' || isDirectStreamActive) && (
-            <div className="mb-4 p-3 rounded-2xl bg-zinc-900/80 border border-amber-500/25 flex items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono text-[10px] border border-amber-500/30 font-semibold shrink-0">
-                  {currentTrack?.source === 'youtube' ? 'YOUTUBE EMBED' : 'DIRECT STREAM (BYPASSED)'}
-                </span>
-                <span className="text-zinc-300 text-xs">
-                  {currentTrack?.source === 'youtube'
-                    ? 'Transport controls (Speed, Volume, Seek, Queue) are active. Web Audio DSP & EQ apply to local files and CORS-enabled streams.'
-                    : 'Direct stream fallback active due to station CORS policy. Volume and playback controls work; Web Audio EQ and DSP filters are bypassed for this stream.'}
-                </span>
-              </div>
+            <div className="mb-4 p-3 rounded-xl bg-amber-500/[0.06] border border-amber-500/20 text-xs text-zinc-300 leading-relaxed">
+              <span className="font-semibold text-amber-300 mr-1.5">
+                {currentTrack?.source === 'youtube' ? 'YouTube Embed ·' : 'Direct Stream ·'}
+              </span>
+              <span>
+                {currentTrack?.source === 'youtube'
+                  ? 'Transport controls (Speed, Volume, Seek, Queue) are active. Web Audio DSP & EQ apply to local files and CORS-enabled streams.'
+                  : 'Direct stream fallback active due to station CORS policy. Volume and playback controls work; Web Audio EQ and DSP filters are bypassed for this stream.'}
+              </span>
             </div>
           )}
           
@@ -229,10 +220,10 @@ export const AudioControlCenter: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 
                 {/* Bass */}
-                <div className="p-4 rounded-2xl bg-zinc-900/50 border border-white/5 flex flex-col gap-3">
+                <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex flex-col gap-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-zinc-200 uppercase tracking-wide">Low-End Bass</span>
-                    <span className={`text-xs font-mono font-bold ${bass > 0 ? 'text-indigo-400' : bass < 0 ? 'text-rose-400' : 'text-zinc-400'}`}>
+                    <span className="text-xs font-semibold text-zinc-200">Low-End Bass</span>
+                    <span className={`text-xs font-mono tabular-nums font-bold ${bass > 0 ? 'text-indigo-400' : bass < 0 ? 'text-rose-400' : 'text-zinc-400'}`}>
                       {bass > 0 ? `+${bass.toFixed(1)}` : bass.toFixed(1)} dB
                     </span>
                   </div>
@@ -242,21 +233,22 @@ export const AudioControlCenter: React.FC = () => {
                     max="12"
                     step="0.5"
                     value={bass}
+                    aria-label="Low-End Bass"
                     onChange={(e) => setBass(parseFloat(e.target.value))}
                     className="w-full"
                   />
-                  <div className="flex justify-between text-[10px] text-zinc-500">
-                    <span>Tamed (-12dB)</span>
+                  <div className="flex justify-between text-[10px] text-zinc-500 tabular-nums">
+                    <span>Tamed (-12 dB)</span>
                     <span>Flat</span>
-                    <span>Deep Punch (+12dB)</span>
+                    <span>Punch (+12 dB)</span>
                   </div>
                 </div>
 
                 {/* Treble */}
-                <div className="p-4 rounded-2xl bg-zinc-900/50 border border-white/5 flex flex-col gap-3">
+                <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex flex-col gap-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-zinc-200 uppercase tracking-wide">High-End Air (Treble)</span>
-                    <span className={`text-xs font-mono font-bold ${treble > 0 ? 'text-cyan-400' : treble < 0 ? 'text-rose-400' : 'text-zinc-400'}`}>
+                    <span className="text-xs font-semibold text-zinc-200">High-End Air</span>
+                    <span className={`text-xs font-mono tabular-nums font-bold ${treble > 0 ? 'text-cyan-400' : treble < 0 ? 'text-rose-400' : 'text-zinc-400'}`}>
                       {treble > 0 ? `+${treble.toFixed(1)}` : treble.toFixed(1)} dB
                     </span>
                   </div>
@@ -266,21 +258,22 @@ export const AudioControlCenter: React.FC = () => {
                     max="12"
                     step="0.5"
                     value={treble}
+                    aria-label="High-End Air"
                     onChange={(e) => setTreble(parseFloat(e.target.value))}
                     className="w-full"
                   />
-                  <div className="flex justify-between text-[10px] text-zinc-500">
-                    <span>Dark (-12dB)</span>
+                  <div className="flex justify-between text-[10px] text-zinc-500 tabular-nums">
+                    <span>Dark (-12 dB)</span>
                     <span>Flat</span>
-                    <span>Bright Sparkle (+12dB)</span>
+                    <span>Bright (+12 dB)</span>
                   </div>
                 </div>
 
                 {/* Balance */}
-                <div className="p-4 rounded-2xl bg-zinc-900/50 border border-white/5 flex flex-col gap-3">
+                <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex flex-col gap-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-zinc-200 uppercase tracking-wide">Stereo Balance</span>
-                    <span className="text-xs font-mono font-bold text-zinc-300">
+                    <span className="text-xs font-semibold text-zinc-200">Stereo Balance</span>
+                    <span className="text-xs font-mono tabular-nums font-bold text-zinc-300">
                       {balance === 0
                         ? 'Center'
                         : balance < 0
@@ -294,10 +287,11 @@ export const AudioControlCenter: React.FC = () => {
                     max="1"
                     step="0.05"
                     value={balance}
+                    aria-label="Stereo Balance"
                     onChange={(e) => setBalance(parseFloat(e.target.value))}
                     className="w-full"
                   />
-                  <div className="flex justify-between text-[10px] text-zinc-500">
+                  <div className="flex justify-between text-[10px] text-zinc-500 tabular-nums">
                     <span>Left 100%</span>
                     <span>Center</span>
                     <span>Right 100%</span>
@@ -307,8 +301,8 @@ export const AudioControlCenter: React.FC = () => {
               </div>
 
               {/* Instant Sound Profiles Grid */}
-              <div className="p-4 rounded-2xl bg-zinc-900/30 border border-white/5 flex flex-col gap-3">
-                <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider">
+              <div className="flex flex-col gap-3 pt-2 border-t border-white/[0.06]">
+                <span className="text-xs font-semibold text-zinc-300">
                   Instant Sound Moods
                 </span>
 
@@ -334,13 +328,10 @@ export const AudioControlCenter: React.FC = () => {
                           treble: preset.t,
                         }, preset.label);
                       }}
-                      className="p-3 rounded-xl bg-zinc-950/70 hover:bg-zinc-900 border border-white/5 hover:border-indigo-500/40 text-left transition-colors group cursor-pointer aura-pressable-subtle aura-focus-ring"
+                      className="p-3 min-h-[44px] rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-indigo-500/35 text-left transition-colors group cursor-pointer aura-pressable-subtle aura-focus-ring flex items-center justify-between gap-2"
                     >
-                      <span className="text-xs font-semibold text-zinc-300 group-hover:text-white block truncate">
+                      <span className="text-xs font-semibold text-zinc-200 group-hover:text-white truncate">
                         {preset.label}
-                      </span>
-                      <span className="text-[10px] text-zinc-500 font-mono mt-0.5 block">
-                        Tap to apply
                       </span>
                     </button>
                   ))}

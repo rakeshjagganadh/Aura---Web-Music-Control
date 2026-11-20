@@ -56,7 +56,7 @@ export const PWAInstallBanner: React.FC<PWAInstallBannerProps> = ({
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-bold text-white tracking-tight truncate">Install AURA Studio</span>
-                  <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-white/10 text-zinc-300 border border-white/10 shrink-0">
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-zinc-300 border border-white/10 shrink-0">
                     APP
                   </span>
                 </div>

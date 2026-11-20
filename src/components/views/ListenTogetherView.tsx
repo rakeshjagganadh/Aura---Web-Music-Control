@@ -6,6 +6,7 @@ import { AuraIcon } from '../ui/AuraIcon';
 import { formatSeconds } from '../../utils/formatTime';
 import { Track } from '../../types';
 import { UniversalSearchModal } from '../search/UniversalSearchModal';
+import { MobileSearchModal } from '../mobile/MobileSearchModal';
 import { GlassPanel } from '../common/primitives/GlassPanel';
 import { SolidCard } from '../common/primitives/SolidCard';
 import { TactileButton } from '../common/primitives/TactileButton';
@@ -92,11 +93,24 @@ export const ListenTogetherView: React.FC = () => {
     onClose: () => setIsDiagnosticsModalOpen(false),
   });
 
-  // Social Hub state (Chat, Participants, Activity)
+  // Social Hub state (Chat, Participants, Activity) & Mobile Room Switcher
   const [activeSocialTab, setActiveSocialTab] = useState<'chat' | 'participants' | 'activity'>('chat');
+  const [mobileRoomTab, setMobileRoomTab] = useState<'stage' | 'queue' | 'social'>('stage');
+  const [isMobileViewport, setIsMobileViewport] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 1024 : false
+  );
   const [chatInputText, setChatInputText] = useState('');
   const [isSendingChat, setIsSendingChat] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mql = window.matchMedia('(max-width: 1023px)');
+    const sync = () => setIsMobileViewport(mql.matches);
+    sync();
+    mql.addEventListener('change', sync);
+    return () => mql.removeEventListener('change', sync);
+  }, []);
 
   const [roomNameInput, setRoomNameInput] = useState('Late Night Vibes');
   const [joinCodeInput, setJoinCodeInput] = useState(pendingJoinRoomId || '');
@@ -242,19 +256,22 @@ export const ListenTogetherView: React.FC = () => {
     }
   };
 
-  // Source badge styling
-  const renderSourceBadge = (source?: string) => {
+  // Clean human-readable source formatting
+  const formatSourceLabel = (source?: string): string => {
     switch (source) {
       case 'youtube':
-        return <TelemetryBadge variant="rose" size="sm">YouTube</TelemetryBadge>;
+        return 'YouTube';
       case 'audius':
-        return <TelemetryBadge variant="amber" size="sm">Audius</TelemetryBadge>;
+        return 'Audius';
       case 'jamendo':
-        return <TelemetryBadge variant="emerald" size="sm">Jamendo</TelemetryBadge>;
+        return 'Jamendo';
       case 'curated_stream':
-        return <TelemetryBadge variant="cyan" size="sm">Curated</TelemetryBadge>;
+        return 'Curated';
+      case 'radiobrowser':
+      case 'radio':
+        return 'Radio';
       default:
-        return <TelemetryBadge variant="cyan" size="sm">Stream</TelemetryBadge>;
+        return 'Stream';
     }
   };
 
@@ -296,13 +313,11 @@ export const ListenTogetherView: React.FC = () => {
     return (
       <div className="max-w-xl mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-[75vh] select-none">
         <GlassPanel intensity="prominent" elevation="lg" className="w-full p-8 rounded-2xl text-center flex flex-col items-center">
-          <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 mb-5 flex items-center justify-center">
-            <AuraIcon name="users" size={32} />
-          </div>
+          <AuraIcon name="users" size={30} className="text-indigo-400 mb-4" />
 
-          <TelemetryBadge variant="cyan" size="sm" dot dotPulse className="mb-3">
+          <span className="text-[11px] font-medium text-cyan-400 mb-2">
             Shared Listening Room Invite
-          </TelemetryBadge>
+          </span>
 
           <h1 className="text-2xl lg:text-3xl font-bold text-white tracking-tight mb-2 font-display">
             Join Room #{pendingJoinRoomId.toUpperCase()}
@@ -378,41 +393,38 @@ export const ListenTogetherView: React.FC = () => {
   // =========================================================================
   if (!isInRoom || !activeRoom) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-8 sm:py-12 lg:py-16 flex flex-col items-center select-none">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-12 lg:py-16 flex flex-col items-center select-none">
         
-        {/* Top Header & Telemetry */}
-        <div className="flex items-center gap-3 mb-6">
-          <TelemetryBadge variant="emerald" size="md" dot dotPulse>
-            {backendType === 'supabase' ? 'Supabase Realtime Engine' : 'AURA Direct WebSocket'}
-          </TelemetryBadge>
-          <TelemetryBadge variant="glass" size="md">
-            Zero-Drift Sync
-          </TelemetryBadge>
-        </div>
+        {/* Top Header Eyebrow */}
+        <p className="text-[11px] font-medium text-zinc-400 mb-2 sm:mb-3 text-center">
+          <span className="text-emerald-400">
+            {backendType === 'supabase' ? 'Supabase Realtime' : 'AURA Direct WebSocket'}
+          </span>
+          <span aria-hidden="true"> · </span>
+          <span>Zero-Drift Sync</span>
+        </p>
 
         {/* Title Block */}
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight text-center mb-3">
+        <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight text-center mb-2 sm:mb-3">
           Listen Together
         </h1>
-        <p className="text-sm sm:text-base text-zinc-400 max-w-xl text-center mb-10 leading-relaxed">
+        <p className="text-xs sm:text-base text-zinc-400 max-w-xl text-center mb-5 sm:mb-10 leading-relaxed">
           Create a room. Invite friends. Listen to synchronized music in real time across any distance.
         </p>
 
         {/* Primary Balanced 2-Action Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-6 w-full max-w-4xl mb-6 sm:mb-12">
           
           {/* Action 1: Create Room */}
-          <GlassPanel intensity="prominent" elevation="lg" className="p-6 sm:p-8 rounded-2xl flex flex-col justify-between group hover:border-indigo-500/30 transition-colors">
+          <GlassPanel intensity="prominent" elevation="lg" className="p-5 sm:p-8 rounded-2xl flex flex-col justify-between group hover:border-indigo-500/30 transition-colors">
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 rounded-xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
-                  <AuraIcon name="add" size={24} />
-                </div>
-                <TelemetryBadge variant="cyan" size="sm">Host Session</TelemetryBadge>
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <AuraIcon name="add" size={22} className="text-indigo-400" />
+                <span className="text-[11px] font-medium text-cyan-400">Host Session</span>
               </div>
 
-              <h2 className="text-xl font-bold text-white mb-2">Create a Listening Room</h2>
-              <p className="text-xs text-zinc-400 leading-relaxed mb-6">
+              <h2 className="text-lg sm:text-xl font-bold text-white mb-1.5 sm:mb-2">Create a Listening Room</h2>
+              <p className="text-xs text-zinc-400 leading-relaxed mb-4 sm:mb-6">
                 Host a private shared room. Control queue order, seek tracks, and invite friends with a single shareable link.
               </p>
             </div>
@@ -420,7 +432,7 @@ export const ListenTogetherView: React.FC = () => {
             <TactileButton
               variant="primary"
               size="lg"
-              className="w-full justify-center"
+              className="w-full justify-center min-h-[44px]"
               onClick={() => {
                 setCreateError(null);
                 setIsCreateModalOpen(true);
@@ -432,17 +444,15 @@ export const ListenTogetherView: React.FC = () => {
           </GlassPanel>
 
           {/* Action 2: Join Room */}
-          <GlassPanel intensity="prominent" elevation="lg" className="p-6 sm:p-8 rounded-2xl flex flex-col justify-between group hover:border-white/20 transition-colors">
+          <GlassPanel intensity="prominent" elevation="lg" className="p-5 sm:p-8 rounded-2xl flex flex-col justify-between group hover:border-white/20 transition-colors">
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 rounded-xl bg-purple-500/15 text-purple-400 border border-purple-500/20 flex items-center justify-center">
-                  <AuraIcon name="users" size={24} />
-                </div>
-                <TelemetryBadge variant="glass" size="sm">Participant</TelemetryBadge>
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <AuraIcon name="users" size={22} className="text-purple-400" />
+                <span className="text-[11px] font-medium text-zinc-400">Join by Code</span>
               </div>
 
-              <h2 className="text-xl font-bold text-white mb-2">Join Existing Room</h2>
-              <p className="text-xs text-zinc-400 leading-relaxed mb-6">
+              <h2 className="text-lg sm:text-xl font-bold text-white mb-1.5 sm:mb-2">Join Existing Room</h2>
+              <p className="text-xs text-zinc-400 leading-relaxed mb-4 sm:mb-6">
                 Enter a room code or paste an invite link to connect directly to an ongoing listening session.
               </p>
             </div>
@@ -450,7 +460,7 @@ export const ListenTogetherView: React.FC = () => {
             <TactileButton
               variant="secondary"
               size="lg"
-              className="w-full justify-center"
+              className="w-full justify-center min-h-[44px]"
               onClick={() => {
                 setJoinError(null);
                 setIsJoinModalOpen(true);
@@ -463,15 +473,15 @@ export const ListenTogetherView: React.FC = () => {
         </div>
 
         {/* Identity & User Configuration Bar */}
-        <SolidCard variant="milled" className="w-full max-w-4xl p-4 sm:p-5 rounded-xl mb-12 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-indigo-600/30 border border-indigo-500/30 text-indigo-300 flex items-center justify-center font-bold text-xs">
+        <SolidCard variant="milled" className="w-full max-w-4xl p-3.5 sm:p-5 rounded-xl mb-6 sm:mb-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className="w-8 h-8 rounded-full bg-indigo-600/30 border border-indigo-500/30 text-indigo-300 flex items-center justify-center font-bold text-xs shrink-0">
               {(displayNameInput || 'L').charAt(0).toUpperCase()}
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col min-w-0 flex-1">
               <span className="text-[10px] font-mono uppercase text-zinc-500">Your Identity</span>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-zinc-400">Listening as:</span>
+                <span className="text-xs text-zinc-400 shrink-0">Listening as:</span>
                 <input
                   type="text"
                   value={displayNameInput}
@@ -479,7 +489,7 @@ export const ListenTogetherView: React.FC = () => {
                     setDisplayNameInput(e.target.value);
                     setUserDisplayName(e.target.value);
                   }}
-                  className="bg-[#08090d] border border-white/10 rounded-md text-white text-xs px-2 py-1 font-medium focus:border-indigo-500/60 focus:outline-none"
+                  className="bg-[#08090d] border border-white/10 rounded-md text-white text-xs px-2 py-1 font-medium focus:border-indigo-500/60 focus:outline-none min-w-0 flex-1 sm:w-auto"
                   placeholder="Your Name"
                 />
               </div>
@@ -487,43 +497,43 @@ export const ListenTogetherView: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2 text-xs text-zinc-400">
-            <AuraIcon name="shieldCheck" size={16} className="text-emerald-400" />
+            <AuraIcon name="shieldCheck" size={16} className="text-emerald-400 shrink-0" />
             <span>Anonymous Session · No Account Required</span>
           </div>
         </SolidCard>
 
         {/* Feature & Technical Guidelines Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full max-w-4xl text-left">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-5 w-full max-w-4xl text-left">
           
-          <SolidCard variant="elevated" className="p-5 rounded-xl flex flex-col gap-2">
-            <div className="flex items-center gap-2 text-indigo-400 mb-1">
+          <div className="p-4 sm:p-5 rounded-xl bg-white/[0.025] border border-white/[0.06] flex flex-col gap-1.5">
+            <div className="flex items-center gap-2 text-indigo-400 mb-0.5">
               <AuraIcon name="radio" size={16} />
-              <h3 className="text-xs font-bold uppercase tracking-wider text-white">Universal Streams</h3>
+              <h3 className="text-xs font-semibold text-white">Universal Streams</h3>
             </div>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Mix official YouTube videos, Audius decentralized tracks, and direct web audio streams into one unified room queue.
+              Mix YouTube embeds, Audius tracks, Jamendo, and web audio streams in one shared queue.
             </p>
-          </SolidCard>
+          </div>
 
-          <SolidCard variant="elevated" className="p-5 rounded-xl flex flex-col gap-2">
-            <div className="flex items-center gap-2 text-purple-400 mb-1">
+          <div className="p-4 sm:p-5 rounded-xl bg-white/[0.025] border border-white/[0.06] flex flex-col gap-1.5">
+            <div className="flex items-center gap-2 text-purple-400 mb-0.5">
               <AuraIcon name="sparkles" size={16} />
-              <h3 className="text-xs font-bold uppercase tracking-wider text-white">Drift Correction</h3>
+              <h3 className="text-xs font-semibold text-white">Drift Correction</h3>
             </div>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Monotonic playback clock anchoring prevents device time skew and automatically corrects playback position drift.
+              Monotonic clock anchoring compensates for device time skew and corrects playback drift automatically.
             </p>
-          </SolidCard>
+          </div>
 
-          <SolidCard variant="elevated" className="p-5 rounded-xl flex flex-col gap-2">
-            <div className="flex items-center gap-2 text-amber-400 mb-1">
+          <div className="p-4 sm:p-5 rounded-xl bg-white/[0.025] border border-white/[0.06] flex flex-col gap-1.5">
+            <div className="flex items-center gap-2 text-amber-400 mb-0.5">
               <AuraIcon name="info" size={16} />
-              <h3 className="text-xs font-bold uppercase tracking-wider text-white">Private Local Files</h3>
+              <h3 className="text-xs font-semibold text-white">Private Local Files</h3>
             </div>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Local music files remain private on your device. Shared rooms require streamable audio sources so all members hear the track.
+              Local device files remain private on your machine. Rooms use streamable sources so every listener hears them.
             </p>
-          </SolidCard>
+          </div>
 
         </div>
 
@@ -585,9 +595,9 @@ export const ListenTogetherView: React.FC = () => {
                       </div>
                     )}
 
-                    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between text-xs text-zinc-400 font-mono">
-                      <span>Playback Control Mode:</span>
-                      <TelemetryBadge variant="emerald" size="sm">Host Seek + Shared Play</TelemetryBadge>
+                    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-between text-xs text-zinc-400">
+                      <span>Playback Control</span>
+                      <span className="font-mono text-emerald-400 font-medium">Host Seek · Shared Play</span>
                     </div>
 
                     <div className="flex items-center gap-3 pt-2">
@@ -750,10 +760,10 @@ export const ListenTogetherView: React.FC = () => {
   const progressPercent = currentDuration > 0 ? (displayCurrentTime / currentDuration) * 100 : 0;
 
   return (
-    <div className="max-w-6xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6 flex flex-col gap-5 sm:gap-6 select-none overflow-x-hidden">
+    <div className="max-w-6xl mx-auto px-3 sm:px-4 pt-3 sm:pt-6 pb-6 flex flex-col gap-4 sm:gap-6 select-none overflow-x-hidden">
       
       {/* 1. ROOM HEADER (Identity, Status, Sharing & Exit) */}
-      <GlassPanel intensity="prominent" elevation="lg" className="p-4 sm:p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <GlassPanel intensity="prominent" elevation="lg" className="p-3.5 sm:p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
         
         {/* Left: Room Identity Block */}
         <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
@@ -762,7 +772,7 @@ export const ListenTogetherView: React.FC = () => {
             size="icon"
             onClick={leaveRoom}
             title="Leave room and return to player"
-            className="shrink-0"
+            className="shrink-0 w-10 h-10 sm:w-9 sm:h-9"
           >
             <AuraIcon name="arrowLeft" size={16} />
           </TactileButton>
@@ -796,16 +806,15 @@ export const ListenTogetherView: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3 mt-1 text-xs text-zinc-400 flex-wrap">
-              <div className="flex items-center gap-1.5 text-emerald-400 font-medium shrink-0">
-                <span className={`w-2 h-2 rounded-full bg-emerald-400 ${!prefersReducedMotion ? 'animate-pulse' : ''}`} />
-                <span>{participants.length || 1} Listening Now</span>
-              </div>
-              <span className="text-zinc-600">·</span>
+              <span className="text-emerald-400 font-medium tabular-nums shrink-0">
+                {participants.length || 1} Listening
+              </span>
+              <span className="text-zinc-600" aria-hidden="true">·</span>
               <span className="truncate">Host: <strong className="text-zinc-200 font-semibold">{activeRoom.ownerName}</strong></span>
               {isOwner && (
                 <>
-                  <span className="text-zinc-600">·</span>
-                  <span className="text-indigo-400 font-mono text-[11px]">(You are Host)</span>
+                  <span className="text-zinc-600" aria-hidden="true">·</span>
+                  <span className="text-indigo-400 font-medium text-[11px]">You are Host</span>
                 </>
               )}
             </div>
@@ -819,6 +828,7 @@ export const ListenTogetherView: React.FC = () => {
             size="sm"
             onClick={handleCopyLink}
             title="Copy full invite link"
+            className="min-h-[38px]"
           >
             <MotionIconSwap stateKey={copiedLink ? 'copied' : 'copy'}>
               {copiedLink ? <AuraIcon name="check" size={14} className="text-emerald-400" /> : <AuraIcon name="copy" size={14} className="text-zinc-400" />}
@@ -831,6 +841,7 @@ export const ListenTogetherView: React.FC = () => {
             size="icon"
             onClick={shareInviteLink}
             title="Share room invitation"
+            className="min-w-[38px] min-h-[38px]"
           >
             <AuraIcon name="shareAlt" size={16} />
           </TactileButton>
@@ -840,6 +851,7 @@ export const ListenTogetherView: React.FC = () => {
             size="icon"
             onClick={() => setIsDiagnosticsModalOpen(true)}
             title="Room connection diagnostics"
+            className="min-w-[38px] min-h-[38px]"
           >
             <AuraIcon name="sliders" size={16} className="text-zinc-400" />
           </TactileButton>
@@ -849,52 +861,86 @@ export const ListenTogetherView: React.FC = () => {
             size="sm"
             onClick={leaveRoom}
             title="Disconnect from shared room"
+            className="min-h-[38px]"
           >
             Leave Room
           </TactileButton>
         </div>
       </GlassPanel>
 
+      {/* MOBILE ROOM VIEW SWITCHER (Stage | Up Next | Chat) */}
+      <div className="lg:hidden grid grid-cols-3 gap-1.5 p-1.5 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
+        <button
+          type="button"
+          onClick={() => setMobileRoomTab('stage')}
+          className={`min-h-[40px] flex items-center justify-center gap-1.5 px-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+            mobileRoomTab === 'stage'
+              ? 'bg-indigo-600 text-white shadow-sm'
+              : 'text-zinc-400 hover:text-white'
+          }`}
+        >
+          <AuraIcon name="musicNote" size={14} />
+          <span>Stage</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileRoomTab('queue')}
+          className={`min-h-[40px] flex items-center justify-center gap-1.5 px-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+            mobileRoomTab === 'queue'
+              ? 'bg-indigo-600 text-white shadow-sm'
+              : 'text-zinc-400 hover:text-white'
+          }`}
+        >
+          <AuraIcon name="queue" size={14} />
+          <span>Queue (<span className="tabular-nums">{upcomingTracks.length}</span>)</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileRoomTab('social')}
+          className={`min-h-[40px] flex items-center justify-center gap-1.5 px-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+            mobileRoomTab === 'social'
+              ? 'bg-indigo-600 text-white shadow-sm'
+              : 'text-zinc-400 hover:text-white'
+          }`}
+        >
+          <AuraIcon name="messageSquare" size={14} />
+          <span>Chat (<span className="tabular-nums">{chatMessages.length}</span>)</span>
+        </button>
+      </div>
+
       {/* 2. MAIN ACTIVE LOUNGE GRID */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         
         {/* LEFT COLUMN: NOW PLAYING & SHARED QUEUE (Span 2) */}
-        <div className="lg:col-span-2 flex flex-col gap-5 sm:gap-6">
+        <div className={`${mobileRoomTab === 'social' ? 'hidden lg:flex' : 'flex'} lg:col-span-2 flex-col gap-4 sm:gap-6`}>
           
-          {/* NOW PLAYING CENTREPIECE */}
-          <GlassPanel intensity="prominent" elevation="lg" className="p-5 sm:p-7 rounded-2xl flex flex-col gap-6 relative overflow-hidden">
+          {/* NOW PLAYING STAGE */}
+          <GlassPanel intensity="prominent" elevation="lg" className={`${mobileRoomTab === 'stage' ? 'flex' : 'hidden lg:flex'} p-4 sm:p-7 rounded-2xl flex-col gap-4 sm:gap-6 relative overflow-hidden`}>
             
             {/* Top Bar inside Now Playing */}
-            <div className="flex items-center justify-between text-xs text-zinc-400 border-b border-white/5 pb-3">
+            <div className="flex items-center justify-between text-xs text-zinc-400 border-b border-white/[0.06] pb-3">
               <div className="flex items-center gap-2">
                 <AuraIcon name="disc" size={14} className={`text-indigo-400 ${isAudioActivelyFlowing && !prefersReducedMotion ? 'animate-spin [animation-duration:4s]' : ''}`} />
-                <span className="font-sans uppercase tracking-widest text-[10px] text-zinc-400 font-semibold">
-                  ROOM AUDIO CENTREPIECE
+                <span className="font-sans text-xs text-zinc-300 font-semibold">
+                  Room Stage
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
-                {currentTrack?.source && renderSourceBadge(currentTrack.source)}
-                {isOwner ? (
-                  <span className="text-[10px] font-sans font-medium text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
-                    Host Seeking Enabled
-                  </span>
-                ) : (
-                  <span className="text-[10px] font-sans font-medium text-zinc-500">
-                    Host Controls Seek
-                  </span>
-                )}
-              </div>
+              {currentTrack?.source && (
+                <span className="text-[11px] font-mono text-zinc-400">
+                  {formatSourceLabel(currentTrack.source)}
+                </span>
+              )}
             </div>
 
             {/* Now Playing State or Empty State */}
             {currentTrack ? (
               <>
                 {/* Artwork & Metadata Showcase */}
-                <div className="w-full min-w-0 flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-6 text-center sm:text-left">
+                <div className="w-full min-w-0 flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 text-center sm:text-left">
                   
                   {/* Artwork Container */}
-                  <div className="relative w-36 h-36 sm:w-40 sm:h-40 rounded-2xl overflow-hidden bg-zinc-900 border border-white/10 shrink-0 shadow-2xl group">
+                  <div className="relative w-28 h-28 sm:w-40 sm:h-40 rounded-2xl overflow-hidden bg-zinc-900 border border-white/10 shrink-0 shadow-2xl group">
                     {currentTrack.coverUrl ? (
                       <img
                         src={currentTrack.coverUrl}
@@ -923,7 +969,7 @@ export const ListenTogetherView: React.FC = () => {
                   {/* Metadata Hierarchy */}
                   <div className="w-full min-w-0 flex flex-col justify-center pt-1 overflow-hidden">
                     <span
-                      className={`text-[10px] font-sans uppercase tracking-widest font-bold mb-1 ${
+                      className={`text-[11px] font-sans font-medium mb-1 ${
                         needsAudioUnlock
                           ? 'text-amber-400'
                           : isLocallySilenced
@@ -934,12 +980,12 @@ export const ListenTogetherView: React.FC = () => {
                       }`}
                     >
                       {needsAudioUnlock
-                        ? 'BROWSER PAUSED AUDIO · TAP ENABLE SOUND TO HEAR ROOM'
+                        ? 'Browser paused audio · Tap Enable Sound'
                         : isLocallySilenced
-                        ? 'SOLO BREAK ACTIVE · MUTED ON YOUR DEVICE'
+                        ? 'Solo break active · Muted on your device'
                         : isPlaying
-                        ? 'CURRENTLY PLAYING FOR ALL LISTENERS'
-                        : 'PAUSED FOR ALL LISTENERS'}
+                        ? 'Playing for all listeners'
+                        : 'Paused for all listeners'}
                     </span>
                     <h2 
                       className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white leading-tight break-words line-clamp-2 mb-1.5 font-display"
@@ -956,10 +1002,10 @@ export const ListenTogetherView: React.FC = () => {
 
                     <div className="flex items-center gap-2 justify-center sm:justify-start text-xs font-sans text-zinc-400 flex-wrap">
                       <span className="truncate max-w-[180px] sm:max-w-xs">{currentTrack.album || 'Single Release'}</span>
-                      <span>·</span>
+                      <span aria-hidden="true">·</span>
                       <span className="font-mono tabular-nums">{formatSeconds(currentTrack.duration)}</span>
-                      <span>·</span>
-                      <span className="capitalize">{currentTrack.source || 'Stream'}</span>
+                      <span aria-hidden="true">·</span>
+                      <span>{formatSourceLabel(currentTrack.source)}</span>
                     </div>
                   </div>
                 </div>
@@ -989,7 +1035,7 @@ export const ListenTogetherView: React.FC = () => {
                     />
                   </div>
 
-                  <div className="flex items-center justify-between text-xs font-mono text-zinc-400 px-0.5">
+                  <div className="flex items-center justify-between text-xs font-mono tabular-nums text-zinc-400 px-0.5">
                     <span>{formatSeconds(displayCurrentTime)}</span>
                     <span className="text-[11px] text-zinc-500 font-sans">
                       {isOwner ? (
@@ -1089,13 +1135,11 @@ export const ListenTogetherView: React.FC = () => {
             ) : (
               /* ELEGANT EMPTY NOW PLAYING STATE */
               <div className="py-12 px-6 flex flex-col items-center justify-center text-center">
-                <div className="w-20 h-20 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mb-5 shadow-inner">
-                  <AuraIcon name="musicAlt" size={40} weight={200} />
-                </div>
+                <AuraIcon name="musicAlt" size={38} weight={200} className="text-indigo-400/80 mb-4" />
 
-                <TelemetryBadge variant="glass" size="sm" className="mb-2">
+                <span className="text-[11px] font-medium text-zinc-400 mb-1.5">
                   Waiting for Tracks
-                </TelemetryBadge>
+                </span>
 
                 <h3 className="text-xl font-bold text-white mb-2 font-display">
                   No Track Currently Playing
@@ -1118,18 +1162,15 @@ export const ListenTogetherView: React.FC = () => {
           </GlassPanel>
 
           {/* SHARED QUEUE (UP NEXT — OPTION A: STRICTLY UPCOMING TRACKS) */}
-          <GlassPanel intensity="prominent" elevation="lg" className="p-5 sm:p-6 rounded-2xl flex flex-col gap-4">
+          <GlassPanel intensity="prominent" elevation="lg" className={`${mobileRoomTab === 'queue' ? 'flex' : 'hidden lg:flex'} p-4 sm:p-6 rounded-2xl flex-col gap-4`}>
             
             {/* Queue Section Header */}
-            <div className="flex items-center justify-between border-b border-white/5 pb-3">
+            <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
               <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base font-bold text-white">Up Next</h3>
-                  <TelemetryBadge variant="glass" size="sm">
-                    {upcomingTracks.length} upcoming
-                  </TelemetryBadge>
-                </div>
-                <p className="text-xs text-zinc-400 mt-0.5">
+                <h3 className="text-base font-bold text-white tabular-nums">
+                  Up Next <span className="text-zinc-500 font-normal">· {upcomingTracks.length}</span>
+                </h3>
+                <p className="text-xs text-zinc-400 mt-0.5 tabular-nums">
                   Shared room playlist · Total {queue.length} track{queue.length === 1 ? '' : 's'}
                 </p>
               </div>
@@ -1159,18 +1200,17 @@ export const ListenTogetherView: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <div className="flex flex-col gap-2 max-h-[420px] overflow-y-auto pr-1">
+              <div className="flex flex-col gap-1.5 max-h-[420px] overflow-y-auto pr-1">
                 {upcomingTracks.map((track, idx) => {
                   return (
-                    <SolidCard
+                    <div
                       key={`${track.id}-${idx}`}
-                      variant="elevated"
-                      className="p-3 rounded-xl flex items-center justify-between gap-3 transition-colors"
+                      className="p-2.5 sm:p-3 rounded-xl bg-white/[0.025] hover:bg-white/[0.05] border border-white/[0.06] flex items-center justify-between gap-3 transition-colors"
                     >
                       {/* Left: Index / Cover / Title / Artist */}
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="w-5 text-right shrink-0">
-                          <span className="text-xs font-mono text-zinc-500">
+                          <span className="text-xs font-mono tabular-nums text-zinc-500">
                             {idx + 1}
                           </span>
                         </div>
@@ -1190,18 +1230,14 @@ export const ListenTogetherView: React.FC = () => {
                             {track.title}
                           </p>
                           <p className="text-[11px] text-zinc-400 truncate mt-0.5" title={track.artist}>
-                            {track.artist}
+                            {track.artist} · {formatSourceLabel(track.source)}
                           </p>
                         </div>
                       </div>
 
-                      {/* Right: Source, Duration & Control Actions */}
+                      {/* Right: Duration & Control Actions */}
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className="hidden sm:inline-flex">
-                          {renderSourceBadge(track.source)}
-                        </span>
-                        
-                        <span className="text-[11px] font-mono text-zinc-400 hidden xs:inline-block">
+                        <span className="text-[11px] font-mono tabular-nums text-zinc-400 hidden xs:inline-block">
                           {formatSeconds(track.duration)}
                         </span>
 
@@ -1213,7 +1249,7 @@ export const ListenTogetherView: React.FC = () => {
                               disabled={idx === 0}
                               onClick={() => handleMoveUpcomingTrack(idx, 'up')}
                               aria-label="Move track up"
-                              className="p-1 hover:bg-white/10 text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed cursor-pointer aura-pressable aura-focus-ring transition-colors"
+                              className="min-w-[36px] min-h-[36px] sm:min-w-0 sm:min-h-0 flex items-center justify-center p-1 hover:bg-white/10 text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed cursor-pointer aura-pressable aura-focus-ring transition-colors"
                               title="Move track up in Up Next"
                             >
                               <AuraIcon name="chevronUp" size={14} />
@@ -1223,7 +1259,7 @@ export const ListenTogetherView: React.FC = () => {
                               disabled={idx === upcomingTracks.length - 1}
                               onClick={() => handleMoveUpcomingTrack(idx, 'down')}
                               aria-label="Move track down"
-                              className="p-1 hover:bg-white/10 text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed cursor-pointer border-l border-white/10 aura-pressable aura-focus-ring transition-colors"
+                              className="min-w-[36px] min-h-[36px] sm:min-w-0 sm:min-h-0 flex items-center justify-center p-1 hover:bg-white/10 text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed cursor-pointer border-l border-white/10 aura-pressable aura-focus-ring transition-colors"
                               title="Move track down in Up Next"
                             >
                               <AuraIcon name="chevronDown" size={14} />
@@ -1238,7 +1274,7 @@ export const ListenTogetherView: React.FC = () => {
                           onClick={() => roomPlayTrack(sharedTrackToTrack(track))}
                           aria-label={`Play ${track.title} now`}
                           title="Play this track now for all listeners"
-                          className="p-1.5"
+                          className="min-w-[36px] min-h-[36px] sm:min-w-0 sm:min-h-0 p-1.5"
                         >
                           <AuraIcon name="play" size={14} filled className="text-indigo-400" />
                         </TactileButton>
@@ -1251,13 +1287,13 @@ export const ListenTogetherView: React.FC = () => {
                             onClick={() => roomRemoveTrack(track.id)}
                             aria-label={`Remove ${track.title} from queue`}
                             title="Remove from room queue"
-                            className="p-1.5 hover:text-rose-400"
+                            className="min-w-[36px] min-h-[36px] sm:min-w-0 sm:min-h-0 p-1.5 hover:text-rose-400"
                           >
                             <AuraIcon name="trash" size={14} />
                           </TactileButton>
                         )}
                       </div>
-                    </SolidCard>
+                    </div>
                   );
                 })}
               </div>
@@ -1267,18 +1303,15 @@ export const ListenTogetherView: React.FC = () => {
         </div>
 
         {/* RIGHT COLUMN: SOCIAL HUB (Live Chat, Participants, Activity) */}
-        <div className="flex flex-col gap-5 sm:gap-6">
+        <div className={`${mobileRoomTab === 'social' ? 'flex' : 'hidden lg:flex'} flex-col gap-4 sm:gap-6`}>
           <GlassPanel intensity="prominent" elevation="lg" className="rounded-2xl flex flex-col overflow-hidden border border-white/10 shadow-2xl">
             {/* Social Header & Segmented Tabs */}
-            <div className="p-3.5 sm:p-4 border-b border-white/5 bg-white/[0.02] flex flex-col gap-3">
+            <div className="p-3.5 sm:p-4 border-b border-white/[0.06] bg-white/[0.02] flex flex-col gap-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full bg-emerald-400 ${!prefersReducedMotion ? 'animate-pulse' : ''}`} />
-                  <span className="text-[11px] font-sans uppercase tracking-widest text-zinc-300 font-bold">
-                    ROOM SOCIAL HUB
-                  </span>
-                </div>
-                <TelemetryBadge variant="emerald" size="sm">
+                <span className="text-xs font-sans text-zinc-200 font-semibold">
+                  Room Social Hub
+                </span>
+                <TelemetryBadge variant="emerald" size="sm" className="tabular-nums">
                   {participants.length || 1} Online
                 </TelemetryBadge>
               </div>
@@ -1304,10 +1337,10 @@ export const ListenTogetherView: React.FC = () => {
                     <AuraIcon name="messageSquare" size={14} className="relative z-10" />
                     <span className="relative z-10">Chat</span>
                     {chatMessages.length > 0 && (
-                      <span className={`relative z-10 text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                        activeSocialTab === 'chat' ? 'bg-white/20 text-white' : 'bg-white/10 text-zinc-300'
+                      <span className={`relative z-10 text-[10px] font-mono tabular-nums ${
+                        activeSocialTab === 'chat' ? 'text-white/90' : 'text-zinc-400'
                       }`}>
-                        {chatMessages.length}
+                        ({chatMessages.length})
                       </span>
                     )}
                   </button>
@@ -1329,10 +1362,10 @@ export const ListenTogetherView: React.FC = () => {
                     )}
                     <AuraIcon name="users" size={14} className="relative z-10" />
                     <span className="relative z-10">People</span>
-                    <span className={`relative z-10 text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                      activeSocialTab === 'participants' ? 'bg-white/20 text-white' : 'bg-white/10 text-zinc-300'
+                    <span className={`relative z-10 text-[10px] font-mono tabular-nums ${
+                      activeSocialTab === 'participants' ? 'text-white/90' : 'text-zinc-400'
                     }`}>
-                      {participants.length || 1}
+                      ({participants.length || 1})
                     </span>
                   </button>
 
@@ -1368,7 +1401,7 @@ export const ListenTogetherView: React.FC = () => {
 
             {/* TAB 1: LIVE CHAT */}
             {activeSocialTab === 'chat' && (
-              <div className="flex flex-col h-[440px] sm:h-[480px]">
+              <div className="flex flex-col h-[52dvh] min-h-[320px] max-h-[440px] sm:h-[480px] sm:max-h-none">
                 {/* Notice header */}
                 <div className="px-4 py-1.5 bg-indigo-500/5 border-b border-indigo-500/10 flex items-center justify-between text-[10px] font-mono text-zinc-400">
                   <span className="flex items-center gap-1.5">
@@ -1418,12 +1451,12 @@ export const ListenTogetherView: React.FC = () => {
                               </span>
                               {isSelf && <span className="text-zinc-500 font-mono">(You)</span>}
                               {msg.isHost && (
-                                <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono text-[9px] border border-amber-500/30">
-                                  Host
+                                <span className="text-amber-300 font-medium">
+                                  · Host
                                 </span>
                               )}
                               <span className="text-zinc-600 font-mono">·</span>
-                              <span className="text-zinc-500 font-mono">
+                              <span className="text-zinc-500 font-mono tabular-nums">
                                 {formatChatTime(msg.timestamp)}
                               </span>
                             </div>
@@ -1487,16 +1520,16 @@ export const ListenTogetherView: React.FC = () => {
             {/* TAB 2: PARTICIPANTS */}
             {activeSocialTab === 'participants' && (
               <div className="p-4 flex flex-col gap-4">
-                <div className="flex items-center justify-between text-xs text-zinc-400 border-b border-white/5 pb-2.5">
-                  <span className="font-sans uppercase tracking-wider text-[11px] text-zinc-300 font-bold">
+                <div className="flex items-center justify-between text-xs text-zinc-400 border-b border-white/[0.06] pb-2.5">
+                  <span className="font-sans text-xs text-zinc-300 font-semibold tabular-nums">
                     Connected Listeners ({participants.length || 1})
                   </span>
-                  <TelemetryBadge variant="emerald" size="sm" dot>
+                  <span className="text-[11px] font-medium text-emerald-400">
                     Active Roster
-                  </TelemetryBadge>
+                  </span>
                 </div>
 
-                <div className="flex flex-col gap-2 max-h-80 overflow-y-auto pr-1">
+                <div className="flex flex-col divide-y divide-white/[0.06] max-h-80 overflow-y-auto pr-1">
                   {(participants.length > 0
                     ? participants
                     : [
@@ -1512,7 +1545,7 @@ export const ListenTogetherView: React.FC = () => {
                     const currentParticipantId = roomService.getCurrentParticipant()?.id;
                     const isSelf = p.isSelf || p.id === currentParticipantId;
                     return (
-                      <SolidCard key={p.id} variant="flat" className="p-3 rounded-xl flex items-center justify-between border border-white/5">
+                      <div key={p.id} className="py-2.5 flex items-center justify-between gap-2">
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="relative">
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-sm ${
@@ -1542,7 +1575,7 @@ export const ListenTogetherView: React.FC = () => {
 
                         <div className="flex items-center gap-1.5 shrink-0">
                           {p.isOwner && (
-                            <TelemetryBadge variant="cyan" size="sm">Host</TelemetryBadge>
+                            <span className="text-[11px] font-medium text-cyan-400">Host</span>
                           )}
                           {isOwner && !isSelf && !p.isOwner && (
                             <TactileButton
@@ -1558,32 +1591,32 @@ export const ListenTogetherView: React.FC = () => {
                             </TactileButton>
                           )}
                         </div>
-                      </SolidCard>
+                      </div>
                     );
                   })}
                 </div>
 
                 {/* Host Moderation Notice */}
-                <SolidCard variant="flat" className="p-3 rounded-xl flex flex-col gap-1.5 text-xs text-zinc-400 bg-white/[0.02] border border-white/5">
+                <div className="pt-3 border-t border-white/[0.06] flex flex-col gap-1 text-xs text-zinc-400">
                   <div className="flex items-center gap-1.5 text-zinc-300 font-medium text-[11px]">
                     <AuraIcon name="shieldCheck" size={14} className="text-indigo-400" />
                     <span>Host Moderation & Roles</span>
                   </div>
-                  <p className="text-[10px] leading-relaxed text-zinc-500">
-                    Host <strong className="text-zinc-300 font-medium">{activeRoom.ownerName}</strong> holds authoritative track-seek, queue-removal, reordering, and participant moderation control enforced server-side.
+                  <p className="text-[11px] leading-relaxed text-zinc-500">
+                    Host <strong className="text-zinc-300 font-medium">{activeRoom.ownerName}</strong> holds track-seek, queue-removal, reordering, and participant moderation control enforced server-side.
                   </p>
-                </SolidCard>
+                </div>
               </div>
             )}
 
             {/* TAB 3: ACTIVITY */}
             {activeSocialTab === 'activity' && (
               <div className="p-4 flex flex-col gap-4">
-                <div className="flex items-center justify-between text-xs text-zinc-400 border-b border-white/5 pb-2.5">
-                  <span className="font-sans uppercase tracking-wider text-[11px] text-zinc-300 font-bold">
+                <div className="flex items-center justify-between text-xs text-zinc-400 border-b border-white/[0.06] pb-2.5">
+                  <span className="font-sans text-xs text-zinc-300 font-semibold">
                     Room Event Stream
                   </span>
-                  <TelemetryBadge variant="glass" size="sm">Live</TelemetryBadge>
+                  <span className="text-[11px] font-medium text-zinc-400">Live</span>
                 </div>
 
                 <div className="flex flex-col gap-2 max-h-80 overflow-y-auto pr-1">
@@ -1691,11 +1724,21 @@ export const ListenTogetherView: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* UNIVERSAL SEARCH MODAL FOR ADDING MUSIC */}
+      {/* SEARCH MODAL FOR ADDING MUSIC (Viewport-aware desktop/mobile routing) */}
       <UniversalSearchModal
-        isOpen={isAddMusicModalOpen}
+        isOpen={isAddMusicModalOpen && !isMobileViewport}
         onClose={() => setIsAddMusicModalOpen(false)}
         title="Add Track to Shared Room Queue"
+        onSelectTrack={(track: Track) => {
+          roomAddTrack(track);
+          setIsAddMusicModalOpen(false);
+        }}
+      />
+
+      <MobileSearchModal
+        isOpen={isAddMusicModalOpen && isMobileViewport}
+        onClose={() => setIsAddMusicModalOpen(false)}
+        title="Add track to room..."
         onSelectTrack={(track: Track) => {
           roomAddTrack(track);
           setIsAddMusicModalOpen(false);

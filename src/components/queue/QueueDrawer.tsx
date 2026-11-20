@@ -195,21 +195,18 @@ export const QueueDrawer: React.FC = () => {
         {/* Header */}
         <div className="p-4 border-b border-white/[0.06] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              <AuraIcon name="playlist" size={16} />
-            </div>
+            <AuraIcon name="playlist" size={18} className="text-zinc-300 shrink-0" />
             <div>
-              <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-1.5">
                 <span>Play Queue</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-white/5 text-zinc-400 font-mono tabular-nums border border-white/5">
-                  {queue.length}
+                <span className="text-xs text-zinc-500 font-mono tabular-nums font-normal">
+                  · {queue.length}
                 </span>
               </h3>
               {upNextTracks.length > 0 && activeTab === 'queue' && (
-                <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 font-sans mt-0.5">
-                  <AuraIcon name="clock" size={12} className="text-indigo-400" />
+                <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 font-sans mt-0.5">
                   <span className="font-mono tabular-nums">{formatRemainingDuration(totalRemainingSecs, hasUnknownDurations)}</span>
-                  <span>•</span>
+                  <span aria-hidden="true">·</span>
                   <span><span className="font-mono tabular-nums">{upNextTracks.length}</span> up next</span>
                 </div>
               )}
@@ -222,7 +219,7 @@ export const QueueDrawer: React.FC = () => {
               type="button"
               onClick={() => setIsSleepTimerModalOpen(true)}
               aria-label="Sleep Timer"
-              className={`p-1.5 rounded-lg transition-colors cursor-pointer aura-pressable aura-focus-ring ${
+              className={`w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                 isSleepTimerActive 
                   ? 'text-indigo-400 bg-indigo-500/20' 
                   : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
@@ -239,7 +236,7 @@ export const QueueDrawer: React.FC = () => {
                 onClick={handleShuffleUpNext}
                 disabled={isQueueControlRestricted}
                 aria-label="Shuffle Up Next"
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-indigo-300 hover:bg-white/5 disabled:opacity-40 disabled:hover:text-zinc-400 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+                className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg text-zinc-400 hover:text-indigo-300 hover:bg-white/5 disabled:opacity-40 disabled:hover:text-zinc-400 transition-colors cursor-pointer aura-pressable aura-focus-ring"
                 title={isQueueControlRestricted ? 'Queue ordering managed by host' : 'Shuffle Up Next'}
               >
                 <AuraIcon name="shuffle" size={16} />
@@ -253,7 +250,7 @@ export const QueueDrawer: React.FC = () => {
                 onClick={handleClearUpcoming}
                 disabled={isQueueControlRestricted}
                 aria-label="Clear Up Next"
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-white/5 disabled:opacity-40 disabled:hover:text-zinc-400 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+                className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-white/5 disabled:opacity-40 disabled:hover:text-zinc-400 transition-colors cursor-pointer aura-pressable aura-focus-ring"
                 title={isQueueControlRestricted ? 'Queue ordering managed by host' : 'Clear Up Next'}
               >
                 <AuraIcon name="trash" size={16} />
@@ -265,7 +262,7 @@ export const QueueDrawer: React.FC = () => {
               type="button"
               onClick={() => setIsQueueDrawerOpen(false)}
               aria-label="Close Play Queue"
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+              className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
               title="Close Drawer"
             >
               <AuraIcon name="close" size={20} />
@@ -289,7 +286,7 @@ export const QueueDrawer: React.FC = () => {
           <div className="flex items-center border-b border-white/[0.06] px-4 pt-1">
             <button
               onClick={() => setActiveTab('queue')}
-              className={`relative flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors cursor-pointer aura-pressable ${
+              className={`relative min-h-[40px] flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors cursor-pointer aura-pressable ${
                 activeTab === 'queue'
                   ? 'text-indigo-300 font-semibold'
                   : 'text-zinc-400 hover:text-zinc-200'
@@ -306,7 +303,7 @@ export const QueueDrawer: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('history')}
-              className={`relative flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors cursor-pointer aura-pressable ${
+              className={`relative min-h-[40px] flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors cursor-pointer aura-pressable ${
                 activeTab === 'history'
                   ? 'text-indigo-300 font-semibold'
                   : 'text-zinc-400 hover:text-zinc-200'
@@ -367,22 +364,11 @@ export const QueueDrawer: React.FC = () => {
                         {currentTrack.artist}
                       </p>
                       
-                      {/* Source badge */}
-                      <div className="flex items-center gap-1.5 mt-1">
-                        {(() => {
-                          const badge = getSourceBadge(currentTrack.source);
-                          return (
-                            <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-mono border ${badge.className}`}>
-                              {badge.label}
-                            </span>
-                          );
-                        })()}
-                        {currentTrack.album && (
-                          <span className="text-[10px] text-zinc-500 truncate max-w-[140px]">
-                            • {currentTrack.album}
-                          </span>
-                        )}
-                      </div>
+                      {/* Clean unboxed metadata attribution */}
+                      <p className="text-[11px] text-zinc-400 truncate mt-0.5">
+                        {getSourceBadge(currentTrack.source).label}
+                        {currentTrack.album && ` · ${currentTrack.album}`}
+                      </p>
                     </div>
 
                     {/* Duration */}
@@ -470,14 +456,10 @@ export const QueueDrawer: React.FC = () => {
                             <h5 className="text-xs font-medium text-zinc-200 truncate group-hover:text-indigo-300 transition-colors">
                               {track.title}
                             </h5>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="text-[11px] text-zinc-400 truncate">
-                                {track.artist}
-                              </span>
-                              <span className={`inline-block px-1 rounded text-[8px] font-mono border ${badge.className}`}>
-                                {badge.label}
-                              </span>
-                            </div>
+                            <p className="text-[11px] text-zinc-400 truncate mt-0.5">
+                              {track.artist}
+                              <span className="text-zinc-500"> · {badge.label}</span>
+                            </p>
                           </div>
 
                           {/* Reorder and Removal Controls */}
@@ -489,11 +471,11 @@ export const QueueDrawer: React.FC = () => {
                                 e.stopPropagation();
                                 openTrackInfo(track);
                               }}
-                              className="p-1 text-zinc-400 hover:text-white rounded hover:bg-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+                              className="w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center text-zinc-400 hover:text-white rounded hover:bg-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
                               title="Track Info"
                               aria-label={`Track info for ${track.title}`}
                             >
-                              <AuraIcon name="info" size={12} />
+                              <AuraIcon name="info" size={14} />
                             </button>
 
                             {/* Move Up */}
@@ -506,11 +488,11 @@ export const QueueDrawer: React.FC = () => {
                                 }
                               }}
                               disabled={relativeIdx === 0 || isQueueControlRestricted}
-                              className="p-1 text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:text-zinc-400 rounded hover:bg-white/10 transition-colors cursor-pointer disabled:cursor-not-allowed aura-pressable aura-focus-ring"
+                              className="w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:text-zinc-400 rounded hover:bg-white/10 transition-colors cursor-pointer disabled:cursor-not-allowed aura-pressable aura-focus-ring"
                               title={relativeIdx === 0 ? 'Cannot move above current track' : 'Move Up'}
                               aria-label={`Move ${track.title} up in queue`}
                             >
-                              <AuraIcon name="chevronUp" size={14} />
+                              <AuraIcon name="chevronUp" size={15} />
                             </button>
 
                             {/* Move Down */}
@@ -523,11 +505,11 @@ export const QueueDrawer: React.FC = () => {
                                 }
                               }}
                               disabled={relativeIdx === upNextTracks.length - 1 || isQueueControlRestricted}
-                              className="p-1 text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:text-zinc-400 rounded hover:bg-white/10 transition-colors cursor-pointer disabled:cursor-not-allowed aura-pressable aura-focus-ring"
+                              className="w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:text-zinc-400 rounded hover:bg-white/10 transition-colors cursor-pointer disabled:cursor-not-allowed aura-pressable aura-focus-ring"
                               title={relativeIdx === upNextTracks.length - 1 ? 'End of queue' : 'Move Down'}
                               aria-label={`Move ${track.title} down in queue`}
                             >
-                              <AuraIcon name="chevronDown" size={14} />
+                              <AuraIcon name="chevronDown" size={15} />
                             </button>
 
                             {/* Remove from queue */}
@@ -540,7 +522,7 @@ export const QueueDrawer: React.FC = () => {
                                 }
                               }}
                               disabled={isQueueControlRestricted}
-                              className="p-1 text-zinc-400 hover:text-rose-400 disabled:opacity-30 rounded hover:bg-white/10 transition-colors cursor-pointer disabled:cursor-not-allowed aura-pressable aura-focus-ring"
+                              className="w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center text-zinc-400 hover:text-rose-400 disabled:opacity-30 rounded hover:bg-white/10 transition-colors cursor-pointer disabled:cursor-not-allowed aura-pressable aura-focus-ring"
                               title="Remove from queue"
                               aria-label={`Remove ${track.title} from queue`}
                             >
@@ -549,7 +531,7 @@ export const QueueDrawer: React.FC = () => {
                           </div>
 
                           {/* Duration */}
-                          <span className="text-[11px] font-mono text-zinc-400 shrink-0">
+                          <span className="text-[11px] font-mono tabular-nums text-zinc-400 shrink-0">
                             {formatTime(track.duration, track.source)}
                           </span>
                         </div>
@@ -600,16 +582,12 @@ export const QueueDrawer: React.FC = () => {
                         <h5 className="text-xs font-medium text-zinc-200 truncate group-hover:text-indigo-300 transition-colors">
                           {track.title}
                         </h5>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[11px] text-zinc-400 truncate">
-                            {track.artist}
-                          </span>
-                          <span className={`inline-block px-1 rounded text-[8px] font-mono border ${badge.className}`}>
-                            {badge.label}
-                          </span>
-                        </div>
+                        <p className="text-[11px] text-zinc-400 truncate mt-0.5">
+                          {track.artist}
+                          <span className="text-zinc-500"> · {badge.label}</span>
+                        </p>
                       </div>
-                      <span className="text-[11px] font-mono text-zinc-400 shrink-0">
+                      <span className="text-[11px] font-mono tabular-nums text-zinc-400 shrink-0">
                         {formatTime(track.duration, track.source)}
                       </span>
                     </div>

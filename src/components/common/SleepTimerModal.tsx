@@ -63,7 +63,7 @@ export const SleepTimerModal: React.FC<SleepTimerModalProps> = ({ isOpen, onClos
             aria-modal="true"
             aria-label="Sleep Timer"
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-md rounded-3xl bg-[#0e1017] border border-white/10 shadow-2xl p-6 flex flex-col gap-5"
+            className="relative w-full max-w-md max-h-[90dvh] overflow-y-auto rounded-3xl bg-[#0e1017] border border-white/10 shadow-2xl p-4 sm:p-6 flex flex-col gap-4 sm:gap-5"
           >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/5 pb-3">
@@ -81,7 +81,7 @@ export const SleepTimerModal: React.FC<SleepTimerModalProps> = ({ isOpen, onClos
             type="button"
             onClick={onClose}
             aria-label="Close sleep timer modal"
-            className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+            className="w-9 h-9 flex items-center justify-center rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
             <AuraIcon name="close" size={16} />
           </button>
@@ -128,7 +128,7 @@ export const SleepTimerModal: React.FC<SleepTimerModalProps> = ({ isOpen, onClos
                   startSleepTimer(p.value);
                   onClose();
                 }}
-                className={`flex items-center justify-between p-3 rounded-xl border text-xs font-medium transition-colors cursor-pointer aura-pressable-subtle aura-focus-ring ${
+                className={`min-h-[42px] flex items-center justify-between p-3 rounded-xl border text-xs font-medium transition-colors cursor-pointer aura-pressable-subtle aura-focus-ring ${
                   isSelected
                     ? 'bg-indigo-600/30 border-indigo-500/40 text-white font-semibold'
                     : 'bg-zinc-900/50 hover:bg-zinc-800/80 border-white/5 text-zinc-300 hover:text-white'
@@ -147,7 +147,7 @@ export const SleepTimerModal: React.FC<SleepTimerModalProps> = ({ isOpen, onClos
               setSleepTimerAtTrackEnd();
               onClose();
             }}
-            className={`col-span-2 flex items-center justify-between p-3 rounded-xl border text-xs font-medium transition-colors cursor-pointer aura-pressable-subtle aura-focus-ring ${
+            className={`col-span-2 min-h-[42px] flex items-center justify-between p-3 rounded-xl border text-xs font-medium transition-colors cursor-pointer aura-pressable-subtle aura-focus-ring ${
               isSleepTimerActive && sleepTimerMinutes === -1
                 ? 'bg-indigo-600/30 border-indigo-500/40 text-white font-semibold'
                 : 'bg-zinc-900/50 hover:bg-zinc-800/80 border-white/5 text-zinc-300 hover:text-white'
@@ -172,11 +172,11 @@ export const SleepTimerModal: React.FC<SleepTimerModalProps> = ({ isOpen, onClos
             value={customMinutes}
             onChange={(e) => setCustomMinutes(e.target.value)}
             placeholder="Custom mins"
-            className="flex-1 px-3 py-2 text-xs bg-zinc-900/80 border border-white/10 rounded-xl text-zinc-200 focus:outline-none focus:border-indigo-500"
+            className="flex-1 min-w-0 px-3 py-2 text-xs bg-zinc-900/80 border border-white/10 rounded-xl text-zinc-200 focus:outline-none focus:border-indigo-500"
           />
           <button
             type="submit"
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl transition-colors shadow-md shadow-indigo-600/20 cursor-pointer aura-pressable"
+            className="min-h-[40px] px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl transition-colors shadow-md shadow-indigo-600/20 cursor-pointer aura-pressable"
           >
             Set Custom
           </button>

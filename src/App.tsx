@@ -112,6 +112,17 @@ const MainLayout: React.FC = () => {
   const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState<boolean>(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 1023px)').matches : false
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 1023px)');
+    const update = () => setIsMobileViewport(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
   const mainRef = useRef<HTMLElement>(null);
   const scrollPositionsRef = useRef<Map<string, number>>(new Map());
@@ -361,7 +372,7 @@ const MainLayout: React.FC = () => {
             <main
               ref={mainRef}
               onScroll={handleMainScroll}
-              className="flex-1 min-w-0 overflow-y-auto pb-[calc(210px+env(safe-area-inset-bottom,0px))] sm:pb-56 lg:pb-52 focus:outline-none"
+              className="flex-1 min-w-0 overflow-y-auto pb-[calc(148px+env(safe-area-inset-bottom,0px))] sm:pb-48 lg:pb-52 focus:outline-none"
             >
               <AnimatePresence mode="wait" initial={false} onExitComplete={handlePageExitComplete}>
                 <MotionPage
@@ -422,7 +433,14 @@ const MainLayout: React.FC = () => {
       <MobileMiniPlayer />
 
       {/* Mobile Bottom Navigation Bar */}
-      <MobileBottomNav onOpenMore={() => setIsMobileMoreOpen(true)} />
+      <MobileBottomNav
+        onOpenMore={() => setIsMobileMoreOpen(true)}
+        onOpenSearch={() => {
+          setIsUniversalSearchOpen(false);
+          setIsMobileSearchOpen(true);
+        }}
+        isSearchOpen={isMobileSearchOpen || (isUniversalSearchOpen && isMobileViewport)}
+      />
 
       {/* Full-screen / Expanded Studio Player Modal */}
       <ExpandedPlayer />
@@ -446,9 +464,9 @@ const MainLayout: React.FC = () => {
       <ToastContainer />
       <DropzoneOverlay />
 
-      {/* Universal Search Modal (⌘K) */}
+      {/* Universal Search Modal (⌘K Desktop >= 1024px) */}
       <UniversalSearchModal
-        isOpen={isUniversalSearchOpen}
+        isOpen={isUniversalSearchOpen && !isMobileViewport}
         onClose={() => setIsUniversalSearchOpen(false)}
         initialQuery={universalSearchInitialQuery}
       />
@@ -468,8 +486,12 @@ const MainLayout: React.FC = () => {
         onInstall={pwa.promptInstall}
       />
       <MobileSearchModal 
-        isOpen={isMobileSearchOpen} 
-        onClose={() => setIsMobileSearchOpen(false)} 
+        isOpen={isMobileSearchOpen || (isUniversalSearchOpen && isMobileViewport)} 
+        onClose={() => {
+          setIsMobileSearchOpen(false);
+          setIsUniversalSearchOpen(false);
+        }}
+        initialQuery={isUniversalSearchOpen && isMobileViewport ? universalSearchInitialQuery : ''}
       />
 
       {/* PWA Install Banner (Non-aggressive, delayed, dismissible) */}

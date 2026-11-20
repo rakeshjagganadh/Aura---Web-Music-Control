@@ -104,6 +104,28 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
+  const formatSourceLabel = (source?: string) => {
+    switch (source) {
+      case 'youtube':
+        return 'YouTube';
+      case 'radio':
+      case 'radiobrowser':
+        return 'Radio';
+      case 'curated_stream':
+        return 'Curated';
+      case 'web_stream':
+        return 'Stream';
+      case 'audius':
+        return 'Audius';
+      case 'jamendo':
+        return 'Jamendo';
+      case 'local':
+        return 'Vault';
+      default:
+        return source ? source.replace(/_/g, ' ') : 'AURA';
+    }
+  };
+
   // -------------------------------------------------------------
   // VARIANT: GRID (The Primary Signature AURA "Music Object")
   // -------------------------------------------------------------
@@ -127,10 +149,10 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
               handleCardClick();
             }
           }}
-          className={`relative w-full aspect-square rounded-2xl overflow-hidden bg-[#0c0f17] border border-white/[0.18] transition-[border-color,box-shadow,transform] duration-300 ease-out aura-pressable-subtle aura-focus-ring ${
+          className={`relative w-full aspect-square rounded-2xl overflow-hidden bg-[#0c0f17] border border-white/[0.10] transition-[border-color,box-shadow,transform] duration-200 ease-out aura-pressable-subtle aura-focus-ring ${
             isCurrent
               ? 'ring-2 ring-white/50 shadow-2xl'
-              : `shadow-lg ${canHover ? 'group-hover:shadow-2xl group-hover:border-white/40 group-hover:scale-[1.02]' : ''}`
+              : `shadow-lg ${canHover ? 'group-hover:shadow-2xl group-hover:border-white/[0.24] group-hover:scale-[1.02]' : ''}`
           }`}
         >
           {/* Track Artwork */}
@@ -149,7 +171,7 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
             <div className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-[#141a29] via-[#0d121c] to-[#080b12]'} flex flex-col items-center justify-center p-4 text-white/80`}>
               <AuraIcon name="disc" size={36} weight={200} className={`opacity-35 mb-2 transition-transform duration-500 text-slate-300 ${canHover ? 'group-hover:rotate-12' : ''}`} />
               <span className="text-[10px] font-mono tracking-widest uppercase opacity-40 font-medium truncate max-w-full px-2 text-center">
-                {track.artist || track.source || 'AURA'}
+                {track.artist || formatSourceLabel(track.source)}
               </span>
             </div>
           )}
@@ -189,11 +211,11 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
             </div>
           )}
 
-          {/* Source Attribution Tag (Top Left) */}
+          {/* Source Attribution Tag (Top Left — clean human label, subtle glass) */}
           {track.source && (
-            <div className="absolute top-2 left-2 pointer-events-none">
-              <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-zinc-300 border border-white/10 shadow-sm uppercase tracking-wider">
-                {track.source === 'youtube' ? 'YouTube' : track.source === 'radio' ? 'Radio' : track.source.toUpperCase()}
+            <div className={`absolute top-2 left-2 pointer-events-none transition-opacity duration-200 ${track.source === 'youtube' || track.source === 'radio' || track.source === 'radiobrowser' ? 'opacity-100' : !canHover ? 'opacity-85' : 'opacity-0 group-hover:opacity-100'}`}>
+              <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded-md bg-black/65 backdrop-blur-md text-zinc-200 border border-white/[0.08] tracking-wide">
+                {formatSourceLabel(track.source)}
               </span>
             </div>
           )}
@@ -201,7 +223,7 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
           {/* Duration Tag (Top Right) */}
           {track.duration > 0 && (
             <div className={`absolute top-2 right-2 transition-opacity duration-200 pointer-events-none ${!canHover ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-zinc-300 border border-white/10">
+              <span className="text-[10px] font-mono tabular-nums px-1.5 py-0.5 rounded-md bg-black/65 backdrop-blur-md text-zinc-200 border border-white/[0.08]">
                 {formatTime(track.duration)}
               </span>
             </div>
@@ -393,9 +415,9 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
     >
       <div className="flex items-center gap-3.5 min-w-0 flex-1">
         {showIndex !== undefined && (
-          <span className="text-xs font-mono text-zinc-500 w-5 shrink-0 text-center">
+          <span className="text-xs font-mono tabular-nums text-zinc-500 w-5 shrink-0 flex items-center justify-center">
             {isActivelyPlaying ? (
-              <span className={`inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 ${!prefersReducedMotion ? 'animate-pulse' : ''}`} />
+              <AuraIcon name="volumeHigh" size={14} className="text-sky-400" />
             ) : (
               showIndex
             )}
@@ -403,7 +425,7 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
         )}
 
         {/* Thumbnail Object */}
-        <div className="relative w-11 h-11 rounded-xl overflow-hidden shrink-0 bg-[#0e1017] border border-white/15 shadow-sm">
+        <div className="relative w-11 h-11 rounded-xl overflow-hidden shrink-0 bg-[#0e1017] border border-white/10 shadow-sm">
           {track.coverUrl && !imageError ? (
             <img
               src={track.coverUrl}
@@ -436,27 +458,17 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
 
         {/* Text */}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <h4
-              className={`text-xs sm:text-sm font-medium truncate ${
-                isCurrent ? 'text-white font-semibold' : 'text-zinc-200 group-hover:text-white'
-              }`}
-            >
-              {track.title}
-            </h4>
-            {track.source === 'youtube' && (
-              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-red-500/15 text-red-300 border border-red-500/25 shrink-0">
-                YouTube
-              </span>
-            )}
-            {track.source === 'audius' && (
-              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 shrink-0">
-                Audius
-              </span>
-            )}
-          </div>
+          <h4
+            className={`text-xs sm:text-sm font-medium truncate ${
+              isCurrent ? 'text-white font-semibold' : 'text-zinc-200 group-hover:text-white'
+            }`}
+          >
+            {track.title}
+          </h4>
           <p className="text-[11px] text-zinc-400 truncate mt-0.5 group-hover:text-zinc-300">
-            {track.artist} {track.album ? `• ${track.album}` : ''}
+            {track.artist}
+            {track.album ? ` · ${track.album}` : ''}
+            {track.source && track.source !== 'local' ? ` · ${formatSourceLabel(track.source)}` : ''}
           </p>
         </div>
       </div>
@@ -481,7 +493,7 @@ export const SongObjectCard: React.FC<SongObjectCardProps> = ({
           </motion.span>
         </button>
 
-        <span className="text-xs font-mono text-zinc-500 w-10 text-right">
+        <span className="text-xs font-mono tabular-nums text-zinc-500 w-11 text-right">
           {formatTime(track.duration)}
         </span>
 

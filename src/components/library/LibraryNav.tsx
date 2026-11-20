@@ -113,7 +113,7 @@ export const LibraryNav: React.FC<LibraryNavProps> = ({
               key={item.id}
               type="button"
               onClick={item.onClick}
-              className={`group relative flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium whitespace-nowrap shrink-0 transition-colors duration-200 cursor-pointer aura-focus-ring aura-pressable ${
+              className={`group relative flex items-center gap-2 px-3 sm:px-3.5 py-2 min-h-[40px] rounded-xl text-xs font-medium whitespace-nowrap shrink-0 transition-colors duration-200 cursor-pointer aura-focus-ring aura-pressable ${
                 isActive
                   ? 'text-white'
                   : 'text-zinc-400 hover:text-white hover:glass-ambient border border-transparent'

@@ -182,14 +182,14 @@ export const StudioView: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto select-none">
+    <div className="flex flex-col gap-4 sm:gap-6 p-3 sm:p-6 lg:p-8 pb-6 sm:pb-8 max-w-7xl mx-auto select-none">
       
       {/* ======================================================== */}
       {/* ZONE 1: MASTER SIGNAL & TIMELINE HEADER                  */}
       {/* ======================================================== */}
       <section 
         aria-label="Master Signal and Timeline"
-        className="rounded-3xl bg-[#0a0d18]/80 backdrop-blur-2xl p-4 sm:p-5 shadow-xl border border-white/[0.08] flex flex-col gap-4"
+        className="rounded-3xl bg-[#0a0d18]/80 backdrop-blur-2xl p-3.5 sm:p-5 shadow-xl border border-white/[0.08] flex flex-col gap-3 sm:gap-4"
       >
         {/* Top Bar: Track Info & Quick Master Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-3.5">
@@ -239,12 +239,12 @@ export const StudioView: React.FC = () => {
           </div>
 
           {/* Master Signal Controls */}
-          <div className="flex items-center gap-2 flex-wrap shrink-0">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar sm:flex-wrap shrink-0 pb-0.5 sm:pb-0">
             {/* A/B Compare Button */}
             <button
               onClick={toggleABBypass}
               title="A/B Comparison: Toggle between original unprocessed audio (A: RAW) and studio DSP (B: DSP)"
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-colors border cursor-pointer aura-pressable ${
+              className={`min-h-[38px] shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold font-mono tabular-nums transition-colors border cursor-pointer aura-pressable ${
                 isABBypassed
                   ? 'bg-zinc-900 text-amber-300 border-amber-500/30 shadow-sm'
                   : 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40 shadow-cyan-500/10 shadow-sm'
@@ -257,7 +257,7 @@ export const StudioView: React.FC = () => {
             {/* Lossless Export / Trim Modal Launcher */}
             <button
               onClick={() => setIsTrimExportModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600/90 hover:bg-emerald-500 text-white shadow-sm transition-colors cursor-pointer aura-pressable"
+              className="min-h-[38px] shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600/90 hover:bg-emerald-500 text-white shadow-sm transition-colors cursor-pointer aura-pressable"
               title="Open Lossless Audio Trimmer & WAV Master Export"
             >
               <AuraIcon name="scissors" size={14} />
@@ -267,7 +267,7 @@ export const StudioView: React.FC = () => {
             {/* Pro / Simple Mode Toggle */}
             <button
               onClick={toggleAdvancedMode}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border transition-colors cursor-pointer aura-pressable ${
+              className={`min-h-[38px] shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border transition-colors cursor-pointer aura-pressable ${
                 isAdvancedMode 
                   ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30' 
                   : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border-white/5'
@@ -282,7 +282,7 @@ export const StudioView: React.FC = () => {
             <button
               onClick={resetAllAudioProcessing}
               title="Reset all studio audio processing, filters, and effects to flat defaults"
-              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-xl transition-colors cursor-pointer aura-pressable"
+              className="min-h-[38px] shrink-0 whitespace-nowrap flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-xl transition-colors cursor-pointer aura-pressable"
             >
               <AuraIcon name="refresh" size={12} />
               <span>Reset All</span>
@@ -291,7 +291,7 @@ export const StudioView: React.FC = () => {
             {/* Full Screen Expanded Player */}
             <button
               onClick={() => setIsExpandedPlayerOpen(true)}
-              className="p-1.5 text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-xl transition-colors cursor-pointer aura-pressable"
+              className="min-w-[38px] min-h-[38px] shrink-0 flex items-center justify-center p-1.5 text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-xl transition-colors cursor-pointer aura-pressable"
               title="Open Fullscreen Visual Player"
               aria-label="Open Fullscreen Visual Player"
             >
@@ -339,7 +339,7 @@ export const StudioView: React.FC = () => {
                   Loop: {formatTime(loopAB.pointA)} - {formatTime(loopAB.pointB)}
                 </span>
               ) : (
-                <span className="text-zinc-600 text-[10px]">64-BIT DSP TIMELINE</span>
+                <span className="text-zinc-500 text-[11px] font-sans">DSP Timeline</span>
               )}
               <span>{formatTime(duration)}</span>
             </div>
@@ -353,14 +353,14 @@ export const StudioView: React.FC = () => {
       <nav aria-label="Studio Categories" className="flex flex-col gap-3">
         {/* Primary 5-Category Tabs Bar */}
         <LayoutGroup id="studio-categories">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 p-1.5 rounded-2xl aura-glass-ambient">
+          <div className="flex overflow-x-auto no-scrollbar sm:grid sm:grid-cols-3 lg:grid-cols-5 gap-1.5 sm:gap-2 p-1.5 rounded-2xl aura-glass-ambient">
             {CATEGORIES.map((cat) => {
               const isActive = activeCategory === cat.id;
               return (
                 <button
                   key={cat.id}
                   onClick={() => handleSelectCategory(cat.id)}
-                  className={`relative flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-colors text-left cursor-pointer aura-pressable ${
+                  className={`relative shrink-0 min-h-[40px] flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors text-left cursor-pointer aura-pressable ${
                     isActive
                       ? 'text-white'
                       : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 border border-transparent'
@@ -376,7 +376,8 @@ export const StudioView: React.FC = () => {
                     <AuraIcon name={cat.icon} size={16} className={cat.iconColorClass} />
                   </div>
                   <div className="relative z-10 truncate">
-                    <span className="block truncate">{cat.label}</span>
+                    <span className="sm:hidden">{cat.shortLabel}</span>
+                    <span className="hidden sm:block truncate">{cat.label}</span>
                   </div>
                 </button>
               );
@@ -387,14 +388,14 @@ export const StudioView: React.FC = () => {
         {/* Sub-Navigation if category has multiple modules */}
         {currentCategoryConfig.subModules && currentCategoryConfig.subModules.length > 1 && (
           <LayoutGroup id={`studio-submodules-${activeCategory}`}>
-            <div className="flex items-center gap-1.5 px-1 overflow-x-auto scrollbar-none">
+            <div className="flex items-center gap-1.5 px-1 overflow-x-auto no-scrollbar">
               {currentCategoryConfig.subModules.map((sub) => {
                 const isSubActive = activeSubModule === sub.id;
                 return (
                   <button
                     key={sub.id}
                     onClick={() => handleSelectSubModule(sub.id)}
-                    className={`relative flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors cursor-pointer aura-pressable ${
+                    className={`relative min-h-[38px] shrink-0 flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors cursor-pointer aura-pressable ${
                       isSubActive
                         ? 'text-cyan-300'
                         : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60 border border-white/5'

@@ -234,91 +234,94 @@ export const AlbumsView: React.FC = () => {
             direction="up"
             distance={8}
             duration="standard"
-            className="flex flex-col gap-6 sm:gap-8 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none pb-36 sm:pb-44"
+            className="flex flex-col gap-4 sm:gap-8 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none pb-6 sm:pb-44"
           >
             {/* Navigation Breadcrumb / Back Button */}
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={closeAlbum}
-                className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 hover:text-white text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+                className="flex items-center gap-2 px-3.5 py-2 min-h-[40px] rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 hover:text-white text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
               >
                 <AuraIcon name="arrowLeft" size={14} />
                 <span>Back to Albums</span>
               </button>
             </div>
 
-            {/* Large Album Header */}
-            <section className="relative overflow-hidden rounded-3xl aura-glass-island p-6 sm:p-8 border border-white/10 shadow-2xl flex flex-col md:flex-row items-center md:items-end gap-6 sm:gap-8">
-              {/* Cover Art Tile */}
-              <div className="relative w-44 h-44 sm:w-56 sm:h-56 rounded-2xl overflow-hidden shrink-0 bg-zinc-900 border border-white/15 shadow-2xl">
-                {activeAlbum.coverUrl ? (
-                  <img
-                    src={activeAlbum.coverUrl}
-                    alt={activeAlbum.title}
-                    className="w-full h-full object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <div className={`w-full h-full bg-gradient-to-br ${activeAlbum.coverColor || 'from-purple-950 to-zinc-900'} flex items-center justify-center`}>
-                    <AuraIcon name="disc" size={64} weight={200} className="text-white/40" />
+            {/* Compact Album Header on mobile, Large on tablet/desktop */}
+            <section className="relative overflow-hidden rounded-2xl sm:rounded-3xl aura-glass-island p-3.5 sm:p-8 border border-white/10 shadow-2xl flex flex-col gap-3.5 sm:gap-6">
+              <div className="flex flex-row items-center md:items-end gap-3.5 sm:gap-8">
+                {/* Cover Art Tile */}
+                <div className="relative w-20 h-20 sm:w-52 sm:h-52 rounded-xl sm:rounded-2xl overflow-hidden shrink-0 bg-zinc-900 border border-white/15 shadow-2xl">
+                  {activeAlbum.coverUrl ? (
+                    <img
+                      src={activeAlbum.coverUrl}
+                      alt={activeAlbum.title}
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className={`w-full h-full bg-gradient-to-br ${activeAlbum.coverColor || 'from-purple-950 to-zinc-900'} flex items-center justify-center`}>
+                      <AuraIcon name="disc" size={32} weight={200} className="text-white/40" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Details */}
+                <div className="flex-1 min-w-0 text-left">
+                  <span className="text-[11px] font-mono font-semibold uppercase tracking-[0.14em] text-purple-300 inline-block mb-1 sm:mb-1.5">
+                    Album Release
+                  </span>
+
+                  <h1 className="text-lg sm:text-4xl font-page-title text-white tracking-tight line-clamp-2">
+                    {activeAlbum.title}
+                  </h1>
+
+                  <div className="flex items-center justify-start gap-1.5 sm:gap-2 mt-1 sm:mt-2 text-[11px] sm:text-sm text-zinc-300 font-ui-meta flex-wrap">
+                    <span className="font-semibold text-white truncate max-w-[160px] sm:max-w-none">{activeAlbum.artist}</span>
+                    {activeAlbum.year && (
+                      <>
+                        <span className="text-zinc-600" aria-hidden="true">·</span>
+                        <span className="text-zinc-400 font-mono tabular-nums">{activeAlbum.year}</span>
+                      </>
+                    )}
+                    <span className="text-zinc-600" aria-hidden="true">·</span>
+                    <span className="text-zinc-400 tabular-nums">{activeAlbum.tracks.length} tracks</span>
+                    <span className="text-zinc-600" aria-hidden="true">·</span>
+                    <span className="text-zinc-400 font-mono tabular-nums">{formatDuration(activeAlbum.totalDuration)}</span>
                   </div>
-                )}
+                </div>
               </div>
 
-              {/* Details & Controls */}
-              <div className="flex-1 min-w-0 text-center md:text-left">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-purple-300 px-2.5 py-0.5 rounded-full bg-purple-500/15 border border-purple-500/25 inline-block mb-2">
-                  ALBUM RELEASE
-                </span>
+              {/* Actions */}
+              <div className="flex items-center justify-start gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => handlePlayAlbum(activeAlbum, false)}
+                  className="flex items-center gap-2 px-4 sm:px-5 py-2 min-h-[40px] rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
+                >
+                  <AuraIcon name="play" size={16} filled className="text-black translate-x-0.2" />
+                  <span>Play Album</span>
+                </button>
 
-                <h1 className="text-2xl sm:text-4xl font-page-title text-white tracking-tight line-clamp-2">
-                  {activeAlbum.title}
-                </h1>
+                <button
+                  type="button"
+                  onClick={() => handlePlayAlbum(activeAlbum, true)}
+                  className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 min-h-[40px] rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
+                >
+                  <AuraIcon name="shuffle" size={14} className="text-sky-400" />
+                  <span>Shuffle</span>
+                </button>
 
-                <div className="flex items-center justify-center md:justify-start gap-2 mt-2 text-xs sm:text-sm text-zinc-300 font-ui-meta">
-                  <span className="font-semibold text-white">{activeAlbum.artist}</span>
-                  {activeAlbum.year && (
-                    <>
-                      <span className="text-zinc-600" aria-hidden="true">·</span>
-                      <span className="text-zinc-400">{activeAlbum.year}</span>
-                    </>
-                  )}
-                  <span className="text-zinc-600" aria-hidden="true">·</span>
-                  <span className="text-zinc-400">{activeAlbum.tracks.length} tracks</span>
-                  <span className="text-zinc-600" aria-hidden="true">·</span>
-                  <span className="text-zinc-400 font-mono">{formatDuration(activeAlbum.totalDuration)}</span>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center justify-center md:justify-start gap-2.5 mt-5 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={() => handlePlayAlbum(activeAlbum, false)}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
-                  >
-                    <AuraIcon name="play" size={16} filled className="text-black translate-x-0.2" />
-                    <span>Play Album</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handlePlayAlbum(activeAlbum, true)}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
-                  >
-                    <AuraIcon name="shuffle" size={14} className="text-sky-400" />
-                    <span>Shuffle</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleAddAlbumToQueue(activeAlbum)}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
-                  >
-                    <AuraIcon name="playlistAdd" size={14} className="text-indigo-400" />
-                    <span>Add to Queue</span>
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => handleAddAlbumToQueue(activeAlbum)}
+                  className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 min-h-[40px] rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
+                >
+                  <AuraIcon name="playlistAdd" size={14} className="text-indigo-400" />
+                  <span className="hidden sm:inline">Add to Queue</span>
+                  <span className="sm:hidden">Queue</span>
+                </button>
               </div>
             </section>
 
@@ -349,35 +352,36 @@ export const AlbumsView: React.FC = () => {
             direction="up"
             distance={6}
             duration="micro"
-            className="flex flex-col gap-6 sm:gap-8 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none pb-36 sm:pb-44"
+            className="flex flex-col gap-4 sm:gap-8 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none pb-6 sm:pb-44"
           >
             {/* Header */}
-            <section className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-white/[0.06]">
-              <div>
-                <div className="flex items-center gap-2 mb-1.5 text-xs font-mono text-zinc-400">
+            <section className="flex flex-row md:items-end items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-white/[0.06]">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 mb-1 text-xs font-mono text-zinc-400">
                   <AuraIcon name="disc" size={14} className="text-purple-400" />
-                  <span className="uppercase tracking-wider text-[11px] font-semibold text-purple-400">Album Catalogue</span>
+                  <span className="uppercase tracking-wider text-[10px] sm:text-[11px] font-semibold text-purple-400">Album Catalogue</span>
                   <span className="text-zinc-600" aria-hidden="true">·</span>
-                  <span>{albumList.length} albums catalogued</span>
+                  <span className="tabular-nums">{albumList.length} albums</span>
                 </div>
 
-                <h1 className="text-2xl sm:text-4xl font-page-title text-white tracking-tight">
+                <h1 className="text-xl sm:text-4xl font-page-title text-white tracking-tight">
                   Albums
                 </h1>
-                <p className="text-xs sm:text-sm text-zinc-400 mt-1 font-ui-meta">
+                <p className="hidden sm:block text-xs sm:text-sm text-zinc-400 mt-1 font-ui-meta">
                   Explore your library through full album releases, EP collections, and curated artwork packages.
                 </p>
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-2.5 flex-wrap">
+              <div className="flex items-center gap-2.5 shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsUploadModalOpen(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
+                  className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 min-h-[40px] rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
                 >
                   <AuraIcon name="add" size={14} weight={600} />
-                  <span>Import Music</span>
+                  <span className="hidden sm:inline">Import Music</span>
+                  <span className="sm:hidden">Import</span>
                 </button>
               </div>
             </section>
@@ -509,7 +513,7 @@ export const AlbumsView: React.FC = () => {
                   {album.artist}
                 </p>
                 {album.year && (
-                  <p className="text-[10px] font-mono text-zinc-500 mt-1">
+                  <p className="text-[10px] font-mono tabular-nums text-zinc-500 mt-1">
                     {album.year}
                   </p>
                 )}

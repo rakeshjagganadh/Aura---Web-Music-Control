@@ -64,66 +64,80 @@ export const Header: React.FC<{
   return (
     <>
       {/* -------------------------------------------------------------
-          MOBILE HEADER: Compact fixed control surface (lg:hidden)
+          MOBILE HEADER: Compact contextual control bar (lg:hidden)
           ------------------------------------------------------------- */}
-      <header className="lg:hidden h-13 border-b border-white/[0.08] glass-floating px-4 flex items-center justify-between gap-3 sticky top-0 z-20 select-none shadow-md">
-        {/* Mobile Brand */}
-        <div 
-          role="button"
-          tabIndex={0}
-          aria-label="AURA Home"
-          onClick={() => {
-            setSelectedPlaylistId(null);
-            setCurrentView('home');
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
+      <header className="lg:hidden h-12 border-b border-white/[0.08] glass-floating px-3 flex items-center justify-between gap-2 sticky top-0 z-20 select-none shadow-md">
+        {/* Mobile Left: Brand on Home, Back + Contextual Title on Subviews */}
+        {currentView === 'home' && !selectedPlaylistId ? (
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label="AURA Home"
+            onClick={() => {
               setSelectedPlaylistId(null);
               setCurrentView('home');
-            }
-          }}
-          className="flex items-center gap-2 cursor-pointer group aura-focus-ring rounded-lg"
-          id="mobile-header-brand"
-        >
-          <AuraBrandMark isPlaying={isPlaying} size={26} />
-          <span className="text-sm font-bold text-white tracking-[0.14em] font-display">AURA</span>
-        </div>
-
-        {/* Mobile Right Utilities */}
-        <div className="flex items-center gap-1.5">
-          {onOpenUniversalSearch && (
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setSelectedPlaylistId(null);
+                setCurrentView('home');
+              }
+            }}
+            className="flex items-center gap-2 cursor-pointer group aura-focus-ring rounded-lg px-1 py-1 min-h-[40px]"
+            id="mobile-header-brand"
+          >
+            <AuraBrandMark isPlaying={isPlaying} size={24} />
+            <span className="text-sm font-bold text-white tracking-[0.14em] font-display whitespace-nowrap">
+              AURA
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1 min-w-0 flex-1">
             <button
               type="button"
-              onClick={onOpenUniversalSearch}
-              className="p-2 rounded-xl text-zinc-400 hover:text-white active:bg-white/5 aura-pressable transition-colors aura-focus-ring cursor-pointer"
-              title="Search"
-              aria-label="Search"
+              onClick={() => {
+                if (selectedPlaylistId && currentView === 'playlist-detail') {
+                  setSelectedPlaylistId(null);
+                  setCurrentView('playlists');
+                } else {
+                  setSelectedPlaylistId(null);
+                  setCurrentView('home');
+                }
+              }}
+              className="w-10 h-10 -ml-1.5 rounded-xl flex items-center justify-center text-zinc-300 hover:text-white active:bg-white/[0.08] transition-colors cursor-pointer shrink-0 aura-pressable aura-focus-ring"
+              aria-label={selectedPlaylistId && currentView === 'playlist-detail' ? 'Back to Spaces' : 'Back to Home'}
             >
-              <AuraIcon name="search" size={16} />
+              <AuraIcon name="chevronLeft" size={20} />
             </button>
-          )}
+            <span className="text-sm font-semibold font-display text-white tracking-tight truncate">
+              {breadcrumb.title}
+            </span>
+          </div>
+        )}
 
+        {/* Mobile Right Utilities (Add, Queue, Profile — Search lives in Bottom Thumb Dock) */}
+        <div className="flex items-center gap-0.5 shrink-0">
           <button
             type="button"
             onClick={() => setIsUploadModalOpen(true)}
-            className="p-2 rounded-xl text-zinc-400 hover:text-white active:bg-white/5 aura-pressable transition-colors aura-focus-ring cursor-pointer"
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-zinc-400 hover:text-white active:bg-white/[0.06] aura-pressable transition-colors aura-focus-ring cursor-pointer"
             title="Add Music"
             aria-label="Add Music"
           >
-            <AuraIcon name="add" size={16} />
+            <AuraIcon name="add" size={18} />
           </button>
 
           <button
             type="button"
             onClick={() => setIsQueueDrawerOpen(true)}
-            className="relative p-2 rounded-xl text-zinc-400 hover:text-white active:bg-white/5 aura-pressable transition-colors cursor-pointer aura-focus-ring"
+            className="relative w-10 h-10 rounded-xl flex items-center justify-center text-zinc-400 hover:text-white active:bg-white/[0.06] aura-pressable transition-colors cursor-pointer aura-focus-ring"
             title="Play Queue"
             aria-label="Open Play Queue"
           >
-            <AuraIcon name="queue" size={16} />
+            <AuraIcon name="queue" size={17} />
             {queue.length > 0 && (
-              <span className="absolute 1 top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-sky-400 shadow-[0_0_6px_rgba(56,189,248,0.8)]" />
+              <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-sky-400 shadow-[0_0_6px_rgba(56,189,248,0.8)]" />
             )}
           </button>
 
@@ -131,11 +145,11 @@ export const Header: React.FC<{
             <button
               type="button"
               onClick={onOpenAccount}
-              className="p-2 rounded-xl text-zinc-400 hover:text-white active:bg-white/5 aura-pressable transition-colors cursor-pointer aura-focus-ring"
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-zinc-400 hover:text-white active:bg-white/[0.06] aura-pressable transition-colors cursor-pointer aura-focus-ring"
               title="AURA Profile & Local Backup"
               aria-label="Profile and Local Backup"
             >
-              <AuraIcon name="user" size={16} />
+              <AuraIcon name="user" size={17} />
             </button>
           )}
         </div>
@@ -266,7 +280,7 @@ export const Header: React.FC<{
             >
               <AuraIcon name="queue" size={16} />
               {queue.length > 0 && (
-                <span className="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-white text-zinc-950 ring-2 ring-[#07090e]">
+                <span className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full text-[9px] font-mono font-bold bg-white text-zinc-950 ring-2 ring-[#07090e]">
                   {queue.length}
                 </span>
               )}

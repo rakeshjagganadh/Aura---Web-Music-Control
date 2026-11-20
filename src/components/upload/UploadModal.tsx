@@ -113,7 +113,7 @@ export const UploadModal: React.FC = () => {
             aria-modal="true"
             aria-label="Add Music to AURA"
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-xl rounded-3xl bg-[#0c0e15] border border-white/10 shadow-2xl p-6 flex flex-col gap-6 select-none"
+            className="relative w-full max-w-xl max-h-[90dvh] overflow-y-auto rounded-3xl bg-[#0c0e15] border border-white/10 shadow-2xl p-4 sm:p-6 flex flex-col gap-4 sm:gap-6 select-none"
           >
         
         {/* Header */}
@@ -132,7 +132,7 @@ export const UploadModal: React.FC = () => {
             type="button"
             aria-label="Close add music modal"
             onClick={() => setIsUploadModalOpen(false)}
-            className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+            className="w-9 h-9 flex items-center justify-center rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
             <AuraIcon name="close" size={20} />
           </button>
@@ -140,7 +140,7 @@ export const UploadModal: React.FC = () => {
 
         {/* Tab Navigation */}
         <LayoutGroup id="upload-modal-tabs">
-          <div className="flex items-center gap-1.5 p-1 bg-zinc-950 rounded-2xl border border-white/5 text-xs overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-1.5 p-1 bg-zinc-950 rounded-2xl border border-white/5 text-xs overflow-x-auto no-scrollbar">
             {([
               { id: 'files', label: 'Import Files', icon: 'fileAudio' },
               { id: 'folder', label: 'Import Folder', icon: 'folderPlus' },
@@ -153,7 +153,7 @@ export const UploadModal: React.FC = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-medium whitespace-nowrap transition-colors cursor-pointer aura-pressable ${
+                  className={`relative min-h-[38px] shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-medium whitespace-nowrap transition-colors cursor-pointer aura-pressable ${
                     isActive
                       ? 'text-white'
                       : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
@@ -195,7 +195,7 @@ export const UploadModal: React.FC = () => {
                   fileInputRef.current?.click();
                 }
               }}
-              className="group relative cursor-pointer flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed border-zinc-800 hover:border-indigo-500/60 bg-zinc-900/30 hover:bg-indigo-950/10 transition-colors text-center aura-focus-ring"
+              className="group relative cursor-pointer flex flex-col items-center justify-center p-5 sm:p-8 rounded-2xl border-2 border-dashed border-zinc-800 hover:border-indigo-500/60 bg-zinc-900/30 hover:bg-indigo-950/10 transition-colors text-center aura-focus-ring"
             >
               <input
                 ref={fileInputRef}
@@ -249,7 +249,7 @@ export const UploadModal: React.FC = () => {
                   folderInputRef.current?.click();
                 }
               }}
-              className="group relative cursor-pointer flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed border-zinc-800 hover:border-indigo-500/60 bg-zinc-900/30 hover:bg-indigo-950/10 transition-colors text-center aura-focus-ring"
+              className="group relative cursor-pointer flex flex-col items-center justify-center p-5 sm:p-8 rounded-2xl border-2 border-dashed border-zinc-800 hover:border-indigo-500/60 bg-zinc-900/30 hover:bg-indigo-950/10 transition-colors text-center aura-focus-ring"
             >
               <input
                 ref={folderInputRef}

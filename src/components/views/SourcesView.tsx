@@ -161,20 +161,16 @@ export const SourcesView: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 sm:gap-8 p-4 sm:p-8 max-w-6xl mx-auto select-none">
+    <div className="flex flex-col gap-4 sm:gap-8 p-3 sm:p-8 pb-6 max-w-6xl mx-auto select-none">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-2xl bg-white/[0.04] text-zinc-200 border border-white/[0.06]">
-            <AuraIcon name="radio" size={20} />
-          </div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="flex items-start gap-3">
+          <AuraIcon name="radio" size={22} className="text-zinc-300 shrink-0 mt-1" />
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-page-title text-white">Music Sources & Radio</h1>
-            </div>
-            <p className="text-xs text-zinc-400 mt-0.5">
-              Connect where your music lives. AURA serves as your universal listening and sound customization layer.
+            <h1 className="text-lg sm:text-2xl font-page-title text-white">Music Sources & Radio</h1>
+            <p className="hidden sm:block text-xs text-zinc-400 mt-0.5">
+              Connect where your music lives. AURA acts as your universal listening and sound layer.
             </p>
           </div>
         </div>
@@ -183,7 +179,7 @@ export const SourcesView: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsUploadModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 text-xs font-semibold shadow-md transition-colors cursor-pointer aura-pressable aura-focus-ring"
+            className="min-h-[40px] flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 text-xs font-semibold shadow-md transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
             <AuraIcon name="add" size={14} weight={600} />
             <span>Add Music / Source</span>
@@ -192,36 +188,35 @@ export const SourcesView: React.FC = () => {
       </div>
 
       {/* Primary Sources Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
         
         {/* Source 1: Local Audio Files */}
-        <div className="p-5 rounded-2xl aura-glass-ambient flex flex-col justify-between gap-5 relative overflow-hidden">
+        <div className="p-4 sm:p-5 rounded-2xl aura-glass-ambient flex flex-col justify-between gap-4 sm:gap-5 relative overflow-hidden">
           <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  <AuraIcon name="hardDrive" size={16} />
-                </div>
+                <AuraIcon name="hardDrive" size={18} className="text-emerald-400 shrink-0" />
                 <div>
                   <h3 className="text-sm font-semibold text-white font-display">Local Device Vault</h3>
-                  <span className="text-[10px] font-sans font-medium text-emerald-400 flex items-center gap-1">
-                    <AuraIcon name="checkCircle" size={12} /> Connected & Active
+                  <span className={`text-[11px] font-sans font-medium flex items-center gap-1 ${localTrackCount > 0 ? 'text-emerald-400' : 'text-zinc-400'}`}>
+                    <AuraIcon name={localTrackCount > 0 ? 'checkCircle' : 'folderOpen'} size={12} />
+                    {localTrackCount > 0 ? 'Connected & Active' : 'Ready · Empty Vault'}
                   </span>
                 </div>
               </div>
-              <span className="text-[10px] font-sans font-semibold text-zinc-400 uppercase tracking-wider">
+              <span className="text-[11px] font-mono text-zinc-400 shrink-0">
                 Full DSP
               </span>
             </div>
 
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Your audio files (MP3, WAV, FLAC, AAC, OGG) stored locally in browser IndexedDB. Offers zero-latency Web Audio processing, 10-band EQ, 3D spatial acoustics, and lossless master WAV export.
+              Audio files (MP3, WAV, FLAC, AAC, OGG) stored in browser IndexedDB with zero-latency Web Audio EQ, spatial acoustics, and WAV export.
             </p>
 
-            <div className="flex items-center gap-4 text-xs font-sans text-zinc-400 pt-2 border-t border-white/5">
-              <span><span className="font-mono tabular-nums">{localTrackCount}</span> tracks stored</span>
-              <span>•</span>
-              <span><span className="font-mono tabular-nums">{formatStorageMB(storageUsage.approxBytes)}</span> used</span>
+            <div className="flex items-center gap-2 text-xs font-sans text-zinc-400 pt-2 border-t border-white/[0.06]">
+              <span><span className="font-mono tabular-nums text-zinc-200">{localTrackCount}</span> tracks stored</span>
+              <span aria-hidden="true">·</span>
+              <span><span className="font-mono tabular-nums text-zinc-200">{formatStorageMB(storageUsage.approxBytes)}</span> used</span>
             </div>
           </div>
 
@@ -229,7 +224,7 @@ export const SourcesView: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsUploadModalOpen(true)}
-              className="flex-1 py-2 px-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-200 text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+              className="flex-1 min-h-[40px] py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 text-xs font-semibold border border-white/[0.08] transition-colors cursor-pointer aura-pressable aura-focus-ring"
             >
               Import Files / Folders
             </button>
@@ -237,32 +232,30 @@ export const SourcesView: React.FC = () => {
         </div>
 
         {/* Source 2: Curated Open Sound Catalog */}
-        <div className="p-5 rounded-2xl aura-glass-ambient flex flex-col justify-between gap-5 relative overflow-hidden">
+        <div className="p-4 sm:p-5 rounded-2xl aura-glass-ambient flex flex-col justify-between gap-4 sm:gap-5 relative overflow-hidden">
           <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                  <AuraIcon name="sparkles" size={16} />
-                </div>
+                <AuraIcon name="sparkles" size={18} className="text-cyan-400 shrink-0" />
                 <div>
                   <h3 className="text-sm font-semibold text-white font-display">AURA Open Sound Catalog</h3>
-                  <span className="text-[10px] font-sans font-medium text-cyan-400 flex items-center gap-1">
+                  <span className="text-[11px] font-sans font-medium text-cyan-400 flex items-center gap-1">
                     <AuraIcon name="checkCircle" size={12} /> Built-in Streams
                   </span>
                 </div>
               </div>
-              <span className="text-[10px] font-sans font-semibold text-zinc-400 uppercase tracking-wider">
+              <span className="text-[11px] font-mono text-zinc-400 shrink-0">
                 Lossless DSP
               </span>
             </div>
 
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Curated royalty-free and Creative Commons soundscapes (Ambient 432Hz, Cyber Synthwave, Lo-Fi Study, Neo-Classical Grand) ready to stream instantly without uploading any files.
+              Curated royalty-free and Creative Commons soundscapes ready to stream immediately without uploading files.
             </p>
 
-            <div className="flex items-center gap-4 text-xs font-sans text-zinc-400 pt-2 border-t border-white/5">
-              <span><span className="font-mono tabular-nums">{CURATED_DISCOVERY_TRACKS.length}</span> instant streams</span>
-              <span>•</span>
+            <div className="flex items-center gap-2 text-xs font-sans text-zinc-400 pt-2 border-t border-white/[0.06]">
+              <span><span className="font-mono tabular-nums text-zinc-200">{CURATED_DISCOVERY_TRACKS.length}</span> instant streams</span>
+              <span aria-hidden="true">·</span>
               <span>Real-time Spectrum</span>
             </div>
           </div>
@@ -271,7 +264,7 @@ export const SourcesView: React.FC = () => {
             <button
               type="button"
               onClick={() => playTrack(CURATED_DISCOVERY_TRACKS[0], CURATED_DISCOVERY_TRACKS)}
-              className="flex-1 py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 border border-white/[0.08] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+              className="flex-1 min-h-[40px] py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 border border-white/[0.08] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             >
               <AuraIcon name="play" size={14} filled />
               Listen to Curated Stream
@@ -280,33 +273,31 @@ export const SourcesView: React.FC = () => {
         </div>
 
         {/* Source 3: Audius Music Network */}
-        <div className="p-5 rounded-2xl aura-glass-ambient flex flex-col justify-between gap-5 relative overflow-hidden">
+        <div className="p-4 sm:p-5 rounded-2xl aura-glass-ambient flex flex-col justify-between gap-4 sm:gap-5 relative overflow-hidden">
           <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                  <AuraIcon name="radio" size={16} />
-                </div>
+                <AuraIcon name="radio" size={18} className="text-purple-400 shrink-0" />
                 <div>
                   <h3 className="text-sm font-semibold text-white font-display">Audius Decentralized Catalog</h3>
-                  <span className="text-[10px] font-sans font-medium text-purple-400 flex items-center gap-1">
+                  <span className="text-[11px] font-sans font-medium text-purple-400 flex items-center gap-1">
                     <AuraIcon name="checkCircle" size={12} /> Public Web Streaming
                   </span>
                 </div>
               </div>
-              <span className="text-[10px] font-sans font-semibold text-zinc-400 uppercase tracking-wider">
+              <span className="text-[11px] font-mono text-zinc-400 shrink-0">
                 Full DSP & EQ
               </span>
             </div>
 
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Decentralized Web3 music catalog powered by independent creators. Direct public high-quality HTTP audio streaming with full 10-band EQ, 3D spatial sound, reverb, and real-time audio analysis.
+              Independent creator catalog over direct HTTP streams with 10-band EQ, spatial sound, reverb, and real-time analysis.
             </p>
 
-            <div className="flex items-center gap-4 text-xs font-sans text-zinc-400 pt-2 border-t border-white/5">
+            <div className="flex items-center gap-2 text-xs font-sans text-zinc-400 pt-2 border-t border-white/[0.06]">
               <span>Public Discovery</span>
-              <span>•</span>
-              <span>No Login or Key Required</span>
+              <span aria-hidden="true">·</span>
+              <span>No Account Required</span>
             </div>
           </div>
 
@@ -315,7 +306,7 @@ export const SourcesView: React.FC = () => {
               type="button"
               onClick={handlePlayAudiusTrending}
               disabled={isLoadingAudiusTrending}
-              className="flex-1 py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 border border-white/[0.08] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed aura-pressable aura-focus-ring"
+              className="flex-1 min-h-[40px] py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 border border-white/[0.08] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed aura-pressable aura-focus-ring"
             >
               <MotionIconSwap
                 stateKey={isLoadingAudiusTrending ? 'loading' : 'ready'}
@@ -338,33 +329,31 @@ export const SourcesView: React.FC = () => {
         </div>
 
         {/* Source: Jamendo Music Catalog */}
-        <div className="p-5 rounded-2xl aura-glass-ambient flex flex-col justify-between gap-5 relative overflow-hidden">
+        <div className="p-4 sm:p-5 rounded-2xl aura-glass-ambient flex flex-col justify-between gap-4 sm:gap-5 relative overflow-hidden">
           <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                  <AuraIcon name="musicNote" size={16} />
-                </div>
+                <AuraIcon name="musicNote" size={18} className="text-amber-400 shrink-0" />
                 <div>
                   <h3 className="text-sm font-semibold text-white font-display">Jamendo Music Catalog</h3>
-                  <span className="text-[10px] font-sans font-medium text-amber-400 flex items-center gap-1">
+                  <span className="text-[11px] font-sans font-medium text-amber-400 flex items-center gap-1">
                     <AuraIcon name="checkCircle" size={12} /> Creative Commons API
                   </span>
                 </div>
               </div>
-              <span className="text-[10px] font-sans font-semibold text-zinc-400 uppercase tracking-wider">
+              <span className="text-[11px] font-mono text-zinc-400 shrink-0">
                 Open CORS DSP
               </span>
             </div>
 
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Official Jamendo API integration. Free independent music under Creative Commons licenses with high-fidelity MP3 streams, full 10-band EQ, 3D audio, and waveform rendering.
+              Independent music under Creative Commons licenses with MP3 streaming, 10-band EQ, 3D audio, and waveform rendering.
             </p>
 
-            <div className="flex items-center gap-4 text-xs font-sans text-zinc-400 pt-2 border-t border-white/5">
-              <span><span className="font-mono tabular-nums">600,000+</span> Tracks</span>
-              <span>•</span>
-              <span>100% Free & Legal</span>
+            <div className="flex items-center gap-2 text-xs font-sans text-zinc-400 pt-2 border-t border-white/[0.06]">
+              <span><span className="font-mono tabular-nums text-zinc-200">600,000+</span> Tracks</span>
+              <span aria-hidden="true">·</span>
+              <span>Free & Licensed</span>
             </div>
           </div>
 
@@ -373,7 +362,7 @@ export const SourcesView: React.FC = () => {
               type="button"
               onClick={handlePlayJamendoTrending}
               disabled={isLoadingJamendo}
-              className="flex-1 py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 border border-white/[0.08] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed aura-pressable aura-focus-ring"
+              className="flex-1 min-h-[40px] py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 border border-white/[0.08] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed aura-pressable aura-focus-ring"
             >
               <MotionIconSwap
                 stateKey={isLoadingJamendo ? 'loading' : 'ready'}
@@ -396,32 +385,30 @@ export const SourcesView: React.FC = () => {
         </div>
 
         {/* Source: Radio Browser Global Directory */}
-        <div className="p-5 rounded-2xl aura-glass-ambient flex flex-col justify-between gap-5 relative overflow-hidden">
+        <div className="p-4 sm:p-5 rounded-2xl aura-glass-ambient flex flex-col justify-between gap-4 sm:gap-5 relative overflow-hidden">
           <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                  <AuraIcon name="radio" size={16} />
-                </div>
+                <AuraIcon name="radio" size={18} className="text-cyan-400 shrink-0" />
                 <div>
                   <h3 className="text-sm font-semibold text-white font-display">Radio Browser Directory</h3>
-                  <span className="text-[10px] font-sans font-medium text-cyan-400 flex items-center gap-1">
+                  <span className="text-[11px] font-sans font-medium text-cyan-400 flex items-center gap-1">
                     <AuraIcon name="checkCircle" size={12} /> Live Internet Radio
                   </span>
                 </div>
               </div>
-              <span className="text-[10px] font-sans font-semibold text-zinc-400 uppercase tracking-wider">
+              <span className="text-[11px] font-mono text-zinc-400 shrink-0">
                 Live DSP
               </span>
             </div>
 
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Global community directory with 60,000+ live internet radio stations. Filter by genre, country, and codec with continuous live audio streaming.
+              Global community directory of live internet radio stations filtered by genre, country, and broadcast codec.
             </p>
 
-            <div className="flex items-center gap-4 text-xs font-sans text-zinc-400 pt-2 border-t border-white/5">
-              <span><span className="font-mono tabular-nums">60,000+</span> Stations</span>
-              <span>•</span>
+            <div className="flex items-center gap-2 text-xs font-sans text-zinc-400 pt-2 border-t border-white/[0.06]">
+              <span><span className="font-mono tabular-nums text-zinc-200">60,000+</span> Stations</span>
+              <span aria-hidden="true">·</span>
               <span>Live Broadcast</span>
             </div>
           </div>
@@ -435,7 +422,7 @@ export const SourcesView: React.FC = () => {
                   loadRadioCategory('top');
                 }
               }}
-              className="w-full py-2 px-3 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-200 border border-cyan-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+              className="w-full min-h-[40px] py-2 px-3 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-200 border border-cyan-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             >
               <AuraIcon name="radio" size={14} />
               <span>Explore Radio Stations</span>
@@ -444,28 +431,32 @@ export const SourcesView: React.FC = () => {
         </div>
 
         {/* Source 4: YouTube Web Embed Player */}
-        <div className="p-6 rounded-3xl bg-[#0c0e15]/70 border border-white/10 backdrop-blur-xl flex flex-col justify-between gap-6 shadow-xl">
+        <div className="p-4 sm:p-5 rounded-2xl aura-glass-ambient flex flex-col justify-between gap-4 sm:gap-5 relative overflow-hidden">
           <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2.5">
-                <div className="p-2.5 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20">
-                  <YouTubeBrandMark size={20} />
-                </div>
+                <YouTubeBrandMark size={18} className="shrink-0" />
                 <div>
-                  <h3 className="text-base font-bold text-white">YouTube Embed Player</h3>
-                  <span className="text-[10px] font-sans font-medium text-zinc-400 flex items-center gap-1">
+                  <h3 className="text-sm font-semibold text-white font-display">YouTube Embed Player</h3>
+                  <span className="text-[11px] font-sans font-medium text-rose-300/90">
                     Official Web Embed
                   </span>
                 </div>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-red-500/10 text-red-300 border border-red-500/20">
-                EMBEDDED
+              <span className="text-[11px] font-mono text-zinc-400 shrink-0">
+                Transport Only
               </span>
             </div>
 
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Official embedded YouTube playback player. Search or paste video links to listen with universal playback controls, queues, and favorites.
+              Paste a video URL or ID to listen through the official embed player with shared queues, speed, and favorites.
             </p>
+
+            <div className="flex items-center gap-2 text-xs font-sans text-zinc-400 pt-2 border-t border-white/[0.06]">
+              <span>IFrame API Bridge</span>
+              <span aria-hidden="true">·</span>
+              <span>Queue & Sync Ready</span>
+            </div>
           </div>
 
           <AnimatePresence mode="wait" initial={false}>
@@ -477,11 +468,11 @@ export const SourcesView: React.FC = () => {
                     value={youtubeInput}
                     onChange={(e) => setYoutubeInput(e.target.value)}
                     placeholder="Paste YouTube URL or Video ID (e.g. dQw4w9WgXcQ)"
-                    className="flex-1 px-3 py-1.5 rounded-xl bg-zinc-900 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none"
+                    className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-zinc-900 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none"
                   />
                   <button
                     type="submit"
-                    className="px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-semibold transition-colors cursor-pointer aura-pressable aura-focus-ring"
+                    className="min-h-[38px] px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-semibold transition-colors cursor-pointer aura-pressable aura-focus-ring"
                   >
                     Play
                   </button>
@@ -492,7 +483,7 @@ export const SourcesView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowAddYoutube(true)}
-                  className="w-full py-2 px-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-200 text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+                  className="w-full min-h-[40px] py-2 px-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-200 text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
                 >
                   + Open YouTube Link
                 </button>
@@ -518,13 +509,11 @@ export const SourcesView: React.FC = () => {
               aria-label="Global Radio Explorer"
               variant="center"
               onClick={(e) => e.stopPropagation()}
-              className="bg-[#0e1017] border border-white/10 rounded-3xl p-6 w-full max-w-2xl shadow-2xl flex flex-col gap-4 max-h-[85vh]"
+              className="bg-[#0e1017] border border-white/10 rounded-3xl p-4 sm:p-6 w-full max-w-2xl shadow-2xl flex flex-col gap-4 max-h-[90dvh]"
             >
-              <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                    <AuraIcon name="radio" size={16} />
-                  </div>
+              <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+                <div className="flex items-center gap-2.5">
+                  <AuraIcon name="radio" size={18} className="text-cyan-400 shrink-0" />
                   <div>
                     <h2 className="text-base font-bold text-white">Global Radio Explorer</h2>
                     <p className="text-xs text-zinc-400">Filter stations by category or top votes</p>
@@ -533,7 +522,7 @@ export const SourcesView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowRadioExplorer(false)}
-                  className="px-2.5 py-1 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white hover:bg-white/5 border border-white/10 cursor-pointer aura-pressable aura-focus-ring"
+                  className="min-h-[38px] px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white hover:bg-white/5 border border-white/10 cursor-pointer aura-pressable aura-focus-ring"
                 >
                   Close
                 </button>
@@ -549,7 +538,7 @@ export const SourcesView: React.FC = () => {
                         type="button"
                         key={cat}
                         onClick={() => loadRadioCategory(cat)}
-                        className={`relative px-3 py-1.5 min-h-[32px] rounded-xl font-sans text-xs capitalize transition-colors cursor-pointer aura-pressable aura-focus-ring ${
+                        className={`relative px-3 py-1.5 min-h-[38px] rounded-xl font-sans text-xs capitalize transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                           isActive
                             ? 'text-cyan-300 font-semibold'
                             : 'bg-white/[0.03] text-zinc-400 hover:text-zinc-200 border border-white/5 font-medium'
@@ -627,7 +616,7 @@ export const SourcesView: React.FC = () => {
                             className={`p-3 rounded-xl border flex items-center justify-between gap-3 transition-colors ${
                               isCurrent
                                 ? 'bg-cyan-950/40 border-cyan-500/40 text-white'
-                                : 'bg-white/[0.02] border-white/5 text-zinc-300 hover:bg-white/[0.04]'
+                                : 'bg-white/[0.02] border-white/[0.06] text-zinc-300 hover:bg-white/[0.04]'
                             }`}
                           >
                             <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -640,28 +629,36 @@ export const SourcesView: React.FC = () => {
                               </div>
                               <div className="min-w-0 flex-1">
                                 <p className="text-xs font-semibold truncate text-white">{st.name}</p>
-                                <p className="text-[10px] font-mono text-zinc-400 truncate">
-                                  {st.country || 'Global'} • {st.tags.slice(0, 3).join(', ') || 'Live Broadcast'}
+                                <p className="text-[11px] font-sans text-zinc-400 truncate mt-0.5">
+                                  <span>{st.country || 'Global'}</span>
+                                  <span aria-hidden="true"> · </span>
+                                  <span className="font-mono uppercase">{st.codec || 'MP3'}</span>
+                                  {isHls && (
+                                    <>
+                                      <span aria-hidden="true"> · </span>
+                                      <span className="font-mono text-amber-300">HLS</span>
+                                    </>
+                                  )}
+                                  {st.tags?.length > 0 && (
+                                    <>
+                                      <span aria-hidden="true"> · </span>
+                                      <span>{st.tags.slice(0, 2).join(', ')}</span>
+                                    </>
+                                  )}
                                 </p>
                               </div>
                             </div>
 
                             <div className="flex items-center gap-2 shrink-0">
-                              {isHls && (
-                                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                                  HLS
-                                </span>
-                              )}
-                              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/[0.06] text-zinc-400 border border-white/10">
-                                {st.codec || 'MP3'}
-                              </span>
                               <button
+                                type="button"
                                 onClick={() => {
                                   playTrack(auraTrack);
                                   showToast(`Connecting to "${st.name}"...`, 'info');
                                 }}
-                                className="p-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white transition-colors cursor-pointer aura-pressable"
+                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white transition-colors cursor-pointer aura-pressable aura-focus-ring"
                                 title="Play Station"
+                                aria-label={`Play ${st.name}`}
                               >
                                 <AuraIcon name="play" size={14} filled />
                               </button>
@@ -679,11 +676,11 @@ export const SourcesView: React.FC = () => {
       </AnimatePresence>
 
       {/* Capabilities & Compatibility Matrix */}
-      <div className="p-6 rounded-3xl bg-[#090b10] border border-white/5 flex flex-col gap-4 shadow-xl">
+      <div className="p-4 sm:p-6 rounded-2xl bg-[#090b10] border border-white/[0.07] flex flex-col gap-3 sm:gap-4 shadow-xl">
         <div className="flex items-center gap-2">
-          <AuraIcon name="sliders" size={16} className="text-indigo-400" />
-          <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-300">
-            Source Capabilities & DSP Processing Matrix
+          <AuraIcon name="sliders" size={16} className="text-indigo-400 shrink-0" />
+          <h2 className="text-sm font-semibold text-zinc-200">
+            Source Capabilities & DSP Matrix
           </h2>
         </div>
 
@@ -691,7 +688,23 @@ export const SourcesView: React.FC = () => {
           AURA honestly reflects what each source can technically support without faking streams or scraping:
         </p>
 
-        <div className="overflow-x-auto">
+        {/* Mobile Compact Capability Cards */}
+        <div className="md:hidden flex flex-col gap-2">
+          {[
+            { name: 'Local Library Files', accent: 'text-white', caps: 'Full Seek · Full DSP & EQ · Master WAV Export' },
+            { name: 'Curated Open Audio', accent: 'text-cyan-300', caps: 'Full Seek · Unlocked Web Audio DSP' },
+            { name: 'Audius & Jamendo', accent: 'text-purple-300', caps: 'Full Seek · CORS DSP (Direct Fallback)' },
+            { name: 'Radio Browser (Live)', accent: 'text-emerald-300', caps: 'Live Stream · Live DSP (When CORS Allowed)' },
+            { name: 'YouTube Embed', accent: 'text-rose-300', caps: 'Official Embed API · Universal Queue & Sync' },
+          ].map((row) => (
+            <div key={row.name} className="p-3 rounded-xl bg-white/[0.025] border border-white/[0.06] flex flex-col gap-0.5">
+              <span className={`text-xs font-bold ${row.accent}`}>{row.name}</span>
+              <span className="text-[11px] font-mono text-zinc-400">{row.caps}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs font-mono">
             <thead>
               <tr className="border-b border-white/10 text-zinc-500">

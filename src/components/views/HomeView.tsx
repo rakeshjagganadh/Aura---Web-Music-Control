@@ -73,6 +73,7 @@ export const HomeView: React.FC = () => {
   const [trendingTracks, setTrendingTracks] = useState<Track[]>([]);
   const [topRadioStations, setTopRadioStations] = useState<Track[]>([]);
   const [isLoadingDiscovery, setIsLoadingDiscovery] = useState(true);
+  const [mobileExploreTab, setMobileExploreTab] = useState<'moods' | 'genres' | 'soundscapes'>('moods');
 
   // Time-of-day greeting calculation
   const greeting = useMemo((): { text: string; icon: AuraIconName; label: string } => {
@@ -179,33 +180,33 @@ export const HomeView: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-8 sm:gap-10 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none pb-36 sm:pb-44">
+    <div className="flex flex-col gap-5 sm:gap-10 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none pb-6 sm:pb-44">
       
       {/* -------------------------------------------------------------
           1. COMPACT TIME-AWARE GREETING & QUICK LISTENING ACTION BAR
           ------------------------------------------------------------- */}
-      <section id="home-welcome-header" className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-2 border-b border-white/[0.06]">
+      <section id="home-welcome-header" className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 sm:gap-4 pb-3 sm:pb-2 border-b border-white/[0.06]">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <AuraIcon name={greeting.icon} size={16} className="text-sky-400" />
-            <span className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider font-medium">
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
+            <AuraIcon name={greeting.icon} size={14} className="text-sky-400" />
+            <span className="text-[10px] sm:text-[11px] font-mono text-zinc-400 uppercase tracking-wider font-medium">
               {greeting.label}
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-page-title text-white tracking-tight">
+          <h1 className="text-xl sm:text-3xl font-page-title text-white tracking-tight">
             {greeting.text}
           </h1>
-          <p className="text-xs text-zinc-400 mt-0.5 font-ui-meta">
-            Your audio sanctuary is online · {quickPicks.length} instant tracks ready
+          <p className="hidden sm:block text-xs text-zinc-400 mt-0.5 font-ui-meta tabular-nums">
+            {quickPicks.length} instant tracks ready across vault and open streams
           </p>
         </div>
 
-        {/* Quick Action Mix Bar */}
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* Quick Action Mix Bar (Single scrollable thumb strip on mobile, wrapped on tablet/desktop) */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0 sm:flex-wrap w-[calc(100%+1.5rem)] sm:w-auto">
           <button
             type="button"
             onClick={handlePlayDailyMix}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md aura-pressable transition-colors cursor-pointer aura-focus-ring"
+            className="flex items-center gap-2 px-3.5 sm:px-4 py-2 min-h-[40px] rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md aura-pressable transition-colors cursor-pointer aura-focus-ring whitespace-nowrap shrink-0"
             title="Play Sanctuary Daily Flow Mix"
           >
             <AuraIcon name="play" size={14} filled className="text-black" />
@@ -215,17 +216,17 @@ export const HomeView: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsYouTubeImportModalOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-medium border border-red-500/25 aura-pressable transition-colors cursor-pointer aura-focus-ring"
+            className="flex items-center gap-2 px-3.5 py-2 min-h-[40px] rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-medium border border-red-500/25 aura-pressable transition-colors cursor-pointer aura-focus-ring whitespace-nowrap shrink-0"
             title="Import YouTube or YouTube Music Playlist"
           >
             <AuraIcon name="playlist" size={14} className="text-red-400" />
-            <span>Import YouTube Playlist</span>
+            <span>Import YouTube</span>
           </button>
 
           <button
             type="button"
             onClick={() => setCurrentView('library')}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium border border-white/10 aura-pressable transition-colors cursor-pointer aura-focus-ring"
+            className="flex items-center gap-2 px-3.5 py-2 min-h-[40px] rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium border border-white/10 aura-pressable transition-colors cursor-pointer aura-focus-ring whitespace-nowrap shrink-0"
             title="Open Personal Vault Overview"
           >
             <AuraIcon name="hardDrive" size={14} className="text-indigo-400" />
@@ -235,7 +236,7 @@ export const HomeView: React.FC = () => {
           <button
             type="button"
             onClick={() => setCurrentView('sources')}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium border border-white/10 aura-pressable transition-colors cursor-pointer aura-focus-ring"
+            className="flex items-center gap-2 px-3.5 py-2 min-h-[40px] rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium border border-white/10 aura-pressable transition-colors cursor-pointer aura-focus-ring whitespace-nowrap shrink-0"
             title="Open Live World Radio"
           >
             <AuraIcon name="radio" size={14} className="text-amber-400" />
@@ -257,8 +258,8 @@ export const HomeView: React.FC = () => {
             <span className="text-xs text-zinc-500 font-sans font-medium hidden sm:inline">Instant Play</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {quickPicks.map((track) => {
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+            {quickPicks.map((track, idx) => {
               const isThisPlaying = currentTrack?.id === track.id && isPlaying;
               return (
                 <div
@@ -273,14 +274,14 @@ export const HomeView: React.FC = () => {
                       playTrack(track, quickPicks);
                     }
                   }}
-                  className={`group relative flex items-center gap-3.5 p-2.5 rounded-2xl aura-hover-scale aura-pressable-subtle transition-colors duration-200 cursor-pointer aura-focus-ring ${
+                  className={`group relative ${idx >= 6 ? 'hidden sm:flex' : 'flex'} items-center gap-2 sm:gap-3.5 p-2 sm:p-2.5 rounded-2xl aura-hover-scale aura-pressable-subtle transition-colors duration-200 cursor-pointer aura-focus-ring ${
                     currentTrack?.id === track.id
                       ? 'bg-white/[0.10] border border-sky-400/50 shadow-md'
                       : 'bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-white/[0.12] shadow-sm hover:shadow-md'
                   }`}
                 >
-                  {/* ~54px Tactile Artwork Tile */}
-                  <div className="relative w-13 h-13 rounded-xl overflow-hidden shrink-0 bg-zinc-900 border border-white/20 shadow-md">
+                  {/* Tactile Artwork Tile */}
+                  <div className="relative w-11 h-11 sm:w-13 sm:h-13 rounded-xl overflow-hidden shrink-0 bg-zinc-900 border border-white/10 shadow-md">
                     {track.coverUrl ? (
                       <img 
                         src={track.coverUrl} 
@@ -336,41 +337,41 @@ export const HomeView: React.FC = () => {
       {/* -------------------------------------------------------------
           3. YOUR MUSIC DISCOVERY (NATIVE AURA MIXES + PLAYLIST IMPORT)
           ------------------------------------------------------------- */}
-      <section className="flex flex-col gap-3.5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
+      <section className="flex flex-col gap-3 sm:gap-3.5">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
             <h2 className="font-section-title text-white flex items-center gap-2">
               <AuraIcon name="sparkles" size={16} className="text-indigo-400" />
               Your Music Discovery
             </h2>
-            <p className="text-xs text-zinc-400 mt-0.5 font-ui-meta">
+            <p className="hidden sm:block text-xs text-zinc-400 mt-0.5 font-ui-meta">
               Personalized listening experiences assembled natively from your library, playback history, and vault
             </p>
           </div>
           <button
             type="button"
             onClick={() => setIsYouTubeImportModalOpen(true)}
-            className="self-start sm:self-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-medium border border-red-500/25 aura-pressable transition-colors cursor-pointer aura-focus-ring"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-medium border border-red-500/25 aura-pressable transition-colors cursor-pointer aura-focus-ring shrink-0"
           >
             <AuraIcon name="playlist" size={14} className="text-red-400" />
             <span>Import YouTube Playlist</span>
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar gap-3 -mx-3 px-3 pb-1 sm:mx-0 sm:px-0 sm:pb-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-4">
           {discoveryMixes.map((mix) => {
             const isPlayingThisMix = currentTrack && mix.tracks.some((t) => t.id === currentTrack.id) && isPlaying;
 
             return (
               <div
                 key={mix.id}
-                className="group relative overflow-hidden rounded-3xl border border-white/[0.22] glass-ambient hover:glass-reflective aura-hover-scale flex flex-col justify-between transition-colors duration-300 hover:border-white/40 shadow-xl hover:shadow-2xl"
+                className="w-[82vw] max-w-[300px] sm:w-auto sm:max-w-none shrink-0 snap-start group relative overflow-hidden rounded-3xl border border-white/[0.10] glass-ambient hover:glass-reflective aura-hover-scale flex flex-col justify-between transition-colors duration-200 hover:border-white/[0.22] shadow-xl hover:shadow-2xl"
               >
                 {/* Background Gradient */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${mix.coverColor} opacity-70 group-hover:opacity-85 transition-opacity`} />
 
                 {/* Top Section: Badges, Real Artwork and Descriptions */}
-                <div className="relative z-10 p-5 flex items-start gap-4">
+                <div className="relative z-10 p-3.5 sm:p-5 flex items-start gap-3 sm:gap-4">
                   {/* Real Artwork Tile */}
                   <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shrink-0 bg-zinc-900 border border-white/20 shadow-lg">
                     {mix.coverUrl ? (
@@ -402,19 +403,12 @@ export const HomeView: React.FC = () => {
                   {/* Title & Metadata */}
                   <div className="min-w-0 flex-1 flex flex-col justify-between h-full">
                     <div>
-                      <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
-                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-white px-2 py-0.5 rounded-full bg-white/10 border border-white/15">
-                          {mix.badgeText}
+                      <div className="flex items-center gap-1.5 mb-1 text-[10px] font-mono uppercase tracking-[0.12em]">
+                        <span className="font-semibold text-white/90">{mix.badgeText}</span>
+                        <span className="text-white/30" aria-hidden="true">·</span>
+                        <span className={mix.isStarterMix ? 'text-indigo-300' : 'text-emerald-300'}>
+                          {mix.isStarterMix ? 'Starter' : 'Personalized'}
                         </span>
-                        {mix.isStarterMix ? (
-                          <span className="text-[9px] font-mono text-indigo-300 px-1.5 py-0.5 rounded bg-indigo-500/15 border border-indigo-500/25">
-                            STARTER
-                          </span>
-                        ) : (
-                          <span className="text-[9px] font-mono text-emerald-300 px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/25">
-                            PERSONALIZED
-                          </span>
-                        )}
                       </div>
 
                       <h3 className="text-base font-bold text-white group-hover:text-indigo-200 transition-colors font-display truncate">
@@ -426,11 +420,11 @@ export const HomeView: React.FC = () => {
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-2 text-[11px] text-zinc-400 font-mono mt-2">
+                    <div className="flex items-center gap-2 text-xs text-zinc-400 font-sans tabular-nums mt-2">
                       <span>{mix.trackCount} tracks ready</span>
                       {isPlayingThisMix && (
-                        <span className="flex items-center gap-1 text-sky-400 font-bold">
-                          <span className={`w-1.5 h-1.5 rounded-full bg-sky-400 ${!prefersReducedMotion ? 'animate-pulse' : ''}`} />
+                        <span className="flex items-center gap-1 text-sky-400 font-semibold">
+                          <AuraIcon name="volumeHigh" size={12} />
                           Playing
                         </span>
                       )}
@@ -480,7 +474,7 @@ export const HomeView: React.FC = () => {
                 setIsYouTubeImportModalOpen(true);
               }
             }}
-            className="group relative overflow-hidden rounded-2xl border border-red-500/20 hover:border-red-500/40 aura-glass-ambient aura-hover-scale aura-pressable-subtle flex flex-col justify-between transition-colors duration-300 shadow-lg cursor-pointer min-h-[160px] aura-focus-ring"
+            className="w-[82vw] max-w-[300px] sm:w-auto sm:max-w-none shrink-0 snap-start group relative overflow-hidden rounded-2xl border border-red-500/20 hover:border-red-500/40 aura-glass-ambient aura-hover-scale aura-pressable-subtle flex flex-col justify-between transition-colors duration-300 shadow-lg cursor-pointer min-h-[160px] aura-focus-ring"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-red-950/40 via-zinc-900/60 to-black/80 opacity-80 group-hover:opacity-100 transition-opacity" />
             
@@ -489,10 +483,10 @@ export const HomeView: React.FC = () => {
                 <AuraIcon name="playlist" size={32} />
               </div>
               <div className="min-w-0 flex-1">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-red-300 px-2 py-0.5 rounded-full bg-red-500/15 border border-red-500/25">
-                  OFFICIAL STREAMING
+                <span className="text-[10px] font-mono font-semibold uppercase tracking-[0.12em] text-red-300">
+                  Official Streaming
                 </span>
-                <h3 className="text-base font-bold text-white group-hover:text-red-200 transition-colors font-display mt-1">
+                <h3 className="text-base font-bold text-white group-hover:text-red-200 transition-colors font-display mt-0.5">
                   Import YouTube Playlist
                 </h3>
                 <p className="text-xs text-zinc-400 mt-1 line-clamp-2">
@@ -517,9 +511,132 @@ export const HomeView: React.FC = () => {
       </section>
 
       {/* -------------------------------------------------------------
-          4. EXPLORE BY MOOD (8 EXPRESSIVE MOOD CARDS)
+          MOBILE-UNIFIED EXPLORE STRIP (Moods | Genres | Soundscapes)
+          Replaces 3 tall stacked grids on mobile with 1 compact swipe strip
           ------------------------------------------------------------- */}
-      <section className="flex flex-col gap-3">
+      <section className="sm:hidden flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="font-section-title text-white flex items-center gap-2 shrink-0">
+            <AuraIcon name="compass" size={16} className="text-purple-400" />
+            Explore
+          </h2>
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.08]">
+            {([
+              { id: 'moods', label: 'Moods' },
+              { id: 'genres', label: 'Genres' },
+              { id: 'soundscapes', label: 'Sounds' },
+            ] as const).map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setMobileExploreTab(tab.id)}
+                className={`px-2.5 py-1.5 min-h-[34px] rounded-lg text-[11px] font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+                  mobileExploreTab === tab.id
+                    ? 'bg-white text-zinc-950 shadow-sm'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {mobileExploreTab === 'moods' && (
+          <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar gap-2.5 -mx-3 px-3 pb-1">
+            {MOOD_CARDS.map((mood) => (
+              <div
+                key={`mob-${mood.id}`}
+                role="button"
+                tabIndex={0}
+                aria-label={`Search ${mood.name} mood`}
+                onClick={() => handleSelectMood(mood.query)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleSelectMood(mood.query);
+                  }
+                }}
+                className={`w-[44vw] max-w-[172px] shrink-0 snap-start group relative overflow-hidden rounded-2xl aspect-[16/10] p-3 flex flex-col justify-between border ${mood.border} cursor-pointer glass-ambient aura-pressable-subtle aura-focus-ring`}
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${mood.gradient} opacity-80`} />
+                <div className="relative z-10 flex items-center justify-between">
+                  <span className="text-[9px] font-mono uppercase tracking-wider text-zinc-300">Mood</span>
+                  <AuraIcon name="arrowUpRight" size={13} className="text-zinc-300" />
+                </div>
+                <div className="relative z-10">
+                  <h3 className="text-xs font-bold text-white font-display truncate">{mood.name}</h3>
+                  <p className="text-[10px] text-zinc-300/80 line-clamp-1 mt-0.5 font-ui-meta">{mood.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {mobileExploreTab === 'genres' && (
+          <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar gap-2.5 -mx-3 px-3 pb-1">
+            {GENUINE_GENRES.map((g) => (
+              <div
+                key={`mob-${g.id}`}
+                role="button"
+                tabIndex={0}
+                aria-label={`Search ${g.name} genre`}
+                onClick={() => handleSelectGenre(g.query)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleSelectGenre(g.query);
+                  }
+                }}
+                className={`w-[38vw] max-w-[152px] shrink-0 snap-start relative overflow-hidden rounded-2xl aspect-[4/3] p-3 flex flex-col justify-between border ${g.border} cursor-pointer aura-glass-ambient aura-pressable-subtle aura-focus-ring`}
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${g.color} opacity-80`} />
+                <span className="relative z-10 text-[9px] font-mono uppercase tracking-wider text-zinc-300">Genre</span>
+                <div className="relative z-10">
+                  <h3 className="text-xs font-bold text-white font-display truncate">{g.name}</h3>
+                  <p className="text-[10px] text-zinc-300/80 line-clamp-1 mt-0.5 font-ui-meta">{g.tag}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {mobileExploreTab === 'soundscapes' && (
+          <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar gap-2.5 -mx-3 px-3 pb-1">
+            {SONIC_ENVIRONMENTS.map((env) => (
+              <div
+                key={`mob-${env.id}`}
+                role="button"
+                tabIndex={0}
+                aria-label={`Play ${env.name} soundscape`}
+                onClick={() => playTrack(env.featuredTrack, [env.featuredTrack])}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    playTrack(env.featuredTrack, [env.featuredTrack]);
+                  }
+                }}
+                className="w-[46vw] max-w-[184px] shrink-0 snap-start relative overflow-hidden rounded-2xl aspect-[16/10] p-3 flex flex-col justify-between border border-white/[0.1] cursor-pointer aura-glass-ambient aura-pressable-subtle aura-focus-ring"
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${env.coverGradient} opacity-75`} />
+                <div className="relative z-10 flex items-center justify-between">
+                  <span className="text-[9px] font-mono uppercase tracking-wider text-zinc-300">Sound</span>
+                  <AuraIcon name="play" size={14} filled className="text-white" />
+                </div>
+                <div className="relative z-10">
+                  <h3 className="text-xs font-bold text-white font-display truncate">{env.name}</h3>
+                  <p className="text-[10px] text-zinc-300/80 line-clamp-1 mt-0.5 font-ui-meta">{env.tagline}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* -------------------------------------------------------------
+          4. EXPLORE BY MOOD (8 EXPRESSIVE MOOD CARDS - TABLET/DESKTOP)
+          ------------------------------------------------------------- */}
+      <section className="hidden sm:flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h2 className="font-section-title text-white flex items-center gap-2">
             <AuraIcon name="compass" size={16} className="text-purple-400" />
@@ -547,8 +664,8 @@ export const HomeView: React.FC = () => {
               <div className={`absolute inset-0 bg-gradient-to-br ${mood.gradient} opacity-75 group-hover:opacity-95 transition-opacity`} />
               
               <div className="relative z-10 flex items-center justify-between">
-                <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-white/10 ${mood.badgeColor}`}>
-                  {mood.name.toUpperCase()}
+                <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-zinc-300/80 font-medium">
+                  Mood
                 </span>
                 <AuraIcon name="arrowUpRight" size={14} className="text-zinc-400 group-hover:text-white transition-colors" />
               </div>
@@ -569,7 +686,7 @@ export const HomeView: React.FC = () => {
       {/* -------------------------------------------------------------
           5. EXPLORE GENRES (GENUINE MUSIC GENRES CONNECTED TO SEARCH)
           ------------------------------------------------------------- */}
-      <section className="flex flex-col gap-3">
+      <section className="hidden sm:flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h2 className="font-section-title text-white flex items-center gap-2">
             <AuraIcon name="layers" size={16} className="text-sky-400" />
@@ -616,7 +733,7 @@ export const HomeView: React.FC = () => {
       {/* -------------------------------------------------------------
           6. EXPLORE SOUNDSCAPES (AURA CURATED SOUND CONCEPTS)
           ------------------------------------------------------------- */}
-      <section className="flex flex-col gap-3">
+      <section className="hidden sm:flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h2 className="font-section-title text-white flex items-center gap-2">
             <AuraIcon name="waves" size={16} className="text-emerald-400" />
@@ -644,8 +761,8 @@ export const HomeView: React.FC = () => {
               <div className={`absolute inset-0 bg-gradient-to-br ${env.coverGradient} opacity-60 group-hover:opacity-85 transition-opacity`} />
               
               <div className="relative z-10 flex items-start justify-between">
-                <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-zinc-300 border border-white/10">
-                  SOUNDSCAPE
+                <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-zinc-300/80 font-medium">
+                  Soundscape
                 </span>
                 <div className="w-6 h-6 rounded-full bg-white text-zinc-950 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <AuraIcon name="play" size={12} filled className="text-black translate-x-0.5" />
@@ -690,7 +807,7 @@ export const HomeView: React.FC = () => {
               direction="up"
               distance={6}
               duration="micro"
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-5"
+              className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar gap-3 -mx-3 px-3 pb-1 sm:mx-0 sm:px-0 sm:pb-0 sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 sm:gap-5 [&>*]:w-[42vw] [&>*]:max-w-[168px] [&>*]:shrink-0 [&>*]:snap-start sm:[&>*]:w-auto sm:[&>*]:max-w-none"
             >
               {trendingTracks.map((track) => (
                 <SongObjectCard
@@ -708,7 +825,7 @@ export const HomeView: React.FC = () => {
               direction="up"
               distance={4}
               duration="micro"
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-5"
+              className="flex overflow-x-auto no-scrollbar gap-3 -mx-3 px-3 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 sm:gap-5 [&>*]:w-[42vw] [&>*]:max-w-[168px] [&>*]:shrink-0 sm:[&>*]:w-auto sm:[&>*]:max-w-none"
               aria-busy="true"
               aria-label="Loading live open streaming discoveries"
             >
@@ -755,7 +872,7 @@ export const HomeView: React.FC = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
+          <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar gap-2.5 -mx-3 px-3 pb-1 sm:mx-0 sm:px-0 sm:pb-0 sm:grid sm:grid-cols-3 lg:grid-cols-6 sm:gap-3">
             {topRadioStations.map((station) => (
               <div
                 key={`radio-${station.id}`}
@@ -769,7 +886,7 @@ export const HomeView: React.FC = () => {
                     playTrack(station, topRadioStations);
                   }
                 }}
-                className="group relative flex flex-col p-2.5 rounded-xl aura-glass-ambient aura-hover-lift aura-pressable-subtle transition-colors cursor-pointer aura-focus-ring"
+                className="w-[38vw] max-w-[152px] sm:w-auto sm:max-w-none shrink-0 snap-start group relative flex flex-col p-2.5 rounded-xl aura-glass-ambient aura-hover-lift aura-pressable-subtle transition-colors cursor-pointer aura-focus-ring"
               >
                 <div className="relative aspect-square rounded-lg overflow-hidden bg-zinc-900 border border-white/10 mb-2 flex items-center justify-center">
                   {station.coverUrl ? (
@@ -790,7 +907,8 @@ export const HomeView: React.FC = () => {
                       <AuraIcon name="play" size={14} filled className="text-black translate-x-0.5" />
                     </div>
                   </div>
-                  <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md text-[9px] font-mono font-semibold uppercase tracking-wider bg-black/70 backdrop-blur-md text-amber-300 border border-white/[0.10] inline-flex items-center gap-1">
+                    <span className="w-1 h-1 rounded-full bg-amber-400" aria-hidden="true" />
                     LIVE
                   </span>
                 </div>
@@ -824,7 +942,7 @@ export const HomeView: React.FC = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar gap-3 -mx-3 px-3 pb-1 sm:mx-0 sm:px-0 sm:pb-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:gap-3.5">
           {CURATED_COLLECTIONS.slice(0, 4).map((col) => (
             <div
               key={col.id}
@@ -838,19 +956,17 @@ export const HomeView: React.FC = () => {
                   playTrack(col.tracks[0], col.tracks);
                 }
               }}
-              className="group relative flex flex-col justify-between p-4 rounded-2xl aura-glass-ambient aura-hover-lift aura-pressable-subtle transition-colors duration-300 cursor-pointer min-h-[145px] aura-focus-ring"
+              className="w-[72vw] max-w-[260px] sm:w-auto sm:max-w-none shrink-0 snap-start group relative flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl aura-glass-ambient aura-hover-lift aura-pressable-subtle transition-colors duration-300 cursor-pointer min-h-[132px] sm:min-h-[145px] aura-focus-ring"
             >
               <div className="flex items-start justify-between">
                 <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${col.coverGradient} flex items-center justify-center text-white shadow-lg group-hover:scale-105 transition-transform`}>
                   <AuraIcon name="play" size={16} filled className="ml-0.5" />
                 </div>
-                <div className="flex gap-1">
-                  {col.tags.slice(0, 1).map((t) => (
-                    <span key={t} className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-white/[0.06] text-zinc-300 border border-white/[0.08]">
-                      {t}
-                    </span>
-                  ))}
-                </div>
+                {col.tags[0] && (
+                  <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-zinc-400">
+                    {col.tags[0]}
+                  </span>
+                )}
               </div>
 
               <div className="mt-3">
@@ -860,7 +976,7 @@ export const HomeView: React.FC = () => {
                 <p className="text-[11px] text-zinc-400 line-clamp-1 mt-0.5 font-ui-meta">
                   {col.description}
                 </p>
-                <div className="flex items-center justify-between pt-2.5 mt-2.5 border-t border-white/[0.06] text-[10px] text-zinc-500 font-mono">
+                <div className="flex items-center justify-between pt-2.5 mt-2.5 border-t border-white/[0.06] text-[10px] text-zinc-500 font-mono tabular-nums">
                   <span>{col.tracks.length} ambient streams</span>
                   <span className="text-zinc-300 group-hover:text-white font-semibold flex items-center gap-0.5">
                     Play <AuraIcon name="arrowUpRight" size={12} />
@@ -875,7 +991,7 @@ export const HomeView: React.FC = () => {
       {/* -------------------------------------------------------------
           10. LOCAL VAULT STATUS & QUICK IMPORT FOOTER
           ------------------------------------------------------------- */}
-      <section className="p-5 sm:p-6 rounded-2xl aura-glass-ambient flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <section className="p-3.5 sm:p-6 rounded-2xl aura-glass-ambient flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-3.5">
           <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0 text-white">
             <AuraIcon name="hardDrive" size={20} className="text-indigo-400" />
@@ -896,7 +1012,7 @@ export const HomeView: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsUploadModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-semibold text-xs shadow-md aura-pressable transition-colors cursor-pointer aura-focus-ring"
+            className="flex items-center gap-1.5 px-4 py-2 min-h-[40px] rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-semibold text-xs shadow-md aura-pressable transition-colors cursor-pointer aura-focus-ring"
           >
             <AuraIcon name="add" size={14} weight={600} />
             <span>Import Audio</span>
@@ -905,7 +1021,7 @@ export const HomeView: React.FC = () => {
             <button
               type="button"
               onClick={loadDemoPack}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 font-medium text-xs border border-white/10 aura-pressable transition-colors cursor-pointer aura-focus-ring"
+              className="flex items-center gap-1.5 px-3.5 py-2 min-h-[40px] rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 font-medium text-xs border border-white/10 aura-pressable transition-colors cursor-pointer aura-focus-ring"
             >
               <AuraIcon name="sparkles" size={14} className="text-indigo-400" />
               <span>Load Demo Pack</span>
@@ -914,8 +1030,8 @@ export const HomeView: React.FC = () => {
         </div>
       </section>
 
-      {/* End-of-view spatial buffer */}
-      <div className="h-8 sm:h-12 shrink-0 flex items-center justify-center text-[10px] font-mono text-zinc-600/40 select-none" aria-hidden="true">
+      {/* End-of-view spatial buffer (Desktop/tablet only; mobile uses App main padding) */}
+      <div className="hidden sm:flex h-12 shrink-0 items-center justify-center text-[10px] font-mono text-zinc-600/40 select-none" aria-hidden="true">
         <span>AURA Audio Sanctuary</span>
       </div>
 

@@ -227,7 +227,7 @@ export const MobileExpandedPlayer: React.FC = () => {
           animate="animate"
           exit="exit"
           style={{ pointerEvents: isExpandedPlayerOpen ? 'auto' : 'none' }}
-          className="lg:hidden fixed inset-0 z-50 bg-[#07090e] text-zinc-100 flex flex-col justify-between px-4 sm:px-6 pt-[calc(12px+env(safe-area-inset-top,0px))] pb-[calc(16px+env(safe-area-inset-bottom,0px))] overflow-hidden select-none"
+          className="lg:hidden fixed inset-0 z-50 bg-[#07090e] text-zinc-100 flex flex-col justify-between px-4 sm:px-6 pt-[calc(12px+env(safe-area-inset-top,0px))] pb-[calc(16px+env(safe-area-inset-bottom,0px))] overflow-y-auto overflow-x-hidden select-none"
         >
           {/* Artwork-derived Ambient Light Wash */}
           <AnimatePresence initial={false}>
@@ -340,7 +340,7 @@ export const MobileExpandedPlayer: React.FC = () => {
                     : { scale: isPlaying && !isLocallySilenced ? 1.02 : 1 }
                 }
                 transition={sharedTransition}
-                className="relative w-[min(68vw,32dvh)] h-[min(68vw,32dvh)] max-w-[296px] max-h-[296px] rounded-2xl sm:rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-white/[0.14] bg-[#0d1017] flex items-center justify-center"
+                className="relative w-[min(64vw,30dvh)] h-[min(64vw,30dvh)] max-w-[296px] max-h-[296px] rounded-2xl sm:rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-white/[0.14] bg-[#0d1017] flex items-center justify-center"
               >
                 <AnimatePresence initial={false}>
                   <MotionArtwork
@@ -805,7 +805,7 @@ export const MobileExpandedPlayer: React.FC = () => {
           >
             <MotionModal
               variant="bottom-sheet"
-              className="w-full max-h-[82vh] rounded-t-3xl bg-[#0c0e15] border-t border-white/10 p-4 sm:p-6 flex flex-col gap-4 shadow-2xl"
+              className="w-full max-h-[84dvh] rounded-t-3xl bg-[#0c0e15] border-t border-white/10 p-4 sm:p-6 pb-[calc(16px+env(safe-area-inset-bottom,0px))] flex flex-col gap-4 shadow-2xl"
             >
               <div className="flex flex-col items-center gap-3">
                 <div className="w-12 h-1 rounded-full bg-white/20" />
@@ -813,8 +813,8 @@ export const MobileExpandedPlayer: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <AuraIcon name="queue" size={16} className="text-indigo-400" />
                     <h3 className="text-sm font-bold text-white font-display">Up Next Queue</h3>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.06] text-zinc-400 border border-white/[0.06]">
-                      {upNextTracks.length}
+                    <span className="text-xs font-mono tabular-nums text-zinc-400">
+                      · {upNextTracks.length}
                     </span>
                   </div>
 
@@ -823,10 +823,11 @@ export const MobileExpandedPlayer: React.FC = () => {
                       <button
                         type="button"
                         onClick={handleShuffleUpcoming}
-                        className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                        className="w-10 h-10 flex items-center justify-center rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
                         title="Shuffle upcoming"
+                        aria-label="Shuffle upcoming"
                       >
-                        <AuraIcon name="shuffle" size={14} />
+                        <AuraIcon name="shuffle" size={16} />
                       </button>
                     )}
 
@@ -834,20 +835,21 @@ export const MobileExpandedPlayer: React.FC = () => {
                       <button
                         type="button"
                         onClick={handleClearUpcoming}
-                        className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-white/5 transition-colors cursor-pointer"
+                        className="w-10 h-10 flex items-center justify-center rounded-xl text-zinc-400 hover:text-rose-400 hover:bg-white/5 transition-colors cursor-pointer"
                         title="Clear upcoming"
+                        aria-label="Clear upcoming"
                       >
-                        <AuraIcon name="trash" size={14} />
+                        <AuraIcon name="trash" size={16} />
                       </button>
                     )}
 
                     <button
                       type="button"
                       onClick={() => setIsQueueSheetOpen(false)}
-                      className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors ml-1 cursor-pointer"
+                      className="w-10 h-10 flex items-center justify-center rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 transition-colors ml-0.5 cursor-pointer"
                       aria-label="Close Queue"
                     >
-                      <AuraIcon name="close" size={16} />
+                      <AuraIcon name="close" size={18} />
                     </button>
                   </div>
                 </div>
@@ -868,8 +870,8 @@ export const MobileExpandedPlayer: React.FC = () => {
                     </div>
                   )}
                   {isPlaying && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <div className="absolute inset-0 bg-black/45 flex items-center justify-center">
+                      <AuraIcon name="volumeHigh" size={14} className="text-emerald-400" />
                     </div>
                   )}
                 </div>
@@ -919,15 +921,16 @@ export const MobileExpandedPlayer: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-0.5 shrink-0">
                         {idx > 0 && (
                           <button
                             type="button"
                             onClick={() => handleMoveTrack(idx, 'up')}
-                            className="p-1 rounded text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                            className="w-9 h-9 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
                             title="Move Up"
+                            aria-label="Move Up"
                           >
-                            <AuraIcon name="chevronUp" size={14} />
+                            <AuraIcon name="chevronUp" size={16} />
                           </button>
                         )}
 
@@ -935,20 +938,22 @@ export const MobileExpandedPlayer: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleMoveTrack(idx, 'down')}
-                            className="p-1 rounded text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                            className="w-9 h-9 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
                             title="Move Down"
+                            aria-label="Move Down"
                           >
-                            <AuraIcon name="chevronDown" size={14} />
+                            <AuraIcon name="chevronDown" size={16} />
                           </button>
                         )}
 
                         <button
                           type="button"
                           onClick={() => handleRemoveTrack(idx)}
-                          className="p-1 rounded text-zinc-500 hover:text-rose-400 hover:bg-white/10 transition-colors cursor-pointer"
+                          className="w-9 h-9 flex items-center justify-center rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-white/10 transition-colors cursor-pointer"
                           title="Remove from queue"
+                          aria-label="Remove from queue"
                         >
-                          <AuraIcon name="close" size={14} />
+                          <AuraIcon name="close" size={16} />
                         </button>
                       </div>
                     </div>
@@ -967,7 +972,7 @@ export const MobileExpandedPlayer: React.FC = () => {
               <MotionPress
                 intensity="subtle"
                 onClick={() => setIsQueueSheetOpen(false)}
-                className="w-full py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.12] text-white text-xs font-semibold transition-colors mt-1 cursor-pointer"
+                className="w-full min-h-[44px] py-3 rounded-xl bg-white/[0.08] hover:bg-white/[0.12] text-white text-xs font-semibold transition-colors mt-1 cursor-pointer"
               >
                 Done
               </MotionPress>

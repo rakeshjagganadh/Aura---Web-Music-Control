@@ -143,7 +143,7 @@ export const TrackGridCard: React.FC<TrackGridCardProps> = ({
           }}
           aria-pressed={Boolean(track.isFavorite)}
           aria-label={track.isFavorite ? `Remove ${track.title} from favorites` : `Add ${track.title} to favorites`}
-          className={`absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center aura-pressable aura-focus-ring transition-opacity cursor-pointer ${
+          className={`absolute top-2 right-2 w-9 h-9 sm:w-8 sm:h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center aura-pressable aura-focus-ring transition-opacity cursor-pointer ${
             track.isFavorite
               ? 'opacity-100 text-rose-400'
               : !canHover
@@ -192,7 +192,7 @@ export const TrackGridCard: React.FC<TrackGridCardProps> = ({
             aria-haspopup="menu"
             aria-expanded={isMenuOpen}
             aria-label={`More options for ${track.title}`}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.08] aura-pressable aura-focus-ring transition-colors cursor-pointer"
+            className="w-9 h-9 sm:w-7 sm:h-7 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.08] aura-pressable aura-focus-ring transition-colors cursor-pointer"
             title="Options"
           >
             <AuraIcon name="more" size={14} />

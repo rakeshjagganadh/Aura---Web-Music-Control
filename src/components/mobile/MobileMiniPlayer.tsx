@@ -215,19 +215,19 @@ export const MobileMiniPlayer: React.FC = () => {
       direction="up"
       distance={8}
       duration="micro"
-      className="lg:hidden fixed bottom-[calc(78px+env(safe-area-inset-bottom,0px))] left-3 right-3 max-w-md mx-auto z-30 select-none"
+      className="lg:hidden fixed bottom-[calc(74px+env(safe-area-inset-bottom,0px))] left-2.5 right-2.5 max-w-md mx-auto z-30 select-none"
     >
       <OpticalGlassSurface
         onClick={() => setIsExpandedPlayerOpen(true)}
-        className="w-full px-2.5 sm:px-3 pt-2 pb-3 flex flex-col justify-between cursor-pointer active:scale-[0.99] transition-transform duration-150 shadow-[0_14px_36px_rgba(0,0,0,0.72)]"
+        className="w-full px-2.5 py-2 flex flex-col justify-between cursor-pointer active:scale-[0.99] transition-transform duration-150 shadow-[0_12px_30px_rgba(0,0,0,0.72)] overflow-hidden"
         artworkUrl={currentTrack.coverUrl}
         refractionScale={8}
         intensity="moderate"
         shape="rounded-2xl"
       >
         {/* COMPACT SINGLE ROW — ARTWORK | TITLE + ARTIST | COMPACT ACTIONS */}
-        <div className="flex items-center justify-between gap-2 sm:gap-2.5 min-w-0">
-          {/* Left: Fixed 40px Artwork */}
+        <div className="flex items-center justify-between gap-2 min-w-0">
+          {/* Left: Fixed 36px Artwork */}
           <motion.div
             animate={
               prefersReducedMotion
@@ -235,7 +235,7 @@ export const MobileMiniPlayer: React.FC = () => {
                 : { scale: isPlaying && !isLocallySilenced ? 1.03 : 1 }
             }
             transition={sharedTransition}
-            className="relative shrink-0 w-10 h-10 rounded-xl overflow-hidden bg-[#0d1017] border border-white/[0.1] shadow-sm flex items-center justify-center"
+            className="relative shrink-0 w-9 h-9 rounded-xl overflow-hidden bg-[#0d1017] border border-white/[0.1] shadow-sm flex items-center justify-center"
           >
             <AnimatePresence initial={false}>
               <MotionArtwork
@@ -286,9 +286,9 @@ export const MobileMiniPlayer: React.FC = () => {
             </div>
           </div>
 
-          {/* Right: Compact Touch Controls (Never overflows 320px) */}
+          {/* Right: Compact Touch Controls (Never overflows 360px) */}
           <div
-            className="flex items-center gap-0.5 sm:gap-1 shrink-0"
+            className="flex items-center gap-0.5 shrink-0"
             onClick={(e) => e.stopPropagation()}
           >
             {isInRoom && !isLocallySilenced && activeRoom?.isPlaying && isAudioOutputBlocked && (
@@ -297,7 +297,7 @@ export const MobileMiniPlayer: React.FC = () => {
                 intensity="control"
                 aria-label="Enable Room Sound"
                 title="Browser paused room audio — tap to enable sound"
-                className="h-8 px-2 rounded-full bg-amber-400 hover:bg-amber-300 text-zinc-950 text-[10px] font-semibold flex items-center gap-1 cursor-pointer aura-focus-ring shrink-0"
+                className="h-9 px-2.5 rounded-full bg-amber-400 hover:bg-amber-300 text-zinc-950 text-[10px] font-semibold flex items-center gap-1 cursor-pointer aura-focus-ring shrink-0"
               >
                 <AuraIcon name="volumeHigh" size={14} />
                 <span>Sound</span>
@@ -310,7 +310,7 @@ export const MobileMiniPlayer: React.FC = () => {
               intensity="control"
               aria-label={currentTrack.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               aria-pressed={Boolean(currentTrack.isFavorite)}
-              className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center transition-colors cursor-pointer aura-focus-ring ${
+              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors cursor-pointer aura-focus-ring ${
                 currentTrack.isFavorite
                   ? 'text-rose-500'
                   : 'text-zinc-300 hover:text-rose-400'
@@ -343,7 +343,7 @@ export const MobileMiniPlayer: React.FC = () => {
               onClick={isInRoom ? roomTogglePlay : togglePlay}
               intensity="control"
               aria-label={isPlaying && !isLocallySilenced ? 'Pause' : 'Play'}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full text-zinc-950 bg-white hover:bg-zinc-100 flex items-center justify-center shadow-[0_2px_10px_rgba(0,0,0,0.4)] transition-colors cursor-pointer aura-focus-ring shrink-0"
+              className="w-10 h-10 rounded-full text-zinc-950 bg-white hover:bg-zinc-100 flex items-center justify-center shadow-[0_2px_10px_rgba(0,0,0,0.4)] transition-colors cursor-pointer aura-focus-ring shrink-0"
             >
               <MotionIconSwap stateKey={isPlaying && !isLocallySilenced ? 'pause' : 'play'}>
                 {isPlaying && !isLocallySilenced ? (
@@ -359,14 +359,14 @@ export const MobileMiniPlayer: React.FC = () => {
               onClick={isInRoom ? roomNext : nextTrack}
               intensity="control"
               aria-label="Next Track"
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-zinc-300 hover:text-white transition-colors cursor-pointer aura-focus-ring"
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-zinc-300 hover:text-white transition-colors cursor-pointer aura-focus-ring"
             >
               <AuraIcon name="skipNext" size={18} filled />
             </MotionPress>
           </div>
         </div>
 
-        {/* INTERACTIVE SLIM BOTTOM PROGRESS LINE (With generous touch hit area) */}
+        {/* INTERACTIVE SLIM BOTTOM PROGRESS LINE (Tucked neatly at bottom edge) */}
         <div
           ref={progressBarRef}
           role={hasValidDuration ? 'slider' : undefined}
@@ -380,14 +380,14 @@ export const MobileMiniPlayer: React.FC = () => {
           onPointerUp={handleProgressPointerUp}
           onPointerCancel={handleProgressPointerCancel}
           style={{ touchAction: 'none' }}
-          className={`absolute -bottom-3 left-1.5 right-1.5 h-5 pb-1 flex items-end z-20 ${
+          className={`absolute bottom-0 left-2.5 right-2.5 h-3 flex items-end z-20 ${
             canSeek ? 'cursor-pointer' : 'cursor-default'
           }`}
         >
           <div
             className={`relative w-full rounded-full transition-all duration-150 ${
-              isScrubbing ? 'h-[3.5px]' : 'h-[2px]'
-            } bg-white/[0.12] overflow-visible`}
+              isScrubbing ? 'h-[3px]' : 'h-[2px]'
+            } bg-white/[0.14] overflow-visible`}
           >
             {isRadio ? (
               <div className="h-full w-full rounded-full bg-emerald-400/50" />

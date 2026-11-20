@@ -189,37 +189,38 @@ export const SongsView: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 sm:gap-8 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none pb-36 sm:pb-44">
+    <div className="flex flex-col gap-4 sm:gap-8 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none pb-6 sm:pb-44">
       
       {/* -------------------------------------------------------------
           1. HEADER & ACTIONS
           ------------------------------------------------------------- */}
-      <section className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-white/[0.06]">
-        <div>
-          <div className="flex items-center gap-2 mb-1.5 text-xs text-zinc-400 font-medium font-sans">
+      <section className="flex flex-row md:items-end items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-white/[0.06]">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 mb-1 text-xs text-zinc-400 font-medium font-sans">
             <AuraIcon name="musicNote" size={14} className="text-sky-400" />
-            <span className="uppercase tracking-wider text-[11px] font-semibold text-sky-400">Music Catalogue</span>
+            <span className="uppercase tracking-wider text-[10px] sm:text-[11px] font-semibold text-sky-400">Music Catalogue</span>
             <span className="text-zinc-600" aria-hidden="true">·</span>
-            <span><span className="font-mono tabular-nums">{tracks.length}</span> tracks total</span>
+            <span><span className="font-mono tabular-nums">{tracks.length}</span> tracks</span>
           </div>
 
-          <h1 className="text-2xl sm:text-4xl font-page-title text-white tracking-tight">
+          <h1 className="text-xl sm:text-4xl font-page-title text-white tracking-tight">
             All Tracks
           </h1>
-          <p className="text-xs sm:text-sm text-zinc-400 mt-1 font-ui-meta">
+          <p className="hidden sm:block text-xs sm:text-sm text-zinc-400 mt-1 font-ui-meta">
             Browse, search, sort, and organize all audio files stored in your library and streaming sources.
           </p>
         </div>
 
         {/* Header Actions */}
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex items-center gap-2.5 shrink-0">
           <button
             type="button"
             onClick={() => setIsUploadModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
+            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 min-h-[40px] rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
           >
             <AuraIcon name="add" size={14} weight={600} />
-            <span>Import Audio</span>
+            <span className="hidden sm:inline">Import Audio</span>
+            <span className="sm:hidden">Import</span>
           </button>
         </div>
       </section>
@@ -258,10 +259,10 @@ export const SongsView: React.FC = () => {
           </div>
 
           {/* Right Controls: Sort Dropdown & View Mode Switcher */}
-          <div className="flex items-center gap-2 self-end md:self-auto">
+          <div className="flex items-center justify-between sm:justify-end gap-2 w-full md:w-auto">
             {/* Sort Dropdown */}
-            <div className="relative flex items-center gap-1 px-3 py-2 rounded-xl bg-white/[0.05] border border-white/10 text-xs text-zinc-300 font-medium">
-              <AuraIcon name="arrowUpDown" size={14} className="text-zinc-400" />
+            <div className="relative flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/[0.05] border border-white/10 text-xs text-zinc-300 font-medium min-h-[40px]">
+              <AuraIcon name="arrowUpDown" size={14} className="text-zinc-400 shrink-0" />
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortField)}
@@ -278,7 +279,7 @@ export const SongsView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="hover:text-white px-2 py-1 text-xs font-semibold rounded-lg bg-white/5 hover:bg-white/10 text-sky-400 cursor-pointer aura-focus-ring flex items-center gap-1 min-h-[28px] sm:min-h-[30px]"
+                className="hover:text-white px-2 py-1 text-xs font-semibold rounded-lg bg-white/5 hover:bg-white/10 text-sky-400 cursor-pointer aura-focus-ring flex items-center gap-1 min-h-[32px]"
                 title="Toggle sort direction"
                 aria-label={`Sort order ${sortOrder === 'asc' ? 'ascending' : 'descending'}`}
               >
@@ -289,13 +290,13 @@ export const SongsView: React.FC = () => {
 
             {/* View Mode Toggle */}
             <LayoutGroup id="songs-viewmode">
-              <div className="flex items-center gap-0.5 p-1 rounded-xl bg-white/[0.05] border border-white/10">
+              <div className="flex items-center gap-0.5 p-1 rounded-xl bg-white/[0.05] border border-white/10 shrink-0">
                 <button
                   type="button"
                   onClick={() => setViewMode('row')}
                   aria-label="List view"
                   aria-pressed={viewMode === 'row'}
-                  className={`relative p-1.5 rounded-lg transition-colors cursor-pointer aura-pressable aura-focus-ring ${
+                  className={`relative min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                     viewMode === 'row' ? 'text-white' : 'text-zinc-400 hover:text-white'
                   }`}
                   title="List View"
@@ -313,7 +314,7 @@ export const SongsView: React.FC = () => {
                   onClick={() => setViewMode('grid')}
                   aria-label="Grid view"
                   aria-pressed={viewMode === 'grid'}
-                  className={`relative p-1.5 rounded-lg transition-colors cursor-pointer aura-pressable aura-focus-ring ${
+                  className={`relative min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                     viewMode === 'grid' ? 'text-white' : 'text-zinc-400 hover:text-white'
                   }`}
                   title="Grid View"
@@ -467,7 +468,7 @@ export const SongsView: React.FC = () => {
             direction="down"
             distance={8}
             duration="micro"
-            className="sticky top-2 z-30 flex items-center justify-between gap-3 p-3 rounded-2xl aura-glass-island border border-sky-500/30 shadow-2xl"
+            className="sticky top-2 z-30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-2xl aura-glass-island border border-sky-500/30 shadow-2xl"
           >
             <div className="flex items-center gap-3">
               <button

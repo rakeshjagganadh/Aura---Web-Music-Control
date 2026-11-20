@@ -139,10 +139,10 @@ export const PlaylistDetailView: React.FC = () => {
             direction="up"
             distance={8}
             duration="standard"
-            className="flex flex-col gap-6 sm:gap-8 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none pb-36 sm:pb-44"
+            className="flex flex-col gap-4 sm:gap-8 p-3 sm:p-6 lg:p-8 max-w-[1600px] mx-auto select-none pb-6 sm:pb-44"
           >
-            {/* Back Button */}
-            <div className="flex items-center gap-3">
+            {/* Back Button (Desktop/tablet — mobile uses contextual Header Back) */}
+            <div className="hidden lg:flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => setCurrentView('playlists')}
@@ -153,102 +153,107 @@ export const PlaylistDetailView: React.FC = () => {
               </button>
             </div>
 
-      {/* Playlist Hero Header */}
-      <section className="relative overflow-hidden rounded-3xl aura-glass-island p-6 sm:p-8 border border-white/10 shadow-2xl flex flex-col md:flex-row items-center md:items-end gap-6 sm:gap-8">
-        {/* Dynamic Collage */}
-        <div className="relative w-44 h-44 sm:w-56 sm:h-56 rounded-2xl overflow-hidden shrink-0 bg-zinc-900 border border-white/15 shadow-2xl">
-          <PlaylistCoverCollage
-            playlist={playlist}
-            allKnownTracks={allKnownTracks}
-          />
+      {/* Playlist Hero Header (Compact Horizontal on mobile, Editorial Showcase on tablet/desktop) */}
+      <section className="relative overflow-hidden rounded-2xl sm:rounded-3xl aura-glass-island p-3.5 sm:p-8 border border-white/10 shadow-2xl flex flex-col gap-3.5 sm:gap-6">
+        <div className="flex flex-row items-center md:items-end gap-3.5 sm:gap-8">
+          {/* Dynamic Collage */}
+          <div className="relative w-20 h-20 sm:w-52 sm:h-52 rounded-xl sm:rounded-2xl overflow-hidden shrink-0 bg-zinc-900 border border-white/15 shadow-2xl">
+            <PlaylistCoverCollage
+              playlist={playlist}
+              allKnownTracks={allKnownTracks}
+            />
+          </div>
+
+          {/* Details & Desktop Controls */}
+          <div className="flex-1 min-w-0 text-left">
+            <span className="text-[10px] sm:text-[11px] font-sans font-semibold uppercase tracking-wider text-emerald-400 inline-block mb-0.5 sm:mb-2">
+              PLAYLIST
+            </span>
+
+            <h1 className="text-lg sm:text-4xl font-page-title text-white tracking-tight line-clamp-2">
+              {playlist.title}
+            </h1>
+
+            {playlist.description && (
+              <p className="hidden sm:block text-xs sm:text-sm text-zinc-300 mt-2 font-ui-meta line-clamp-2 leading-relaxed">
+                {playlist.description}
+              </p>
+            )}
+
+            <div className="flex items-center justify-start gap-1.5 sm:gap-2 mt-1 sm:mt-2 text-[11px] sm:text-xs text-zinc-400 font-ui-meta flex-wrap">
+              <span className="tabular-nums">{playlistTracks.length} {playlistTracks.length === 1 ? 'track' : 'tracks'}</span>
+              <span className="text-zinc-600" aria-hidden="true">·</span>
+              <span className="font-mono tabular-nums">{formatDuration(totalDurationSeconds)}</span>
+              {playlist.createdAt && (
+                <span className="hidden sm:inline-flex items-center gap-2">
+                  <span className="text-zinc-600" aria-hidden="true">·</span>
+                  <span>Created {formatDate(playlist.createdAt)}</span>
+                </span>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Details & Controls */}
-        <div className="flex-1 min-w-0 text-center md:text-left">
-          <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-emerald-400 inline-block mb-2">
-            PLAYLIST
-          </span>
+        {/* Action Buttons */}
+        <div className="flex items-center justify-start gap-2 flex-wrap">
+          {playlistTracks.length > 0 && (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  if (playlistTracks.length === 0) return;
+                  playTrack(playlistTracks[0], playlistTracks);
+                }}
+                className="flex items-center gap-2 px-4 sm:px-5 py-2 min-h-[40px] rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
+              >
+                <AuraIcon name="play" size={16} filled className="text-black translate-x-0.2" />
+                <span>Play All</span>
+              </button>
 
-          <h1 className="text-2xl sm:text-4xl font-page-title text-white tracking-tight line-clamp-2">
-            {playlist.title}
-          </h1>
+              <button
+                type="button"
+                onClick={() => {
+                  if (playlistTracks.length === 0) return;
+                  const queue = [...playlistTracks].sort(() => Math.random() - 0.5);
+                  playTrack(queue[0], queue);
+                }}
+                className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 min-h-[40px] rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
+              >
+                <AuraIcon name="shuffle" size={14} className="text-sky-400" />
+                <span>Shuffle</span>
+              </button>
 
-          {playlist.description && (
-            <p className="text-xs sm:text-sm text-zinc-300 mt-2 font-ui-meta line-clamp-2 leading-relaxed">
-              {playlist.description}
-            </p>
+              <button
+                type="button"
+                onClick={() => playlistTracks.forEach((t) => addToQueue(t))}
+                className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 min-h-[40px] rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
+              >
+                <AuraIcon name="playlistAdd" size={14} className="text-indigo-400" />
+                <span className="hidden sm:inline">Add to Queue</span>
+                <span className="sm:hidden">Queue</span>
+              </button>
+            </>
           )}
 
-          <div className="flex items-center justify-center md:justify-start gap-2 mt-2 text-xs text-zinc-400 font-ui-meta">
-            <span>{playlistTracks.length} {playlistTracks.length === 1 ? 'track' : 'tracks'}</span>
-            <span className="text-zinc-600" aria-hidden="true">·</span>
-            <span className="font-mono tabular-nums">{formatDuration(totalDurationSeconds)}</span>
-            {playlist.createdAt && (
-              <>
-                <span className="text-zinc-600" aria-hidden="true">·</span>
-                <span>Created {formatDate(playlist.createdAt)}</span>
-              </>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={() => setIsEditModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 min-h-[40px] rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 hover:text-white text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+            title="Edit Details"
+          >
+            <AuraIcon name="edit" size={14} />
+            <span className="hidden sm:inline">Edit Details</span>
+          </button>
 
-          {/* Action Buttons */}
-          <div className="flex items-center justify-center md:justify-start gap-2.5 mt-5 flex-wrap">
-            {playlistTracks.length > 0 && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (playlistTracks.length === 0) return;
-                    playTrack(playlistTracks[0], playlistTracks);
-                  }}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
-                >
-                  <AuraIcon name="play" size={16} filled className="text-black translate-x-0.2" />
-                  <span>Play All</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (playlistTracks.length === 0) return;
-                    const queue = [...playlistTracks].sort(() => Math.random() - 0.5);
-                    playTrack(queue[0], queue);
-                  }}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
-                >
-                  <AuraIcon name="shuffle" size={14} className="text-sky-400" />
-                  <span>Shuffle</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => playlistTracks.forEach((t) => addToQueue(t))}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer aura-focus-ring aura-pressable"
-                >
-                  <AuraIcon name="playlistAdd" size={14} className="text-indigo-400" />
-                  <span>Add to Queue</span>
-                </button>
-              </>
-            )}
-
-            <button
-              type="button"
-              onClick={() => setIsEditModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 hover:text-white text-xs font-medium border border-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
-            >
-              <AuraIcon name="edit" size={14} />
-              <span>Edit Details</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsDeleteModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-medium border border-rose-500/20 transition-colors cursor-pointer aura-pressable aura-focus-ring"
-            >
-              <AuraIcon name="trash" size={14} />
-              <span>Delete</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setIsDeleteModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 min-h-[40px] rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-medium border border-rose-500/20 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+            title="Delete Playlist"
+          >
+            <AuraIcon name="trash" size={14} />
+            <span className="hidden sm:inline">Delete</span>
+          </button>
         </div>
       </section>
 
@@ -256,15 +261,15 @@ export const PlaylistDetailView: React.FC = () => {
       {playlistTracks.length > 0 ? (
         <section className="flex flex-col rounded-2xl aura-glass-ambient border border-white/10 overflow-hidden">
           <div className="p-3 sm:p-4 border-b border-white/[0.06] flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white font-ui-title">Playlist Tracks ({playlistTracks.length})</h3>
-            <span className="text-xs font-mono text-zinc-400">{formatDuration(totalDurationSeconds)}</span>
+            <h3 className="text-sm font-bold text-white font-ui-title tabular-nums">Playlist Tracks ({playlistTracks.length})</h3>
+            <span className="text-xs font-mono tabular-nums text-zinc-400">{formatDuration(totalDurationSeconds)}</span>
           </div>
 
           <div className="divide-y divide-white/[0.03] p-1.5">
             {playlistTracks.map((track, i) => (
               <div key={`pl-item-${track.id}-${i}`} className="group/item relative flex items-center">
-                {/* Reorder Buttons (Visible on hover/focus or on touch devices) */}
-                <div className={`hidden sm:flex flex-col items-center justify-center gap-0.5 pl-2 pr-1 transition-opacity ${
+                {/* Reorder Buttons (Accessible on touch and hover/focus) */}
+                <div className={`flex flex-col items-center justify-center gap-0.5 pl-1 sm:pl-2 pr-0.5 sm:pr-1 transition-opacity ${
                   !canHover ? 'opacity-90' : 'opacity-0 group-hover/item:opacity-100 focus-within:opacity-100'
                 }`}>
                   <button
@@ -279,11 +284,11 @@ export const PlaylistDetailView: React.FC = () => {
                       newTrackIds.splice(targetIndex, 0, moved);
                       updatePlaylist({ ...playlist, trackIds: newTrackIds });
                     }}
-                    className={`p-0.5 rounded text-zinc-400 hover:text-white transition-colors aura-focus-ring ${i === 0 ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer aura-pressable'}`}
+                    className={`w-7 h-7 sm:w-6 sm:h-6 flex items-center justify-center rounded text-zinc-400 hover:text-white transition-colors aura-focus-ring ${i === 0 ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer aura-pressable'}`}
                     title="Move up"
                     aria-label={`Move ${track.title} up`}
                   >
-                    <AuraIcon name="chevronUp" size={12} />
+                    <AuraIcon name="chevronUp" size={14} />
                   </button>
                   <button
                     type="button"
@@ -297,11 +302,11 @@ export const PlaylistDetailView: React.FC = () => {
                       newTrackIds.splice(targetIndex, 0, moved);
                       updatePlaylist({ ...playlist, trackIds: newTrackIds });
                     }}
-                    className={`p-0.5 rounded text-zinc-400 hover:text-white transition-colors aura-focus-ring ${i === playlistTracks.length - 1 ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer aura-pressable'}`}
+                    className={`w-7 h-7 sm:w-6 sm:h-6 flex items-center justify-center rounded text-zinc-400 hover:text-white transition-colors aura-focus-ring ${i === playlistTracks.length - 1 ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer aura-pressable'}`}
                     title="Move down"
                     aria-label={`Move ${track.title} down`}
                   >
-                    <AuraIcon name="chevronDown" size={12} />
+                    <AuraIcon name="chevronDown" size={14} />
                   </button>
                 </div>
 

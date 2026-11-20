@@ -206,11 +206,9 @@ export const QuickSoundControls: React.FC = () => {
       {/* Header & Primary Action Matrix */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-baseline gap-2 flex-wrap">
             <h2 className="text-base font-bold text-white tracking-tight">Sound Lab Macro Workspace</h2>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-white/10">
-              64-BIT DSP
-            </span>
+            <span className="text-xs text-zinc-400 font-medium">64-bit DSP</span>
           </div>
           <p className="text-xs text-zinc-400 mt-1">
             Intuitive macro acoustic shapers mapped to the 64-bit Aura DSP audio processing pipeline.
@@ -348,7 +346,7 @@ export const QuickSoundControls: React.FC = () => {
         </AnimatePresence>
 
         {/* Curated 8 Profiles Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
           {CURATED_MOOD_PROFILES.map((profile) => {
             const isActive = activeSoundLabPreset === profile.id;
             return (
@@ -412,25 +410,21 @@ export const QuickSoundControls: React.FC = () => {
           return (
             <div
               key={macro.key}
-              className="flex flex-col gap-3 p-4 rounded-xl bg-zinc-900/50 border border-white/5 hover:border-white/10 transition-colors"
+              className="flex flex-col gap-3 p-4 rounded-xl bg-white/[0.025] border border-white/[0.06] hover:border-white/[0.12] transition-colors"
             >
               {/* Macro Header */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-lg bg-zinc-900 border border-white/5 shrink-0 flex items-center justify-center">
-                    <AuraIcon name={macro.icon} size={16} className={macro.iconColorClass} />
-                  </div>
-                  <div>
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start gap-2.5 min-w-0">
+                  <AuraIcon name={macro.icon} size={16} className={`${macro.iconColorClass} mt-0.5 shrink-0`} />
+                  <div className="min-w-0">
                     <h3 className="text-xs font-semibold text-white">{macro.label}</h3>
-                    <p className="text-[10px] text-zinc-400 leading-tight">{macro.desc}</p>
+                    <p className="text-[11px] text-zinc-400 leading-snug mt-0.5">{macro.desc}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="text-xs font-mono font-bold text-zinc-200 bg-zinc-900 px-2 py-0.5 rounded border border-white/5 tabular-nums">
-                    {macro.val}%
-                  </span>
-                </div>
+                <span className="text-xs font-mono font-semibold text-zinc-200 tabular-nums shrink-0">
+                  {macro.val}%
+                </span>
               </div>
 
               {/* Slider Track */}

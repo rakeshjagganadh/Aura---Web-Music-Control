@@ -151,10 +151,12 @@ export const TrackRow: React.FC<TrackRowProps> = ({
       return track.fileFormat ? `Vault · ${track.fileFormat}` : 'Vault · Audio';
     }
     if (track.source === 'jamendo') return 'Jamendo · MP3';
-    if (track.source === 'audius') return 'Audius · Web3';
+    if (track.source === 'audius') return 'Audius · Stream';
     if (track.source === 'youtube') return 'YouTube · Stream';
-    if (track.source === 'radio') return 'Live · Radio';
-    return 'Web Stream';
+    if (track.source === 'curated_stream') return 'Curated · Stream';
+    if (track.source === 'radio' || track.source === 'radiobrowser') return 'Live · Radio';
+    if (track.source === 'web_stream') return 'Web Stream';
+    return 'Stream';
   };
 
   return (
@@ -333,7 +335,7 @@ export const TrackRow: React.FC<TrackRowProps> = ({
           type="button"
           onClick={() => toggleFavorite(track.id)}
           aria-pressed={Boolean(track.isFavorite)}
-          className={`min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg aura-pressable transition-colors cursor-pointer aura-focus-ring ${
+          className={`min-h-[40px] min-w-[40px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center rounded-lg aura-pressable transition-colors cursor-pointer aura-focus-ring ${
             track.isFavorite
               ? 'text-rose-400 hover:text-rose-300'
               : !canHover
@@ -367,7 +369,7 @@ export const TrackRow: React.FC<TrackRowProps> = ({
             aria-haspopup="menu"
             aria-expanded={isMenuOpen}
             aria-label={`More options for ${track.title}`}
-            className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.08] aura-pressable transition-colors cursor-pointer aura-focus-ring"
+            className="min-h-[40px] min-w-[40px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.08] aura-pressable transition-colors cursor-pointer aura-focus-ring"
             title="More track options"
           >
             <AuraIcon name="more" size={16} />

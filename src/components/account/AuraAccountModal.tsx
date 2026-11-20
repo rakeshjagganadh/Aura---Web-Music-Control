@@ -137,7 +137,7 @@ export const AuraAccountModal: React.FC<AuraAccountModalProps> = ({ isOpen, onCl
             aria-label="AURA Profile and Local Backup"
             variant="center"
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-lg rounded-3xl bg-[#0c0e15] border border-white/10 shadow-2xl p-6 flex flex-col gap-6"
+            className="relative w-full max-w-lg max-h-[90dvh] overflow-y-auto rounded-3xl bg-[#0c0e15] border border-white/10 shadow-2xl p-4 sm:p-6 flex flex-col gap-4 sm:gap-6"
           >
         
         {/* Header */}
@@ -156,7 +156,7 @@ export const AuraAccountModal: React.FC<AuraAccountModalProps> = ({ isOpen, onCl
             type="button"
             onClick={onClose}
             aria-label="Close profile dialog"
-            className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+            className="w-9 h-9 flex items-center justify-center rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
             <AuraIcon name="close" size={20} />
           </button>
@@ -197,7 +197,7 @@ export const AuraAccountModal: React.FC<AuraAccountModalProps> = ({ isOpen, onCl
 
           <button
             type="submit"
-            className="py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+            className="min-h-[42px] py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20 transition-colors cursor-pointer aura-pressable aura-focus-ring"
           >
             Save Local Profile
           </button>
@@ -239,11 +239,11 @@ export const AuraAccountModal: React.FC<AuraAccountModalProps> = ({ isOpen, onCl
 
         {/* Backup & Restore JSON */}
         <div className="flex items-center justify-between gap-2 flex-wrap pt-2 border-t border-white/5">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               type="button"
               onClick={handleExportBackup}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs border border-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+              className="min-h-[40px] flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs border border-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             >
               <AuraIcon name="download" size={14} className="text-indigo-400" />
               Export Backup (JSON)
@@ -251,7 +251,7 @@ export const AuraAccountModal: React.FC<AuraAccountModalProps> = ({ isOpen, onCl
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs border border-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+              className="min-h-[40px] flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs border border-white/5 transition-colors cursor-pointer aura-pressable aura-focus-ring"
             >
               <AuraIcon name="upload" size={14} className="text-emerald-400" />
               Import Backup
