@@ -63,7 +63,7 @@ const CATEGORIES: CategoryConfig[] = [
     id: 'tuning',
     label: 'Tuning & Tone',
     shortLabel: 'Tuning',
-    icon: 'sparkles',
+    icon: 'wand',
     iconColorClass: 'text-cyan-400',
     description: 'Aura Sound Lab macro acoustic shapers & one-click mood profiles',
     defaultSubModule: 'soundlab',
@@ -242,22 +242,24 @@ export const StudioView: React.FC = () => {
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar sm:flex-wrap shrink-0 pb-0.5 sm:pb-0">
             {/* A/B Compare Button */}
             <button
+              type="button"
               onClick={toggleABBypass}
               title="A/B Comparison: Toggle between original unprocessed audio (A: RAW) and studio DSP (B: DSP)"
-              className={`min-h-[38px] shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold font-mono tabular-nums transition-colors border cursor-pointer aura-pressable ${
+              className={`min-h-[38px] shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold font-mono tabular-nums transition-colors border cursor-pointer aura-pressable aura-focus-ring ${
                 isABBypassed
                   ? 'bg-zinc-900 text-amber-300 border-amber-500/30 shadow-sm'
                   : 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40 shadow-cyan-500/10 shadow-sm'
               }`}
             >
-              <AuraIcon name="radio" size={14} className={!isABBypassed ? 'text-cyan-400' : 'text-amber-400'} />
+              <AuraIcon name="sliders" size={14} className={!isABBypassed ? 'text-cyan-400' : 'text-amber-400'} />
               <span>{isABBypassed ? 'A: RAW' : 'B: DSP'}</span>
             </button>
 
             {/* Lossless Export / Trim Modal Launcher */}
             <button
+              type="button"
               onClick={() => setIsTrimExportModalOpen(true)}
-              className="min-h-[38px] shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600/90 hover:bg-emerald-500 text-white shadow-sm transition-colors cursor-pointer aura-pressable"
+              className="min-h-[38px] shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600/90 hover:bg-emerald-500 text-white shadow-sm transition-colors cursor-pointer aura-pressable aura-focus-ring"
               title="Open Lossless Audio Trimmer & WAV Master Export"
             >
               <AuraIcon name="scissors" size={14} />
@@ -266,8 +268,9 @@ export const StudioView: React.FC = () => {
 
             {/* Pro / Simple Mode Toggle */}
             <button
+              type="button"
               onClick={toggleAdvancedMode}
-              className={`min-h-[38px] shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border transition-colors cursor-pointer aura-pressable ${
+              className={`min-h-[38px] shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                 isAdvancedMode 
                   ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30' 
                   : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border-white/5'
@@ -280,9 +283,10 @@ export const StudioView: React.FC = () => {
 
             {/* Master Reset All */}
             <button
+              type="button"
               onClick={resetAllAudioProcessing}
               title="Reset all studio audio processing, filters, and effects to flat defaults"
-              className="min-h-[38px] shrink-0 whitespace-nowrap flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-xl transition-colors cursor-pointer aura-pressable"
+              className="min-h-[38px] shrink-0 whitespace-nowrap flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-xl transition-colors cursor-pointer aura-pressable aura-focus-ring"
             >
               <AuraIcon name="refresh" size={12} />
               <span>Reset All</span>
@@ -290,8 +294,9 @@ export const StudioView: React.FC = () => {
 
             {/* Full Screen Expanded Player */}
             <button
+              type="button"
               onClick={() => setIsExpandedPlayerOpen(true)}
-              className="min-w-[38px] min-h-[38px] shrink-0 flex items-center justify-center p-1.5 text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-xl transition-colors cursor-pointer aura-pressable"
+              className="min-w-[38px] min-h-[38px] shrink-0 flex items-center justify-center p-1.5 text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-xl transition-colors cursor-pointer aura-pressable aura-focus-ring"
               title="Open Fullscreen Visual Player"
               aria-label="Open Fullscreen Visual Player"
             >
@@ -359,8 +364,9 @@ export const StudioView: React.FC = () => {
               return (
                 <button
                   key={cat.id}
+                  type="button"
                   onClick={() => handleSelectCategory(cat.id)}
-                  className={`relative shrink-0 min-h-[40px] flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors text-left cursor-pointer aura-pressable ${
+                  className={`relative shrink-0 min-h-[40px] flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors text-left cursor-pointer aura-pressable aura-focus-ring ${
                     isActive
                       ? 'text-white'
                       : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 border border-transparent'
@@ -394,8 +400,9 @@ export const StudioView: React.FC = () => {
                 return (
                   <button
                     key={sub.id}
+                    type="button"
                     onClick={() => handleSelectSubModule(sub.id)}
-                    className={`relative min-h-[38px] shrink-0 flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors cursor-pointer aura-pressable ${
+                    className={`relative min-h-[38px] shrink-0 flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                       isSubActive
                         ? 'text-cyan-300'
                         : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60 border border-white/5'

@@ -196,11 +196,9 @@ export const SongsView: React.FC = () => {
           ------------------------------------------------------------- */}
       <section className="flex flex-row md:items-end items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-white/[0.06]">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 mb-1 text-xs text-zinc-400 font-medium font-sans">
+          <div className="flex items-center gap-1.5 mb-1 text-xs text-zinc-400 font-medium font-sans">
             <AuraIcon name="musicNote" size={14} className="text-sky-400" />
-            <span className="uppercase tracking-wider text-[10px] sm:text-[11px] font-semibold text-sky-400">Music Catalogue</span>
-            <span className="text-zinc-600" aria-hidden="true">·</span>
-            <span><span className="font-mono tabular-nums">{tracks.length}</span> tracks</span>
+            <span><span className="font-mono tabular-nums text-zinc-200">{tracks.length}</span> tracks</span>
           </div>
 
           <h1 className="text-xl sm:text-4xl font-page-title text-white tracking-tight">
@@ -335,14 +333,12 @@ export const SongsView: React.FC = () => {
         {/* Source Segmented Filter Buttons */}
         <LayoutGroup id="songs-source-filter">
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-            <span className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider mr-1 shrink-0">Source:</span>
-            
             <button
               type="button"
               onClick={() => setActiveSourceFilter('all')}
-              className={`relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer aura-pressable ${
+              className={`relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                 activeSourceFilter === 'all'
-                  ? 'text-zinc-950 font-bold'
+                  ? 'text-zinc-950 font-semibold'
                   : 'bg-white/[0.04] text-zinc-400 hover:text-white hover:bg-white/[0.08]'
               }`}
             >
@@ -359,16 +355,16 @@ export const SongsView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveSourceFilter('local')}
-                className={`relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer aura-pressable ${
+                className={`relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                   activeSourceFilter === 'local'
-                    ? 'text-white font-bold'
+                    ? 'text-zinc-950 font-semibold'
                     : 'bg-white/[0.04] text-zinc-400 hover:text-white hover:bg-white/[0.08]'
                 }`}
               >
                 {activeSourceFilter === 'local' && (
                   <SharedIndicator
                     layoutId="songs-source-pill"
-                    className="absolute inset-0 rounded-lg bg-sky-500 shadow-sm"
+                    className="absolute inset-0 rounded-lg bg-white shadow-sm"
                   />
                 )}
                 <span className="relative z-10">Local Vault ({sourceCounts.local})</span>
@@ -379,16 +375,16 @@ export const SongsView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveSourceFilter('jamendo')}
-                className={`relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer aura-pressable ${
+                className={`relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                   activeSourceFilter === 'jamendo'
-                    ? 'text-white font-bold'
+                    ? 'text-zinc-950 font-semibold'
                     : 'bg-white/[0.04] text-zinc-400 hover:text-white hover:bg-white/[0.08]'
                 }`}
               >
                 {activeSourceFilter === 'jamendo' && (
                   <SharedIndicator
                     layoutId="songs-source-pill"
-                    className="absolute inset-0 rounded-lg bg-purple-600 shadow-sm"
+                    className="absolute inset-0 rounded-lg bg-white shadow-sm"
                   />
                 )}
                 <span className="relative z-10">Jamendo ({sourceCounts.jamendo})</span>
@@ -399,16 +395,16 @@ export const SongsView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveSourceFilter('audius')}
-                className={`relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer aura-pressable ${
+                className={`relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                   activeSourceFilter === 'audius'
-                    ? 'text-white font-bold'
+                    ? 'text-zinc-950 font-semibold'
                     : 'bg-white/[0.04] text-zinc-400 hover:text-white hover:bg-white/[0.08]'
                 }`}
               >
                 {activeSourceFilter === 'audius' && (
                   <SharedIndicator
                     layoutId="songs-source-pill"
-                    className="absolute inset-0 rounded-lg bg-indigo-600 shadow-sm"
+                    className="absolute inset-0 rounded-lg bg-white shadow-sm"
                   />
                 )}
                 <span className="relative z-10">Audius ({sourceCounts.audius})</span>
@@ -419,16 +415,16 @@ export const SongsView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveSourceFilter('youtube')}
-                className={`relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer aura-pressable ${
+                className={`relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                   activeSourceFilter === 'youtube'
-                    ? 'text-white font-bold'
+                    ? 'text-zinc-950 font-semibold'
                     : 'bg-white/[0.04] text-zinc-400 hover:text-white hover:bg-white/[0.08]'
                 }`}
               >
                 {activeSourceFilter === 'youtube' && (
                   <SharedIndicator
                     layoutId="songs-source-pill"
-                    className="absolute inset-0 rounded-lg bg-red-600 shadow-sm"
+                    className="absolute inset-0 rounded-lg bg-white shadow-sm"
                   />
                 )}
                 <span className="relative z-10">YouTube ({sourceCounts.youtube})</span>
@@ -439,16 +435,16 @@ export const SongsView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveSourceFilter('curated_stream')}
-                className={`relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer aura-pressable ${
+                className={`relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                   activeSourceFilter === 'curated_stream'
-                    ? 'text-white font-bold'
+                    ? 'text-zinc-950 font-semibold'
                     : 'bg-white/[0.04] text-zinc-400 hover:text-white hover:bg-white/[0.08]'
                 }`}
               >
                 {activeSourceFilter === 'curated_stream' && (
                   <SharedIndicator
                     layoutId="songs-source-pill"
-                    className="absolute inset-0 rounded-lg bg-emerald-600 shadow-sm"
+                    className="absolute inset-0 rounded-lg bg-white shadow-sm"
                   />
                 )}
                 <span className="relative z-10">Curated Streams ({sourceCounts.curated_stream})</span>
@@ -550,7 +546,7 @@ export const SongsView: React.FC = () => {
                     <button
                       type="button"
                       onClick={toggleSelectAll}
-                      className="w-5 flex items-center justify-center text-zinc-500 hover:text-white cursor-pointer"
+                      className="w-5 flex items-center justify-center text-zinc-500 hover:text-white cursor-pointer rounded aura-focus-ring"
                       title={isAllSelected ? 'Deselect all' : 'Select all'}
                     >
                       {isAllSelected ? <AuraIcon name="checkSquare" size={14} filled className="text-sky-400" /> : <AuraIcon name="square" size={14} />}
@@ -560,7 +556,7 @@ export const SongsView: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => toggleSort('title')}
-                      className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
+                      className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer rounded aura-focus-ring"
                     >
                       <span>Title</span>
                       {sortBy === 'title' && <AuraIcon name={sortOrder === 'asc' ? 'chevronUp' : 'chevronDown'} size={12} />}
@@ -571,7 +567,7 @@ export const SongsView: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => toggleSort('album')}
-                      className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
+                      className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer rounded aura-focus-ring"
                     >
                       <span>Album</span>
                       {sortBy === 'album' && <AuraIcon name={sortOrder === 'asc' ? 'chevronUp' : 'chevronDown'} size={12} />}
@@ -582,7 +578,7 @@ export const SongsView: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => toggleSort('dateAdded')}
-                      className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
+                      className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer rounded aura-focus-ring"
                     >
                       <span>Added</span>
                       {sortBy === 'dateAdded' && <AuraIcon name={sortOrder === 'asc' ? 'chevronUp' : 'chevronDown'} size={12} />}
@@ -593,7 +589,7 @@ export const SongsView: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => toggleSort('source')}
-                      className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
+                      className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer rounded aura-focus-ring"
                     >
                       <span>Source</span>
                       {sortBy === 'source' && <AuraIcon name={sortOrder === 'asc' ? 'chevronUp' : 'chevronDown'} size={12} />}
@@ -647,9 +643,7 @@ export const SongsView: React.FC = () => {
           ) : (
             /* Thoughtful Empty State */
             <div className="p-10 sm:p-16 rounded-2xl aura-glass-ambient border border-dashed border-white/10 flex flex-col items-center justify-center text-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-zinc-500">
-                <AuraIcon name="musicNote" size={24} className="text-zinc-400" />
-              </div>
+              <AuraIcon name="musicNote" size={28} className="text-zinc-500" />
               {localSearch || activeSourceFilter !== 'all' ? (
                 <>
                   <h3 className="text-sm font-semibold text-zinc-200">No matching tracks found</h3>

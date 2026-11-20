@@ -199,10 +199,10 @@ export const Header: React.FC<{
                   duration="micro"
                   className="flex items-center gap-1.5 sm:gap-2 text-xs min-w-0"
                 >
-                  <span className="text-zinc-500 font-mono uppercase tracking-wider text-[10px] font-semibold shrink-0">
+                  <span className="text-zinc-400 font-sans text-xs font-medium shrink-0">
                     {breadcrumb.section}
                   </span>
-                  <span className="text-zinc-700 font-mono text-[10px] shrink-0" aria-hidden="true">/</span>
+                  <span className="text-zinc-600 text-xs shrink-0" aria-hidden="true">/</span>
                   <h1 className="text-white font-semibold font-display tracking-tight text-sm truncate max-w-[110px] sm:max-w-[180px] xl:max-w-xs">
                     {breadcrumb.title}
                   </h1>

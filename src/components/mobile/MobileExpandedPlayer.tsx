@@ -87,6 +87,12 @@ export const MobileExpandedPlayer: React.FC = () => {
   const [activeTray, setActiveTray] = useState<'none' | 'volume' | 'speed'>('none');
   const [showRemainingTime, setShowRemainingTime] = useState(true);
   const [isQueueSheetOpen, setIsQueueSheetOpen] = useState(false);
+  const [failedQueueCovers, setFailedQueueCovers] = useState<Record<string, boolean>>({});
+
+  const markQueueCoverFailed = (url?: string) => {
+    if (!url) return;
+    setFailedQueueCovers((prev) => (prev[url] ? prev : { ...prev, [url]: true }));
+  };
 
   const touchStartY = useRef<number>(0);
   const touchStartX = useRef<number>(0);
@@ -490,9 +496,9 @@ export const MobileExpandedPlayer: React.FC = () => {
               </span>
 
               {isInRoom && !isOwner ? (
-                <span className="text-[10px] text-zinc-400 font-sans">Host controls seek</span>
+                <span className="text-[11px] text-zinc-400 font-sans">Host controls seek</span>
               ) : !isRadio && !hasValidDuration ? (
-                <span className="text-[10px] text-zinc-400 font-sans">
+                <span className="text-[11px] text-zinc-400 font-sans">
                   {isPlaying ? 'Loading track duration…' : 'Duration unavailable'}
                 </span>
               ) : null}
@@ -858,11 +864,13 @@ export const MobileExpandedPlayer: React.FC = () => {
               {/* Pinned Currently Playing Track */}
               <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center gap-3 shrink-0">
                 <div className="w-10 h-10 rounded-lg overflow-hidden bg-zinc-900 border border-white/10 shrink-0 relative">
-                  {currentTrack.coverUrl ? (
+                  {currentTrack.coverUrl && !failedQueueCovers[currentTrack.coverUrl] ? (
                     <img
                       src={currentTrack.coverUrl}
                       alt={currentTrack.title}
                       className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                      onError={() => markQueueCoverFailed(currentTrack.coverUrl)}
                     />
                   ) : (
                     <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-400">
@@ -876,11 +884,11 @@ export const MobileExpandedPlayer: React.FC = () => {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className="text-[9px] font-mono uppercase tracking-wider text-emerald-400 font-semibold">
+                  <span className="text-[11px] font-sans font-medium text-emerald-400">
                     Playing Now
                   </span>
                   <p className="text-xs font-bold text-white truncate">{currentTrack.title}</p>
-                  <p className="text-[10px] text-zinc-400 truncate">{currentTrack.artist}</p>
+                  <p className="text-[11px] text-zinc-400 truncate">{currentTrack.artist}</p>
                 </div>
               </div>
 
@@ -893,18 +901,30 @@ export const MobileExpandedPlayer: React.FC = () => {
                       className="group flex items-center justify-between p-2 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-transparent hover:border-white/5 transition-all"
                     >
                       <div
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Play ${track.title} by ${track.artist}`}
                         onClick={() => {
                           playTrack(track);
                           setIsQueueSheetOpen(false);
                         }}
-                        className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            playTrack(track);
+                            setIsQueueSheetOpen(false);
+                          }
+                        }}
+                        className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer aura-focus-ring rounded-lg"
                       >
                         <div className="w-9 h-9 rounded-lg overflow-hidden bg-zinc-900 shrink-0 border border-white/5 relative">
-                          {track.coverUrl ? (
+                          {track.coverUrl && !failedQueueCovers[track.coverUrl] ? (
                             <img
                               src={track.coverUrl}
                               alt={track.title}
                               className="w-full h-full object-cover"
+                              referrerPolicy="no-referrer"
+                              onError={() => markQueueCoverFailed(track.coverUrl)}
                             />
                           ) : (
                             <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-500">
@@ -917,7 +937,7 @@ export const MobileExpandedPlayer: React.FC = () => {
                           <p className="text-xs font-semibold text-zinc-200 group-hover:text-white truncate">
                             {track.title}
                           </p>
-                          <p className="text-[10px] text-zinc-500 truncate">{track.artist}</p>
+                          <p className="text-[11px] text-zinc-400 truncate">{track.artist}</p>
                         </div>
                       </div>
 
@@ -926,7 +946,7 @@ export const MobileExpandedPlayer: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleMoveTrack(idx, 'up')}
-                            className="w-9 h-9 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                            className="w-10 h-10 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer aura-focus-ring"
                             title="Move Up"
                             aria-label="Move Up"
                           >
@@ -938,7 +958,7 @@ export const MobileExpandedPlayer: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleMoveTrack(idx, 'down')}
-                            className="w-9 h-9 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                            className="w-10 h-10 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer aura-focus-ring"
                             title="Move Down"
                             aria-label="Move Down"
                           >
@@ -949,7 +969,7 @@ export const MobileExpandedPlayer: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleRemoveTrack(idx)}
-                          className="w-9 h-9 flex items-center justify-center rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-white/10 transition-colors cursor-pointer"
+                          className="w-10 h-10 flex items-center justify-center rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-white/10 transition-colors cursor-pointer aura-focus-ring"
                           title="Remove from queue"
                           aria-label="Remove from queue"
                         >

@@ -28,13 +28,13 @@ export const AuraAccountModal: React.FC<AuraAccountModalProps> = ({ isOpen, onCl
   });
 
   const [account, setAccount] = useState<AuraUserAccount>(() => {
-    const saved = localStorage.getItem('aura_user_account');
-    if (saved) {
-      try {
+    try {
+      const saved = localStorage.getItem('aura_user_account');
+      if (saved) {
         return JSON.parse(saved);
-      } catch {
-        // ignore
       }
+    } catch {
+      // ignore storage or JSON parse errors in restricted iframes
     }
     return {
       id: 'usr-local-audiophile',
@@ -59,7 +59,11 @@ export const AuraAccountModal: React.FC<AuraAccountModalProps> = ({ isOpen, onCl
       lastSyncedAt: Date.now(),
     };
     setAccount(updated);
-    localStorage.setItem('aura_user_account', JSON.stringify(updated));
+    try {
+      localStorage.setItem('aura_user_account', JSON.stringify(updated));
+    } catch {
+      // ignore storage restriction
+    }
     showToast('Local AURA Studio profile saved on this device', 'success');
   };
 
@@ -103,7 +107,11 @@ export const AuraAccountModal: React.FC<AuraAccountModalProps> = ({ isOpen, onCl
         setAccount(nextAccount);
         setDisplayName(nextAccount.displayName);
         setEmail(nextAccount.email || '');
-        localStorage.setItem('aura_user_account', JSON.stringify(nextAccount));
+        try {
+          localStorage.setItem('aura_user_account', JSON.stringify(nextAccount));
+        } catch {
+          // ignore storage restriction
+        }
       }
       const res = await importStudioBackup(parsed);
       const total = res.playlistsCount + res.presetsCount + res.markersCount + res.momentsCount;

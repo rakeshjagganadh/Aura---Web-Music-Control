@@ -113,17 +113,29 @@ class RoomService {
     let name = '';
 
     if (typeof window !== 'undefined') {
-      id = localStorage.getItem(LOCAL_STORAGE_USER_ID_KEY) || '';
-      name = localStorage.getItem(LOCAL_STORAGE_USER_NAME_KEY) || '';
+      try {
+        id = localStorage.getItem(LOCAL_STORAGE_USER_ID_KEY) || '';
+        name = localStorage.getItem(LOCAL_STORAGE_USER_NAME_KEY) || '';
+      } catch {
+        // Ignore storage restrictions in cross-origin iframes
+      }
 
       if (!id) {
         id = `user_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-        localStorage.setItem(LOCAL_STORAGE_USER_ID_KEY, id);
+        try {
+          localStorage.setItem(LOCAL_STORAGE_USER_ID_KEY, id);
+        } catch {
+          // Ignore storage restrictions
+        }
       }
 
       if (preferredName && preferredName.trim()) {
         name = preferredName.trim();
-        localStorage.setItem(LOCAL_STORAGE_USER_NAME_KEY, name);
+        try {
+          localStorage.setItem(LOCAL_STORAGE_USER_NAME_KEY, name);
+        } catch {
+          // Ignore storage restrictions
+        }
       } else if (!name) {
         name = 'Listener';
       }
@@ -137,7 +149,11 @@ class RoomService {
 
   public setDisplayName(name: string): void {
     if (typeof window !== 'undefined' && name.trim()) {
-      localStorage.setItem(LOCAL_STORAGE_USER_NAME_KEY, name.trim());
+      try {
+        localStorage.setItem(LOCAL_STORAGE_USER_NAME_KEY, name.trim());
+      } catch {
+        // Ignore storage restrictions
+      }
       if (this.currentParticipant) {
         this.currentParticipant.name = name.trim();
       }

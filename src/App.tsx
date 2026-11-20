@@ -520,7 +520,9 @@ export default function App() {
       <MusicProvider>
         <ListenTogetherProvider>
           <MainLayout />
-          <Analytics />
+          {typeof window !== 'undefined' && window.location.hostname.endsWith('.vercel.app') && (
+            <Analytics />
+          )}
         </ListenTogetherProvider>
       </MusicProvider>
     </MotionConfig>

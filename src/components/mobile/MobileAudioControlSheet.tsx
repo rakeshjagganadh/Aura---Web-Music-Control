@@ -76,7 +76,7 @@ export const MobileAudioControlSheet: React.FC = () => {
   const tabs: { id: MobileAudioTab; label: string; icon: AuraIconName }[] = [
     { id: 'basic', label: 'Tone', icon: 'layers' },
     { id: 'eq', label: '10-Band EQ', icon: 'sliders' },
-    { id: 'effects', label: 'Effects', icon: 'sparkles' },
+    { id: 'effects', label: 'Effects', icon: 'wand' },
     { id: 'spatial', label: 'Spatial 3D', icon: 'compass' },
     { id: 'dynamics', label: 'Dynamics', icon: 'activity' },
     { id: 'analysis', label: 'Analysis', icon: 'equalizer' },
@@ -215,7 +215,7 @@ export const MobileAudioControlSheet: React.FC = () => {
               title="A/B Comparison"
             >
               <MotionIconSwap stateKey={isABBypassed ? 'raw' : 'dsp'}>
-                <AuraIcon name="radio" size={12} className={!isABBypassed ? 'text-cyan-400' : 'text-amber-400'} />
+                <AuraIcon name="sliders" size={12} className={!isABBypassed ? 'text-cyan-400' : 'text-amber-400'} />
               </MotionIconSwap>
               <span>{isABBypassed ? 'A: RAW' : 'B: DSP'}</span>
             </button>
@@ -230,7 +230,7 @@ export const MobileAudioControlSheet: React.FC = () => {
               className="min-h-[40px] flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-cyan-300 border border-cyan-500/25 text-[11px] font-semibold whitespace-nowrap transition-colors cursor-pointer aura-pressable aura-focus-ring"
               title="Open Full Audio Studio"
             >
-              <AuraIcon name="sparkles" size={12} />
+              <AuraIcon name="expand" size={12} />
               <span>Full Studio</span>
               <AuraIcon name="arrowRight" size={12} />
             </button>
@@ -377,18 +377,18 @@ export const MobileAudioControlSheet: React.FC = () => {
                 </div>
               </div>
 
-              {/* Quick Presets Pills */}
+              {/* Quick Presets Grid (2 rows of 3 presets, no orphan wrap) */}
               <div className="flex flex-col gap-2">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500">
+                <span className="text-xs font-semibold text-zinc-300">
                   Quick Sound Curve
                 </span>
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   {['flat', 'bass_boost', 'vocal', 'rock', 'pop', 'cinematic'].map((p) => (
                     <button
                       key={p}
                       type="button"
                       onClick={() => setEQPreset(p as EqualizerPreset)}
-                      className={`min-h-[40px] px-3 py-2 rounded-xl text-xs font-semibold capitalize transition-colors cursor-pointer aura-pressable aura-focus-ring ${
+                      className={`min-h-[40px] px-2.5 py-2 rounded-xl text-xs font-semibold capitalize truncate transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                         eqPreset === p
                           ? 'bg-indigo-600 text-white shadow-md'
                           : 'bg-zinc-900 text-zinc-300 border border-white/5 hover:bg-zinc-800'

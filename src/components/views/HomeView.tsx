@@ -74,6 +74,12 @@ export const HomeView: React.FC = () => {
   const [topRadioStations, setTopRadioStations] = useState<Track[]>([]);
   const [isLoadingDiscovery, setIsLoadingDiscovery] = useState(true);
   const [mobileExploreTab, setMobileExploreTab] = useState<'moods' | 'genres' | 'soundscapes'>('moods');
+  const [failedCoverUrls, setFailedCoverUrls] = useState<Record<string, boolean>>({});
+
+  const markCoverFailed = (url?: string) => {
+    if (!url) return;
+    setFailedCoverUrls((prev) => (prev[url] ? prev : { ...prev, [url]: true }));
+  };
 
   // Time-of-day greeting calculation
   const greeting = useMemo((): { text: string; icon: AuraIconName; label: string } => {
@@ -129,6 +135,12 @@ export const HomeView: React.FC = () => {
       history,
     });
   }, [tracks, recentlyPlayed, favoriteItems, history]);
+
+  const activeDiscoveryMixId = useMemo(() => {
+    if (!currentTrack) return null;
+    const match = discoveryMixes.find((mix) => mix.tracks.some((t) => t.id === currentTrack.id));
+    return match?.id ?? null;
+  }, [discoveryMixes, currentTrack]);
 
   // Handle Play Discovery Mix (sequential or shuffle)
   const handlePlayDiscoveryMix = (mix: AuraDiscoveryMix, shuffle = false) => {
@@ -282,12 +294,13 @@ export const HomeView: React.FC = () => {
                 >
                   {/* Tactile Artwork Tile */}
                   <div className="relative w-11 h-11 sm:w-13 sm:h-13 rounded-xl overflow-hidden shrink-0 bg-zinc-900 border border-white/10 shadow-md">
-                    {track.coverUrl ? (
+                    {track.coverUrl && !failedCoverUrls[track.coverUrl] ? (
                       <img 
                         src={track.coverUrl} 
                         alt={track.title} 
                         className={`w-full h-full object-cover transition-transform duration-300 ${canHover ? 'group-hover:scale-105' : ''}`}
                         referrerPolicy="no-referrer"
+                        onError={() => markCoverFailed(track.coverUrl)}
                       />
                     ) : (
                       <div className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-indigo-900 to-black'} flex items-center justify-center`}>
@@ -341,11 +354,11 @@ export const HomeView: React.FC = () => {
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
             <h2 className="font-section-title text-white flex items-center gap-2">
-              <AuraIcon name="sparkles" size={16} className="text-indigo-400" />
+              <AuraIcon name="disc" size={16} className="text-indigo-400" />
               Your Music Discovery
             </h2>
             <p className="hidden sm:block text-xs text-zinc-400 mt-0.5 font-ui-meta">
-              Personalized listening experiences assembled natively from your library, playback history, and vault
+              Mixes assembled from your library, playback history, and vault
             </p>
           </div>
           <button
@@ -360,7 +373,8 @@ export const HomeView: React.FC = () => {
 
         <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar gap-3 -mx-3 px-3 pb-1 sm:mx-0 sm:px-0 sm:pb-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-4">
           {discoveryMixes.map((mix) => {
-            const isPlayingThisMix = currentTrack && mix.tracks.some((t) => t.id === currentTrack.id) && isPlaying;
+            const isPlayingThisMix = activeDiscoveryMixId === mix.id && isPlaying;
+            const hasValidCover = Boolean(mix.coverUrl && !failedCoverUrls[mix.coverUrl]);
 
             return (
               <div
@@ -374,16 +388,17 @@ export const HomeView: React.FC = () => {
                 <div className="relative z-10 p-3.5 sm:p-5 flex items-start gap-3 sm:gap-4">
                   {/* Real Artwork Tile */}
                   <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shrink-0 bg-zinc-900 border border-white/20 shadow-lg">
-                    {mix.coverUrl ? (
+                    {hasValidCover && mix.coverUrl ? (
                       <img
                         src={mix.coverUrl}
                         alt={mix.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         referrerPolicy="no-referrer"
+                        onError={() => markCoverFailed(mix.coverUrl)}
                       />
                     ) : (
-                      <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
-                        <AuraIcon name="musicNote" size={28} className="text-white/50" />
+                      <div className={`w-full h-full bg-gradient-to-br ${mix.coverColor || 'from-indigo-900 to-zinc-900'} flex items-center justify-center`}>
+                        <AuraIcon name="musicNote" size={28} className="text-white/55" />
                       </div>
                     )}
 
@@ -403,10 +418,10 @@ export const HomeView: React.FC = () => {
                   {/* Title & Metadata */}
                   <div className="min-w-0 flex-1 flex flex-col justify-between h-full">
                     <div>
-                      <div className="flex items-center gap-1.5 mb-1 text-[10px] font-mono uppercase tracking-[0.12em]">
-                        <span className="font-semibold text-white/90">{mix.badgeText}</span>
-                        <span className="text-white/30" aria-hidden="true">·</span>
-                        <span className={mix.isStarterMix ? 'text-indigo-300' : 'text-emerald-300'}>
+                      <div className="flex items-center gap-1.5 mb-1 text-[11px] font-sans whitespace-nowrap min-w-0">
+                        <span className="font-medium text-white/90 truncate">{mix.badgeText}</span>
+                        <span className="text-white/30 shrink-0" aria-hidden="true">·</span>
+                        <span className={`shrink-0 ${mix.isStarterMix ? 'text-indigo-300' : 'text-emerald-300'}`}>
                           {mix.isStarterMix ? 'Starter' : 'Personalized'}
                         </span>
                       </div>
@@ -461,52 +476,6 @@ export const HomeView: React.FC = () => {
               </div>
             );
           })}
-
-          {/* Quick-Launcher Card for YouTube Playlist Import */}
-          <div
-            role="button"
-            tabIndex={0}
-            aria-label="Import YouTube Playlist"
-            onClick={() => setIsYouTubeImportModalOpen(true)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                setIsYouTubeImportModalOpen(true);
-              }
-            }}
-            className="w-[82vw] max-w-[300px] sm:w-auto sm:max-w-none shrink-0 snap-start group relative overflow-hidden rounded-2xl border border-red-500/20 hover:border-red-500/40 aura-glass-ambient aura-hover-scale aura-pressable-subtle flex flex-col justify-between transition-colors duration-300 shadow-lg cursor-pointer min-h-[160px] aura-focus-ring"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-red-950/40 via-zinc-900/60 to-black/80 opacity-80 group-hover:opacity-100 transition-opacity" />
-            
-            <div className="relative z-10 p-5 flex items-start gap-4">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center shrink-0 text-red-400 group-hover:scale-105 transition-transform">
-                <AuraIcon name="playlist" size={32} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <span className="text-[10px] font-mono font-semibold uppercase tracking-[0.12em] text-red-300">
-                  Official Streaming
-                </span>
-                <h3 className="text-base font-bold text-white group-hover:text-red-200 transition-colors font-display mt-0.5">
-                  Import YouTube Playlist
-                </h3>
-                <p className="text-xs text-zinc-400 mt-1 line-clamp-2">
-                  Paste any YouTube or YouTube Music playlist URL or ID to stream officially inside AURA.
-                </p>
-              </div>
-            </div>
-
-            <div className="relative z-10 px-5 pb-4 pt-2 flex items-center justify-between border-t border-white/[0.06] bg-black/20">
-              <span className="text-[11px] font-mono text-zinc-400">
-                Official YouTube IFrame Player API
-              </span>
-              <span
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500 group-hover:bg-red-400 text-white font-semibold text-xs transition-colors shadow"
-              >
-                <AuraIcon name="add" size={12} weight={600} />
-                <span>Import</span>
-              </span>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -560,8 +529,7 @@ export const HomeView: React.FC = () => {
                 className={`w-[44vw] max-w-[172px] shrink-0 snap-start group relative overflow-hidden rounded-2xl aspect-[16/10] p-3 flex flex-col justify-between border ${mood.border} cursor-pointer glass-ambient aura-pressable-subtle aura-focus-ring`}
               >
                 <div className={`absolute inset-0 bg-gradient-to-br ${mood.gradient} opacity-80`} />
-                <div className="relative z-10 flex items-center justify-between">
-                  <span className="text-[9px] font-mono uppercase tracking-wider text-zinc-300">Mood</span>
+                <div className="relative z-10 flex items-center justify-end">
                   <AuraIcon name="arrowUpRight" size={13} className="text-zinc-300" />
                 </div>
                 <div className="relative z-10">
@@ -591,7 +559,9 @@ export const HomeView: React.FC = () => {
                 className={`w-[38vw] max-w-[152px] shrink-0 snap-start relative overflow-hidden rounded-2xl aspect-[4/3] p-3 flex flex-col justify-between border ${g.border} cursor-pointer aura-glass-ambient aura-pressable-subtle aura-focus-ring`}
               >
                 <div className={`absolute inset-0 bg-gradient-to-br ${g.color} opacity-80`} />
-                <span className="relative z-10 text-[9px] font-mono uppercase tracking-wider text-zinc-300">Genre</span>
+                <div className="relative z-10 flex items-center justify-end">
+                  <AuraIcon name="arrowUpRight" size={13} className="text-zinc-300" />
+                </div>
                 <div className="relative z-10">
                   <h3 className="text-xs font-bold text-white font-display truncate">{g.name}</h3>
                   <p className="text-[10px] text-zinc-300/80 line-clamp-1 mt-0.5 font-ui-meta">{g.tag}</p>
@@ -619,8 +589,7 @@ export const HomeView: React.FC = () => {
                 className="w-[46vw] max-w-[184px] shrink-0 snap-start relative overflow-hidden rounded-2xl aspect-[16/10] p-3 flex flex-col justify-between border border-white/[0.1] cursor-pointer aura-glass-ambient aura-pressable-subtle aura-focus-ring"
               >
                 <div className={`absolute inset-0 bg-gradient-to-br ${env.coverGradient} opacity-75`} />
-                <div className="relative z-10 flex items-center justify-between">
-                  <span className="text-[9px] font-mono uppercase tracking-wider text-zinc-300">Sound</span>
+                <div className="relative z-10 flex items-center justify-end">
                   <AuraIcon name="play" size={14} filled className="text-white" />
                 </div>
                 <div className="relative z-10">
@@ -663,10 +632,7 @@ export const HomeView: React.FC = () => {
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${mood.gradient} opacity-75 group-hover:opacity-95 transition-opacity`} />
               
-              <div className="relative z-10 flex items-center justify-between">
-                <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-zinc-300/80 font-medium">
-                  Mood
-                </span>
+              <div className="relative z-10 flex items-center justify-end">
                 <AuraIcon name="arrowUpRight" size={14} className="text-zinc-400 group-hover:text-white transition-colors" />
               </div>
 
@@ -713,8 +679,8 @@ export const HomeView: React.FC = () => {
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${g.color} opacity-70 group-hover:opacity-95 transition-opacity`} />
               
-              <div className="relative z-10 flex items-center justify-between">
-                <span className="text-[8px] font-sans font-semibold text-zinc-400 uppercase tracking-wider">GENRE</span>
+              <div className="relative z-10 flex items-center justify-end">
+                <AuraIcon name="arrowUpRight" size={12} className="text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
 
               <div className="relative z-10">
@@ -760,10 +726,7 @@ export const HomeView: React.FC = () => {
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${env.coverGradient} opacity-60 group-hover:opacity-85 transition-opacity`} />
               
-              <div className="relative z-10 flex items-start justify-between">
-                <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-zinc-300/80 font-medium">
-                  Soundscape
-                </span>
+              <div className="relative z-10 flex items-start justify-end">
                 <div className="w-6 h-6 rounded-full bg-white text-zinc-950 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <AuraIcon name="play" size={12} filled className="text-black translate-x-0.5" />
                 </div>
@@ -993,9 +956,7 @@ export const HomeView: React.FC = () => {
           ------------------------------------------------------------- */}
       <section className="p-3.5 sm:p-6 rounded-2xl aura-glass-ambient flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0 text-white">
-            <AuraIcon name="hardDrive" size={20} className="text-indigo-400" />
-          </div>
+          <AuraIcon name="hardDrive" size={22} className="text-indigo-400 shrink-0" />
           <div>
             <h3 className="text-sm font-bold text-white font-ui-title">
               Your Personal Vault
@@ -1023,7 +984,7 @@ export const HomeView: React.FC = () => {
               onClick={loadDemoPack}
               className="flex items-center gap-1.5 px-3.5 py-2 min-h-[40px] rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 font-medium text-xs border border-white/10 aura-pressable transition-colors cursor-pointer aura-focus-ring"
             >
-              <AuraIcon name="sparkles" size={14} className="text-indigo-400" />
+              <AuraIcon name="disc" size={14} className="text-indigo-400" />
               <span>Load Demo Pack</span>
             </button>
           )}

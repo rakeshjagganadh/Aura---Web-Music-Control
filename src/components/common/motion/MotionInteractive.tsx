@@ -83,32 +83,23 @@ export const MotionIconSwap: React.FC<MotionIconSwapProps> = ({
   const { prefersReducedMotion } = useMotionCapabilities();
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.span
-        key={String(stateKey)}
-        className={className}
-        initial={
-          prefersReducedMotion
-            ? { opacity: 0 }
-            : { opacity: 0, scale: MOTION_SCALE.iconSwapInitial }
-        }
-        animate={
-          prefersReducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }
-        }
-        exit={
-          prefersReducedMotion
-            ? { opacity: 0 }
-            : { opacity: 0, scale: MOTION_SCALE.iconSwapInitial }
-        }
-        transition={
-          prefersReducedMotion
-            ? REDUCED_FADE_TRANSITION
-            : MOTION_TRANSITION.instant
-        }
-      >
-        {children}
-      </motion.span>
-    </AnimatePresence>
+    <motion.span
+      key={String(stateKey)}
+      className={className}
+      initial={
+        prefersReducedMotion
+          ? false
+          : { opacity: 0.72, scale: MOTION_SCALE.iconSwapInitial }
+      }
+      animate={{ opacity: 1, scale: 1 }}
+      transition={
+        prefersReducedMotion
+          ? REDUCED_FADE_TRANSITION
+          : MOTION_TRANSITION.instant
+      }
+    >
+      {children}
+    </motion.span>
   );
 };
 

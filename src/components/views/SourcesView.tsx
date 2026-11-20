@@ -236,16 +236,16 @@ export const SourcesView: React.FC = () => {
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2.5">
-                <AuraIcon name="sparkles" size={18} className="text-cyan-400 shrink-0" />
+                <AuraIcon name="disc" size={18} className="text-cyan-400 shrink-0" />
                 <div>
                   <h3 className="text-sm font-semibold text-white font-display">AURA Open Sound Catalog</h3>
-                  <span className="text-[11px] font-sans font-medium text-cyan-400 flex items-center gap-1">
-                    <AuraIcon name="checkCircle" size={12} /> Built-in Streams
+                  <span className="text-[11px] font-sans text-zinc-400">
+                    Built-in Royalty-Free Streams
                   </span>
                 </div>
               </div>
-              <span className="text-[11px] font-mono text-zinc-400 shrink-0">
-                Lossless DSP
+              <span className="text-[11px] font-sans text-zinc-400 shrink-0">
+                Full DSP
               </span>
             </div>
 
@@ -280,13 +280,13 @@ export const SourcesView: React.FC = () => {
                 <AuraIcon name="radio" size={18} className="text-purple-400 shrink-0" />
                 <div>
                   <h3 className="text-sm font-semibold text-white font-display">Audius Decentralized Catalog</h3>
-                  <span className="text-[11px] font-sans font-medium text-purple-400 flex items-center gap-1">
-                    <AuraIcon name="checkCircle" size={12} /> Public Web Streaming
+                  <span className="text-[11px] font-sans text-zinc-400">
+                    Public Web Streaming
                   </span>
                 </div>
               </div>
-              <span className="text-[11px] font-mono text-zinc-400 shrink-0">
-                Full DSP & EQ
+              <span className="text-[11px] font-sans text-zinc-400 shrink-0">
+                DSP & EQ
               </span>
             </div>
 
@@ -336,13 +336,13 @@ export const SourcesView: React.FC = () => {
                 <AuraIcon name="musicNote" size={18} className="text-amber-400 shrink-0" />
                 <div>
                   <h3 className="text-sm font-semibold text-white font-display">Jamendo Music Catalog</h3>
-                  <span className="text-[11px] font-sans font-medium text-amber-400 flex items-center gap-1">
-                    <AuraIcon name="checkCircle" size={12} /> Creative Commons API
+                  <span className="text-[11px] font-sans text-zinc-400">
+                    Creative Commons API
                   </span>
                 </div>
               </div>
-              <span className="text-[11px] font-mono text-zinc-400 shrink-0">
-                Open CORS DSP
+              <span className="text-[11px] font-sans text-zinc-400 shrink-0">
+                CORS DSP
               </span>
             </div>
 
@@ -392,12 +392,12 @@ export const SourcesView: React.FC = () => {
                 <AuraIcon name="radio" size={18} className="text-cyan-400 shrink-0" />
                 <div>
                   <h3 className="text-sm font-semibold text-white font-display">Radio Browser Directory</h3>
-                  <span className="text-[11px] font-sans font-medium text-cyan-400 flex items-center gap-1">
-                    <AuraIcon name="checkCircle" size={12} /> Live Internet Radio
+                  <span className="text-[11px] font-sans text-zinc-400">
+                    Live Internet Radio
                   </span>
                 </div>
               </div>
-              <span className="text-[11px] font-mono text-zinc-400 shrink-0">
+              <span className="text-[11px] font-sans text-zinc-400 shrink-0">
                 Live DSP
               </span>
             </div>
@@ -622,7 +622,13 @@ export const SourcesView: React.FC = () => {
                             <div className="flex items-center gap-3 min-w-0 flex-1">
                               <div className="w-9 h-9 rounded-lg bg-zinc-900 border border-white/10 overflow-hidden flex items-center justify-center shrink-0">
                                 {st.favicon ? (
-                                  <img src={st.favicon} alt={st.name} className="w-full h-full object-cover" />
+                                  <img
+                                    src={st.favicon}
+                                    alt={st.name}
+                                    className="w-full h-full object-cover"
+                                    referrerPolicy="no-referrer"
+                                    onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
+                                  />
                                 ) : (
                                   <AuraIcon name="radio" size={16} className="text-zinc-600" />
                                 )}

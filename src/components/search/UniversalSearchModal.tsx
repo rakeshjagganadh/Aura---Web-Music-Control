@@ -749,8 +749,9 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                       Recent Searches
                     </span>
                     <button
+                      type="button"
                       onClick={clearRecentSearches}
-                      className="text-[10px] font-sans font-medium text-zinc-500 hover:text-rose-400 transition-colors cursor-pointer"
+                      className="text-[11px] font-sans font-medium text-zinc-500 hover:text-rose-400 transition-colors cursor-pointer rounded aura-focus-ring"
                     >
                       Clear All
                     </button>
@@ -823,7 +824,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                   
-                  {/* YouTube (Primary Source) */}
+                  {/* YouTube */}
                   <button
                     type="button"
                     onClick={() => {
@@ -832,12 +833,11 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                     }}
                     className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.07] hover:border-white/[0.16] text-left transition-colors cursor-pointer group col-span-2 sm:col-span-1 aura-pressable-subtle aura-focus-ring"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider font-medium">Primary</span>
-                      <YouTubeBrandMark size={14} className="text-red-400" />
+                    <div className="flex items-center justify-between gap-2">
+                      <h5 className="text-xs font-semibold text-white font-ui-title group-hover:text-sky-300 transition-colors">YouTube Music</h5>
+                      <YouTubeBrandMark size={14} className="text-red-400 shrink-0" />
                     </div>
-                    <h5 className="text-xs font-semibold text-white mt-1.5 font-ui-title group-hover:text-sky-300 transition-colors">YouTube Music</h5>
-                    <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta line-clamp-1">Search songs or paste URL</p>
+                    <p className="text-[11px] text-zinc-400 mt-1 font-ui-meta line-clamp-1">Search songs or paste URL</p>
                   </button>
 
                   {/* Personal Vault */}
@@ -849,12 +849,11 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                     }}
                     className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.07] hover:border-white/[0.16] text-left transition-colors cursor-pointer group aura-pressable-subtle aura-focus-ring"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider font-medium">Local</span>
-                      <AuraIcon name="hardDrive" size={14} className="text-emerald-400" />
+                    <div className="flex items-center justify-between gap-2">
+                      <h5 className="text-xs font-semibold text-white font-ui-title group-hover:text-sky-300 transition-colors">Personal Vault</h5>
+                      <AuraIcon name="hardDrive" size={14} className="text-emerald-400 shrink-0" />
                     </div>
-                    <h5 className="text-xs font-semibold text-white mt-1.5 font-ui-title group-hover:text-sky-300 transition-colors">Personal Vault</h5>
-                    <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta line-clamp-1 tabular-nums">{tracks.length} local files</p>
+                    <p className="text-[11px] text-zinc-400 mt-1 font-ui-meta line-clamp-1 tabular-nums">{tracks.length} local files</p>
                   </button>
 
                   {/* Audius */}
@@ -866,12 +865,11 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                     }}
                     className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.07] hover:border-white/[0.16] text-left transition-colors cursor-pointer group aura-pressable-subtle aura-focus-ring"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider font-medium">Open Audio</span>
-                      <AuraIcon name="sparkles" size={14} className="text-purple-400" />
+                    <div className="flex items-center justify-between gap-2">
+                      <h5 className="text-xs font-semibold text-white font-ui-title group-hover:text-sky-300 transition-colors">Audius Network</h5>
+                      <AuraIcon name="radio" size={14} className="text-purple-400 shrink-0" />
                     </div>
-                    <h5 className="text-xs font-semibold text-white mt-1.5 font-ui-title group-hover:text-sky-300 transition-colors">Audius Network</h5>
-                    <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta line-clamp-1">1M+ open tracks</p>
+                    <p className="text-[11px] text-zinc-400 mt-1 font-ui-meta line-clamp-1">1M+ open tracks</p>
                   </button>
 
                   {/* Jamendo */}
@@ -883,12 +881,11 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                     }}
                     className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.07] hover:border-white/[0.16] text-left transition-colors cursor-pointer group aura-pressable-subtle aura-focus-ring"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider font-medium">Licensed CC</span>
-                      <AuraIcon name="musicNote" size={14} className="text-amber-400" />
+                    <div className="flex items-center justify-between gap-2">
+                      <h5 className="text-xs font-semibold text-white font-ui-title group-hover:text-sky-300 transition-colors">Jamendo Catalog</h5>
+                      <AuraIcon name="musicNote" size={14} className="text-amber-400 shrink-0" />
                     </div>
-                    <h5 className="text-xs font-semibold text-white mt-1.5 font-ui-title group-hover:text-sky-300 transition-colors">Jamendo Catalog</h5>
-                    <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta line-clamp-1">Creative Commons audio</p>
+                    <p className="text-[11px] text-zinc-400 mt-1 font-ui-meta line-clamp-1">Creative Commons audio</p>
                   </button>
 
                   {/* Radio Browser */}
@@ -900,12 +897,11 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                     }}
                     className="p-3.5 rounded-2xl bg-[#0c0e17] hover:bg-[#121624] border border-white/[0.07] hover:border-white/[0.16] text-left transition-colors cursor-pointer group aura-pressable-subtle aura-focus-ring"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider font-medium">Broadcasts</span>
-                      <AuraIcon name="radio" size={14} className="text-cyan-400" />
+                    <div className="flex items-center justify-between gap-2">
+                      <h5 className="text-xs font-semibold text-white font-ui-title group-hover:text-sky-300 transition-colors">Radio Browser</h5>
+                      <AuraIcon name="radio" size={14} className="text-cyan-400 shrink-0" />
                     </div>
-                    <h5 className="text-xs font-semibold text-white mt-1.5 font-ui-title group-hover:text-sky-300 transition-colors">Radio Browser</h5>
-                    <p className="text-[11px] text-zinc-400 mt-0.5 font-ui-meta line-clamp-1">30k+ live stations</p>
+                    <p className="text-[11px] text-zinc-400 mt-1 font-ui-meta line-clamp-1">30k+ live stations</p>
                   </button>
 
                 </div>
@@ -942,7 +938,13 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 <div className="flex items-center gap-3.5 min-w-0">
                   <div className="w-16 h-16 rounded-xl overflow-hidden bg-zinc-900 border border-white/12 shrink-0 relative shadow-sm">
                     {topMatch.coverUrl ? (
-                      <img src={topMatch.coverUrl} alt={topMatch.title} className={`w-full h-full object-cover transition-transform duration-300 ${canHover ? 'group-hover:scale-105' : ''}`} referrerPolicy="no-referrer" />
+                      <img
+                        src={topMatch.coverUrl}
+                        alt={topMatch.title}
+                        className={`w-full h-full object-cover transition-transform duration-300 ${canHover ? 'group-hover:scale-105' : ''}`}
+                        referrerPolicy="no-referrer"
+                        onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
+                      />
                     ) : (
                       <div className={`w-full h-full bg-gradient-to-br ${topMatch.coverColor || 'from-indigo-900 to-black'} flex items-center justify-center text-white/80`}>
                         <AuraIcon name="musicNote" size={28} />
@@ -1047,7 +1049,13 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                         {/* 40x40 artwork */}
                         <div className="w-10 h-10 rounded-xl overflow-hidden bg-zinc-900 shrink-0 border border-white/10 relative shadow-sm">
                           {song.coverUrl ? (
-                            <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            <img
+                              src={song.coverUrl}
+                              alt={song.title}
+                              className="w-full h-full object-cover"
+                              referrerPolicy="no-referrer"
+                              onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
+                            />
                           ) : (
                             <div className={`w-full h-full bg-gradient-to-br ${song.coverColor || 'from-indigo-600 to-zinc-900'} flex items-center justify-center text-white`}>
                               <AuraIcon name="musicNote" size={16} />

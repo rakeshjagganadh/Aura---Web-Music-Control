@@ -4,12 +4,10 @@
    - Strictly Bypasses all user audio, IndexedDB, Audius, YouTube, and Supabase
    ========================================================================== */
 
-const CACHE_NAME = 'aura-shell-v2';
+const CACHE_NAME = 'aura-shell-v3';
 
 // Static Shell Assets for Instant App Shell Boot
 const PRECACHE_ASSETS = [
-  '/',
-  '/index.html',
   '/site.webmanifest',
   '/favicon.svg',
   '/icon-192.png',
@@ -59,8 +57,6 @@ self.addEventListener('fetch', (event) => {
   }
 
   // 3. Audio & Video safety: NEVER intercept range requests or media streaming
-  // Local music uses IndexedDB / Blob URLs in the main thread (not SW).
-  // Remote streams from Audius, YouTube, etc. must never be touched by SW.
   if (
     req.headers.has('range') ||
     req.destination === 'audio' ||
@@ -70,7 +66,6 @@ self.addEventListener('fetch', (event) => {
   }
 
   // 4. Bypass external streaming & real-time APIs
-  // Supabase, YouTube, Audius, Google APIs, AI Studio endpoints
   const bypassHosts = [
     'supabase.co',
     'audius.co',
@@ -86,18 +81,26 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 5. Bypass internal API endpoints and Listen Together room WebSockets
-  if (url.pathname.startsWith('/api') || url.pathname.startsWith('/ws') || url.pathname.startsWith('/listen-sync')) {
+  // 5. Bypass internal API endpoints, Vite dev modules, AI Studio iframe bridge, and Listen Together WS
+  if (
+    url.pathname.startsWith('/api') ||
+    url.pathname.startsWith('/ws') ||
+    url.pathname.startsWith('/listen-sync') ||
+    url.pathname.startsWith('/@') ||
+    url.pathname.startsWith('/src/') ||
+    url.pathname.startsWith('/node_modules/') ||
+    url.pathname.startsWith('/_aistudio') ||
+    url.pathname.startsWith('/_vercel')
+  ) {
     return;
   }
 
   // 6. Navigation requests (HTML document loading)
-  // Network first; fall back to cached index.html if offline
+  // Network first; fall back to cached index.html only if offline
   if (req.mode === 'navigate') {
     event.respondWith(
       fetch(req)
         .then((networkResponse) => {
-          // Update cached index.html in the background
           if (networkResponse && networkResponse.status === 200) {
             const responseClone = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
@@ -120,31 +123,31 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 7. Same-origin Static Assets (JS, CSS, SVGs, Fonts, Images)
+  // 7. Same-origin Immutable Built Assets (/assets/..., icons, fonts)
   if (url.origin === self.location.origin) {
-    // Only cache static build assets (e.g. /assets/..., fonts, icons)
     const isStaticAsset =
       url.pathname.startsWith('/assets/') ||
-      /\.(js|css|svg|png|jpg|jpeg|webp|ico|woff2?|ttf|eot)$/i.test(url.pathname);
+      /\.(svg|png|jpg|jpeg|webp|ico|woff2?|ttf|eot)$/i.test(url.pathname);
 
     if (isStaticAsset) {
       event.respondWith(
         caches.match(req).then((cachedResponse) => {
           if (cachedResponse) {
-            // Stale-while-revalidate in background
             fetch(req)
               .then((networkResponse) => {
-                if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+                const ct = networkResponse?.headers?.get('content-type') || '';
+                if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic' && !ct.includes('text/html')) {
                   const toCache = networkResponse.clone();
                   caches.open(CACHE_NAME).then((cache) => cache.put(req, toCache));
                 }
               })
-              .catch(() => {/* Offline: cached version was already returned */});
+              .catch(() => {});
             return cachedResponse;
           }
 
           return fetch(req).then((networkResponse) => {
-            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+            const ct = networkResponse?.headers?.get('content-type') || '';
+            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic' || ct.includes('text/html')) {
               return networkResponse;
             }
             const toCache = networkResponse.clone();
@@ -156,6 +159,4 @@ self.addEventListener('fetch', (event) => {
       return;
     }
   }
-
-  // Default: pass through directly to network
 });

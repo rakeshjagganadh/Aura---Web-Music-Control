@@ -120,16 +120,10 @@ export const LibraryNav: React.FC<LibraryNavProps> = ({
               }`}
             >
               {isActive && (
-                <>
-                  <SharedIndicator
-                    layoutId="library-subnav-bg"
-                    className="absolute inset-0 rounded-xl glass-floating border border-white/25 shadow-md pointer-events-none"
-                  />
-                  <SharedIndicator
-                    layoutId="library-subnav-bar"
-                    className="absolute bottom-0 left-3 right-3 h-[2px] bg-sky-400 rounded-full shadow-[0_0_8px_rgba(56,189,248,0.8)] pointer-events-none"
-                  />
-                </>
+                <SharedIndicator
+                  layoutId="library-subnav-bg"
+                  className="absolute inset-0 rounded-xl glass-floating border border-white/20 shadow-md pointer-events-none"
+                />
               )}
               <AuraIcon
                 name={item.icon}
@@ -139,7 +133,7 @@ export const LibraryNav: React.FC<LibraryNavProps> = ({
               />
               <span className="font-medium relative z-10">{item.label}</span>
               {item.count !== undefined && (
-                <span className={`text-[11px] font-mono tabular-nums px-1.5 py-0.5 rounded-full transition-colors relative z-10 ${isActive ? 'bg-white/20 text-white font-semibold' : 'bg-white/5 text-zinc-400'}`}>
+                <span className={`text-[11px] font-mono tabular-nums transition-colors relative z-10 ${isActive ? 'text-zinc-200 font-semibold' : 'text-zinc-500'}`}>
                   {item.count}
                 </span>
               )}

@@ -104,18 +104,21 @@ export const LibraryOverviewView: React.FC = () => {
           ------------------------------------------------------------- */}
       <section className="flex flex-col md:flex-row md:items-end justify-between gap-3 sm:gap-4 pb-3 sm:pb-4 border-b border-white/[0.06]">
         <div>
-          <div className="flex items-center gap-2 mb-1 text-xs text-zinc-400 font-medium font-sans">
-            <AuraIcon name="database" size={14} className="text-sky-400" />
-            <span className="uppercase tracking-wider text-[10px] sm:text-[11px] font-semibold text-sky-400">Personal Collection</span>
+          <div className="flex items-center gap-2 mb-1 text-xs text-zinc-400 font-sans tabular-nums">
+            <span>{tracks.length} tracks</span>
             <span className="text-zinc-600" aria-hidden="true">·</span>
-            <span>IndexedDB Vault</span>
+            <span>{albumCount} albums</span>
+            <span className="text-zinc-600" aria-hidden="true">·</span>
+            <span>{artistCount} artists</span>
+            <span className="text-zinc-600" aria-hidden="true">·</span>
+            <span className="font-mono">{formatStorageMB(storageUsage.approxBytes)}</span>
           </div>
 
           <h1 className="text-xl sm:text-4xl font-page-title text-white tracking-tight">
             Your Library
           </h1>
           <p className="hidden sm:block text-xs sm:text-sm text-zinc-400 mt-1 max-w-xl font-ui-meta leading-relaxed">
-            Your personal music catalogue, lossless local vault, and curated listening collections.
+            Your personal music catalogue, offline local vault, and curated collections.
           </p>
         </div>
 
@@ -184,92 +187,6 @@ export const LibraryOverviewView: React.FC = () => {
       <LibraryNav activeView="library" />
 
       {/* -------------------------------------------------------------
-          3. REAL COLLECTION METRICS BAR (ZERO INVENTED NUMBERS)
-          ------------------------------------------------------------- */}
-      <section className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
-        <div 
-          onClick={() => setCurrentView('songs')}
-          className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.08] hover:border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-md aura-hover-scale aura-pressable-subtle"
-        >
-          <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-[10px] sm:text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400 truncate">Tracks</span>
-            <AuraIcon name="musicNote" size={15} className="text-sky-400 shrink-0" />
-          </div>
-          <div className="mt-2 sm:mt-3">
-            <span className="text-lg sm:text-2xl font-bold text-white font-mono tabular-nums">{tracks.length}</span>
-            <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-0.5 font-ui-meta truncate">In library</p>
-          </div>
-        </div>
-
-        <div 
-          onClick={() => setCurrentView('albums')}
-          className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.08] hover:border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-md aura-hover-scale aura-pressable-subtle"
-        >
-          <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-[10px] sm:text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400 truncate">Albums</span>
-            <AuraIcon name="disc" size={15} className="text-purple-400 shrink-0" />
-          </div>
-          <div className="mt-2 sm:mt-3">
-            <span className="text-lg sm:text-2xl font-bold text-white font-mono tabular-nums">{albumCount}</span>
-            <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-0.5 font-ui-meta truncate">Catalogued</p>
-          </div>
-        </div>
-
-        <div 
-          onClick={() => setCurrentView('artists')}
-          className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.08] hover:border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-md aura-hover-scale aura-pressable-subtle"
-        >
-          <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-[10px] sm:text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400 truncate">Artists</span>
-            <AuraIcon name="user" size={15} className="text-amber-400 shrink-0" />
-          </div>
-          <div className="mt-2 sm:mt-3">
-            <span className="text-lg sm:text-2xl font-bold text-white font-mono tabular-nums">{artistCount}</span>
-            <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-0.5 font-ui-meta truncate">Creators</p>
-          </div>
-        </div>
-
-        <div 
-          onClick={() => setCurrentView('playlists')}
-          className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.08] hover:border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-md aura-hover-scale aura-pressable-subtle"
-        >
-          <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-[10px] sm:text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400 truncate">Playlists</span>
-            <AuraIcon name="playlist" size={15} className="text-emerald-400 shrink-0" />
-          </div>
-          <div className="mt-2 sm:mt-3">
-            <span className="text-lg sm:text-2xl font-bold text-white font-mono tabular-nums">{playlists.length}</span>
-            <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-0.5 font-ui-meta truncate">Organized</p>
-          </div>
-        </div>
-
-        <div 
-          onClick={() => setCurrentView('favorites')}
-          className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl glass-ambient hover:glass-reflective border border-white/[0.08] hover:border-white/[0.18] flex flex-col justify-between cursor-pointer transition-colors shadow-md aura-hover-scale aura-pressable-subtle"
-        >
-          <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-[10px] sm:text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400 truncate">Liked</span>
-            <AuraIcon name="heart" size={15} filled className="text-rose-400 shrink-0" />
-          </div>
-          <div className="mt-2 sm:mt-3">
-            <span className="text-lg sm:text-2xl font-bold text-white font-mono tabular-nums">{favoriteItems.length}</span>
-            <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-0.5 font-ui-meta truncate">Starred</p>
-          </div>
-        </div>
-
-        <div className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
-          <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-[10px] sm:text-[11px] font-sans font-semibold uppercase tracking-wider text-zinc-400 truncate">Vault</span>
-            <AuraIcon name="hardDrive" size={15} className="text-cyan-400 shrink-0" />
-          </div>
-          <div className="mt-2 sm:mt-3">
-            <span className="text-base sm:text-2xl font-bold text-white font-mono tabular-nums truncate block">{formatStorageMB(storageUsage.approxBytes)}</span>
-            <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-0.5 font-ui-meta truncate tabular-nums">{localVaultTracks.length} local</p>
-          </div>
-        </div>
-      </section>
-
-      {/* -------------------------------------------------------------
           4. RECENTLY ADDED (ARTWORK-LED SHELF)
           ------------------------------------------------------------- */}
       <section className="flex flex-col gap-3 sm:gap-4">
@@ -305,10 +222,8 @@ export const LibraryOverviewView: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="p-8 sm:p-12 rounded-2xl aura-glass-ambient border border-dashed border-white/10 flex flex-col items-center justify-center text-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-zinc-500">
-              <AuraIcon name="fileAudio" size={24} className="text-zinc-400" />
-            </div>
+          <div className="p-8 sm:p-10 rounded-2xl aura-glass-ambient border border-dashed border-white/10 flex flex-col items-center justify-center text-center gap-3">
+            <AuraIcon name="fileAudio" size={28} className="text-zinc-500" />
             <h3 className="text-sm font-semibold text-zinc-200">Your library is currently empty</h3>
             <p className="text-xs text-zinc-400 max-w-sm font-ui-meta">
               Import local audio files (MP3, FLAC, WAV, AAC) into your offline IndexedDB vault or load the demo sound pack to start listening.
@@ -341,7 +256,7 @@ export const LibraryOverviewView: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="font-section-title text-white flex items-center gap-2">
-                <AuraIcon name="sparkles" size={16} className="text-emerald-400" />
+                <AuraIcon name="history" size={16} className="text-sky-400" />
                 Recently Played
               </h2>
               <p className="hidden sm:block text-xs text-zinc-400 mt-0.5 font-ui-meta">
@@ -367,39 +282,27 @@ export const LibraryOverviewView: React.FC = () => {
       {/* -------------------------------------------------------------
           6. LOCAL MUSIC VAULT MANAGEMENT (HONEST INDEXEDDB OVERVIEW)
           ------------------------------------------------------------- */}
-      <section className="p-4 sm:p-7 rounded-2xl aura-glass-island border border-white/10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6 shadow-xl">
-        <div className="flex items-start gap-4 max-w-2xl">
-          <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/25 flex items-center justify-center shrink-0 text-cyan-400">
-            <AuraIcon name="hardDrive" size={24} />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 mb-1 text-[11px] font-mono">
-              <span className="font-semibold uppercase tracking-[0.12em] text-cyan-300">
-                Private Vault
-              </span>
-              <span className="text-zinc-600" aria-hidden="true">·</span>
-              <span className="text-zinc-400 tabular-nums">
-                {localVaultTracks.length} tracks · {formatStorageMB(storageUsage.approxBytes)}
-              </span>
-            </div>
-            <h3 className="text-lg font-bold text-white font-ui-title">
-              Local Audio Vault & Offline Engine
+      <section className="p-4 sm:p-6 rounded-2xl aura-glass-ambient border border-white/[0.08] flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6">
+        <div className="max-w-2xl">
+          <div className="flex items-center gap-2 mb-1">
+            <AuraIcon name="hardDrive" size={16} className="text-cyan-400 shrink-0" />
+            <h3 className="text-base font-bold text-white font-ui-title">
+              Local Audio Vault
             </h3>
-            <p className="text-xs text-zinc-400 mt-1 font-ui-meta leading-relaxed">
-              Imported audio stays inside browser-local IndexedDB storage for offline playback and Web Audio DSP processing.
-            </p>
-            <p className="mt-2.5 text-[11px] font-mono text-zinc-400">
-              <span className="text-zinc-500">Formats: </span>
-              FLAC · WAV · MP3 · AAC · OGG · WebM
-            </p>
+            <span className="text-xs font-mono tabular-nums text-zinc-400">
+              · {localVaultTracks.length} tracks · {formatStorageMB(storageUsage.approxBytes)}
+            </span>
           </div>
+          <p className="text-xs text-zinc-400 mt-1 font-ui-meta leading-relaxed">
+            Imported audio stays inside browser-local IndexedDB storage for offline playback and Web Audio DSP (FLAC, WAV, MP3, AAC, OGG, WebM).
+          </p>
         </div>
 
         <div className="flex items-center gap-3 shrink-0 self-end lg:self-center">
           <button
             type="button"
             onClick={() => setIsUploadModalOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs shadow-md transition-colors cursor-pointer aura-focus-ring aura-pressable"
           >
             <AuraIcon name="add" size={16} weight={600} />
             <span>Import Audio Files</span>

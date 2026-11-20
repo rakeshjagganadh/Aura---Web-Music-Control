@@ -109,6 +109,12 @@ export const QueueDrawer: React.FC = () => {
   });
 
   const [activeTab, setActiveTab] = useState<'queue' | 'history'>('queue');
+  const [failedCovers, setFailedCovers] = useState<Record<string, boolean>>({});
+
+  const markCoverFailed = (url?: string) => {
+    if (!url) return;
+    setFailedCovers((prev) => (prev[url] ? prev : { ...prev, [url]: true }));
+  };
 
   // Slice only the upcoming tracks after queueIndex
   const upNextTracks = useMemo(() => {
@@ -285,8 +291,9 @@ export const QueueDrawer: React.FC = () => {
         <LayoutGroup id="queue-drawer-tabs">
           <div className="flex items-center border-b border-white/[0.06] px-4 pt-1">
             <button
+              type="button"
               onClick={() => setActiveTab('queue')}
-              className={`relative min-h-[40px] flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors cursor-pointer aura-pressable ${
+              className={`relative min-h-[40px] flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors cursor-pointer aura-pressable aura-focus-ring rounded-lg ${
                 activeTab === 'queue'
                   ? 'text-indigo-300 font-semibold'
                   : 'text-zinc-400 hover:text-zinc-200'
@@ -302,8 +309,9 @@ export const QueueDrawer: React.FC = () => {
               )}
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab('history')}
-              className={`relative min-h-[40px] flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors cursor-pointer aura-pressable ${
+              className={`relative min-h-[40px] flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors cursor-pointer aura-pressable aura-focus-ring rounded-lg ${
                 activeTab === 'history'
                   ? 'text-indigo-300 font-semibold'
                   : 'text-zinc-400 hover:text-zinc-200'
@@ -330,11 +338,11 @@ export const QueueDrawer: React.FC = () => {
               {currentTrack && (
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-sans font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                      <AuraIcon name="sparkles" size={12} className="text-indigo-400" />
+                    <span className="text-[11px] font-sans font-medium text-zinc-400 flex items-center gap-1.5">
+                      <AuraIcon name="disc" size={12} className="text-indigo-400" />
                       Now Playing
                     </span>
-                    <span className="text-[10px] font-sans font-medium text-indigo-400">
+                    <span className="text-[11px] font-sans font-medium text-indigo-400">
                       {isPlaying ? 'Playing' : 'Paused'}
                     </span>
                   </div>
@@ -342,11 +350,13 @@ export const QueueDrawer: React.FC = () => {
                   <div className="flex items-center gap-3 p-3 rounded-2xl bg-indigo-950/30 border border-indigo-500/25 shadow-lg backdrop-blur-xl">
                     {/* Artwork */}
                     <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-[#0e1017] border border-white/10 shadow-sm">
-                      {currentTrack.coverUrl ? (
+                      {currentTrack.coverUrl && !failedCovers[currentTrack.coverUrl] ? (
                         <img 
                           src={currentTrack.coverUrl} 
                           alt={currentTrack.title} 
-                          className="w-full h-full object-cover" 
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                          onError={() => markCoverFailed(currentTrack.coverUrl)}
                         />
                       ) : (
                         <div className={`w-full h-full bg-gradient-to-br ${currentTrack.coverColor || 'from-indigo-600 to-zinc-900'} flex items-center justify-center`}>
@@ -401,11 +411,12 @@ export const QueueDrawer: React.FC = () => {
                       Add tracks using "Play Next" or "Add to Queue" from your music library
                     </p>
                     <button
+                      type="button"
                       onClick={() => {
                         setIsQueueDrawerOpen(false);
                         setCurrentView('songs');
                       }}
-                      className="px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-indigo-300 hover:text-indigo-200 transition-colors cursor-pointer aura-pressable"
+                      className="px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-indigo-300 hover:text-indigo-200 transition-colors cursor-pointer aura-pressable aura-focus-ring"
                     >
                       Browse Library
                     </button>
@@ -427,8 +438,14 @@ export const QueueDrawer: React.FC = () => {
                             className="relative w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-[#0e1017] border border-white/10 cursor-pointer"
                             title={`Play "${track.title}"`}
                           >
-                            {track.coverUrl ? (
-                              <img src={track.coverUrl} alt={track.title} className="w-full h-full object-cover" />
+                            {track.coverUrl && !failedCovers[track.coverUrl] ? (
+                              <img
+                                src={track.coverUrl}
+                                alt={track.title}
+                                className="w-full h-full object-cover"
+                                referrerPolicy="no-referrer"
+                                onError={() => markCoverFailed(track.coverUrl)}
+                              />
                             ) : (
                               <div className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-indigo-600 to-zinc-900'} flex items-center justify-center`}>
                                 <AuraIcon name="musicNote" size={14} className="text-white/80" />
@@ -471,7 +488,7 @@ export const QueueDrawer: React.FC = () => {
                                 e.stopPropagation();
                                 openTrackInfo(track);
                               }}
-                              className="w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center text-zinc-400 hover:text-white rounded hover:bg-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
+                              className="w-9 h-9 sm:w-7 sm:h-7 flex items-center justify-center text-zinc-400 hover:text-white rounded hover:bg-white/10 transition-colors cursor-pointer aura-pressable aura-focus-ring"
                               title="Track Info"
                               aria-label={`Track info for ${track.title}`}
                             >
@@ -488,7 +505,7 @@ export const QueueDrawer: React.FC = () => {
                                 }
                               }}
                               disabled={relativeIdx === 0 || isQueueControlRestricted}
-                              className="w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:text-zinc-400 rounded hover:bg-white/10 transition-colors cursor-pointer disabled:cursor-not-allowed aura-pressable aura-focus-ring"
+                              className="w-9 h-9 sm:w-7 sm:h-7 flex items-center justify-center text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:text-zinc-400 rounded hover:bg-white/10 transition-colors cursor-pointer disabled:cursor-not-allowed aura-pressable aura-focus-ring"
                               title={relativeIdx === 0 ? 'Cannot move above current track' : 'Move Up'}
                               aria-label={`Move ${track.title} up in queue`}
                             >
@@ -505,7 +522,7 @@ export const QueueDrawer: React.FC = () => {
                                 }
                               }}
                               disabled={relativeIdx === upNextTracks.length - 1 || isQueueControlRestricted}
-                              className="w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:text-zinc-400 rounded hover:bg-white/10 transition-colors cursor-pointer disabled:cursor-not-allowed aura-pressable aura-focus-ring"
+                              className="w-9 h-9 sm:w-7 sm:h-7 flex items-center justify-center text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:text-zinc-400 rounded hover:bg-white/10 transition-colors cursor-pointer disabled:cursor-not-allowed aura-pressable aura-focus-ring"
                               title={relativeIdx === upNextTracks.length - 1 ? 'End of queue' : 'Move Down'}
                               aria-label={`Move ${track.title} down in queue`}
                             >
@@ -522,7 +539,7 @@ export const QueueDrawer: React.FC = () => {
                                 }
                               }}
                               disabled={isQueueControlRestricted}
-                              className="w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center text-zinc-400 hover:text-rose-400 disabled:opacity-30 rounded hover:bg-white/10 transition-colors cursor-pointer disabled:cursor-not-allowed aura-pressable aura-focus-ring"
+                              className="w-9 h-9 sm:w-7 sm:h-7 flex items-center justify-center text-zinc-400 hover:text-rose-400 disabled:opacity-30 rounded hover:bg-white/10 transition-colors cursor-pointer disabled:cursor-not-allowed aura-pressable aura-focus-ring"
                               title="Remove from queue"
                               aria-label={`Remove ${track.title} from queue`}
                             >
@@ -570,8 +587,14 @@ export const QueueDrawer: React.FC = () => {
                       className="group flex items-center gap-2.5 p-2 rounded-xl bg-[#0b0d13]/60 hover:bg-[#121520]/80 border border-white/[0.04] hover:border-white/[0.08] transition-colors cursor-pointer aura-pressable-subtle aura-focus-ring"
                     >
                       <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-[#0e1017] border border-white/10">
-                        {track.coverUrl ? (
-                          <img src={track.coverUrl} alt={track.title} className="w-full h-full object-cover" />
+                        {track.coverUrl && !failedCovers[track.coverUrl] ? (
+                          <img
+                            src={track.coverUrl}
+                            alt={track.title}
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                            onError={() => markCoverFailed(track.coverUrl)}
+                          />
                         ) : (
                           <div className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-indigo-600 to-zinc-900'} flex items-center justify-center`}>
                             <AuraIcon name="musicNote" size={14} className="text-white/80" />

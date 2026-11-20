@@ -28,10 +28,14 @@ export function usePWAInstall() {
   const [isAndroid, setIsAndroid] = useState<boolean>(false);
   const [isBannerDismissed, setIsBannerDismissed] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
-    const dismissedUntil = localStorage.getItem(DISMISS_KEY);
-    if (!dismissedUntil) return false;
-    const expiry = parseInt(dismissedUntil, 10);
-    return Date.now() < expiry;
+    try {
+      const dismissedUntil = localStorage.getItem(DISMISS_KEY);
+      if (!dismissedUntil) return false;
+      const expiry = parseInt(dismissedUntil, 10);
+      return Date.now() < expiry;
+    } catch {
+      return false;
+    }
   });
   const [isInstructionsOpen, setIsInstructionsOpen] = useState<boolean>(false);
 
@@ -97,7 +101,11 @@ export function usePWAInstall() {
 
   const dismissBanner = useCallback(() => {
     const expiry = Date.now() + DISMISS_DURATION_MS;
-    localStorage.setItem(DISMISS_KEY, expiry.toString());
+    try {
+      localStorage.setItem(DISMISS_KEY, expiry.toString());
+    } catch {
+      // Ignore storage errors in restricted iframe environments
+    }
     setIsBannerDismissed(true);
   }, []);
 

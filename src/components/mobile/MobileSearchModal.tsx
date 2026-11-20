@@ -516,13 +516,14 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({
             {recentSearches.length > 0 && (
               <div className="flex flex-col gap-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold flex items-center gap-1.5">
+                  <span className="text-[11px] font-sans font-semibold text-zinc-400 flex items-center gap-1.5">
                     <AuraIcon name="history" size={14} className="text-sky-400" />
                     Recent Searches
                   </span>
                   <button
+                    type="button"
                     onClick={clearRecentSearches}
-                    className="text-[10px] font-mono text-zinc-500 hover:text-rose-400 transition-colors p-1"
+                    className="text-[11px] font-sans font-medium text-zinc-500 hover:text-rose-400 transition-colors p-1 rounded cursor-pointer aura-focus-ring"
                   >
                     Clear All
                   </button>
@@ -557,9 +558,9 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({
 
             {/* Quick Sonic Moods */}
             <div className="flex flex-col gap-2.5">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold flex items-center gap-1.5">
+              <span className="text-[11px] font-sans font-semibold text-zinc-400 flex items-center gap-1.5">
                 <AuraIcon name="compass" size={14} className="text-indigo-400" />
-                Sonic Mood Discovery
+                Sonic Moods
               </span>
               <div className="grid grid-cols-2 gap-2">
                 {QUICK_MOODS.map((mood) => (
@@ -578,7 +579,7 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({
 
             {/* Audio Sources Catalog Pillars */}
             <div className="flex flex-col gap-2.5">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold flex items-center gap-1.5">
+              <span className="text-[11px] font-sans font-semibold text-zinc-400 flex items-center gap-1.5">
                 <AuraIcon name="globe" size={14} className="text-emerald-400" />
                 Catalog Sources
               </span>
@@ -617,7 +618,7 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({
                   className="p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.07] text-left flex items-center justify-between min-h-[44px] transition-colors cursor-pointer aura-focus-ring aura-pressable-subtle"
                 >
                   <div className="flex items-center gap-2 min-w-0">
-                    <AuraIcon name="sparkles" size={16} className="text-purple-400 shrink-0" />
+                    <AuraIcon name="disc" size={16} className="text-purple-400 shrink-0" />
                     <span className="text-xs font-semibold text-zinc-100 truncate font-ui-title">Audius Live</span>
                   </div>
                   <AuraIcon name="arrowRight" size={12} className="text-zinc-500 shrink-0" />
@@ -655,7 +656,7 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({
             {/* Recent Tracks in Library */}
             {tracks.length > 0 && (
               <div className="flex flex-col gap-2.5 pt-2 border-t border-white/[0.06]">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">
+                <span className="text-[11px] font-sans font-semibold text-zinc-400">
                   From Your Vault ({tracks.length})
                 </span>
                 <div className="flex flex-col gap-1.5">
@@ -676,7 +677,13 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({
                     >
                       <div className="w-10 h-10 rounded-lg overflow-hidden bg-zinc-900 shrink-0 border border-white/10 relative">
                         {track.coverUrl ? (
-                          <img src={track.coverUrl} alt={track.title} className="w-full h-full object-cover" />
+                          <img
+                            src={track.coverUrl}
+                            alt={track.title}
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                            onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
+                          />
                         ) : (
                           <div className={`w-full h-full bg-gradient-to-br ${track.coverColor || 'from-sky-600 to-zinc-900'} flex items-center justify-center text-white`}>
                             <AuraIcon name="musicNote" size={16} />
@@ -699,15 +706,20 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({
         {/* Best Match Spotlight Card (when search results exist and in 'all' tab) */}
         {query && activeTab === 'all' && bestMatch && !searchResults.detectedDirectTrack && (
           <div className="p-4 rounded-2xl bg-gradient-to-br from-white/[0.08] via-zinc-900/90 to-black border border-white/[0.12] shadow-xl relative overflow-hidden">
-            <div className="text-[10px] font-mono tracking-widest uppercase text-sky-400 font-bold mb-3 flex items-center gap-1.5">
-              <AuraIcon name="sparkles" size={12} />
-              <span>Top Match</span>
+            <div className="text-[11px] font-sans font-semibold text-sky-400 mb-3">
+              Top Match
             </div>
 
             <div className="flex items-center gap-3.5">
               <div className="w-14 h-14 rounded-xl overflow-hidden bg-zinc-900 shrink-0 border border-white/10 relative shadow-md">
                 {bestMatch.coverUrl ? (
-                  <img src={bestMatch.coverUrl} alt={bestMatch.title} className="w-full h-full object-cover" />
+                  <img
+                    src={bestMatch.coverUrl}
+                    alt={bestMatch.title}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
+                  />
                 ) : (
                   <div className={`w-full h-full bg-gradient-to-br ${bestMatch.coverColor || 'from-sky-600 to-zinc-900'} flex items-center justify-center text-white`}>
                     <AuraIcon name="musicNote" size={24} />
@@ -740,7 +752,7 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({
         {/* Songs List */}
         {query && (activeTab === 'all' || activeTab === 'songs') && searchResults.songs.length > 0 && (
           <div className="flex flex-col gap-2">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">
+            <span className="text-[11px] font-sans font-semibold text-zinc-400">
               Songs ({searchResults.songs.length})
             </span>
             <div className="flex flex-col gap-1.5">
@@ -765,7 +777,13 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <div className="w-11 h-11 rounded-xl overflow-hidden bg-zinc-900 shrink-0 border border-white/10 relative">
                         {song.coverUrl ? (
-                          <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover" />
+                          <img
+                            src={song.coverUrl}
+                            alt={song.title}
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                            onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
+                          />
                         ) : (
                           <div className={`w-full h-full bg-gradient-to-br ${song.coverColor || 'from-indigo-600 to-zinc-900'} flex items-center justify-center text-white`}>
                             <AuraIcon name="musicNote" size={16} />
@@ -818,7 +836,7 @@ export const MobileSearchModal: React.FC<MobileSearchModalProps> = ({
         {/* Artists Section */}
         {query && (activeTab === 'all' || activeTab === 'artists') && searchResults.artists.length > 0 && (
           <div className="flex flex-col gap-2 pt-2 border-t border-white/[0.06]">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">
+            <span className="text-[11px] font-sans font-semibold text-zinc-400">
               Artists ({searchResults.artists.length})
             </span>
             <div className="flex flex-col gap-1.5">

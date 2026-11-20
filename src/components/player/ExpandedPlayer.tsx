@@ -199,7 +199,7 @@ export const ExpandedPlayer: React.FC = () => {
             animate="animate"
             exit="exit"
             style={{ pointerEvents: isExpandedPlayerOpen ? 'auto' : 'none' }}
-            className="hidden lg:flex fixed inset-0 z-50 bg-[#06070a]/98 backdrop-blur-3xl overflow-y-auto flex-col justify-between p-6 sm:p-8 select-none relative"
+            className="hidden lg:flex fixed inset-0 z-50 bg-[#06070a]/98 backdrop-blur-3xl overflow-y-auto flex-col justify-between p-6 sm:p-8 select-none"
           >
             {/* Full-bleed Ambient Artwork Canvas Behind the Sanctuary */}
             <AnimatePresence initial={false}>
@@ -217,6 +217,9 @@ export const ExpandedPlayer: React.FC = () => {
                     alt=""
                     className="w-full h-full object-cover blur-[90px] opacity-25 scale-125 filter brightness-75"
                     referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = 'none';
+                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#06070a] via-[#06070a]/80 to-[#06070a]/90" />
                 </motion.div>
@@ -228,8 +231,8 @@ export const ExpandedPlayer: React.FC = () => {
             <div className="flex items-center justify-between w-full max-w-7xl mx-auto pb-4 border-b border-white/[0.08] shrink-0">
               <div className="flex items-center gap-3">
                 <AuraBrandMark size={24} isPlaying={isPlaying} />
-                <div className="flex items-center gap-2 text-xs font-mono">
-                  <span className="font-semibold uppercase tracking-[0.14em] text-zinc-200">
+                <div className="flex items-center gap-2 text-xs font-sans">
+                  <span className="font-semibold text-zinc-200 tracking-tight">
                     Now Playing
                   </span>
                   <span className="text-zinc-600" aria-hidden="true">·</span>
@@ -237,7 +240,7 @@ export const ExpandedPlayer: React.FC = () => {
                   {currentTrack.fileFormat && (
                     <>
                       <span className="text-zinc-600" aria-hidden="true">·</span>
-                      <span className="text-zinc-400 tabular-nums">
+                      <span className="text-zinc-400 font-mono tabular-nums">
                         {currentTrack.fileFormat}
                         {currentTrack.fileSize ? ` · ${formatBytes(currentTrack.fileSize)}` : ''}
                       </span>
@@ -466,8 +469,8 @@ export const ExpandedPlayer: React.FC = () => {
             
             {/* Real-time Spectrum / Waveform Visualizer Canvas */}
             <div className="flex flex-col gap-2 p-3.5 rounded-2xl bg-[rgba(10,13,20,0.55)] border border-white/[0.06] backdrop-blur-xl shadow-lg">
-              <div className="flex items-center justify-between text-xs font-mono px-0.5">
-                <span className="text-zinc-300 uppercase tracking-wider text-[10px] font-semibold flex items-center gap-1.5">
+              <div className="flex items-center justify-between text-xs font-sans px-0.5">
+                <span className="text-zinc-300 font-medium flex items-center gap-1.5">
                   <AuraIcon name="waveform" size={14} className="text-sky-400" />
                   Acoustic Analyzer
                 </span>
@@ -475,25 +478,28 @@ export const ExpandedPlayer: React.FC = () => {
                 {/* Visualizer Mode Switcher */}
                 <div className="flex items-center gap-1 p-0.5 rounded-lg bg-white/[0.04] border border-white/[0.06]">
                   <button
+                    type="button"
                     onClick={() => setVisualizerMode('spectrum')}
-                    className={`px-2 py-0.5 rounded text-[10px] uppercase font-mono transition-colors ${
-                      visualizerMode === 'spectrum' ? 'bg-white text-zinc-950 font-bold' : 'text-zinc-400 hover:text-white'
+                    className={`px-2.5 py-0.5 rounded text-[11px] font-sans transition-colors cursor-pointer aura-focus-ring ${
+                      visualizerMode === 'spectrum' ? 'bg-white text-zinc-950 font-semibold' : 'text-zinc-400 hover:text-white'
                     }`}
                   >
                     Spectrum
                   </button>
                   <button
+                    type="button"
                     onClick={() => setVisualizerMode('waveform')}
-                    className={`px-2 py-0.5 rounded text-[10px] uppercase font-mono transition-colors ${
-                      visualizerMode === 'waveform' ? 'bg-white text-zinc-950 font-bold' : 'text-zinc-400 hover:text-white'
+                    className={`px-2.5 py-0.5 rounded text-[11px] font-sans transition-colors cursor-pointer aura-focus-ring ${
+                      visualizerMode === 'waveform' ? 'bg-white text-zinc-950 font-semibold' : 'text-zinc-400 hover:text-white'
                     }`}
                   >
                     Wave
                   </button>
                   <button
+                    type="button"
                     onClick={() => setVisualizerMode('circular')}
-                    className={`px-2 py-0.5 rounded text-[10px] uppercase font-mono transition-colors ${
-                      visualizerMode === 'circular' ? 'bg-white text-zinc-950 font-bold' : 'text-zinc-400 hover:text-white'
+                    className={`px-2.5 py-0.5 rounded text-[11px] font-sans transition-colors cursor-pointer aura-focus-ring ${
+                      visualizerMode === 'circular' ? 'bg-white text-zinc-950 font-semibold' : 'text-zinc-400 hover:text-white'
                     }`}
                   >
                     Radial
@@ -660,7 +666,7 @@ export const ExpandedPlayer: React.FC = () => {
             <div className="flex items-center justify-between gap-4 p-3 rounded-2xl glass-ambient border border-white/[0.12] shadow-sm">
               {/* Playback Speed Pills */}
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-mono uppercase text-zinc-400 mr-1 hidden sm:inline">Speed:</span>
+                <span className="text-xs font-sans font-medium text-zinc-400 mr-1 hidden sm:inline">Speed</span>
                 {[0.75, 1.0, 1.25, 1.5].map((rate) => (
                   <MotionPress
                     key={rate}
@@ -727,20 +733,22 @@ export const ExpandedPlayer: React.FC = () => {
               <div className="flex items-center justify-between pb-3 border-b border-white/[0.06] shrink-0">
                 <div className="flex items-center gap-2">
                   <AuraIcon name="queue" size={16} className="text-sky-400" />
-                  <h3 className="text-xs font-mono font-medium uppercase tracking-wider text-zinc-300">
+                  <h3 className="text-xs font-sans font-semibold text-zinc-200">
                     Up Next
                   </h3>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.05] text-zinc-400 border border-white/[0.06]">
-                    {upNextTracks.length}
+                  <span className="text-xs font-mono tabular-nums text-zinc-400">
+                    · {upNextTracks.length}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-1">
                   {upNextTracks.length > 1 && (
                     <button
+                      type="button"
                       onClick={handleShuffleUpcoming}
-                      className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer aura-focus-ring"
                       title="Shuffle upcoming tracks"
+                      aria-label="Shuffle upcoming tracks"
                     >
                       <AuraIcon name="shuffle" size={14} />
                     </button>
@@ -748,9 +756,11 @@ export const ExpandedPlayer: React.FC = () => {
 
                   {upNextTracks.length > 0 && (
                     <button
+                      type="button"
                       onClick={handleClearUpcoming}
-                      className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-white/5 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-white/5 transition-colors cursor-pointer aura-focus-ring"
                       title="Clear upcoming queue"
+                      aria-label="Clear upcoming queue"
                     >
                       <AuraIcon name="trash" size={14} />
                     </button>
@@ -768,7 +778,15 @@ export const ExpandedPlayer: React.FC = () => {
                       className="absolute inset-0 w-full h-full"
                     >
                       {currentTrack.coverUrl ? (
-                        <img src={currentTrack.coverUrl} alt={currentTrack.title} className="w-full h-full object-cover" />
+                        <img
+                          src={currentTrack.coverUrl}
+                          alt={currentTrack.title}
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLElement).style.display = 'none';
+                          }}
+                        />
                       ) : (
                         <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-400">
                           <AuraIcon name="musicNote" size={16} />
@@ -783,13 +801,13 @@ export const ExpandedPlayer: React.FC = () => {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className="text-[9px] font-mono uppercase tracking-wider text-emerald-400 font-semibold">
+                  <span className="text-[11px] font-sans font-medium text-emerald-400">
                     Playing Now
                   </span>
-                  <p className="text-xs font-bold text-white truncate">
+                  <p className="text-xs font-semibold text-white truncate">
                     {currentTrack.title}
                   </p>
-                  <p className="text-[10px] text-zinc-400 truncate">
+                  <p className="text-[11px] text-zinc-400 truncate">
                     {currentTrack.artist}
                   </p>
                 </div>
@@ -804,12 +822,29 @@ export const ExpandedPlayer: React.FC = () => {
                       className="group flex items-center justify-between p-2 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-transparent hover:border-white/5 transition-all"
                     >
                       <div 
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Play ${track.title} by ${track.artist}`}
                         onClick={() => playTrack(track)}
-                        className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            playTrack(track);
+                          }
+                        }}
+                        className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer aura-focus-ring rounded"
                       >
                         <div className="w-8 h-8 rounded-lg overflow-hidden bg-zinc-900 shrink-0 border border-white/5 relative">
                           {track.coverUrl ? (
-                            <img src={track.coverUrl} alt={track.title} className="w-full h-full object-cover" />
+                            <img
+                              src={track.coverUrl}
+                              alt={track.title}
+                              className="w-full h-full object-cover"
+                              referrerPolicy="no-referrer"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLElement).style.display = 'none';
+                              }}
+                            />
                           ) : (
                             <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-500">
                               <AuraIcon name="musicNote" size={14} />
@@ -824,19 +859,21 @@ export const ExpandedPlayer: React.FC = () => {
                           <p className="text-xs font-medium text-zinc-200 group-hover:text-white truncate">
                             {track.title}
                           </p>
-                          <p className="text-[10px] text-zinc-500 truncate">
+                          <p className="text-[11px] text-zinc-500 truncate">
                             {track.artist}
                           </p>
                         </div>
                       </div>
 
                       {/* Item Actions */}
-                      <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                         {idx > 0 && (
                           <button
+                            type="button"
                             onClick={() => handleMoveTrack(idx, 'up')}
-                            className="p-1 rounded text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+                            className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer aura-focus-ring"
                             title="Move Up"
+                            aria-label={`Move ${track.title} up`}
                           >
                             <AuraIcon name="chevronUp" size={12} />
                           </button>
@@ -844,18 +881,22 @@ export const ExpandedPlayer: React.FC = () => {
 
                         {idx < upNextTracks.length - 1 && (
                           <button
+                            type="button"
                             onClick={() => handleMoveTrack(idx, 'down')}
-                            className="p-1 rounded text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+                            className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer aura-focus-ring"
                             title="Move Down"
+                            aria-label={`Move ${track.title} down`}
                           >
                             <AuraIcon name="chevronDown" size={12} />
                           </button>
                         )}
 
                         <button
+                          type="button"
                           onClick={() => handleRemoveTrack(idx)}
-                          className="p-1 rounded text-zinc-500 hover:text-rose-400 hover:bg-white/10 transition-colors"
+                          className="p-1.5 rounded text-zinc-500 hover:text-rose-400 hover:bg-white/10 transition-colors cursor-pointer aura-focus-ring"
                           title="Remove from queue"
+                          aria-label={`Remove ${track.title} from queue`}
                         >
                           <AuraIcon name="close" size={12} />
                         </button>

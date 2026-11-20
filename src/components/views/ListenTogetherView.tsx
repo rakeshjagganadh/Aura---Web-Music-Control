@@ -396,12 +396,12 @@ export const ListenTogetherView: React.FC = () => {
       <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-12 lg:py-16 flex flex-col items-center select-none">
         
         {/* Top Header Eyebrow */}
-        <p className="text-[11px] font-medium text-zinc-400 mb-2 sm:mb-3 text-center">
+        <p className="text-xs font-medium text-zinc-400 mb-2 sm:mb-3 text-center">
           <span className="text-emerald-400">
-            {backendType === 'supabase' ? 'Supabase Realtime' : 'AURA Direct WebSocket'}
+            {backendType === 'supabase' ? 'Synchronized Session' : 'Direct WebSocket'}
           </span>
           <span aria-hidden="true"> · </span>
-          <span>Zero-Drift Sync</span>
+          <span>Real-time clock alignment</span>
         </p>
 
         {/* Title Block */}
@@ -489,7 +489,7 @@ export const ListenTogetherView: React.FC = () => {
                     setDisplayNameInput(e.target.value);
                     setUserDisplayName(e.target.value);
                   }}
-                  className="bg-[#08090d] border border-white/10 rounded-md text-white text-xs px-2 py-1 font-medium focus:border-indigo-500/60 focus:outline-none min-w-0 flex-1 sm:w-auto"
+                  className="bg-[#08090d] border border-white/10 rounded-md text-white text-xs px-2 py-1 font-medium focus:border-indigo-500/60 focus:outline-none min-w-0 flex-1 sm:w-auto aura-focus-ring"
                   placeholder="Your Name"
                 />
               </div>
@@ -517,7 +517,7 @@ export const ListenTogetherView: React.FC = () => {
 
           <div className="p-4 sm:p-5 rounded-xl bg-white/[0.025] border border-white/[0.06] flex flex-col gap-1.5">
             <div className="flex items-center gap-2 text-purple-400 mb-0.5">
-              <AuraIcon name="sparkles" size={16} />
+              <AuraIcon name="clock" size={16} />
               <h3 className="text-xs font-semibold text-white">Drift Correction</h3>
             </div>
             <p className="text-xs text-zinc-400 leading-relaxed">

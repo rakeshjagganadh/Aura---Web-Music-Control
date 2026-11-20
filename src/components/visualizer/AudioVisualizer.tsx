@@ -768,10 +768,10 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
             onClick={() => handleModeSelect('spectrum')}
             title="Spectrum"
             aria-label="Spectrum mode"
-            className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-mono uppercase transition-colors cursor-pointer aura-focus-ring ${
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-sans transition-colors cursor-pointer aura-focus-ring ${
               currentMode === 'spectrum'
-                ? 'bg-white text-zinc-950 font-bold shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200'
+                ? 'bg-white text-zinc-950 font-semibold shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 font-medium'
             }`}
           >
             <AuraIcon name="equalizer" size={12} />
@@ -782,10 +782,10 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
             onClick={() => handleModeSelect('waveform')}
             title="Wave"
             aria-label="Wave mode"
-            className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-mono uppercase transition-colors cursor-pointer aura-focus-ring ${
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-sans transition-colors cursor-pointer aura-focus-ring ${
               currentMode === 'waveform'
-                ? 'bg-white text-zinc-950 font-bold shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200'
+                ? 'bg-white text-zinc-950 font-semibold shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 font-medium'
             }`}
           >
             <AuraIcon name="waves" size={12} />
@@ -796,10 +796,10 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
             onClick={() => handleModeSelect('circular')}
             title="Radial"
             aria-label="Radial mode"
-            className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-mono uppercase transition-colors cursor-pointer aura-focus-ring ${
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-sans transition-colors cursor-pointer aura-focus-ring ${
               currentMode === 'circular'
-                ? 'bg-white text-zinc-950 font-bold shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200'
+                ? 'bg-white text-zinc-950 font-semibold shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 font-medium'
             }`}
           >
             <AuraIcon name="disc" size={12} />

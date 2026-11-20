@@ -27,7 +27,7 @@ const CURATED_MOOD_PROFILES: MoodProfileCard[] = [
     id: 'warm',
     label: 'Warm & Intimate',
     subtitle: 'Rich low-mids, smooth analog tape harmonics',
-    icon: 'sparkles',
+    icon: 'flame',
     iconColorClass: 'text-orange-400',
   },
   {
@@ -144,7 +144,7 @@ export const QuickSoundControls: React.FC = () => {
       key: 'warmth',
       label: 'Warmth / Analog Drive',
       desc: 'Second-order harmonic tape drive and tube saturation',
-      icon: 'sparkles',
+      icon: 'sliders',
       iconColorClass: 'text-orange-400',
       val: quickSound.warmth,
       neutralVal: 50,
@@ -207,29 +207,27 @@ export const QuickSoundControls: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-4">
         <div>
           <div className="flex items-baseline gap-2 flex-wrap">
-            <h2 className="text-base font-bold text-white tracking-tight">Sound Lab Macro Workspace</h2>
-            <span className="text-xs text-zinc-400 font-medium">64-bit DSP</span>
+            <h2 className="text-base font-bold text-white tracking-tight">Sound Lab Macros</h2>
           </div>
           <p className="text-xs text-zinc-400 mt-1">
-            Intuitive macro acoustic shapers mapped to the 64-bit Aura DSP audio processing pipeline.
+            Six acoustic macro shapers mapped to the DSP processing chain.
           </p>
         </div>
 
-        {/* Master Control Matrix */}
+        {/* Macro A/B & Reset Controls (distinct from Studio master A/B toolbar) */}
         <div className="flex items-center gap-2 flex-wrap">
-          {/* A/B Switcher */}
           <LayoutGroup id="soundlab-ab-switch">
             <div className="flex items-center p-0.5 rounded-xl bg-zinc-900 border border-white/10">
               <button
                 id="ab-mode-a-btn"
                 type="button"
                 onClick={() => setABMode('A')}
-                className={`relative px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer aura-pressable aura-focus-ring ${
+                className={`relative px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                   abMode === 'A'
                     ? 'text-amber-300'
-                    : 'text-zinc-500 hover:text-zinc-300'
+                    : 'text-zinc-400 hover:text-zinc-200'
                 }`}
-                title="A: Raw Audio without DSP processing"
+                title="Macro Slot A (Compare uncolored macro baseline)"
               >
                 {abMode === 'A' && (
                   <SharedIndicator
@@ -237,18 +235,18 @@ export const QuickSoundControls: React.FC = () => {
                     className="absolute inset-0 rounded-lg bg-zinc-800 border border-amber-500/30 shadow-sm pointer-events-none"
                   />
                 )}
-                <span className="relative z-10">A: RAW</span>
+                <span className="relative z-10">Macro A</span>
               </button>
               <button
                 id="ab-mode-b-btn"
                 type="button"
                 onClick={() => setABMode('B')}
-                className={`relative px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer aura-pressable aura-focus-ring ${
+                className={`relative px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-colors cursor-pointer aura-pressable aura-focus-ring ${
                   abMode === 'B'
                     ? 'text-cyan-300'
-                    : 'text-zinc-500 hover:text-zinc-300'
+                    : 'text-zinc-400 hover:text-zinc-200'
                 }`}
-                title="B: Processed Aura Sound Lab DSP"
+                title="Macro Slot B (Sound Lab macro tuning)"
               >
                 {abMode === 'B' && (
                   <SharedIndicator
@@ -256,12 +254,11 @@ export const QuickSoundControls: React.FC = () => {
                     className="absolute inset-0 rounded-lg bg-cyan-500/20 border border-cyan-500/30 shadow-sm pointer-events-none"
                   />
                 )}
-                <span className="relative z-10">B: DSP</span>
+                <span className="relative z-10">Macro B</span>
               </button>
             </div>
           </LayoutGroup>
 
-          {/* Master DSP Bypass */}
           <button
             id="master-bypass-btn"
             type="button"
@@ -271,15 +268,14 @@ export const QuickSoundControls: React.FC = () => {
                 ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
                 : 'bg-zinc-900 text-zinc-300 border-white/10 hover:bg-zinc-800'
             }`}
-            title="Toggle Master DSP Bypass"
+            title="Bypass Sound Lab DSP"
           >
             <MotionIconSwap stateKey={isMasterBypass ? 'bypass' : 'active'}>
               <AuraIcon name="power" size={14} />
             </MotionIconSwap>
-            <span>{isMasterBypass ? 'DSP Bypassed' : 'DSP Active'}</span>
+            <span>{isMasterBypass ? 'Bypassed' : 'Active'}</span>
           </button>
 
-          {/* Reset All Macros to Neutral */}
           <button
             id="reset-quick-sound-btn"
             type="button"
@@ -288,7 +284,7 @@ export const QuickSoundControls: React.FC = () => {
             title="Reset macro sliders to neutral default"
           >
             <AuraIcon name="reset" size={12} />
-            <span>Neutral</span>
+            <span>Reset Macros</span>
           </button>
         </div>
       </div>
@@ -299,7 +295,7 @@ export const QuickSoundControls: React.FC = () => {
       <section aria-label="One-Click Mood Profiles" className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-300">Acoustic Mood Profiles</span>
+            <span className="text-xs font-semibold text-zinc-200">Sound Profiles</span>
             <span className="text-[11px] text-zinc-500">· One-click DSP tuning</span>
           </div>
 
